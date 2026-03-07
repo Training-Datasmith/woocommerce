@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * REST API Reports downloads files controller
  *
@@ -7,7 +9,7 @@
 
 namespace Automattic\WooCommerce\Admin\API\Reports\Downloads\Files;
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * REST API Reports downloads files controller class.
@@ -15,19 +17,19 @@ defined( 'ABSPATH' ) || exit;
  * @internal
  * @extends WC_REST_Reports_Controller
  */
-class Controller extends \WC_REST_Reports_Controller {
+class Controller extends \WC_REST_Reports_Controller
+{
+    /**
+     * Endpoint namespace.
+     *
+     * @var string
+     */
+    protected $namespace = 'wc-analytics';
 
-	/**
-	 * Endpoint namespace.
-	 *
-	 * @var string
-	 */
-	protected $namespace = 'wc-analytics';
-
-	/**
-	 * Route base.
-	 *
-	 * @var string
-	 */
-	protected $rest_base = 'reports/downloads/files';
+    /**
+     * Route base.
+     *
+     * @var string
+     */
+    protected $rest_base = 'reports/downloads/files';
 }

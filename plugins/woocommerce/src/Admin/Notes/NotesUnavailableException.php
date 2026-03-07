@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * WooCommerce Admin Notes Unavailable Exception Class
  *
@@ -7,9 +9,11 @@
 
 namespace Automattic\WooCommerce\Admin\Notes;
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * Notes\NotesUnavailableException class.
  */
-class NotesUnavailableException extends \WC_Data_Exception {}
+class NotesUnavailableException extends \WC_Data_Exception
+{
+}

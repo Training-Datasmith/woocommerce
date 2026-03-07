@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Units
  *
@@ -9,20 +11,20 @@
  * @version
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
-return array(
-	'weight'     => array(
-		'kg'  => __( 'kg', 'woocommerce' ),
-		'g'   => __( 'g', 'woocommerce' ),
-		'lbs' => __( 'lbs', 'woocommerce' ),
-		'oz'  => __( 'oz', 'woocommerce' ),
-	),
-	'dimensions' => array(
-		'm'  => __( 'm', 'woocommerce' ),
-		'cm' => __( 'cm', 'woocommerce' ),
-		'mm' => __( 'mm', 'woocommerce' ),
-		'in' => __( 'in', 'woocommerce' ),
-		'yd' => __( 'yd', 'woocommerce' ),
-	),
-);
+return [
+    'weight'     => [
+        'kg'  => __('kg', 'woocommerce'),
+        'g'   => __('g', 'woocommerce'),
+        'lbs' => __('lbs', 'woocommerce'),
+        'oz'  => __('oz', 'woocommerce'),
+    ],
+    'dimensions' => [
+        'm'  => __('m', 'woocommerce'),
+        'cm' => __('cm', 'woocommerce'),
+        'mm' => __('mm', 'woocommerce'),
+        'in' => __('in', 'woocommerce'),
+        'yd' => __('yd', 'woocommerce'),
+    ],
+];

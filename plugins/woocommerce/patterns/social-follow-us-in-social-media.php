@@ -5,12 +5,12 @@
  * Categories: WooCommerce, social-media
  */
 
-$image1 = plugins_url( 'assets/images/pattern-placeholders/drinkware-liquid-tableware-dishware-bottle-fluid.jpg', WC_PLUGIN_FILE );
-$image2 = plugins_url( 'assets/images/pattern-placeholders/watch-hand-brand-jewellery-strap-platinum.jpg', WC_PLUGIN_FILE );
-$image3 = plugins_url( 'assets/images/pattern-placeholders/tree-branch-plant-wood-leaf-flower.jpg', WC_PLUGIN_FILE );
-$image4 = plugins_url( 'assets/images/pattern-placeholders/road-sport-vintage-wheel-retro-old.jpg', WC_PLUGIN_FILE );
+$image1 = plugins_url('assets/images/pattern-placeholders/drinkware-liquid-tableware-dishware-bottle-fluid.jpg', WC_PLUGIN_FILE);
+$image2 = plugins_url('assets/images/pattern-placeholders/watch-hand-brand-jewellery-strap-platinum.jpg', WC_PLUGIN_FILE);
+$image3 = plugins_url('assets/images/pattern-placeholders/tree-branch-plant-wood-leaf-flower.jpg', WC_PLUGIN_FILE);
+$image4 = plugins_url('assets/images/pattern-placeholders/road-sport-vintage-wheel-retro-old.jpg', WC_PLUGIN_FILE);
 
-$social_title = __( 'Stay in the loop', 'woocommerce' );
+$social_title = __('Stay in the loop', 'woocommerce');
 ?>
 
 <!-- wp:group {"metadata":{"name":"Social: Follow us on social media"},"align":"full","style":{"spacing":{"padding":{"top":"calc( 0.5 * var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal)))","bottom":"calc( 0.5 * var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal)))","left":"var(--wp--style--root--padding-left, var(--wp--custom--gap--horizontal))","right":"var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal))"},"margin":{"top":"0","bottom":"0"}}},"layout":{"type":"constrained","justifyContent":"center"}} -->
@@ -22,7 +22,7 @@ $social_title = __( 'Stay in the loop', 'woocommerce' );
 	<!-- wp:group {"align":"wide","layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between"}} -->
 	<div class="wp-block-group alignwide">
 		<!-- wp:heading {"level":3,"align":"wide"} -->
-		<h3 class="wp-block-heading alignwide"><?php echo esc_html( $social_title ); ?></h3>
+		<h3 class="wp-block-heading alignwide"><?php echo esc_html($social_title); ?></h3>
 		<!-- /wp:heading -->
 
 		<!-- wp:social-links {"iconColor":"primary","openInNewTab":true,"style":{"spacing":{"blockGap":{"top":"0","left":"16px"}}},"className":"has-icon-color is-style-logos-only","layout":{"type":"flex","justifyContent":"space-between","orientation":"horizontal"}} -->
@@ -49,7 +49,7 @@ $social_title = __( 'Stay in the loop', 'woocommerce' );
 		<div class="wp-block-column" style="flex-basis:25%">
 			<!-- wp:image {"aspectRatio":"1","scale":"cover","sizeSlug":"large","linkDestination":"none"} -->
 			<figure class="wp-block-image is-resized size-large">
-				<img src="<?php echo esc_url( $image1 ); ?>" alt="<?php esc_attr_e( 'Placeholder image used to represent products being showcased under the social media icons. 1 out of 4.', 'woocommerce' ); ?>" style="aspect-ratio:1;object-fit:cover;"/>
+				<img src="<?php echo esc_url($image1); ?>" alt="<?php esc_attr_e('Placeholder image used to represent products being showcased under the social media icons. 1 out of 4.', 'woocommerce'); ?>" style="aspect-ratio:1;object-fit:cover;"/>
 			</figure>
 			<!-- /wp:image -->
 		</div>
@@ -59,7 +59,7 @@ $social_title = __( 'Stay in the loop', 'woocommerce' );
 		<div class="wp-block-column" style="flex-basis:25%">
 			<!-- wp:image {"aspectRatio":"1","scale":"cover","sizeSlug":"large","linkDestination":"none"} -->
 			<figure class="wp-block-image is-resized size-large">
-				<img src="<?php echo esc_url( $image2 ); ?>" alt="<?php esc_attr_e( 'Placeholder image used to represent products being showcased under the social media icons. 2 out of 4.', 'woocommerce' ); ?>" style="aspect-ratio:1;object-fit:cover;"/>
+				<img src="<?php echo esc_url($image2); ?>" alt="<?php esc_attr_e('Placeholder image used to represent products being showcased under the social media icons. 2 out of 4.', 'woocommerce'); ?>" style="aspect-ratio:1;object-fit:cover;"/>
 			</figure>
 			<!-- /wp:image -->
 		</div>
@@ -69,7 +69,7 @@ $social_title = __( 'Stay in the loop', 'woocommerce' );
 		<div class="wp-block-column" style="flex-basis:25%">
 			<!-- wp:image {"aspectRatio":"1","scale":"cover","sizeSlug":"large","linkDestination":"none"} -->
 			<figure class="wp-block-image is-resized size-large">
-				<img src="<?php echo esc_url( $image3 ); ?>" alt="<?php esc_attr_e( 'Placeholder image used to represent products being showcased under the social media icons. 3 out of 4.', 'woocommerce' ); ?>" style="aspect-ratio:1;object-fit:cover;"/>
+				<img src="<?php echo esc_url($image3); ?>" alt="<?php esc_attr_e('Placeholder image used to represent products being showcased under the social media icons. 3 out of 4.', 'woocommerce'); ?>" style="aspect-ratio:1;object-fit:cover;"/>
 			</figure>
 			<!-- /wp:image -->
 		</div>
@@ -79,7 +79,7 @@ $social_title = __( 'Stay in the loop', 'woocommerce' );
 		<div class="wp-block-column" style="flex-basis:25%">
 			<!-- wp:image {"aspectRatio":"1","scale":"cover","sizeSlug":"large","linkDestination":"none"} -->
 			<figure class="wp-block-image is-resized size-large">
-				<img src="<?php echo esc_url( $image4 ); ?>" alt="<?php esc_attr_e( 'Placeholder image used to represent products being showcased under the social media icons. 4 out of 4.', 'woocommerce' ); ?>" style="aspect-ratio:1;object-fit:cover;"/>
+				<img src="<?php echo esc_url($image4); ?>" alt="<?php esc_attr_e('Placeholder image used to represent products being showcased under the social media icons. 4 out of 4.', 'woocommerce'); ?>" style="aspect-ratio:1;object-fit:cover;"/>
 			</figure>
 			<!-- /wp:image -->
 		</div>

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Customer Stock Notification Confirm template.
  *
@@ -16,16 +18,15 @@
  */
 
 // Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
-
 echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n";
-echo esc_html( wp_strip_all_tags( $email_heading ) );
+echo esc_html(wp_strip_all_tags($email_heading));
 echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";
 
-echo esc_html( wp_strip_all_tags( wptexturize( apply_filters( 'woocommerce_email_intro_content', $intro_content, $notification ) ) ) ); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
+echo esc_html(wp_strip_all_tags(wptexturize(apply_filters('woocommerce_email_intro_content', $intro_content, $notification)))); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
 
 echo "\n\n----------------------------------------\n\n";
 
@@ -34,14 +35,14 @@ echo "\n\n----------------------------------------\n\n";
  *
  * @since 10.2.0
  */
-do_action( 'woocommerce_email_stock_notification_product', $product, $notification, true, $email );
+do_action('woocommerce_email_stock_notification_product', $product, $notification, true, $email);
 
 /**
  * Show user-defined additional content - this is set in each email's settings.
  */
-if ( $additional_content ) {
-	echo esc_html( wp_strip_all_tags( wptexturize( $additional_content ) ) );
-	echo "\n\n----------------------------------------\n\n";
+if ($additional_content) {
+    echo esc_html(wp_strip_all_tags(wptexturize($additional_content)));
+    echo "\n\n----------------------------------------\n\n";
 }
 
-echo wp_kses_post( apply_filters( 'woocommerce_email_footer_text', get_option( 'woocommerce_email_footer_text' ) ) ); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
+echo wp_kses_post(apply_filters('woocommerce_email_footer_text', get_option('woocommerce_email_footer_text'))); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment

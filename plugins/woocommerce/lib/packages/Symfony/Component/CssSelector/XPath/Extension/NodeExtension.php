@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -31,11 +33,8 @@ class NodeExtension extends AbstractExtension
     public const ATTRIBUTE_NAME_IN_LOWER_CASE = 2;
     public const ATTRIBUTE_VALUE_IN_LOWER_CASE = 4;
 
-    private $flags;
-
-    public function __construct(int $flags = 0)
+    public function __construct(private int $flags = 0)
     {
-        $this->flags = $flags;
     }
 
     /**
@@ -65,15 +64,15 @@ class NodeExtension extends AbstractExtension
     public function getNodeTranslators(): array
     {
         return [
-            'Selector' => [$this, 'translateSelector'],
-            'CombinedSelector' => [$this, 'translateCombinedSelector'],
-            'Negation' => [$this, 'translateNegation'],
-            'Function' => [$this, 'translateFunction'],
-            'Pseudo' => [$this, 'translatePseudo'],
-            'WC_Vendor_Attribute' => [$this, 'translateAttribute'],
-            'Class' => [$this, 'translateClass'],
-            'Hash' => [$this, 'translateHash'],
-            'Element' => [$this, 'translateElement'],
+            'Selector' => $this->translateSelector(...),
+            'CombinedSelector' => $this->translateCombinedSelector(...),
+            'Negation' => $this->translateNegation(...),
+            'Function' => $this->translateFunction(...),
+            'Pseudo' => $this->translatePseudo(...),
+            'WC_Vendor_Attribute' => $this->translateAttribute(...),
+            'Class' => $this->translateClass(...),
+            'Hash' => $this->translateHash(...),
+            'Element' => $this->translateElement(...),
         ];
     }
 
@@ -133,7 +132,7 @@ class NodeExtension extends AbstractExtension
         $xpath = $translator->nodeToXPath($node->getSelector());
 
         if ($this->hasFlag(self::ATTRIBUTE_VALUE_IN_LOWER_CASE)) {
-            $value = strtolower($value);
+            $value = strtolower((string) $value);
         }
 
         return $translator->addAttributeMatching($xpath, $node->getOperator(), $attribute, $value);

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -23,18 +25,18 @@ namespace Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector
  */
 class TokenizerPatterns
 {
-    private $unicodeEscapePattern;
-    private $simpleEscapePattern;
-    private $newLineEscapePattern;
-    private $escapePattern;
-    private $stringEscapePattern;
-    private $nonAsciiPattern;
-    private $nmCharPattern;
-    private $nmStartPattern;
-    private $identifierPattern;
-    private $hashPattern;
-    private $numberPattern;
-    private $quotedStringPattern;
+    private readonly string $unicodeEscapePattern;
+    private readonly string $simpleEscapePattern;
+    private readonly string $newLineEscapePattern;
+    private readonly string $escapePattern;
+    private readonly string $stringEscapePattern;
+    private readonly string $nonAsciiPattern;
+    private readonly string $nmCharPattern;
+    private readonly string $nmStartPattern;
+    private readonly string $identifierPattern;
+    private readonly string $hashPattern;
+    private readonly string $numberPattern;
+    private readonly string $quotedStringPattern;
 
     public function __construct()
     {

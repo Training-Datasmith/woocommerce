@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Automattic\WooCommerce\Tests\Admin\Features\Fulfillments\Helpers;
 
@@ -12,41 +14,46 @@ use Automattic\WooCommerce\Admin\Features\Fulfillments\Providers\AbstractShippin
  * @since 10.1.0
  * @package WooCommerce\Tests\Admin\Features\Fulfillments
  */
-class ShippingProviderMock extends AbstractShippingProvider {
-	/**
-	 * Get the key of the shipping provider.
-	 *
-	 * @return string
-	 */
-	public function get_key(): string {
-		return 'mock_shipping_provider';
-	}
+class ShippingProviderMock extends AbstractShippingProvider
+{
+    /**
+     * Get the key of the shipping provider.
+     *
+     * @return string
+     */
+    public function get_key(): string
+    {
+        return 'mock_shipping_provider';
+    }
 
-	/**
-	 * Get the name of the shipping provider.
-	 *
-	 * @return string
-	 */
-	public function get_name(): string {
-		return 'Mock Shipping Provider';
-	}
+    /**
+     * Get the name of the shipping provider.
+     *
+     * @return string
+     */
+    public function get_name(): string
+    {
+        return 'Mock Shipping Provider';
+    }
 
-	/**
-	 * Get the icon of the shipping provider.
-	 *
-	 * @return string
-	 */
-	public function get_icon(): string {
-		return 'https://example.com/icon.png';
-	}
+    /**
+     * Get the icon of the shipping provider.
+     *
+     * @return string
+     */
+    public function get_icon(): string
+    {
+        return 'https://example.com/icon.png';
+    }
 
-	/**
-	 * Get the tracking URL for a given tracking number.
-	 *
-	 * @param string $tracking_number The tracking number.
-	 * @return string The tracking URL.
-	 */
-	public function get_tracking_url( string $tracking_number ): string {
-		return 'https://example.com/track?number=' . rawurlencode( $tracking_number );
-	}
+    /**
+     * Get the tracking URL for a given tracking number.
+     *
+     * @param string $tracking_number The tracking number.
+     * @return string The tracking URL.
+     */
+    public function get_tracking_url(string $tracking_number): string
+    {
+        return 'https://example.com/track?number=' . rawurlencode($tracking_number);
+    }
 }

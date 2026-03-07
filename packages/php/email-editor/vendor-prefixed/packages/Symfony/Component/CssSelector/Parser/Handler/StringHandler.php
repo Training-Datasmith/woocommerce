@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -31,13 +33,8 @@ use Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector\Parse
  */
 class StringHandler implements HandlerInterface
 {
-    private $patterns;
-    private $escaping;
-
-    public function __construct(TokenizerPatterns $patterns, TokenizerEscaping $escaping)
+    public function __construct(private readonly TokenizerPatterns $patterns, private readonly TokenizerEscaping $escaping)
     {
-        $this->patterns = $patterns;
-        $this->escaping = $escaping;
     }
 
     /**
@@ -59,18 +56,18 @@ class StringHandler implements HandlerInterface
         }
 
         // check unclosed strings
-        if (\strlen($match[0]) === $reader->getRemainingLength()) {
+        if (\strlen((string) $match[0]) === $reader->getRemainingLength()) {
             throw SyntaxErrorException::unclosedString($reader->getPosition() - 1);
         }
 
         // check quotes pairs validity
-        if ($quote !== $reader->getSubstring(1, \strlen($match[0]))) {
+        if ($quote !== $reader->getSubstring(1, \strlen((string) $match[0]))) {
             throw SyntaxErrorException::unclosedString($reader->getPosition() - 1);
         }
 
         $string = $this->escaping->escapeUnicodeAndNewLine($match[0]);
         $stream->push(new Token(Token::TYPE_STRING, $string, $reader->getPosition()));
-        $reader->moveForward(\strlen($match[0]) + 1);
+        $reader->moveForward(\strlen((string) $match[0]) + 1);
 
         return true;
     }

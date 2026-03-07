@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\CSSList;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Comment\Comment;
@@ -17,7 +19,6 @@ use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Property\Charset;
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Property\CSSNamespace;
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Property\Import;
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Property\Selector;
-use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Renderable;
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\RuleSet\AtRuleSet;
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\RuleSet\DeclarationBlock;
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\RuleSet\RuleSet;
@@ -48,7 +49,7 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
      *
      * @internal since 8.8.0
      */
-    protected $aContents;
+    protected array $aContents;
 
     /**
      * @param int $iLineNo
@@ -61,14 +62,12 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
     }
 
     /**
-     * @return void
      *
      * @throws UnexpectedTokenException
      * @throws SourceException
-     *
      * @internal since V8.8.0
      */
-    public static function parseList(ParserState $oParserState, CSSList $oList)
+    public static function parseList(ParserState $oParserState, CSSList $oList): void
     {
         $bIsRoot = $oList instanceof Document;
         if (is_string($oParserState)) {
@@ -82,7 +81,7 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
             if ($bLenientParsing) {
                 try {
                     $oListItem = self::parseListItem($oParserState, $oList);
-                } catch (UnexpectedTokenException $e) {
+                } catch (UnexpectedTokenException) {
                     $oListItem = false;
                 }
             } else {
@@ -100,7 +99,7 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
         }
         $oList->addComments($aComments);
         if (!$bIsRoot && !$bLenientParsing) {
-            throw new SourceException("Unexpected end of document", $oParserState->currentLine());
+            throw new SourceException('Unexpected end of document', $oParserState->currentLine());
         }
     }
 
@@ -136,32 +135,28 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
                 $oParserState->setCharset($oAtRule->getCharset());
             }
             return $oAtRule;
-        } elseif ($oParserState->comes('}')) {
-            if ($bIsRoot) {
-                if ($oParserState->getSettings()->bLenientParsing) {
-                    return DeclarationBlock::parse($oParserState);
-                } else {
-                    throw new SourceException("Unopened {", $oParserState->currentLine());
-                }
-            } else {
+        }
+        if ($oParserState->comes('}')) {
+            if (!$bIsRoot) {
                 // End of list
                 return null;
             }
-        } else {
-            return DeclarationBlock::parse($oParserState, $oList);
+            if ($oParserState->getSettings()->bLenientParsing) {
+                return DeclarationBlock::parse($oParserState);
+            }
+            throw new SourceException('Unopened {', $oParserState->currentLine());
         }
+        return DeclarationBlock::parse($oParserState, $oList);
     }
 
     /**
-     * @param ParserState $oParserState
      *
-     * @return AtRuleBlockList|KeyFrame|Charset|CSSNamespace|Import|AtRuleSet|null
      *
      * @throws SourceException
      * @throws UnexpectedTokenException
      * @throws UnexpectedEOFException
      */
-    private static function parseAtRule(ParserState $oParserState)
+    private static function parseAtRule(ParserState $oParserState): \Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Property\Import|\Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Property\Charset|\Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\CSSList\KeyFrame|\Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Property\CSSNamespace|null|\Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\CSSList\AtRuleBlockList|\Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\RuleSet\AtRuleSet
     {
         $oParserState->consume('@');
         $sIdentifier = $oParserState->parseIdentifier();
@@ -176,12 +171,14 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
             }
             $oParserState->consumeUntil([';', ParserState::EOF], true, true);
             return new Import($oLocation, $sMediaQuery ?: null, $iIdentifierLineNum);
-        } elseif ($sIdentifier === 'charset') {
+        }
+        if ($sIdentifier === 'charset') {
             $oCharsetString = CSSString::parse($oParserState);
             $oParserState->consumeWhiteSpace();
             $oParserState->consumeUntil([';', ParserState::EOF], true, true);
             return new Charset($oCharsetString, $iIdentifierLineNum);
-        } elseif (self::identifierIs($sIdentifier, 'keyframes')) {
+        }
+        if (self::identifierIs($sIdentifier, 'keyframes')) {
             $oResult = new KeyFrame($iIdentifierLineNum);
             $oResult->setVendorKeyFrame($sIdentifier);
             $oResult->setAnimationName(trim($oParserState->consumeUntil('{', false, true)));
@@ -190,7 +187,8 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
                 $oParserState->consume('}');
             }
             return $oResult;
-        } elseif ($sIdentifier === 'namespace') {
+        }
+        if ($sIdentifier === 'namespace') {
             $sPrefix = null;
             $mUrl = Value::parsePrimitiveValue($oParserState);
             if (!$oParserState->comes(';')) {
@@ -210,35 +208,33 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
                 );
             }
             return new CSSNamespace($mUrl, $sPrefix, $iIdentifierLineNum);
-        } else {
-            // Unknown other at rule (font-face or such)
-            $sArgs = trim($oParserState->consumeUntil('{', false, true));
-            if (substr_count($sArgs, "(") != substr_count($sArgs, ")")) {
-                if ($oParserState->getSettings()->bLenientParsing) {
-                    return null;
-                } else {
-                    throw new SourceException("Unmatched brace count in media query", $oParserState->currentLine());
-                }
-            }
-            $bUseRuleSet = true;
-            foreach (explode('/', AtRule::BLOCK_RULES) as $sBlockRuleName) {
-                if (self::identifierIs($sIdentifier, $sBlockRuleName)) {
-                    $bUseRuleSet = false;
-                    break;
-                }
-            }
-            if ($bUseRuleSet) {
-                $oAtRule = new AtRuleSet($sIdentifier, $sArgs, $iIdentifierLineNum);
-                RuleSet::parseRuleSet($oParserState, $oAtRule);
-            } else {
-                $oAtRule = new AtRuleBlockList($sIdentifier, $sArgs, $iIdentifierLineNum);
-                CSSList::parseList($oParserState, $oAtRule);
-                if ($oParserState->comes('}')) {
-                    $oParserState->consume('}');
-                }
-            }
-            return $oAtRule;
         }
+        // Unknown other at rule (font-face or such)
+        $sArgs = trim($oParserState->consumeUntil('{', false, true));
+        if (substr_count($sArgs, '(') != substr_count($sArgs, ')')) {
+            if ($oParserState->getSettings()->bLenientParsing) {
+                return null;
+            }
+            throw new SourceException('Unmatched brace count in media query', $oParserState->currentLine());
+        }
+        $bUseRuleSet = true;
+        foreach (explode('/', AtRule::BLOCK_RULES) as $sBlockRuleName) {
+            if (self::identifierIs($sIdentifier, $sBlockRuleName)) {
+                $bUseRuleSet = false;
+                break;
+            }
+        }
+        if ($bUseRuleSet) {
+            $oAtRule = new AtRuleSet($sIdentifier, $sArgs, $iIdentifierLineNum);
+            RuleSet::parseRuleSet($oParserState, $oAtRule);
+        } else {
+            $oAtRule = new AtRuleBlockList($sIdentifier, $sArgs, $iIdentifierLineNum);
+            CSSList::parseList($oParserState, $oAtRule);
+            if ($oParserState->comes('}')) {
+                $oParserState->consume('}');
+            }
+        }
+        return $oAtRule;
     }
 
     /**
@@ -246,11 +242,9 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
      * We need to check for these versions too.
      *
      * @param string $sIdentifier
-     * @param string $sMatch
      *
-     * @return bool
      */
-    private static function identifierIs($sIdentifier, $sMatch)
+    private static function identifierIs($sIdentifier, string $sMatch): bool
     {
         return (strcasecmp($sIdentifier, $sMatch) === 0)
             ?: preg_match("/^(-\\w+-)?$sMatch$/i", $sIdentifier) === 1;
@@ -260,10 +254,8 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
      * Prepends an item to the list of contents.
      *
      * @param RuleSet|CSSList|Import|Charset $oItem
-     *
-     * @return void
      */
-    public function prepend($oItem)
+    public function prepend($oItem): void
     {
         array_unshift($this->aContents, $oItem);
     }
@@ -272,10 +264,8 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
      * Appends an item to the list of contents.
      *
      * @param RuleSet|CSSList|Import|Charset $oItem
-     *
-     * @return void
      */
-    public function append($oItem)
+    public function append($oItem): void
     {
         $this->aContents[] = $oItem;
     }
@@ -286,10 +276,8 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
      * @param int $iOffset
      * @param int $iLength
      * @param array<int, RuleSet|CSSList|Import|Charset> $mReplacement
-     *
-     * @return void
      */
-    public function splice($iOffset, $iLength = null, $mReplacement = null)
+    public function splice($iOffset, $iLength = null, $mReplacement = null): void
     {
         array_splice($this->aContents, $iOffset, $iLength, $mReplacement);
     }
@@ -301,7 +289,7 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
      * @param RuleSet|CSSList|Import|Charset $item
      * @param RuleSet|CSSList|Import|Charset $sibling
      */
-    public function insertBefore($item, $sibling)
+    public function insertBefore($item, $sibling): void
     {
         if (in_array($sibling, $this->aContents, true)) {
             $this->replace($sibling, [$item, $sibling]);
@@ -355,7 +343,7 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
     /**
      * @param array<int, RuleSet|Import|Charset|CSSList> $aContents
      */
-    public function setContents(array $aContents)
+    public function setContents(array $aContents): void
     {
         $this->aContents = [];
         foreach ($aContents as $content) {
@@ -368,10 +356,8 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
      *
      * @param DeclarationBlock|array<array-key, Selector>|string $mSelector the selectors to match
      * @param bool $bRemoveAll whether to stop at the first declaration block found or remove all blocks
-     *
-     * @return void
      */
-    public function removeDeclarationBlockBySelector($mSelector, $bRemoveAll = false)
+    public function removeDeclarationBlockBySelector($mSelector, $bRemoveAll = false): void
     {
         if ($mSelector instanceof DeclarationBlock) {
             $mSelector = $mSelector->getSelectors();
@@ -385,7 +371,7 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
                     throw new UnexpectedTokenException(
                         "Selector did not match '" . Selector::SELECTOR_VALIDATION_RX . "'.",
                         $mSel,
-                        "custom"
+                        'custom'
                     );
                 }
                 $mSel = new Selector($mSel);
@@ -405,11 +391,9 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
@@ -426,9 +410,7 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
             $oNextLevel = $oOutputFormat->nextLevel();
         }
         foreach ($this->aContents as $oContent) {
-            $sRendered = $oOutputFormat->safely(function () use ($oNextLevel, $oContent) {
-                return $oContent->render($oNextLevel);
-            });
+            $sRendered = $oOutputFormat->safely(fn () => $oContent->render($oNextLevel));
             if ($sRendered === null) {
                 continue;
             }
@@ -468,10 +450,8 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
 
     /**
      * @param array<array-key, Comment> $aComments
-     *
-     * @return void
      */
-    public function addComments(array $aComments)
+    public function addComments(array $aComments): void
     {
         $this->aComments = array_merge($this->aComments, $aComments);
     }
@@ -486,10 +466,8 @@ abstract class CSSList implements Commentable, CSSElement, Positionable
 
     /**
      * @param array<array-key, Comment> $aComments
-     *
-     * @return void
      */
-    public function setComments(array $aComments)
+    public function setComments(array $aComments): void
     {
         $this->aComments = $aComments;
     }

@@ -1,9 +1,11 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Blocks\Domain;
 
-use Automattic\WooCommerce\Blocks\Options;
 use Automattic\WooCommerce\Blocks\Domain\Services\FeatureGating;
-
+use Automattic\WooCommerce\Blocks\Options;
 
 /**
  * Main package class.
@@ -12,118 +14,110 @@ use Automattic\WooCommerce\Blocks\Domain\Services\FeatureGating;
  *
  * @since 2.5.0
  */
-class Package {
+class Package
+{
+    /**
+     * Holds locally the plugin_dir_url to avoid recomputing it.
+     *
+     * @var string
+     */
+    private $plugin_dir_url;
 
-	/**
-	 * Holds the current version of the blocks plugin.
-	 *
-	 * @var string
-	 */
-	private $version;
+    /**
+     * Holds the feature gating class instance.
+     */
+    private ?\Automattic\WooCommerce\Blocks\Domain\Services\FeatureGating $feature_gating = null;
 
-	/**
-	 * Holds the main path to the blocks plugin directory.
-	 *
-	 * @var string
-	 */
-	private $path;
+    /**
+     * Constructor
+     *
+     * @param string        $version        Version of the plugin.
+     * @param string $path Path to the main plugin file.
+     * @param FeatureGating $deprecated     Deprecated Feature gating class.
+     */
+    public function __construct(/**
+     * Holds the current version of the blocks plugin.
+     */
+        private $version, /**
+     * Holds the main path to the blocks plugin directory.
+     */
+        private $path,
+        $deprecated = null
+    ) {
+        if (null !== $deprecated) {
+            wc_deprecated_argument('FeatureGating', '9.6', 'FeatureGating class is deprecated, please use wp_get_environment_type() instead.');
+            $this->feature_gating = new FeatureGating();
+        }
+    }
 
-	/**
-	 * Holds locally the plugin_dir_url to avoid recomputing it.
-	 *
-	 * @var string
-	 */
-	private $plugin_dir_url;
+    /**
+     * Returns the version of WooCommerce Blocks.
+     *
+     * Note: since Blocks was merged into WooCommerce Core, the version of
+     * WC Blocks doesn't update anymore. Use
+     * `Constants::get_constant( 'WC_VERSION' )` when possible to get the
+     * WooCommerce Core version.
+     *
+     * @return string
+     */
+    public function get_version()
+    {
+        return $this->version;
+    }
 
-	/**
-	 * Holds the feature gating class instance.
-	 *
-	 * @var FeatureGating
-	 */
-	private $feature_gating;
+    /**
+     * Returns the version of WooCommerce Blocks stored in the database.
+     *
+     * @return string
+     */
+    public function get_version_stored_on_db()
+    {
+        return get_option(Options::WC_BLOCK_VERSION, '');
+    }
 
-	/**
-	 * Constructor
-	 *
-	 * @param string        $version        Version of the plugin.
-	 * @param string        $plugin_path    Path to the main plugin file.
-	 * @param FeatureGating $deprecated     Deprecated Feature gating class.
-	 */
-	public function __construct( $version, $plugin_path, $deprecated = null ) {
-		if ( null !== $deprecated ) {
-			wc_deprecated_argument( 'FeatureGating', '9.6', 'FeatureGating class is deprecated, please use wp_get_environment_type() instead.' );
-			$this->feature_gating = new FeatureGating();
-		}
-		$this->version = $version;
-		$this->path    = $plugin_path;
-	}
+    /**
+     * Sets the version of WooCommerce Blocks in the database.
+     * This is useful during the first installation or after the upgrade process.
+     */
+    public function set_version_stored_on_db(): void
+    {
+        update_option(Options::WC_BLOCK_VERSION, $this->get_version());
+    }
 
-	/**
-	 * Returns the version of WooCommerce Blocks.
-	 *
-	 * Note: since Blocks was merged into WooCommerce Core, the version of
-	 * WC Blocks doesn't update anymore. Use
-	 * `Constants::get_constant( 'WC_VERSION' )` when possible to get the
-	 * WooCommerce Core version.
-	 *
-	 * @return string
-	 */
-	public function get_version() {
-		return $this->version;
-	}
+    /**
+     * Returns the path to the plugin directory.
+     *
+     * @param string $relative_path  If provided, the relative path will be
+     *                               appended to the plugin path.
+     */
+    public function get_path(string $relative_path = ''): string
+    {
+        return trailingslashit($this->path) . $relative_path;
+    }
 
-	/**
-	 * Returns the version of WooCommerce Blocks stored in the database.
-	 *
-	 * @return string
-	 */
-	public function get_version_stored_on_db() {
-		return get_option( Options::WC_BLOCK_VERSION, '' );
-	}
+    /**
+     * Returns the url to the blocks plugin directory.
+     *
+     * @param string $relative_url If provided, the relative url will be
+     *                             appended to the plugin url.
+     */
+    public function get_url(string $relative_url = ''): string
+    {
+        if (! $this->plugin_dir_url) {
+            // Append index.php so WP does not return the parent directory.
+            $this->plugin_dir_url = plugin_dir_url($this->path . '/index.php');
+        }
 
-	/**
-	 * Sets the version of WooCommerce Blocks in the database.
-	 * This is useful during the first installation or after the upgrade process.
-	 */
-	public function set_version_stored_on_db() {
-		update_option( Options::WC_BLOCK_VERSION, $this->get_version() );
-	}
+        return $this->plugin_dir_url . $relative_url;
+    }
 
-	/**
-	 * Returns the path to the plugin directory.
-	 *
-	 * @param string $relative_path  If provided, the relative path will be
-	 *                               appended to the plugin path.
-	 *
-	 * @return string
-	 */
-	public function get_path( $relative_path = '' ) {
-		return trailingslashit( $this->path ) . $relative_path;
-	}
-
-	/**
-	 * Returns the url to the blocks plugin directory.
-	 *
-	 * @param string $relative_url If provided, the relative url will be
-	 *                             appended to the plugin url.
-	 *
-	 * @return string
-	 */
-	public function get_url( $relative_url = '' ) {
-		if ( ! $this->plugin_dir_url ) {
-			// Append index.php so WP does not return the parent directory.
-			$this->plugin_dir_url = plugin_dir_url( $this->path . '/index.php' );
-		}
-
-		return $this->plugin_dir_url . $relative_url;
-	}
-
-	/**
-	 * Returns an instance of the FeatureGating class.
-	 *
-	 * @return FeatureGating
-	 */
-	public function feature() {
-		return $this->feature_gating;
-	}
+    /**
+     * Returns an instance of the FeatureGating class.
+     *
+     * @return FeatureGating
+     */
+    public function feature()
+    {
+        return $this->feature_gating;
+    }
 }

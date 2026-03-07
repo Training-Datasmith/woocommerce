@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * ClassWithInterface class file.
  */
@@ -8,5 +10,6 @@ namespace Automattic\WooCommerce\Tests\Internal\DependencyManagement\ExampleClas
 /**
  * An example of a class with an interface.
  */
-class ClassWithInterface implements ClassInterface {
+class ClassWithInterface implements ClassInterface
+{
 }

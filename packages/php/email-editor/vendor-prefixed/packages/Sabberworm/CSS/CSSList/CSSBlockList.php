@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\CSSList;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\CSSElement;
@@ -19,14 +21,6 @@ use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Value\ValueList;
  */
 abstract class CSSBlockList extends CSSList
 {
-    /**
-     * @param int $iLineNo
-     */
-    public function __construct($iLineNo = 0)
-    {
-        parent::__construct($iLineNo);
-    }
-
     /**
      * @param array<int, DeclarationBlock> $aResult
      *
@@ -162,24 +156,13 @@ abstract class CSSBlockList extends CSSList
                     }
                     $iTargetSpecificity = (int)$iTargetSpecificity;
                     $iSelectorSpecificity = $oSelector->getSpecificity();
-                    $bMatches = false;
-                    switch ($sComparator) {
-                        case '<=':
-                            $bMatches = $iSelectorSpecificity <= $iTargetSpecificity;
-                            break;
-                        case '<':
-                            $bMatches = $iSelectorSpecificity < $iTargetSpecificity;
-                            break;
-                        case '>=':
-                            $bMatches = $iSelectorSpecificity >= $iTargetSpecificity;
-                            break;
-                        case '>':
-                            $bMatches = $iSelectorSpecificity > $iTargetSpecificity;
-                            break;
-                        default:
-                            $bMatches = $iSelectorSpecificity === $iTargetSpecificity;
-                            break;
-                    }
+                    $bMatches = match ($sComparator) {
+                        '<=' => $iSelectorSpecificity <= $iTargetSpecificity,
+                        '<' => $iSelectorSpecificity < $iTargetSpecificity,
+                        '>=' => $iSelectorSpecificity >= $iTargetSpecificity,
+                        '>' => $iSelectorSpecificity > $iTargetSpecificity,
+                        default => $iSelectorSpecificity === $iTargetSpecificity,
+                    };
                     if ($bMatches) {
                         $aResult[] = $oSelector;
                     }

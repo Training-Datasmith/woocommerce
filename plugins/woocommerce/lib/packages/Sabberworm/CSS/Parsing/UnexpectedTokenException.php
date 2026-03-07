@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing;
 
 /**
@@ -8,42 +10,25 @@ namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing;
 class UnexpectedTokenException extends SourceException
 {
     /**
-     * @var string
-     */
-    private $sExpected;
-
-    /**
-     * @var string
-     */
-    private $sFound;
-
-    /**
-     * Possible values: literal, identifier, count, expression, search
-     *
-     * @var string
-     */
-    private $sMatchType;
-
-    /**
      * @param string $sExpected
      * @param string $sFound
      * @param string $sMatchType
      * @param int $iLineNo
      */
-    public function __construct($sExpected, $sFound, $sMatchType = 'literal', $iLineNo = 0)
+    public function __construct(private $sExpected, private $sFound, /**
+     * Possible values: literal, identifier, count, expression, search
+     */
+        private $sMatchType = 'literal', $iLineNo = 0)
     {
-        $this->sExpected = $sExpected;
-        $this->sFound = $sFound;
-        $this->sMatchType = $sMatchType;
-        $sMessage = "Token “{$sExpected}” ({$sMatchType}) not found. Got “{$sFound}”.";
+        $sMessage = "Token “{$this->sExpected}” ({$this->sMatchType}) not found. Got “{$this->sFound}”.";
         if ($this->sMatchType === 'search') {
-            $sMessage = "Search for “{$sExpected}” returned no results. Context: “{$sFound}”.";
+            $sMessage = "Search for “{$this->sExpected}” returned no results. Context: “{$this->sFound}”.";
         } elseif ($this->sMatchType === 'count') {
-            $sMessage = "Next token was expected to have {$sExpected} chars. Context: “{$sFound}”.";
+            $sMessage = "Next token was expected to have {$this->sExpected} chars. Context: “{$this->sFound}”.";
         } elseif ($this->sMatchType === 'identifier') {
-            $sMessage = "Identifier expected. Got “{$sFound}”";
+            $sMessage = "Identifier expected. Got “{$this->sFound}”";
         } elseif ($this->sMatchType === 'custom') {
-            $sMessage = trim("$sExpected $sFound");
+            $sMessage = trim("{$this->sExpected} {$this->sFound}");
         }
 
         parent::__construct($sMessage, $iLineNo);

@@ -84,11 +84,11 @@ final class ISO3166 implements \Countable, \IteratorAggregate, ISO3166DataProvid
     public function exactName(string $name): array
     {
         Guards::guardAgainstInvalidName($name);
-        
+
         $value = mb_strtolower($name);
 
         foreach ($this->countries as $country) {
-            $comparison = mb_strtolower($country[self::KEY_NAME]);
+            $comparison = mb_strtolower((string) $country[self::KEY_NAME]);
 
             if ($value === $comparison) {
                 return $country;
@@ -164,7 +164,7 @@ final class ISO3166 implements \Countable, \IteratorAggregate, ISO3166DataProvid
         $value = mb_strtolower($value);
 
         foreach ($this->countries as $country) {
-            $comparison = mb_strtolower($country[$key]);
+            $comparison = mb_strtolower((string) $country[$key]);
 
             if ($value === $comparison || $value === mb_substr($comparison, 0, mb_strlen($value))) {
                 return $country;

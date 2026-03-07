@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -21,7 +23,7 @@ namespace Automattic\WooCommerce\Vendor\Symfony\Component\CssSelector\Parser;
  *
  * @internal
  */
-class Token
+class Token implements \Stringable
 {
     public const TYPE_FILE_END = 'eof';
     public const TYPE_DELIMITER = 'delimiter';
@@ -31,15 +33,8 @@ class Token
     public const TYPE_NUMBER = 'number';
     public const TYPE_STRING = 'string';
 
-    private $type;
-    private $value;
-    private $position;
-
-    public function __construct(?string $type, ?string $value, ?int $position)
+    public function __construct(private readonly ?string $type, private readonly ?string $value, private readonly ?int $position)
     {
-        $this->type = $type;
-        $this->value = $value;
-        $this->position = $position;
     }
 
     public function getType(): ?int

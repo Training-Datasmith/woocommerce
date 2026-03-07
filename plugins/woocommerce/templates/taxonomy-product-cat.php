@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * The Template for displaying products in a product category. Simply includes the archive template
  *
@@ -15,8 +17,8 @@
  * @version     4.7.0
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly.
+if (! defined('ABSPATH')) {
+    exit; // Exit if accessed directly.
 }
 
-wc_get_template( 'archive-product.php' );
+wc_get_template('archive-product.php');

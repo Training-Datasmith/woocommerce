@@ -1,69 +1,51 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Gets the processor for the specified rule type.
  */
 
 namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * Class encapsulating getting the processor for a given rule type.
  */
-class GetRuleProcessor {
-	/**
-	 * Get the processor for the specified rule type.
-	 *
-	 * @param string $rule_type The rule type.
-	 *
-	 * @return RuleProcessorInterface The matching processor for the specified rule type, or a FailRuleProcessor if no matching processor is found.
-	 */
-	public static function get_processor( $rule_type ) {
-		switch ( $rule_type ) {
-			case 'plugins_activated':
-				return new PluginsActivatedRuleProcessor();
-			case 'publish_after_time':
-				return new PublishAfterTimeRuleProcessor();
-			case 'publish_before_time':
-				return new PublishBeforeTimeRuleProcessor();
-			case 'not':
-				return new NotRuleProcessor();
-			case 'or':
-				return new OrRuleProcessor();
-			case 'fail':
-				return new FailRuleProcessor();
-			case 'pass':
-				return new PassRuleProcessor();
-			case 'plugin_version':
-				return new PluginVersionRuleProcessor();
-			case 'stored_state':
-				return new StoredStateRuleProcessor();
-			case 'order_count':
-				return new OrderCountRuleProcessor();
-			case 'wcadmin_active_for':
-				return new WCAdminActiveForRuleProcessor();
-			case 'product_count':
-				return new ProductCountRuleProcessor();
-			case 'onboarding_profile':
-				return new OnboardingProfileRuleProcessor();
-			case 'is_ecommerce':
-				return new IsEcommerceRuleProcessor();
-			case 'is_woo_express':
-				return new IsWooExpressRuleProcessor();
-			case 'base_location_country':
-				return new BaseLocationCountryRuleProcessor();
-			case 'base_location_state':
-				return new BaseLocationStateRuleProcessor();
-			case 'note_status':
-				return new NoteStatusRuleProcessor();
-			case 'option':
-				return new OptionRuleProcessor();
-			case 'wca_updated':
-				return new WooCommerceAdminUpdatedRuleProcessor();
-			case 'total_payments_value':
-				return new TotalPaymentsVolumeProcessor();
-		}
-
-		return new FailRuleProcessor();
-	}
+class GetRuleProcessor
+{
+    /**
+     * Get the processor for the specified rule type.
+     *
+     * @param string $rule_type The rule type.
+     *
+     * @return RuleProcessorInterface The matching processor for the specified rule type, or a FailRuleProcessor if no matching processor is found.
+     */
+    public static function get_processor($rule_type): \Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\PluginsActivatedRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\PublishAfterTimeRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\PublishBeforeTimeRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\NotRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\OrRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\FailRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\PassRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\PluginVersionRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\StoredStateRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\OrderCountRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\WCAdminActiveForRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\ProductCountRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\OnboardingProfileRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\IsEcommerceRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\IsWooExpressRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\BaseLocationCountryRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\BaseLocationStateRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\NoteStatusRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\OptionRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\WooCommerceAdminUpdatedRuleProcessor|\Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\TotalPaymentsVolumeProcessor
+    {
+        return match ($rule_type) {
+            'plugins_activated' => new PluginsActivatedRuleProcessor(),
+            'publish_after_time' => new PublishAfterTimeRuleProcessor(),
+            'publish_before_time' => new PublishBeforeTimeRuleProcessor(),
+            'not' => new NotRuleProcessor(),
+            'or' => new OrRuleProcessor(),
+            'fail' => new FailRuleProcessor(),
+            'pass' => new PassRuleProcessor(),
+            'plugin_version' => new PluginVersionRuleProcessor(),
+            'stored_state' => new StoredStateRuleProcessor(),
+            'order_count' => new OrderCountRuleProcessor(),
+            'wcadmin_active_for' => new WCAdminActiveForRuleProcessor(),
+            'product_count' => new ProductCountRuleProcessor(),
+            'onboarding_profile' => new OnboardingProfileRuleProcessor(),
+            'is_ecommerce' => new IsEcommerceRuleProcessor(),
+            'is_woo_express' => new IsWooExpressRuleProcessor(),
+            'base_location_country' => new BaseLocationCountryRuleProcessor(),
+            'base_location_state' => new BaseLocationStateRuleProcessor(),
+            'note_status' => new NoteStatusRuleProcessor(),
+            'option' => new OptionRuleProcessor(),
+            'wca_updated' => new WooCommerceAdminUpdatedRuleProcessor(),
+            'total_payments_value' => new TotalPaymentsVolumeProcessor(),
+            default => new FailRuleProcessor(),
+        };
+    }
 }

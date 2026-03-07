@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 
 namespace Automattic\WooCommerce\Internal\EmailEditor\EmailPatterns;
 
@@ -10,55 +12,57 @@ use Automattic\WooCommerce\Internal\EmailEditor\Integration;
  *
  * Provides a default content pattern that can be used in WooCommerce email templates.
  */
-class WooEmailContentPattern extends Abstract_Pattern {
-	/**
-	 * Pattern name identifier.
-	 *
-	 * @var string
-	 */
-	public $name = 'woo-email-content-pattern';
+class WooEmailContentPattern extends Abstract_Pattern
+{
+    /**
+     * Pattern name identifier.
+     *
+     * @var string
+     */
+    public $name = 'woo-email-content-pattern';
 
-	/**
-	 * Allowed block types for this pattern.
-	 *
-	 * @var array
-	 */
-	public $block_types = array();
+    /**
+     * Allowed block types for this pattern.
+     *
+     * @var array
+     */
+    public $block_types = [];
 
-	/**
-	 * Template types where this pattern can be used.
-	 *
-	 * @var array
-	 */
-	public $template_types = array( 'email-template' );    // Required.
+    /**
+     * Template types where this pattern can be used.
+     *
+     * @var array
+     */
+    public $template_types = [ 'email-template' ];    // Required.
 
-	/**
-	 * Categories this pattern belongs to.
-	 *
-	 * @var array
-	 */
-	public $categories = array( 'email-contents' );        // Optional.
+    /**
+     * Categories this pattern belongs to.
+     *
+     * @var array
+     */
+    public $categories = [ 'email-contents' ];        // Optional.
 
-	/**
-	 * Pattern namespace.
-	 *
-	 * @var string
-	 */
-	public $namespace = 'woocommerce';      // Required.
+    /**
+     * Pattern namespace.
+     *
+     * @var string
+     */
+    public $namespace = 'woocommerce';      // Required.
 
-	/**
-	 * List of supported post types.
-	 *
-	 * @var string[]
-	 */
-	protected $post_types = array( Integration::EMAIL_POST_TYPE );
-	/**
-	 * Get the pattern content.
-	 *
-	 * @return string HTML content for the pattern.
-	 */
-	public function get_content(): string {
-		return '<!-- wp:group {"style":{"spacing":{"padding":{"right":"var:preset|spacing|20","left":"var:preset|spacing|20"}}},"layout":{"type":"constrained"}} -->
+    /**
+     * List of supported post types.
+     *
+     * @var string[]
+     */
+    protected $post_types = [ Integration::EMAIL_POST_TYPE ];
+    /**
+     * Get the pattern content.
+     *
+     * @return string HTML content for the pattern.
+     */
+    public function get_content(): string
+    {
+        return '<!-- wp:group {"style":{"spacing":{"padding":{"right":"var:preset|spacing|20","left":"var:preset|spacing|20"}}},"layout":{"type":"constrained"}} -->
 <div class="wp-block-group" style="padding-right:var(--wp--preset--spacing--20);padding-left:var(--wp--preset--spacing--20)"><!-- wp:heading -->
 <h2 class="wp-block-heading">Woo Email Content</h2>
 <!-- /wp:heading -->
@@ -77,15 +81,16 @@ class WooEmailContentPattern extends Abstract_Pattern {
 <!-- /wp:button --></div>
 <!-- /wp:buttons --></div>
 <!-- /wp:group -->';
-	}
+    }
 
-	/**
-	 * Get the pattern title.
-	 *
-	 * @return string Localized pattern title.
-	 */
-	public function get_title(): string {
-		/* translators: Name of a content pattern used as starting content of an email */
-		return __( 'Woo Email Content Pattern', 'woocommerce' );
-	}
+    /**
+     * Get the pattern title.
+     *
+     * @return string Localized pattern title.
+     */
+    public function get_title(): string
+    {
+        /* translators: Name of a content pattern used as starting content of an email */
+        return __('Woo Email Content Pattern', 'woocommerce');
+    }
 }

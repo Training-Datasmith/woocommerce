@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Order Refund Data Store Interface
  *
@@ -13,5 +15,6 @@
  *
  * @version  3.0.0
  */
-interface WC_Order_Refund_Data_Store_Interface {
+interface WC_Order_Refund_Data_Store_Interface
+{
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -31,10 +33,10 @@ class CombinationExtension extends AbstractExtension
     public function getCombinationTranslators(): array
     {
         return [
-            ' ' => [$this, 'translateDescendant'],
-            '>' => [$this, 'translateChild'],
-            '+' => [$this, 'translateDirectAdjacent'],
-            '~' => [$this, 'translateIndirectAdjacent'],
+            ' ' => $this->translateDescendant(...),
+            '>' => $this->translateChild(...),
+            '+' => $this->translateDirectAdjacent(...),
+            '~' => $this->translateIndirectAdjacent(...),
         ];
     }
 

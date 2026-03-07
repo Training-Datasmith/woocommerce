@@ -12,11 +12,11 @@
 		<!-- wp:heading {"style":{"spacing":{"margin":{"top":"var:preset|spacing|30","bottom":"var:preset|spacing|30"}}}} -->
 		<h2 class="wp-block-heading" style="margin-top:var(--wp--preset--spacing--30);margin-bottom:var(--wp--preset--spacing--30)">
 				<?php
-					echo esc_html__(
-						'Related products',
-						'woocommerce'
-					)
-					?>
+                    echo esc_html__(
+                        'Related products',
+                        'woocommerce'
+                    )
+?>
 			</h2>
 		<!-- /wp:heading -->
 

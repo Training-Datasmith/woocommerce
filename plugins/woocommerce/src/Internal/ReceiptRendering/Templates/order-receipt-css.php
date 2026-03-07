@@ -19,7 +19,7 @@ footer {
 	padding-top: <?php echo $data['constants']['margin']; ?>pt;
 }
 p { line-height: <?php echo $data['constants']['line_height']; ?>pt; margin: 0 0 <?php echo $data['constants']['margin'] / 2; ?> 0; }
-<?php if ( isset( $data['payment_info'] ) ) { ?>
+<?php if (isset($data['payment_info'])) { ?>
 .card-icon {
 	width: <?php echo $data['constants']['icon_width']; ?>pt;
 	height: <?php echo $data['constants']['icon_height']; ?>pt;

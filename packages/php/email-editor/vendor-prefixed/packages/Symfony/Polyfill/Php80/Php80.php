@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -48,9 +50,9 @@ final class Php80
                 return "resource ($type)";
         }
 
-        $class = \get_class($value);
+        $class = $value::class;
 
-        if (false === strpos($class, '@')) {
+        if (!str_contains($class, '@')) {
             return $class;
         }
 
@@ -68,34 +70,26 @@ final class Php80
 
     public static function preg_last_error_msg(): string
     {
-        switch (preg_last_error()) {
-            case \PREG_INTERNAL_ERROR:
-                return 'Internal error';
-            case \PREG_BAD_UTF8_ERROR:
-                return 'Malformed UTF-8 characters, possibly incorrectly encoded';
-            case \PREG_BAD_UTF8_OFFSET_ERROR:
-                return 'The offset did not correspond to the beginning of a valid UTF-8 code point';
-            case \PREG_BACKTRACK_LIMIT_ERROR:
-                return 'Backtrack limit exhausted';
-            case \PREG_RECURSION_LIMIT_ERROR:
-                return 'Recursion limit exhausted';
-            case \PREG_JIT_STACKLIMIT_ERROR:
-                return 'JIT stack limit exhausted';
-            case \PREG_NO_ERROR:
-                return 'No error';
-            default:
-                return 'Unknown error';
-        }
+        return match (preg_last_error()) {
+            \PREG_INTERNAL_ERROR => 'Internal error',
+            \PREG_BAD_UTF8_ERROR => 'Malformed UTF-8 characters, possibly incorrectly encoded',
+            \PREG_BAD_UTF8_OFFSET_ERROR => 'The offset did not correspond to the beginning of a valid UTF-8 code point',
+            \PREG_BACKTRACK_LIMIT_ERROR => 'Backtrack limit exhausted',
+            \PREG_RECURSION_LIMIT_ERROR => 'Recursion limit exhausted',
+            \PREG_JIT_STACKLIMIT_ERROR => 'JIT stack limit exhausted',
+            \PREG_NO_ERROR => 'No error',
+            default => 'Unknown error',
+        };
     }
 
     public static function str_contains(string $haystack, string $needle): bool
     {
-        return '' === $needle || false !== strpos($haystack, $needle);
+        return '' === $needle || str_contains($haystack, $needle);
     }
 
     public static function str_starts_with(string $haystack, string $needle): bool
     {
-        return 0 === strncmp($haystack, $needle, \strlen($needle));
+        return str_starts_with($haystack, $needle);
     }
 
     public static function str_ends_with(string $haystack, string $needle): bool

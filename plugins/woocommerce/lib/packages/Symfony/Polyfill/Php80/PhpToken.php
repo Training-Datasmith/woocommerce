@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -52,7 +54,7 @@ class PhpToken implements \Stringable
     public function getTokenName(): ?string
     {
         if ('UNKNOWN' === $name = token_name($this->id)) {
-            $name = \strlen($this->text) > 1 || \ord($this->text) < 32 ? null : $this->text;
+            return \strlen($this->text) > 1 || \ord($this->text) < 32 ? null : $this->text;
         }
 
         return $name;

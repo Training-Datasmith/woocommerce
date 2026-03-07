@@ -7,10 +7,10 @@
 
 declare(strict_types=1);
 
-$header  = __( 'Find your shade', 'woocommerce' );
-$content = __( 'Explore our exclusive collection of sunglasses, crafted to elevate your look and safeguard your eyes. Find your perfect pair and see the world through a new lens.', 'woocommerce' );
-$button  = __( 'Shop now', 'woocommerce' );
-$image_0 = plugins_url( 'assets/images/pattern-placeholders/girls-in-the-hills.jpg', WC_PLUGIN_FILE );
+$header  = __('Find your shade', 'woocommerce');
+$content = __('Explore our exclusive collection of sunglasses, crafted to elevate your look and safeguard your eyes. Find your perfect pair and see the world through a new lens.', 'woocommerce');
+$button  = __('Shop now', 'woocommerce');
+$image_0 = plugins_url('assets/images/pattern-placeholders/girls-in-the-hills.jpg', WC_PLUGIN_FILE);
 
 ?>
 
@@ -21,15 +21,15 @@ $image_0 = plugins_url( 'assets/images/pattern-placeholders/girls-in-the-hills.j
 
 <!-- wp:group {"metadata":{"name":"Content"},"layout":{"type":"constrained","contentSize":"580px"}} -->
 <div class="wp-block-group"><!-- wp:heading {"textAlign":"center","align":"wide","fontSize":"xx-large"} -->
-<h2 class="wp-block-heading alignwide has-text-align-center has-xx-large-font-size"><?php echo esc_html( $header ); ?></h2>
+<h2 class="wp-block-heading alignwide has-text-align-center has-xx-large-font-size"><?php echo esc_html($header); ?></h2>
 <!-- /wp:heading -->
 
 <!-- wp:paragraph {"align":"center"} -->
-<p class="has-text-align-center"><?php echo esc_html( $content ); ?></p>
+<p class="has-text-align-center"><?php echo esc_html($content); ?></p>
 <!-- /wp:paragraph -->
 
 <!-- wp:buttons {"layout":{"type":"flex","justifyContent":"center"}} -->
-<div class="wp-block-buttons"><!-- wp:button {"textAlign":"center"} --><div class="wp-block-button"><a class="wp-block-button__link has-text-align-center wp-element-button"><?php echo esc_html( $button ); ?></a></div><!-- /wp:button --></div>
+<div class="wp-block-buttons"><!-- wp:button {"textAlign":"center"} --><div class="wp-block-button"><a class="wp-block-button__link has-text-align-center wp-element-button"><?php echo esc_html($button); ?></a></div><!-- /wp:button --></div>
 <!-- /wp:buttons --></div>
 <!-- /wp:group -->
 
@@ -38,7 +38,7 @@ $image_0 = plugins_url( 'assets/images/pattern-placeholders/girls-in-the-hills.j
 <!-- /wp:spacer -->
 
 <!-- wp:image {"id":13691,"sizeSlug":"full","linkDestination":"none","align":"wide"} -->
-<figure class="wp-block-image alignwide size-full"><img src="<?php echo esc_url( $image_0 ); ?>" alt="" class="wp-image-13691" /></figure>
+<figure class="wp-block-image alignwide size-full"><img src="<?php echo esc_url($image_0); ?>" alt="" class="wp-image-13691" /></figure>
 <!-- /wp:image -->
 
 <!-- wp:spacer {"height":"calc( 0.25 * var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal)))"} -->

@@ -1,30 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Comment;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\OutputFormat;
-use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Renderable;
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Position\Position;
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Position\Positionable;
+use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Renderable;
 
 class Comment implements Positionable, Renderable
 {
     use Position;
 
     /**
-     * @var string
-     *
-     * @internal since 8.8.0
-     */
-    protected $sComment;
-
-    /**
      * @param string $sComment
      * @param int $iLineNo
      */
-    public function __construct($sComment = '', $iLineNo = 0)
-    {
-        $this->sComment = $sComment;
+    public function __construct(/**
+     * @internal since 8.8.0
+     */
+        protected $sComment = '',
+        $iLineNo = 0
+    ) {
         $this->setPosition($iLineNo);
     }
 
@@ -38,30 +36,24 @@ class Comment implements Positionable, Renderable
 
     /**
      * @param string $sComment
-     *
-     * @return void
      */
-    public function setComment($sComment)
+    public function setComment($sComment): void
     {
         $this->sComment = $sComment;
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
 
     /**
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat)
+    public function render($oOutputFormat): string
     {
         return '/*' . $this->sComment . '*/';
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Value;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\OutputFormat;
@@ -23,17 +25,15 @@ class Color extends CSSFunction
     }
 
     /**
-     * @param ParserState $oParserState
      * @param bool $bIgnoreCase
      *
-     * @return Color|CSSFunction
      *
      * @throws UnexpectedEOFException
      * @throws UnexpectedTokenException
      *
      * @internal since V8.8.0
      */
-    public static function parse(ParserState $oParserState, $bIgnoreCase = false)
+    public static function parse(ParserState $oParserState, $bIgnoreCase = false): \Automattic\WooCommerce\Vendor\Sabberworm\CSS\Value\CSSFunction|\Automattic\WooCommerce\Vendor\Sabberworm\CSS\Value\Color
     {
         $aColor = [];
         if ($oParserState->comes('#')) {
@@ -108,15 +108,10 @@ class Color extends CSSFunction
     }
 
     /**
-     * @param float $fVal
-     * @param float $fFromMin
-     * @param float $fFromMax
-     * @param float $fToMin
-     * @param float $fToMax
      *
      * @return float
      */
-    private static function mapRange($fVal, $fFromMin, $fFromMax, $fToMin, $fToMax)
+    private static function mapRange(int $fVal, int $fFromMin, int $fFromMax, int $fToMin, int $fToMax): float|int
     {
         $fFromRange = $fFromMax - $fFromMin;
         $fToRange = $fToMax - $fToMin;
@@ -136,10 +131,8 @@ class Color extends CSSFunction
 
     /**
      * @param array<int, RuleValueList|CSSFunction|CSSString|LineName|Size|URL|string> $aColor
-     *
-     * @return void
      */
-    public function setColor(array $aColor)
+    public function setColor(array $aColor): void
     {
         $this->setName(implode('', array_keys($aColor)));
         $this->aComponents = $aColor;
@@ -154,11 +147,9 @@ class Color extends CSSFunction
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }

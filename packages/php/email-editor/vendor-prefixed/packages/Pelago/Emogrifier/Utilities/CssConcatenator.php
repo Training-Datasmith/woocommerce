@@ -57,7 +57,7 @@ final class CssConcatenator
      *   }>
      * }>
      */
-    private $mediaRules = [];
+    private array $mediaRules = [];
 
     /**
      * Appends a declaration block to the CSS.
@@ -94,12 +94,9 @@ final class CssConcatenator
         }
     }
 
-    /**
-     * @return string
-     */
     public function getCss(): string
     {
-        return \implode('', \array_map([self::class, 'getMediaRuleCss'], $this->mediaRules));
+        return \implode('', \array_map(self::getMediaRuleCss(...), $this->mediaRules));
     }
 
     /**
@@ -135,8 +132,6 @@ final class CssConcatenator
      * @param array<string, array-key> $selectorsAsKeys1
      *        array in which the selectors are the keys, and the values are of no significance
      * @param array<string, array-key> $selectorsAsKeys2 another such array
-     *
-     * @return bool
      */
     private static function hasEquivalentSelectors(array $selectorsAsKeys1, array $selectorsAsKeys2): bool
     {
@@ -158,10 +153,10 @@ final class CssConcatenator
     private static function getMediaRuleCss(object $mediaRule): string
     {
         $ruleBlocks = $mediaRule->ruleBlocks;
-        $css = \implode('', \array_map([self::class, 'getRuleBlockCss'], $ruleBlocks));
+        $css = \implode('', \array_map(self::getRuleBlockCss(...), $ruleBlocks));
         $media = $mediaRule->media;
         if ($media !== '') {
-            $css = $media . '{' . $css . '}';
+            return $media . '{' . $css . '}';
         }
         return $css;
     }

@@ -8,36 +8,38 @@
 /**
  * Register the JS.
  */
-function wc_admin_important_notice_register_script() {
-	if ( ! class_exists( 'Automattic\WooCommerce\Internal\Admin\Loader' ) ) {
-		return;
-	}
+function wc_admin_important_notice_register_script(): void
+{
+    if (! class_exists(\Automattic\WooCommerce\Internal\Admin\Loader::class)) {
+        return;
+    }
 
-	if (
-		! \Automattic\WooCommerce\Admin\PageController::is_admin_page() &&
-		! \Automattic\WooCommerce\Admin\PageController::is_embed_page()
-	) {
-		return;
-	}
+    if (
+        ! \Automattic\WooCommerce\Admin\PageController::is_admin_page() &&
+        ! \Automattic\WooCommerce\Admin\PageController::is_embed_page()
+    ) {
+        return;
+    }
 
-	$asset_file = require __DIR__ . '/dist/index.asset.php';
-	wp_register_script(
-		'wc-admin-important-notice',
-		plugins_url( '/dist/index.js', __FILE__ ),
-		$asset_file['dependencies'],
-		$asset_file['version'],
-		true
-	);
+    $asset_file = require __DIR__ . '/dist/index.asset.php';
+    wp_register_script(
+        'wc-admin-important-notice',
+        plugins_url('/dist/index.js', __FILE__),
+        $asset_file['dependencies'],
+        $asset_file['version'],
+        true
+    );
 
-	wp_enqueue_script( 'wc-admin-important-notice' );
+    wp_enqueue_script('wc-admin-important-notice');
 }
-add_action( 'admin_enqueue_scripts', 'wc_admin_important_notice_register_script' );
+add_action('admin_enqueue_scripts', 'wc_admin_important_notice_register_script');
 
 /**
  * Create an Admin Notice we want to remain visible.
  */
-function wc_admin_add_important_notice() {
-	?>
+function wc_admin_add_important_notice(): void
+{
+    ?>
 	<div class="updated woocommerce-message">
 		<p class="notice-text">Important notice targeted by inspecting DOM.</p>
 	</div>
@@ -52,4 +54,4 @@ function wc_admin_add_important_notice() {
 	</div>
 	<?php
 }
-add_action( 'admin_notices', 'wc_admin_add_important_notice' );
+add_action('admin_notices', 'wc_admin_add_important_notice');

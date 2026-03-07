@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Dump and die.
  *
@@ -7,7 +9,8 @@
  *
  * @return void
  */
-function dd( $x ) {
-	print_r( $x );
-	exit;
+function dd($x)
+{
+    print_r($x);
+    exit;
 }

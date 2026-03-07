@@ -5,7 +5,7 @@
  * Categories: WooCommerce, featured-selling
  */
 
-$products_title = __( 'Our latest and greatest', 'woocommerce' );
+$products_title = __('Our latest and greatest', 'woocommerce');
 ?>
 
 <!-- wp:group {"metadata":{"name":"Product Collection 5 Columns"},"align":"full","style":{"spacing":{"padding":{"top":"calc( 0.5 * var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal)))","bottom":"calc( 0.5 * var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal)))","left":"var(--wp--style--root--padding-left, var(--wp--custom--gap--horizontal))","right":"var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal))"},"margin":{"top":"0","bottom":"0"}}},"layout":{"type":"constrained","justifyContent":"center"}} -->
@@ -15,7 +15,7 @@ $products_title = __( 'Our latest and greatest', 'woocommerce' );
 	<!-- /wp:spacer -->
 
 	<!-- wp:heading {"level":3,"align":"wide"} -->
-	<h3 class="wp-block-heading alignwide"><?php echo esc_html( $products_title ); ?></h3>
+	<h3 class="wp-block-heading alignwide"><?php echo esc_html($products_title); ?></h3>
 	<!-- /wp:heading -->
 
 	<!-- wp:spacer {"height":"var:preset|spacing|20"} -->

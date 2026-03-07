@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\RuleSet;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\OutputFormat;
@@ -14,25 +16,13 @@ use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Property\AtRule;
 class AtRuleSet extends RuleSet implements AtRule
 {
     /**
-     * @var string
-     */
-    private $sType;
-
-    /**
-     * @var string
-     */
-    private $sArgs;
-
-    /**
      * @param string $sType
      * @param string $sArgs
      * @param int $iLineNo
      */
-    public function __construct($sType, $sArgs = '', $iLineNo = 0)
+    public function __construct(private $sType, private $sArgs = '', $iLineNo = 0)
     {
         parent::__construct($iLineNo);
-        $this->sType = $sType;
-        $this->sArgs = $sArgs;
     }
 
     /**
@@ -52,21 +42,17 @@ class AtRuleSet extends RuleSet implements AtRule
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
 
     /**
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat)
+    public function render($oOutputFormat): string
     {
         $sResult = $oOutputFormat->comments($this);
         $sArgs = $this->sArgs;
@@ -75,7 +61,6 @@ class AtRuleSet extends RuleSet implements AtRule
         }
         $sResult .= "@{$this->sType}$sArgs{$oOutputFormat->spaceBeforeOpeningBrace()}{";
         $sResult .= $this->renderRules($oOutputFormat);
-        $sResult .= '}';
-        return $sResult;
+        return $sResult . '}';
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Comment\Comment;
@@ -15,27 +17,14 @@ class ParserState
      *
      * @internal since 8.5.2
      */
-    const EOF = null;
-
-    /**
-     * @var Settings
-     */
-    private $oParserSettings;
-
-    /**
-     * @var string
-     */
-    private $sText;
+    public const EOF = null;
 
     /**
      * @var array<int, string>
      */
     private $aText;
 
-    /**
-     * @var int
-     */
-    private $iCurrentPosition;
+    private int $iCurrentPosition;
 
     /**
      * will only be used if the CSS does not contain an `@charset` declaration
@@ -44,26 +33,15 @@ class ParserState
      */
     private $sCharset;
 
-    /**
-     * @var int
-     */
-    private $iLength;
-
-    /**
-     * @var int
-     */
-    private $iLineNo;
+    private ?int $iLength = null;
 
     /**
      * @param string $sText the complete CSS as text (i.e., usually the contents of a CSS file)
      * @param int $iLineNo
      */
-    public function __construct($sText, Settings $oParserSettings, $iLineNo = 1)
+    public function __construct(private $sText, private readonly Settings $oParserSettings, private $iLineNo = 1)
     {
-        $this->oParserSettings = $oParserSettings;
-        $this->sText = $sText;
         $this->iCurrentPosition = 0;
-        $this->iLineNo = $iLineNo;
         $this->setCharset($this->oParserSettings->sDefaultCharset);
     }
 
@@ -71,10 +49,8 @@ class ParserState
      * Sets the charset to be used if the CSS does not contain an `@charset` declaration.
      *
      * @param string $sCharset
-     *
-     * @return void
      */
-    public function setCharset($sCharset)
+    public function setCharset($sCharset): void
     {
         $this->sCharset = $sCharset;
         $this->aText = $this->strsplit($this->sText);
@@ -117,20 +93,15 @@ class ParserState
         return $this->oParserSettings;
     }
 
-    /**
-     * @return \Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing\Anchor
-     */
-    public function anchor()
+    public function anchor(): \Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing\Anchor
     {
         return new Anchor($this->iCurrentPosition, $this);
     }
 
     /**
      * @param int $iPosition
-     *
-     * @return void
      */
-    public function setPosition($iPosition)
+    public function setPosition($iPosition): void
     {
         $this->iCurrentPosition = $iPosition;
     }
@@ -162,7 +133,7 @@ class ParserState
             }
         }
         if ($bIgnoreCase) {
-            $sResult = $this->strtolower($sResult);
+            return $this->strtolower($sResult);
         }
         return $sResult;
     }
@@ -206,7 +177,7 @@ class ParserState
                 }
             }
             $iUnicode = intval($sUnicode, 16);
-            $sUtf32 = "";
+            $sUtf32 = '';
             for ($i = 0; $i < 4; ++$i) {
                 $sUtf32 .= chr($iUnicode & 0xff);
                 $iUnicode = $iUnicode >> 8;
@@ -238,7 +209,7 @@ class ParserState
      * @throws UnexpectedEOFException
      * @throws UnexpectedTokenException
      */
-    public function consumeWhiteSpace()
+    public function consumeWhiteSpace(): array
     {
         $aComments = [];
         do {
@@ -248,7 +219,7 @@ class ParserState
             if ($this->oParserSettings->bLenientParsing) {
                 try {
                     $oComment = $this->consumeComment();
-                } catch (UnexpectedEOFException $e) {
+                } catch (UnexpectedEOFException) {
                     $this->iCurrentPosition = $this->iLength;
                     return $aComments;
                 }
@@ -310,16 +281,15 @@ class ParserState
             $this->iLineNo += $iLineCount;
             $this->iCurrentPosition += $this->strlen($mValue);
             return $mValue;
-        } else {
-            if ($this->iCurrentPosition + $mValue > $this->iLength) {
-                throw new UnexpectedEOFException($mValue, $this->peek(5), 'count', $this->iLineNo);
-            }
-            $sResult = $this->substr($this->iCurrentPosition, $mValue);
-            $iLineCount = substr_count($sResult, "\n");
-            $this->iLineNo += $iLineCount;
-            $this->iCurrentPosition += $mValue;
-            return $sResult;
         }
+        if ($this->iCurrentPosition + $mValue > $this->iLength) {
+            throw new UnexpectedEOFException($mValue, $this->peek(5), 'count', $this->iLineNo);
+        }
+        $sResult = $this->substr($this->iCurrentPosition, $mValue);
+        $iLineCount = substr_count($sResult, "\n");
+        $this->iLineNo += $iLineCount;
+        $this->iCurrentPosition += $mValue;
+        return $sResult;
     }
 
     /**
@@ -344,7 +314,7 @@ class ParserState
     /**
      * @return Comment|false
      */
-    public function consumeComment()
+    public function consumeComment(): \Automattic\WooCommerce\Vendor\Sabberworm\CSS\Comment\Comment|false
     {
         $mComment = false;
         if ($this->comes('/*')) {
@@ -368,10 +338,7 @@ class ParserState
         return $mComment;
     }
 
-    /**
-     * @return bool
-     */
-    public function isEnd()
+    public function isEnd(): bool
     {
         return $this->iCurrentPosition >= $this->iLength;
     }
@@ -382,12 +349,11 @@ class ParserState
      * @param string $consumeEnd
      * @param array<int, Comment> $comments
      *
-     * @return string
      *
      * @throws UnexpectedEOFException
      * @throws UnexpectedTokenException
      */
-    public function consumeUntil($aEnd, $bIncludeEnd = false, $consumeEnd = false, array &$comments = [])
+    public function consumeUntil($aEnd, $bIncludeEnd = false, $consumeEnd = false, array &$comments = []): string
     {
         $aEnd = is_array($aEnd) ? $aEnd : [$aEnd];
         $out = '';
@@ -434,49 +400,39 @@ class ParserState
      * @param string $sString1
      * @param string $sString2
      * @param bool $bCaseInsensitive
-     *
-     * @return bool
      */
-    public function streql($sString1, $sString2, $bCaseInsensitive = true)
+    public function streql($sString1, $sString2, $bCaseInsensitive = true): bool
     {
         if ($bCaseInsensitive) {
             return $this->strtolower($sString1) === $this->strtolower($sString2);
-        } else {
-            return $sString1 === $sString2;
         }
+        return $sString1 === $sString2;
     }
 
     /**
      * @param int $iAmount
-     *
-     * @return void
      */
-    public function backtrack($iAmount)
+    public function backtrack($iAmount): void
     {
         $this->iCurrentPosition -= $iAmount;
     }
 
     /**
      * @param string $sString
-     *
-     * @return int
      */
-    public function strlen($sString)
+    public function strlen($sString): int
     {
         if ($this->oParserSettings->bMultibyteSupport) {
             return mb_strlen($sString, $this->sCharset);
-        } else {
-            return strlen($sString);
         }
+        return strlen($sString);
     }
 
     /**
      * @param int $iStart
      * @param int $iLength
-     *
-     * @return string
      */
-    private function substr($iStart, $iLength)
+    private function substr($iStart, $iLength): string
     {
         if ($iLength < 0) {
             $iLength = $this->iLength - $iStart + $iLength;
@@ -495,16 +451,13 @@ class ParserState
 
     /**
      * @param string $sString
-     *
-     * @return string
      */
-    private function strtolower($sString)
+    private function strtolower($sString): string
     {
         if ($this->oParserSettings->bMultibyteSupport) {
             return mb_strtolower($sString, $this->sCharset);
-        } else {
-            return strtolower($sString);
         }
+        return strtolower($sString);
     }
 
     /**
@@ -517,36 +470,17 @@ class ParserState
         if ($this->oParserSettings->bMultibyteSupport) {
             if ($this->streql($this->sCharset, 'utf-8')) {
                 return preg_split('//u', $sString, -1, PREG_SPLIT_NO_EMPTY);
-            } else {
-                $iLength = mb_strlen($sString, $this->sCharset);
-                $aResult = [];
-                for ($i = 0; $i < $iLength; ++$i) {
-                    $aResult[] = mb_substr($sString, $i, 1, $this->sCharset);
-                }
-                return $aResult;
             }
-        } else {
-            if ($sString === '') {
-                return [];
-            } else {
-                return str_split($sString);
+            $iLength = mb_strlen($sString, $this->sCharset);
+            $aResult = [];
+            for ($i = 0; $i < $iLength; ++$i) {
+                $aResult[] = mb_substr($sString, $i, 1, $this->sCharset);
             }
+            return $aResult;
         }
-    }
-
-    /**
-     * @param string $sString
-     * @param string $sNeedle
-     * @param int $iOffset
-     *
-     * @return int|false
-     */
-    private function strpos($sString, $sNeedle, $iOffset)
-    {
-        if ($this->oParserSettings->bMultibyteSupport) {
-            return mb_strpos($sString, $sNeedle, $iOffset, $this->sCharset);
-        } else {
-            return strpos($sString, $sNeedle, $iOffset);
+        if ($sString === '') {
+            return [];
         }
+        return str_split($sString);
     }
 }

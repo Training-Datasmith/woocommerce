@@ -1,86 +1,97 @@
 <?php
 
+declare(strict_types=1);
+
 // Utility functions used by Behat steps
 
-function assertEquals( $expected, $actual ) {
-	if ( $expected != $actual ) {
-		throw new Exception( "Actual value: " . var_export( $actual, true ) );
-	}
+function assertEquals($expected, $actual)
+{
+    if ($expected != $actual) {
+        throw new Exception('Actual value: ' . var_export($actual, true));
+    }
 }
 
-function assertNumeric( $actual ) {
-	if ( !is_numeric( $actual ) ) {
-		throw new Exception( "Actual value: " . var_export( $actual, true ) );
-	}
+function assertNumeric($actual)
+{
+    if (!is_numeric($actual)) {
+        throw new Exception('Actual value: ' . var_export($actual, true));
+    }
 }
 
-function assertNotNumeric( $actual ) {
-	if ( is_numeric( $actual ) ) {
-		throw new Exception( "Actual value: " . var_export( $actual, true ) );
-	}
+function assertNotNumeric($actual)
+{
+    if (is_numeric($actual)) {
+        throw new Exception('Actual value: ' . var_export($actual, true));
+    }
 }
 
-function checkString( $output, $expected, $action, $message = false ) {
-	switch ( $action ) {
+function checkString($output, $expected, $action, $message = false)
+{
+    switch ($action) {
 
-	case 'be':
-		$r = $expected === rtrim( $output, "\n" );
-		break;
+        case 'be':
+            $r = $expected === rtrim($output, "\n");
+            break;
 
-	case 'contain':
-		$r = false !== strpos( $output, $expected );
-		break;
+        case 'contain':
+            $r = false !== strpos($output, $expected);
+            break;
 
-	case 'not contain':
-		$r = false === strpos( $output, $expected );
-		break;
+        case 'not contain':
+            $r = false === strpos($output, $expected);
+            break;
 
-	default:
-		throw new Behat\Behat\Exception\PendingException();
-	}
+        default:
+            throw new Behat\Behat\Exception\PendingException();
+    }
 
-	if ( !$r ) {
-		if ( false === $message )
-			$message = $output;
-		throw new Exception( $message );
-	}
+    if (!$r) {
+        if (false === $message) {
+            $message = $output;
+        }
+        throw new Exception($message);
+    }
 }
 
-function compareTables( $expected_rows, $actual_rows, $output ) {
-	// the first row is the header and must be present
-	if ( $expected_rows[0] != $actual_rows[0] ) {
-		throw new \Exception( $output );
-	}
+function compareTables($expected_rows, $actual_rows, $output)
+{
+    // the first row is the header and must be present
+    if ($expected_rows[0] != $actual_rows[0]) {
+        throw new \Exception($output);
+    }
 
-	unset( $actual_rows[0] );
-	unset( $expected_rows[0] );
+    unset($actual_rows[0]);
+    unset($expected_rows[0]);
 
-	$missing_rows = array_diff( $expected_rows, $actual_rows );
-	if ( !empty( $missing_rows ) ) {
-		throw new \Exception( $output );
-	}
+    $missing_rows = array_diff($expected_rows, $actual_rows);
+    if (!empty($missing_rows)) {
+        throw new \Exception($output);
+    }
 }
 
-function compareContents( $expected, $actual ) {
-	if ( gettype( $expected ) != gettype( $actual ) ) {
-		return false;
-	}
+function compareContents($expected, $actual)
+{
+    if (gettype($expected) != gettype($actual)) {
+        return false;
+    }
 
-	if ( is_object( $expected ) ) {
-		foreach ( get_object_vars( $expected ) as $name => $value ) {
-			if ( ! compareContents( $value, $actual->$name ) )
-				return false;
-		}
-	} else if ( is_array( $expected ) ) {
-		foreach ( $expected as $key => $value ) {
-			if ( ! compareContents( $value, $actual[$key] ) )
-				return false;
-		}
-	} else {
-		return $expected === $actual;
-	}
+    if (is_object($expected)) {
+        foreach (get_object_vars($expected) as $name => $value) {
+            if (! compareContents($value, $actual->$name)) {
+                return false;
+            }
+        }
+    } elseif (is_array($expected)) {
+        foreach ($expected as $key => $value) {
+            if (! compareContents($value, $actual[$key])) {
+                return false;
+            }
+        }
+    } else {
+        return $expected === $actual;
+    }
 
-	return true;
+    return true;
 }
 
 /**
@@ -116,15 +127,16 @@ function compareContents( $expected, $actual ) {
  *   return: false
  *     the contents of 'array' does not include 3
  */
-function checkThatJsonStringContainsJsonString( $actualJson, $expectedJson ) {
-	$actualValue   = json_decode( $actualJson );
-	$expectedValue = json_decode( $expectedJson );
+function checkThatJsonStringContainsJsonString($actualJson, $expectedJson)
+{
+    $actualValue   = json_decode($actualJson);
+    $expectedValue = json_decode($expectedJson);
 
-	if ( !$actualValue ) {
-		return false;
-	}
+    if (!$actualValue) {
+        return false;
+    }
 
-	return compareContents( $expectedValue, $actualValue );
+    return compareContents($expectedValue, $actualValue);
 }
 
 /**
@@ -136,32 +148,36 @@ function checkThatJsonStringContainsJsonString( $actualJson, $expectedJson ) {
  * @param  array    A nested array of values
  * @return bool     Whether $actualCSV contains $expectedCSV
  */
-function checkThatCsvStringContainsValues( $actualCSV, $expectedCSV ) {
-	$actualCSV = array_map( 'str_getcsv', explode( PHP_EOL, $actualCSV ) );
+function checkThatCsvStringContainsValues($actualCSV, $expectedCSV)
+{
+    $actualCSV = array_map('str_getcsv', explode(PHP_EOL, $actualCSV));
 
-	if ( empty( $actualCSV ) )
-		return false;
+    if (empty($actualCSV)) {
+        return false;
+    }
 
-	// Each sample must have headers
-	$actualHeaders = array_values( array_shift( $actualCSV ) );
-	$expectedHeaders = array_values( array_shift( $expectedCSV ) );
+    // Each sample must have headers
+    $actualHeaders = array_values(array_shift($actualCSV));
+    $expectedHeaders = array_values(array_shift($expectedCSV));
 
-	// Each expectedCSV must exist somewhere in actualCSV in the proper column
-	$expectedResult = 0;
-	foreach ( $expectedCSV as $expected_row ) {
-		$expected_row = array_combine( $expectedHeaders, $expected_row );
-		foreach ( $actualCSV as $actual_row ) {
+    // Each expectedCSV must exist somewhere in actualCSV in the proper column
+    $expectedResult = 0;
+    foreach ($expectedCSV as $expected_row) {
+        $expected_row = array_combine($expectedHeaders, $expected_row);
+        foreach ($actualCSV as $actual_row) {
 
-			if ( count( $actualHeaders ) != count( $actual_row ) )
-				continue;
+            if (count($actualHeaders) != count($actual_row)) {
+                continue;
+            }
 
-			$actual_row = array_intersect_key( array_combine( $actualHeaders, $actual_row ), $expected_row );
-			if ( $actual_row == $expected_row )
-				$expectedResult++;
-		}
-	}
+            $actual_row = array_intersect_key(array_combine($actualHeaders, $actual_row), $expected_row);
+            if ($actual_row == $expected_row) {
+                $expectedResult++;
+            }
+        }
+    }
 
-	return $expectedResult >= count( $expectedCSV );
+    return $expectedResult >= count($expectedCSV);
 }
 
 /**
@@ -175,14 +191,14 @@ function checkThatCsvStringContainsValues( $actualCSV, $expectedCSV ) {
  * @param[in] $actualYaml   the YAML string to be tested
  * @param[in] $expectedYaml the expected YAML string
  */
-function checkThatYamlStringContainsYamlString( $actualYaml, $expectedYaml ) {
-	$actualValue   = spyc_load( $actualYaml );
-	$expectedValue = spyc_load( $expectedYaml );
+function checkThatYamlStringContainsYamlString($actualYaml, $expectedYaml)
+{
+    $actualValue   = spyc_load($actualYaml);
+    $expectedValue = spyc_load($expectedYaml);
 
-	if ( !$actualValue ) {
-		return false;
-	}
+    if (!$actualValue) {
+        return false;
+    }
 
-	return compareContents( $expectedValue, $actualValue );
+    return compareContents($expectedValue, $actualValue);
 }
-

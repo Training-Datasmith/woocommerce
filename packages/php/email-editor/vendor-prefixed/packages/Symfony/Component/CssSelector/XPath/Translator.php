@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -30,23 +32,23 @@ use Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector\Parse
  */
 class Translator implements TranslatorInterface
 {
-    private $mainParser;
+    private readonly \Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector\Parser\ParserInterface $mainParser;
 
     /**
      * @var ParserInterface[]
      */
-    private $shortcutParsers = [];
+    private array $shortcutParsers = [];
 
     /**
      * @var Extension\ExtensionInterface[]
      */
-    private $extensions = [];
+    private array $extensions = [];
 
-    private $nodeTranslators = [];
-    private $combinationTranslators = [];
-    private $functionTranslators = [];
-    private $pseudoClassTranslators = [];
-    private $attributeMatchingTranslators = [];
+    private array $nodeTranslators = [];
+    private array $combinationTranslators = [];
+    private array $functionTranslators = [];
+    private array $pseudoClassTranslators = [];
+    private array $attributeMatchingTranslators = [];
 
     public function __construct(?ParserInterface $parser = null)
     {

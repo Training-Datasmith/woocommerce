@@ -32,13 +32,10 @@ final class CssDocument
     /**
      * `@import` rules must precede all other types of rules, except `@charset` rules.  This property is used while
      * rendering at-rules to enforce that.
-     *
-     * @var bool
      */
-    private $isImportRuleAllowed = true;
+    private bool $isImportRuleAllowed = true;
 
     /**
-     * @param string $css
      * @param bool $debug
      *        If this is `true`, an exception will be thrown if invalid CSS is encountered.
      *        Otherwise the parser will try to do the best it can.
@@ -100,14 +97,12 @@ final class CssDocument
      * Renders at-rules from the parsed CSS that are valid and not conditional group rules (i.e. not rules such as
      * `@media` which contain style rules whose data is returned by {@see getStyleRulesData}).  Also does not render
      * `@charset` rules; these are discarded (only UTF-8 is supported).
-     *
-     * @return string
      */
     public function renderNonConditionalAtRules(): string
     {
         $this->isImportRuleAllowed = true;
         $cssContents = $this->sabberwormCssDocument->getContents();
-        $atRules = \array_filter($cssContents, [$this, 'isValidAtRuleToRender']);
+        $atRules = \array_filter($cssContents, $this->isValidAtRuleToRender(...));
 
         if ($atRules === []) {
             return '';
@@ -120,9 +115,7 @@ final class CssDocument
     }
 
     /**
-     * @param CssAtRuleBlockList $rule
      * @param array<array-key, string> $allowedMediaTypes
-     *
      * @return ?string
      *         If the nested at-rule is supported, it's opening declaration (e.g. "@media (max-width: 768px)") is
      *         returned; otherwise the return value is null.
@@ -136,9 +129,7 @@ final class CssDocument
             [$mediaType] = \explode('(', $mediaQueryList, 2);
             if (\trim($mediaType) !== '') {
                 $escapedAllowedMediaTypes = \array_map(
-                    static function (string $allowedMediaType): string {
-                        return \preg_quote($allowedMediaType, '/');
-                    },
+                    static fn (string $allowedMediaType): string => \preg_quote($allowedMediaType, '/'),
                     $allowedMediaTypes
                 );
                 $mediaTypesMatcher = \implode('|', $escapedAllowedMediaTypes);
@@ -166,9 +157,7 @@ final class CssDocument
      * - `@font-face` rules are checked for validity - they must contain both a `src` and `font-family` property;
      * - other at-rules are assumed to be valid and treated as a black box - `true` is returned.
      *
-     * @param CssRenderable $rule
      *
-     * @return bool
      */
     private function isValidAtRuleToRender(CssRenderable $rule): bool
     {
@@ -186,19 +175,12 @@ final class CssDocument
             return false;
         }
 
-        switch ($rule->atRuleName()) {
-            case 'media':
-                $result = false;
-                break;
-            case 'font-face':
-                $result = $rule instanceof CssRuleSet
-                    && $rule->getRules('font-family') !== []
-                    && $rule->getRules('src') !== [];
-                break;
-            default:
-                $result = true;
-        }
-
-        return $result;
+        return match ($rule->atRuleName()) {
+            'media' => false,
+            'font-face' => $rule instanceof CssRuleSet
+                && $rule->getRules('font-family') !== []
+                && $rule->getRules('src') !== [],
+            default => true,
+        };
     }
 }

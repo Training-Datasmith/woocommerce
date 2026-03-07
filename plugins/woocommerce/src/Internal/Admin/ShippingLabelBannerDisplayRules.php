@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * WooCommerce Shipping Label Banner Display Rules.
  */
@@ -8,133 +10,117 @@ namespace Automattic\WooCommerce\Internal\Admin;
 /**
  * Determines whether the Shipping Label Banner should be displayed
  */
-class ShippingLabelBannerDisplayRules {
+class ShippingLabelBannerDisplayRules
+{
+    /**
+     * Whether installed plugins are incompatible with the banner.
+     */
+    private readonly bool $no_incompatible_plugins_installed;
 
-	/**
-	 * Whether the site is connected to wordpress.com.
-	 *
-	 * @var bool
-	 */
-	private $dotcom_connected;
+    /**
+     * Supported countries by USPS, see: https://webpmt.usps.gov/pmt010.cfm
+     */
+    private array $supported_countries = [ 'US', 'AS', 'PR', 'VI', 'GU', 'MP', 'UM', 'FM', 'MH' ];
 
-	/**
-	 * Whether installed plugins are incompatible with the banner.
-	 *
-	 * @var bool
-	 */
-	private $no_incompatible_plugins_installed;
+    /**
+     * Array of supported currency codes.
+     */
+    private array $supported_currencies = [ 'USD' ];
 
-	/**
-	 * Holds the installed WooCommerce Shipping & Tax version.
-	 *
-	 * @var string
-	 */
-	private $wcs_version;
+    /**
+     * Constructor.
+     *
+     * @param bool        $dotcom_connected Is site connected to wordpress.com?.
+     * @param string|null $wcs_version Installed WooCommerce Shipping version to check, null if not installed.
+     * @param bool        $incompatible_plugins_installed Are there any incompatible plugins installed?.
+     */
+    public function __construct(/**
+     * Whether the site is connected to wordpress.com.
+     */
+        private $dotcom_connected, /**
+     * Holds the installed WooCommerce Shipping & Tax version.
+     */
+        private $wcs_version,
+        $incompatible_plugins_installed
+    ) {
+        $this->no_incompatible_plugins_installed = ! $incompatible_plugins_installed;
+    }
 
-	/**
-	 * Supported countries by USPS, see: https://webpmt.usps.gov/pmt010.cfm
-	 *
-	 * @var array
-	 */
-	private $supported_countries = array( 'US', 'AS', 'PR', 'VI', 'GU', 'MP', 'UM', 'FM', 'MH' );
+    /**
+     * Determines whether banner is eligible for display (does not include a/b logic).
+     */
+    public function should_display_banner(): bool
+    {
+        return $this->banner_not_dismissed() &&
+            $this->dotcom_connected &&
+            $this->no_incompatible_plugins_installed &&
+            $this->order_has_shippable_products() &&
+            $this->store_in_us_and_usd() &&
+            $this->wcs_not_installed();
+    }
 
-	/**
-	 * Array of supported currency codes.
-	 *
-	 * @var array
-	 */
-	private $supported_currencies = array( 'USD' );
+    /**
+     * Checks if the banner was not dismissed by the user.
+     *
+     * @return bool
+     */
+    private function banner_not_dismissed()
+    {
+        $dismissed_timestamp_ms = get_option('woocommerce_shipping_dismissed_timestamp');
 
+        if (! is_numeric($dismissed_timestamp_ms)) {
+            return true;
+        }
+        $dismissed_timestamp_ms = intval($dismissed_timestamp_ms);
+        $dismissed_timestamp    = intval(round($dismissed_timestamp_ms / 1000));
+        $expired_timestamp      = $dismissed_timestamp + 24 * 60 * 60; // 24 hours from click time
 
-	/**
-	 * Constructor.
-	 *
-	 * @param bool        $dotcom_connected Is site connected to wordpress.com?.
-	 * @param string|null $wcs_version Installed WooCommerce Shipping version to check, null if not installed.
-	 * @param bool        $incompatible_plugins_installed Are there any incompatible plugins installed?.
-	 */
-	public function __construct( $dotcom_connected, $wcs_version, $incompatible_plugins_installed ) {
-		$this->dotcom_connected                  = $dotcom_connected;
-		$this->wcs_version                       = $wcs_version;
-		$this->no_incompatible_plugins_installed = ! $incompatible_plugins_installed;
-	}
+        $dismissed_for_good = -1 === $dismissed_timestamp_ms;
+        $dismissed_24h      = time() < $expired_timestamp;
 
-	/**
-	 * Determines whether banner is eligible for display (does not include a/b logic).
-	 */
-	public function should_display_banner() {
-		return $this->banner_not_dismissed() &&
-			$this->dotcom_connected &&
-			$this->no_incompatible_plugins_installed &&
-			$this->order_has_shippable_products() &&
-			$this->store_in_us_and_usd() &&
-			$this->wcs_not_installed();
-	}
+        return ! $dismissed_for_good && ! $dismissed_24h;
+    }
 
-	/**
-	 * Checks if the banner was not dismissed by the user.
-	 *
-	 * @return bool
-	 */
-	private function banner_not_dismissed() {
-		$dismissed_timestamp_ms = get_option( 'woocommerce_shipping_dismissed_timestamp' );
+    /**
+     * Checks if there's a shippable product in the current order.
+     */
+    private function order_has_shippable_products(): bool
+    {
+        $order = wc_get_order();
 
-		if ( ! is_numeric( $dismissed_timestamp_ms ) ) {
-			return true;
-		}
-		$dismissed_timestamp_ms = intval( $dismissed_timestamp_ms );
-		$dismissed_timestamp    = intval( round( $dismissed_timestamp_ms / 1000 ) );
-		$expired_timestamp      = $dismissed_timestamp + 24 * 60 * 60; // 24 hours from click time
+        if (! $order) {
+            return false;
+        }
+        // At this point (no packaging data), only show if there's at least one existing and shippable product.
+        foreach ($order->get_items() as $item) {
+            if ($item instanceof \WC_Order_Item_Product) {
+                $product = $item->get_product();
 
-		$dismissed_for_good = -1 === $dismissed_timestamp_ms;
-		$dismissed_24h      = time() < $expired_timestamp;
+                if ($product && $product->needs_shipping()) {
+                    return true;
+                }
+            }
+        }
 
-		return ! $dismissed_for_good && ! $dismissed_24h;
-	}
+        return false;
+    }
 
-	/**
-	 * Checks if there's a shippable product in the current order.
-	 *
-	 * @return bool
-	 */
-	private function order_has_shippable_products() {
-		$order = wc_get_order();
+    /**
+     * Checks if the store is in the US and has its default currency set to USD.
+     */
+    private function store_in_us_and_usd(): bool
+    {
+        $base_currency = get_woocommerce_currency();
+        $base_location = wc_get_base_location();
 
-		if ( ! $order ) {
-			return false;
-		}
-		// At this point (no packaging data), only show if there's at least one existing and shippable product.
-		foreach ( $order->get_items() as $item ) {
-			if ( $item instanceof \WC_Order_Item_Product ) {
-				$product = $item->get_product();
+        return in_array($base_currency, $this->supported_currencies, true) && in_array($base_location['country'], $this->supported_countries, true);
+    }
 
-				if ( $product && $product->needs_shipping() ) {
-					return true;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Checks if the store is in the US and has its default currency set to USD.
-	 *
-	 * @return bool
-	 */
-	private function store_in_us_and_usd() {
-		$base_currency = get_woocommerce_currency();
-		$base_location = wc_get_base_location();
-
-		return in_array( $base_currency, $this->supported_currencies, true ) && in_array( $base_location['country'], $this->supported_countries, true );
-	}
-
-	/**
-	 * Checks if WooCommerce Shipping & Tax is not installed.
-	 *
-	 * @return bool
-	 */
-	private function wcs_not_installed() {
-		return ! $this->wcs_version;
-	}
+    /**
+     * Checks if WooCommerce Shipping & Tax is not installed.
+     */
+    private function wcs_not_installed(): bool
+    {
+        return ! $this->wcs_version;
+    }
 }

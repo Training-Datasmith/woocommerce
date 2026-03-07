@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Value;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\OutputFormat;
@@ -19,7 +21,7 @@ class Size extends PrimitiveValue
      *
      * @internal
      */
-    const ABSOLUTE_SIZE_UNITS = [
+    public const ABSOLUTE_SIZE_UNITS = [
         'px',
         'pt',
         'pc',
@@ -42,34 +44,21 @@ class Size extends PrimitiveValue
      *
      * @internal
      */
-    const RELATIVE_SIZE_UNITS = ['%', 'em', 'ex', 'ch', 'fr'];
+    public const RELATIVE_SIZE_UNITS = ['%', 'em', 'ex', 'ch', 'fr'];
 
     /**
      * @var array<int, string>
      *
      * @internal
      */
-    const NON_SIZE_UNITS = ['deg', 'grad', 'rad', 's', 'ms', 'turn', 'Hz', 'kHz'];
+    public const NON_SIZE_UNITS = ['deg', 'grad', 'rad', 's', 'ms', 'turn', 'Hz', 'kHz'];
 
     /**
      * @var array<int, array<string, string>>|null
      */
-    private static $SIZE_UNITS = null;
+    private static ?array $SIZE_UNITS = null;
 
-    /**
-     * @var float
-     */
-    private $fSize;
-
-    /**
-     * @var string|null
-     */
-    private $sUnit;
-
-    /**
-     * @var bool
-     */
-    private $bIsColorComponent;
+    private float $fSize;
 
     /**
      * @param float|int|string $fSize
@@ -77,25 +66,21 @@ class Size extends PrimitiveValue
      * @param bool $bIsColorComponent
      * @param int $iLineNo
      */
-    public function __construct($fSize, $sUnit = null, $bIsColorComponent = false, $iLineNo = 0)
+    public function __construct($fSize, private $sUnit = null, private $bIsColorComponent = false, $iLineNo = 0)
     {
         parent::__construct($iLineNo);
         $this->fSize = (float)$fSize;
-        $this->sUnit = $sUnit;
-        $this->bIsColorComponent = $bIsColorComponent;
     }
 
     /**
      * @param bool $bIsColorComponent
      *
-     * @return Size
      *
      * @throws UnexpectedEOFException
      * @throws UnexpectedTokenException
-     *
      * @internal since V8.8.0
      */
-    public static function parse(ParserState $oParserState, $bIsColorComponent = false)
+    public static function parse(ParserState $oParserState, $bIsColorComponent = false): \Automattic\WooCommerce\Vendor\Sabberworm\CSS\Value\Size
     {
         $sSize = '';
         if ($oParserState->comes('-')) {
@@ -153,10 +138,8 @@ class Size extends PrimitiveValue
 
     /**
      * @param string $sUnit
-     *
-     * @return void
      */
-    public function setUnit($sUnit)
+    public function setUnit($sUnit): void
     {
         $this->sUnit = $sUnit;
     }
@@ -172,7 +155,7 @@ class Size extends PrimitiveValue
     /**
      * @param float|int|string $fSize
      */
-    public function setSize($fSize)
+    public function setSize($fSize): void
     {
         $this->fSize = (float)$fSize;
     }
@@ -206,10 +189,7 @@ class Size extends PrimitiveValue
         return !$this->isColorComponent();
     }
 
-    /**
-     * @return bool
-     */
-    public function isRelative()
+    public function isRelative(): bool
     {
         if (in_array($this->sUnit, self::RELATIVE_SIZE_UNITS, true)) {
             return true;
@@ -221,11 +201,9 @@ class Size extends PrimitiveValue
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
@@ -238,10 +216,10 @@ class Size extends PrimitiveValue
     public function render($oOutputFormat)
     {
         $l = localeconv();
-        $sPoint = preg_quote($l['decimal_point'], '/');
+        $sPoint = preg_quote((string) $l['decimal_point'], '/');
         $sSize = preg_match("/[\d\.]+e[+-]?\d+/i", (string)$this->fSize)
-            ? preg_replace("/$sPoint?0+$/", "", sprintf("%f", $this->fSize)) : (string)$this->fSize;
-        return preg_replace(["/$sPoint/", "/^(-?)0\./"], ['.', '$1.'], $sSize)
-            . ($this->sUnit === null ? '' : $this->sUnit);
+            ? preg_replace("/$sPoint?0+$/", '', sprintf('%f', $this->fSize)) : (string)$this->fSize;
+        return preg_replace(["/$sPoint/", "/^(-?)0\./"], ['.', '$1.'], (string) $sSize)
+            . ($this->sUnit ?? '');
     }
 }

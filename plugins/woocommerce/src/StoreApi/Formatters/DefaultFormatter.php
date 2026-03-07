@@ -1,18 +1,23 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\StoreApi\Formatters;
 
 /**
  * Default Formatter.
  */
-class DefaultFormatter implements FormatterInterface {
-	/**
-	 * Format a given value and return the result.
-	 *
-	 * @param mixed $value Value to format.
-	 * @param array $options Options that influence the formatting.
-	 * @return mixed
-	 */
-	public function format( $value, array $options = [] ) {
-		return $value;
-	}
+class DefaultFormatter implements FormatterInterface
+{
+    /**
+     * Format a given value and return the result.
+     *
+     * @param mixed $value Value to format.
+     * @param array $options Options that influence the formatting.
+     * @return mixed
+     */
+    public function format($value, array $options = [])
+    {
+        return $value;
+    }
 }

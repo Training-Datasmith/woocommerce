@@ -5,7 +5,7 @@
  * Categories: WooCommerce, featured-selling
  */
 
-$collection_title = __( 'Shop new arrivals', 'woocommerce' );
+$collection_title = __('Shop new arrivals', 'woocommerce');
 ?>
 
 <!-- wp:group {"metadata":{"name":"Product Collection: Featured Products 5 Columns"},"align":"full","style":{"spacing":{"padding":{"top":"calc( 0.5 * var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal)))","bottom":"calc( 0.5 * var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal)))","left":"var(--wp--style--root--padding-left, var(--wp--custom--gap--horizontal))","right":"var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal))"},"margin":{"top":"0","bottom":"0"}}},"layout":{"type":"constrained","justifyContent":"center"}} -->
@@ -16,7 +16,7 @@ $collection_title = __( 'Shop new arrivals', 'woocommerce' );
 
 	<!-- wp:heading {"textAlign":"center","level":3} -->
 	<h3 class="wp-block-heading has-text-align-center">
-		<?php echo esc_html( $collection_title ); ?>
+		<?php echo esc_html($collection_title); ?>
 	</h3>
 	<!-- /wp:heading -->
 
@@ -44,8 +44,8 @@ $collection_title = __( 'Shop new arrivals', 'woocommerce' );
 		<div class="wp-block-buttons alignwide">
 			<!-- wp:button {"textAlign":"center"} -->
 			<div class="wp-block-button">
-				<a class="wp-block-button__link has-text-align-center wp-element-button" href="<?php echo esc_url( wc_get_page_permalink( 'shop' ) ); ?>">
-					<?php esc_html_e( 'Shop All', 'woocommerce' ); ?>
+				<a class="wp-block-button__link has-text-align-center wp-element-button" href="<?php echo esc_url(wc_get_page_permalink('shop')); ?>">
+					<?php esc_html_e('Shop All', 'woocommerce'); ?>
 				</a>
 			</div>
 			<!-- /wp:button -->

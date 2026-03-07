@@ -1,5 +1,7 @@
 <?php
-declare( strict_types=1 );
+
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Blocks\Templates;
 
 /**
@@ -9,38 +11,36 @@ namespace Automattic\WooCommerce\Blocks\Templates;
  *
  * @internal
  */
-abstract class AbstractTemplate {
+abstract class AbstractTemplate
+{
+    /**
+     * The slug of the template.
+     *
+     * @var string
+     */
+    public const SLUG = '';
 
-	/**
-	 * The slug of the template.
-	 *
-	 * @var string
-	 */
-	const SLUG = '';
+    /**
+     * Whether this is a taxonomy template.
+     */
+    public bool $is_taxonomy_template = false;
 
-	/**
-	 * Whether this is a taxonomy template.
-	 *
-	 * @var bool
-	 */
-	public bool $is_taxonomy_template = false;
+    /**
+     * Initialization method.
+     */
+    abstract public function init();
 
-	/**
-	 * Initialization method.
-	 */
-	abstract public function init();
+    /**
+     * Should return the title of the template.
+     *
+     * @return string
+     */
+    abstract public function get_template_title();
 
-	/**
-	 * Should return the title of the template.
-	 *
-	 * @return string
-	 */
-	abstract public function get_template_title();
-
-	/**
-	 * Should return the description of the template.
-	 *
-	 * @return string
-	 */
-	abstract public function get_template_description();
+    /**
+     * Should return the description of the template.
+     *
+     * @return string
+     */
+    abstract public function get_template_description();
 }

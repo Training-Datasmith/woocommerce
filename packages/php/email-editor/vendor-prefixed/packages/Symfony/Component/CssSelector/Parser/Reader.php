@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -23,14 +25,12 @@ namespace Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector
  */
 class Reader
 {
-    private $source;
-    private $length;
+    private readonly int $length;
     private $position = 0;
 
-    public function __construct(string $source)
+    public function __construct(private readonly string $source)
     {
-        $this->source = $source;
-        $this->length = \strlen($source);
+        $this->length = \strlen($this->source);
     }
 
     public function isEOF(): bool
@@ -53,7 +53,7 @@ class Reader
         return substr($this->source, $this->position + $offset, $length);
     }
 
-    public function getOffset(string $string)
+    public function getOffset(string $string): float|int|false
     {
         $position = strpos($this->source, $string, $this->position);
 
@@ -63,7 +63,7 @@ class Reader
     /**
      * @return array|false
      */
-    public function findPattern(string $pattern)
+    public function findPattern(string $pattern): array|false
     {
         $source = substr($this->source, $this->position);
 
@@ -74,12 +74,12 @@ class Reader
         return false;
     }
 
-    public function moveForward(int $length)
+    public function moveForward(int $length): void
     {
         $this->position += $length;
     }
 
-    public function moveToEnd()
+    public function moveToEnd(): void
     {
         $this->position = $this->length;
     }

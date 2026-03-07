@@ -17,7 +17,7 @@ final class CssVariableEvaluator extends AbstractHtmlProcessor
      *
      * @var array<non-empty-string, string>
      */
-    private $currentVariableDefinitions = [];
+    private array $currentVariableDefinitions = [];
 
     /**
      * Replaces all CSS custom property references in inline style attributes with their corresponding values where
@@ -41,9 +41,7 @@ final class CssVariableEvaluator extends AbstractHtmlProcessor
     {
         return \array_filter(
             $declarations,
-            static function (string $key): bool {
-                return \substr($key, 0, 2) === '--';
-            },
+            static fn (string $key): bool => str_starts_with($key, '--'),
             ARRAY_FILTER_USE_KEY
         );
     }
@@ -121,7 +119,7 @@ final class CssVariableEvaluator extends AbstractHtmlProcessor
                     )?+
                 \\)
             /x',
-            \Closure::fromCallable([$this, 'getPropertyValueReplacement']),
+            $this->getPropertyValueReplacement(...),
             $propertyValue
         );
     }
@@ -154,9 +152,7 @@ final class CssVariableEvaluator extends AbstractHtmlProcessor
     private function getDeclarationsAsString(array $declarations): string
     {
         $declarationStrings = \array_map(
-            static function (string $key, string $value): string {
-                return $key . ': ' . $value;
-            },
+            static fn (string $key, string $value): string => $key . ': ' . $value,
             \array_keys($declarations),
             \array_values($declarations)
         );

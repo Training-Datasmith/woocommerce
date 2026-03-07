@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * REST API Tax Classes controller
  *
@@ -8,7 +10,7 @@
  * @since   2.6.0
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * REST API Tax Classes controller class.
@@ -16,12 +18,12 @@ defined( 'ABSPATH' ) || exit;
  * @package WooCommerce\RestApi
  * @extends WC_REST_Tax_Classes_V2_Controller
  */
-class WC_REST_Tax_Classes_Controller extends WC_REST_Tax_Classes_V2_Controller {
-
-	/**
-	 * Endpoint namespace.
-	 *
-	 * @var string
-	 */
-	protected $namespace = 'wc/v3';
+class WC_REST_Tax_Classes_Controller extends WC_REST_Tax_Classes_V2_Controller
+{
+    /**
+     * Endpoint namespace.
+     *
+     * @var string
+     */
+    protected $namespace = 'wc/v3';
 }

@@ -14,4 +14,6 @@ namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS;
  *
  * It extends `Renderable` because every element is renderable.
  */
-interface CSSElement extends Renderable {}
+interface CSSElement extends Renderable
+{
+}

@@ -1,7 +1,11 @@
 <?php
+
+declare(strict_types=1);
 /**
  * WooCommerce Mock Session Handler
  *
  * @since 2.2
  */
-class WC_Mock_Session_Handler extends WC_Session { }
+class WC_Mock_Session_Handler extends WC_Session
+{
+}

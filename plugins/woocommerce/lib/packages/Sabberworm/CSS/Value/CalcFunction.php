@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Value;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing\ParserState;
@@ -16,34 +18,33 @@ class CalcFunction extends CSSFunction
      *
      * @internal
      */
-    const T_OPERAND = 1;
+    public const T_OPERAND = 1;
 
     /**
      * @var int
      *
      * @internal
      */
-    const T_OPERATOR = 2;
+    public const T_OPERATOR = 2;
 
     /**
-     * @param ParserState $oParserState
      * @param bool $bIgnoreCase
      *
-     * @return CalcFunction
      *
      * @throws UnexpectedTokenException
      * @throws UnexpectedEOFException
      *
      * @internal since V8.8.0
      */
-    public static function parse(ParserState $oParserState, $bIgnoreCase = false)
+    public static function parse(ParserState $oParserState, $bIgnoreCase = false): \Automattic\WooCommerce\Vendor\Sabberworm\CSS\Value\CalcFunction
     {
         $aOperators = ['+', '-', '*', '/'];
         $sFunction = $oParserState->parseIdentifier();
         if ($oParserState->peek() != '(') {
             // Found ; or end of line before an opening bracket
             throw new UnexpectedTokenException('(', $oParserState->peek(), 'literal', $oParserState->currentLine());
-        } elseif (!in_array($sFunction, ['calc', '-moz-calc', '-webkit-calc'])) {
+        }
+        if (!in_array($sFunction, ['calc', '-moz-calc', '-webkit-calc'])) {
             // Found invalid calc definition. Example calc (...
             throw new UnexpectedTokenException('calc', $sFunction, 'literal', $oParserState->currentLine());
         }
@@ -63,7 +64,8 @@ class CalcFunction extends CSSFunction
                 $oCalcList->addListComponent($oParserState->consume(1));
                 $oParserState->consumeWhiteSpace();
                 continue;
-            } elseif ($oParserState->comes(')')) {
+            }
+            if ($oParserState->comes(')')) {
                 $iNestingLevel--;
                 $oCalcList->addListComponent($oParserState->consume(1));
                 $oParserState->consumeWhiteSpace();

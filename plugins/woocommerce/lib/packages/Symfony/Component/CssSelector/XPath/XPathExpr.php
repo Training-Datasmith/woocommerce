@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -21,18 +23,10 @@ namespace Automattic\WooCommerce\Vendor\Symfony\Component\CssSelector\XPath;
  *
  * @internal
  */
-class XPathExpr
+class XPathExpr implements \Stringable
 {
-    private $path;
-    private $element;
-    private $condition;
-
-    public function __construct(string $path = '', string $element = '*', string $condition = '', bool $starPrefix = false)
+    public function __construct(private string $path = '', private string $element = '*', private string $condition = '', bool $starPrefix = false)
     {
-        $this->path = $path;
-        $this->element = $element;
-        $this->condition = $condition;
-
         if ($starPrefix) {
             $this->addStarPrefix();
         }

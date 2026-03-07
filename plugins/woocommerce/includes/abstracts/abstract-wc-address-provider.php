@@ -1,8 +1,9 @@
 <?php
-declare( strict_types=1 );
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+declare(strict_types=1);
+
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 /**
@@ -14,26 +15,26 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @version     9.9.0
  * @package     WooCommerce\Abstracts
  */
-abstract class WC_Address_Provider {
+abstract class WC_Address_Provider
+{
+    /**
+     * Unique ID for the address provider.
+     *
+     * @var string
+     */
+    public $id;
 
-	/**
-	 * Unique ID for the address provider.
-	 *
-	 * @var string
-	 */
-	public $id;
+    /**
+     * Provider name.
+     *
+     * @var string
+     */
+    public $name;
 
-	/**
-	 * Provider name.
-	 *
-	 * @var string
-	 */
-	public $name;
-
-	/**
-	 * Optional HTML element to display for branding purposes (e.g. "powered by ...").
-	 *
-	 * @var string
-	 */
-	public $branding_html = '';
+    /**
+     * Optional HTML element to display for branding purposes (e.g. "powered by ...").
+     *
+     * @var string
+     */
+    public $branding_html = '';
 }

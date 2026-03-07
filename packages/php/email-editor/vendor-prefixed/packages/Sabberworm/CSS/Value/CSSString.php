@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Value;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\OutputFormat;
@@ -16,30 +18,22 @@ use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Parsing\UnexpectedTo
 class CSSString extends PrimitiveValue
 {
     /**
-     * @var string
-     */
-    private $sString;
-
-    /**
      * @param string $sString
      * @param int $iLineNo
      */
-    public function __construct($sString, $iLineNo = 0)
+    public function __construct(private $sString, $iLineNo = 0)
     {
-        $this->sString = $sString;
         parent::__construct($iLineNo);
     }
 
     /**
-     * @return CSSString
      *
      * @throws SourceException
      * @throws UnexpectedEOFException
      * @throws UnexpectedTokenException
-     *
      * @internal since V8.8.0
      */
-    public static function parse(ParserState $oParserState)
+    public static function parse(ParserState $oParserState): \Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Value\CSSString
     {
         $sBegin = $oParserState->peek();
         $sQuote = null;
@@ -51,7 +45,7 @@ class CSSString extends PrimitiveValue
         if ($sQuote !== null) {
             $oParserState->consume($sQuote);
         }
-        $sResult = "";
+        $sResult = '';
         $sContent = null;
         if ($sQuote === null) {
             // Unquoted strings end in whitespace or with braces, brackets, parentheses
@@ -76,10 +70,8 @@ class CSSString extends PrimitiveValue
 
     /**
      * @param string $sString
-     *
-     * @return void
      */
-    public function setString($sString)
+    public function setString($sString): void
     {
         $this->sString = $sString;
     }
@@ -93,21 +85,17 @@ class CSSString extends PrimitiveValue
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
 
     /**
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat)
+    public function render($oOutputFormat): string
     {
         $sString = addslashes($this->sString);
         $sString = str_replace("\n", '\A', $sString);

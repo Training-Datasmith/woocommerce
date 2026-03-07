@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -23,13 +25,8 @@ namespace Automattic\WooCommerce\Vendor\Symfony\Component\CssSelector\Node;
  */
 class ClassNode extends AbstractNode
 {
-    private $selector;
-    private $name;
-
-    public function __construct(NodeInterface $selector, string $name)
+    public function __construct(private readonly NodeInterface $selector, private readonly string $name)
     {
-        $this->selector = $selector;
-        $this->name = $name;
     }
 
     public function getSelector(): NodeInterface

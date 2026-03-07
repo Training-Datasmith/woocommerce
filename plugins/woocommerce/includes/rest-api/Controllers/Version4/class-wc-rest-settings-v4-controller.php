@@ -1,4 +1,5 @@
 <?php
+
 /**
  * REST API Settings V4 controller.
  *
@@ -11,8 +12,8 @@
 
 declare(strict_types=1);
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 /**
@@ -21,12 +22,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WooCommerce\RestApi
  * @extends WC_REST_Setting_Options_Controller
  */
-class WC_REST_Settings_V4_Controller extends WC_REST_Setting_Options_Controller {
-
-	/**
-	 * Endpoint namespace.
-	 *
-	 * @var string
-	 */
-	protected $namespace = 'wc/v4';
+class WC_REST_Settings_V4_Controller extends WC_REST_Setting_Options_Controller
+{
+    /**
+     * Endpoint namespace.
+     *
+     * @var string
+     */
+    protected $namespace = 'wc/v4';
 }

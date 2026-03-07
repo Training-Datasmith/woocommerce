@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * REST API Product Categories Controller
  *
@@ -7,7 +9,7 @@
 
 namespace Automattic\WooCommerce\Admin\API;
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * Product categories controller.
@@ -15,11 +17,12 @@ defined( 'ABSPATH' ) || exit;
  * @internal
  * @extends WC_REST_Product_Categories_Controller
  */
-class ProductCategories extends \WC_REST_Product_Categories_Controller {
-	/**
-	 * Endpoint namespace.
-	 *
-	 * @var string
-	 */
-	protected $namespace = 'wc-analytics';
+class ProductCategories extends \WC_REST_Product_Categories_Controller
+{
+    /**
+     * Endpoint namespace.
+     *
+     * @var string
+     */
+    protected $namespace = 'wc-analytics';
 }

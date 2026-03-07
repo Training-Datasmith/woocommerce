@@ -1,6 +1,6 @@
 <?php
 
-declare( strict_types = 1);
+declare(strict_types=1);
 
 namespace Automattic\WooCommerce\Admin\Features\Blueprint\Exporters;
 
@@ -13,42 +13,43 @@ use Automattic\WooCommerce\Blueprint\UseWPFunctions;
  *
  * @package Automattic\WooCommerce\Admin\Features\Blueprint\Exporters
  */
-class ExportWCSettingsGeneral extends ExportWCSettings {
-	use UseWPFunctions;
+class ExportWCSettingsGeneral extends ExportWCSettings
+{
+    use UseWPFunctions;
 
-	/**
-	 * Get the alias for this exporter.
-	 *
-	 * @return string
-	 */
-	public function get_alias() {
-		return 'setWCSettingsGeneral';
-	}
+    /**
+     * Get the alias for this exporter.
+     */
+    public function get_alias(): string
+    {
+        return 'setWCSettingsGeneral';
+    }
 
-	/**
-	 * Return label used in the frontend.
-	 *
-	 * @return string
-	 */
-	public function get_label() {
-		return __( 'General', 'woocommerce' );
-	}
+    /**
+     * Return label used in the frontend.
+     *
+     * @return string
+     */
+    public function get_label()
+    {
+        return __('General', 'woocommerce');
+    }
 
-	/**
-	 * Return description used in the frontend.
-	 *
-	 * @return string
-	 */
-	public function get_description() {
-		return __( 'Includes all settings in WooCommerce | Settings | General.', 'woocommerce' );
-	}
+    /**
+     * Return description used in the frontend.
+     *
+     * @return string
+     */
+    public function get_description()
+    {
+        return __('Includes all settings in WooCommerce | Settings | General.', 'woocommerce');
+    }
 
-	/**
-	 * Get the page ID for the settings page.
-	 *
-	 * @return string
-	 */
-	protected function get_page_id(): string {
-		return 'general';
-	}
+    /**
+     * Get the page ID for the settings page.
+     */
+    protected function get_page_id(): string
+    {
+        return 'general';
+    }
 }

@@ -1,9 +1,10 @@
 <?php
+
 /**
  * Container class file.
  */
 
-declare( strict_types=1 );
+declare(strict_types=1);
 
 namespace Automattic\WooCommerce;
 
@@ -28,55 +29,55 @@ use Automattic\WooCommerce\Internal\DependencyManagement\RuntimeContainer;
  * When running the unit tests suite this will be replaced with an instance of TestingContainer,
  * which provides additional functionality.
  */
-final class Container {
-	/**
-	 * The underlying container.
-	 *
-	 * @var RuntimeContainer
-	 */
-	private $container;
+final readonly class Container
+{
+    /**
+     * The underlying container.
+     */
+    private \Automattic\WooCommerce\Internal\DependencyManagement\RuntimeContainer $container;
 
-	/**
-	 * Class constructor.
-	 */
-	public function __construct() {
-		// When the League container was in use we allowed to retrieve the container itself
-		// by using 'Psr\Container\ContainerInterface' as the class identifier,
-		// we continue allowing that for compatibility.
-		$this->container = new RuntimeContainer(
-			array(
-				__CLASS__                          => $this,
-				'Psr\Container\ContainerInterface' => $this,
-			)
-		);
-	}
+    /**
+     * Class constructor.
+     */
+    public function __construct()
+    {
+        // When the League container was in use we allowed to retrieve the container itself
+        // by using 'Psr\Container\ContainerInterface' as the class identifier,
+        // we continue allowing that for compatibility.
+        $this->container = new RuntimeContainer(
+            [
+                self::class                          => $this,
+                \Psr\Container\ContainerInterface::class => $this,
+            ]
+        );
+    }
 
-	/**
-	 * Returns an instance of the specified class.
-	 * See the comment about ContainerException in RuntimeContainer::get.
-	 *
-	 * @template T of object
-	 * @param string $id Class name.
-	 * @phpstan-param class-string<T> $id
-	 *
-	 * @return T Object instance.
-	 *
-	 * @throws ContainerException Error when resolving the class to an object instance, or class not found.
-	 * @throws \Exception Exception thrown in the constructor or in the 'init' method of one of the resolved classes.
-	 */
-	public function get( string $id ) {
-		return $this->container->get( $id );
-	}
+    /**
+     * Returns an instance of the specified class.
+     * See the comment about ContainerException in RuntimeContainer::get.
+     *
+     * @template T of object
+     * @param string $id Class name.
+     * @phpstan-param class-string<T> $id
+     *
+     * @return T Object instance.
+     *
+     * @throws ContainerException Error when resolving the class to an object instance, or class not found.
+     * @throws \Exception Exception thrown in the constructor or in the 'init' method of one of the resolved classes.
+     */
+    public function get(string $id)
+    {
+        return $this->container->get($id);
+    }
 
-	/**
-	 * Returns true if the container can return an instance of the given class or false otherwise.
-	 * See the comment in RuntimeContainer::has.
-	 *
-	 * @param class-string $id Class name.
-	 *
-	 * @return bool
-	 */
-	public function has( string $id ): bool {
-		return $this->container->has( $id );
-	}
+    /**
+     * Returns true if the container can return an instance of the given class or false otherwise.
+     * See the comment in RuntimeContainer::has.
+     *
+     * @param class-string $id Class name.
+     */
+    public function has(string $id): bool
+    {
+        return $this->container->has($id);
+    }
 }

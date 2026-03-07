@@ -1,45 +1,46 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Automattic\WooCommerce\Admin\Features\Fulfillments\Providers;
 
 /**
  * PostNL Shipping Provider class.
  */
-class PostNLShippingProvider extends AbstractShippingProvider {
-	/**
-	 * Get the key of the shipping provider.
-	 *
-	 * @return string
-	 */
-	public function get_key(): string {
-		return 'postnl';
-	}
+class PostNLShippingProvider extends AbstractShippingProvider
+{
+    /**
+     * Get the key of the shipping provider.
+     */
+    public function get_key(): string
+    {
+        return 'postnl';
+    }
 
-	/**
-	 * Get the name of the shipping provider.
-	 *
-	 * @return string
-	 */
-	public function get_name(): string {
-		return 'PostNL';
-	}
+    /**
+     * Get the name of the shipping provider.
+     */
+    public function get_name(): string
+    {
+        return 'PostNL';
+    }
 
-	/**
-	 * Get the icon of the shipping provider.
-	 *
-	 * @return string
-	 */
-	public function get_icon(): string {
-		return esc_url( WC()->plugin_url() ) . '/assets/images/shipping_providers/postnl.png';
-	}
+    /**
+     * Get the icon of the shipping provider.
+     */
+    public function get_icon(): string
+    {
+        return esc_url(WC()->plugin_url()) . '/assets/images/shipping_providers/postnl.png';
+    }
 
-	/**
-	 * Get the tracking URL for a given tracking number.
-	 *
-	 * @param string $tracking_number The tracking number.
-	 * @return string The tracking URL.
-	 */
-	public function get_tracking_url( string $tracking_number ): string {
-		return 'https://www.postnl.nl/track-en-trace/' . $tracking_number;
-	}
+    /**
+     * Get the tracking URL for a given tracking number.
+     *
+     * @param string $tracking_number The tracking number.
+     * @return string The tracking URL.
+     */
+    public function get_tracking_url(string $tracking_number): string
+    {
+        return 'https://www.postnl.nl/track-en-trace/' . $tracking_number;
+    }
 }

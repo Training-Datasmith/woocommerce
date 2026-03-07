@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -27,11 +29,8 @@ use Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector\Parse
  */
 class Parser implements ParserInterface
 {
-    private $tokenizer;
-
-    public function __construct(?Tokenizer $tokenizer = null)
+    public function __construct(private readonly ?Tokenizer $tokenizer = new Tokenizer())
     {
-        $this->tokenizer = $tokenizer ?? new Tokenizer();
     }
 
     /**
@@ -60,11 +59,9 @@ class Parser implements ParserInterface
             }
         }
 
-        $joined = trim(implode('', array_map(function (Token $token) {
-            return $token->getValue();
-        }, $tokens)));
+        $joined = trim(implode('', array_map(fn (Token $token) => $token->getValue(), $tokens)));
 
-        $int = function ($string) {
+        $int = function ($string): int {
             if (!is_numeric($string)) {
                 throw SyntaxErrorException::stringAsFunctionArgument();
             }
@@ -314,10 +311,11 @@ class Parser implements ParserInterface
         if (null === $operator) {
             $stream->skipWhitespace();
             $next = $stream->getNext();
-
             if ($next->isDelimiter([']'])) {
                 return new Node\AttributeNode($selector, $namespace, $attribute, 'exists', null);
-            } elseif ($next->isDelimiter(['='])) {
+            }
+
+            if ($next->isDelimiter(['='])) {
                 $operator = '=';
             } elseif ($next->isDelimiter(['^', '$', '*', '~', '|', '!'])
                 && $stream->getPeek()->isDelimiter(['='])

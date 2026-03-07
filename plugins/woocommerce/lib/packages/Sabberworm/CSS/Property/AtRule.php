@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Property;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Comment\Commentable;
@@ -15,7 +17,7 @@ interface AtRule extends Renderable, Commentable
      *
      * @internal since 8.5.2
      */
-    const BLOCK_RULES = 'media/document/supports/region-style/font-feature-values';
+    public const BLOCK_RULES = 'media/document/supports/region-style/font-feature-values';
 
     /**
      * … and more font-specific ones (to be used inside font-feature-values)
@@ -24,7 +26,7 @@ interface AtRule extends Renderable, Commentable
      *
      * @internal since 8.5.2
      */
-    const SET_RULES = 'font-face/counter-style/page/swash/styleset/annotation';
+    public const SET_RULES = 'font-face/counter-style/page/swash/styleset/annotation';
 
     /**
      * @return string|null

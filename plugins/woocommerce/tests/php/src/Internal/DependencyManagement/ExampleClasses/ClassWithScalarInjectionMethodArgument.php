@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * ClassWithScalarInjectionMethodArgument class file.
  *
@@ -10,17 +12,18 @@ namespace Automattic\WooCommerce\Tests\Internal\DependencyManagement\ExampleClas
 /**
  * An example class that has an injector method argument with a scalar type but without a default value.
  */
-class ClassWithScalarInjectionMethodArgument {
+class ClassWithScalarInjectionMethodArgument
+{
+    // phpcs:disable Squiz.Commenting.FunctionComment.InvalidTypeHint
 
-	// phpcs:disable Squiz.Commenting.FunctionComment.InvalidTypeHint
-
-	/**
-	 * Initialize the class instance.
-	 *
-	 * @internal
-	 *
-	 * @param mixed $scalar_argument_without_default_value Anything, really.
-	 */
-	final public function init( int $scalar_argument_without_default_value ) {
-	}
+    /**
+     * Initialize the class instance.
+     *
+     * @internal
+     *
+     * @param mixed $scalar_argument_without_default_value Anything, really.
+     */
+    final public function init(int $scalar_argument_without_default_value)
+    {
+    }
 }

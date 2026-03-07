@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -25,18 +27,14 @@ use Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector\Parse
  */
 class FunctionNode extends AbstractNode
 {
-    private $selector;
-    private $name;
-    private $arguments;
+    private readonly \Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector\Node\NodeInterface|string $name;
 
     /**
      * @param Token[] $arguments
      */
-    public function __construct(NodeInterface $selector, string $name, array $arguments = [])
+    public function __construct(private readonly NodeInterface $selector, string $name, private readonly array $arguments = [])
     {
-        $this->selector = $selector;
         $this->name = strtolower($name);
-        $this->arguments = $arguments;
     }
 
     public function getSelector(): NodeInterface
@@ -67,9 +65,7 @@ class FunctionNode extends AbstractNode
 
     public function __toString(): string
     {
-        $arguments = implode(', ', array_map(function (Token $token) {
-            return "'".$token->getValue()."'";
-        }, $this->arguments));
+        $arguments = implode(', ', array_map(fn (Token $token) => "'".$token->getValue()."'", $this->arguments));
 
         return sprintf('%s[%s:%s(%s)]', $this->getNodeName(), $this->selector, $this->name, $arguments ? '['.$arguments.']' : '');
     }

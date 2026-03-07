@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Plugin Name: WooCommerce
  * Plugin URI: https://woocommerce.com/
@@ -14,24 +16,24 @@
  * @package WooCommerce
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
-if ( ! defined( 'WC_PLUGIN_FILE' ) ) {
-	define( 'WC_PLUGIN_FILE', __FILE__ );
+if (! defined('WC_PLUGIN_FILE')) {
+    define('WC_PLUGIN_FILE', __FILE__);
 }
 
 // Load core packages and the autoloader.
 require __DIR__ . '/src/Autoloader.php';
 require __DIR__ . '/src/Packages.php';
 
-if ( ! \Automattic\WooCommerce\Autoloader::init() ) {
-	return;
+if (! \Automattic\WooCommerce\Autoloader::init()) {
+    return;
 }
 \Automattic\WooCommerce\Packages::init();
 
 // Include the main WooCommerce class.
-if ( ! class_exists( 'WooCommerce', false ) ) {
-	include_once dirname( WC_PLUGIN_FILE ) . '/includes/class-woocommerce.php';
+if (! class_exists('WooCommerce', false)) {
+    include_once dirname(WC_PLUGIN_FILE) . '/includes/class-woocommerce.php';
 }
 
 // Initialize dependency injection.
@@ -43,8 +45,8 @@ $GLOBALS['wc_container'] = new Automattic\WooCommerce\Container();
  * @since  2.1
  * @return WooCommerce
  */
-function WC() { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid
-	return WooCommerce::instance();
+function WC() // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid
+{return WooCommerce::instance();
 }
 
 /**
@@ -54,14 +56,15 @@ function WC() { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.Fu
  * @since  4.4.0
  * @return \Automattic\WooCommerce\Container The WooCommerce object container.
  */
-function wc_get_container() {
-	return $GLOBALS['wc_container'];
+function wc_get_container()
+{
+    return $GLOBALS['wc_container'];
 }
 
 // Global for backwards compatibility.
 $GLOBALS['woocommerce'] = WC();
 
 // Jetpack's Rest_Authentication needs to be initialized even before plugins_loaded.
-if ( class_exists( \Automattic\Jetpack\Connection\Rest_Authentication::class ) ) {
-	\Automattic\Jetpack\Connection\Rest_Authentication::init();
+if (class_exists(\Automattic\Jetpack\Connection\Rest_Authentication::class)) {
+    \Automattic\Jetpack\Connection\Rest_Authentication::init();
 }

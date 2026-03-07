@@ -21,10 +21,8 @@ final class Preg
 {
     /**
      * whether to throw exceptions on errors (or call `trigger_error` and implement fallback)
-     *
-     * @var bool
      */
-    private $throwExceptions = false;
+    private bool $throwExceptions = false;
 
     /**
      * Sets whether exceptions should be thrown if an error occurs.
@@ -184,14 +182,12 @@ final class Preg
         $pcreConstants = \get_defined_constants(true)['pcre'];
         $pcreErrorConstantNames = \array_flip(\array_filter(
             $pcreConstants,
-            static function (string $key): bool {
-                return \substr($key, -6) === '_ERROR';
-            },
+            static fn (string $key): bool => str_ends_with($key, '_ERROR'),
             ARRAY_FILTER_USE_KEY
         ));
 
         $pregLastError = \preg_last_error();
-        $message = 'PCRE regex execution error `' . (string) ($pcreErrorConstantNames[$pregLastError] ?? $pregLastError)
+        $message = 'PCRE regex execution error `' . ($pcreErrorConstantNames[$pregLastError] ?? $pregLastError)
             . '`';
 
         if ($this->throwExceptions) {

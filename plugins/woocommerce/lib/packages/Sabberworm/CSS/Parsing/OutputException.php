@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing;
 
 /**
@@ -7,12 +9,4 @@ namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing;
  */
 class OutputException extends SourceException
 {
-    /**
-     * @param string $sMessage
-     * @param int $iLineNo
-     */
-    public function __construct($sMessage, $iLineNo = 0)
-    {
-        parent::__construct($sMessage, $iLineNo);
-    }
 }

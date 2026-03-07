@@ -24,21 +24,21 @@ $body_font_family    = $fonts['body'];
 <div class="wp-block-group"><!-- wp:site-logo {"width":60,"style":{"layout":{"selfStretch":"fit","flexSize":null}}} /-->
 
 <!-- wp:group {"style":{"spacing":{"blockGap":"0px"}}} -->
-<div class="wp-block-group"><!-- wp:site-title {"level":0,"style":{"typography":{"fontSize":"20px","letterSpacing":"0px"},"color":{"text":"#000000"},"elements":{"link":{"color":{"text":"#000000"}}}},"fontFamily":"<?php echo esc_html( $body_font_family ); ?>"} /--></div>
+<div class="wp-block-group"><!-- wp:site-title {"level":0,"style":{"typography":{"fontSize":"20px","letterSpacing":"0px"},"color":{"text":"#000000"},"elements":{"link":{"color":{"text":"#000000"}}}},"fontFamily":"<?php echo esc_html($body_font_family); ?>"} /--></div>
 <!-- /wp:group --></div>
 <!-- /wp:group -->
 
 <!-- wp:group {"className":"woocommerce-coming-soon-social-login","style":{"spacing":{"blockGap":"48px"}},"layout":{"type":"flex","flexWrap":"nowrap"}} -->
 <div class="wp-block-group woocommerce-coming-soon-social-login"><!-- wp:template-part {"slug":"coming-soon-social-links","theme":"woocommerce/woocommerce","tagName":"div"} /-->
 
-<!-- wp:loginout {"style":{"elements":{"link":{"color":{"text":"#ffffff"}}},"color":{"background":"#000000"},"spacing":{"padding":{"top":"12px","bottom":"12px","left":"16px","right":"16px"}},"typography":{"fontSize":"14px","lineHeight":"1.2"},"border":{"radius":"6px"}},"fontFamily":"<?php echo esc_html( $body_font_family ); ?>"} /--></div>
+<!-- wp:loginout {"style":{"elements":{"link":{"color":{"text":"#ffffff"}}},"color":{"background":"#000000"},"spacing":{"padding":{"top":"12px","bottom":"12px","left":"16px","right":"16px"}},"typography":{"fontSize":"14px","lineHeight":"1.2"},"border":{"radius":"6px"}},"fontFamily":"<?php echo esc_html($body_font_family); ?>"} /--></div>
 <!-- /wp:group --></div>
 <!-- /wp:group --></div>
 <!-- /wp:group -->
 
 <!-- wp:group {"style":{"layout":{"selfStretch":"fill","flexSize":null}},"layout":{"type":"flex","orientation":"vertical","justifyContent":"center","verticalAlignment":"center"}} -->
-<div class="wp-block-group"><!-- wp:heading {"textAlign":"center","level":1,"align":"wide","className":"woocommerce-coming-soon-banner","style":{"typography":{"fontSize":"48px","fontStyle":"normal","fontWeight":"400","lineHeight":"1.2"}},"fontFamily":"<?php echo esc_html( $heading_font_family ); ?>"} -->
-<h1 class="wp-block-heading alignwide has-text-align-center woocommerce-coming-soon-banner has-<?php echo esc_html( $heading_font_family ); ?>-font-family" style="font-size:48px;font-style:normal;font-weight:400;line-height:1.2"><?php echo esc_html__( "Pardon our dust! We're working on something amazing — check back soon!", 'woocommerce' ); ?></h1>
+<div class="wp-block-group"><!-- wp:heading {"textAlign":"center","level":1,"align":"wide","className":"woocommerce-coming-soon-banner","style":{"typography":{"fontSize":"48px","fontStyle":"normal","fontWeight":"400","lineHeight":"1.2"}},"fontFamily":"<?php echo esc_html($heading_font_family); ?>"} -->
+<h1 class="wp-block-heading alignwide has-text-align-center woocommerce-coming-soon-banner has-<?php echo esc_html($heading_font_family); ?>-font-family" style="font-size:48px;font-style:normal;font-weight:400;line-height:1.2"><?php echo esc_html__("Pardon our dust! We're working on something amazing — check back soon!", 'woocommerce'); ?></h1>
 <!-- /wp:heading --></div>
 <!-- /wp:group -->
 

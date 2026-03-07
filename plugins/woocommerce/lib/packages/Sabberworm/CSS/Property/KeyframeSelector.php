@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Property;
 
 class KeyframeSelector extends Selector
@@ -11,7 +13,7 @@ class KeyframeSelector extends Selector
      *
      * @internal since 8.5.2
      */
-    const SELECTOR_VALIDATION_RX = '/
+    public const SELECTOR_VALIDATION_RX = '/
     ^(
         (?:
             [a-zA-Z0-9\x{00A0}-\x{FFFF}_^$|*="\'~\[\]()\-\s\.:#+>]* # any sequence of valid unescaped characters

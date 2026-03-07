@@ -1,12 +1,14 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Reports Exportable Controller Interface
  */
 
 namespace Automattic\WooCommerce\Admin\API\Reports;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 /**
@@ -14,20 +16,20 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 3.5.0
  */
-interface ExportableInterface {
+interface ExportableInterface
+{
+    /**
+     * Get the column names for export.
+     *
+     * @return array Key value pair of Column ID => Label.
+     */
+    public function get_export_columns();
 
-	/**
-	 * Get the column names for export.
-	 *
-	 * @return array Key value pair of Column ID => Label.
-	 */
-	public function get_export_columns();
-
-	/**
-	 * Get the column values for export.
-	 *
-	 * @param array $item Single report item/row.
-	 * @return array Key value pair of Column ID => Value.
-	 */
-	public function prepare_item_for_export( $item );
+    /**
+     * Get the column values for export.
+     *
+     * @param array $item Single report item/row.
+     * @return array Key value pair of Column ID => Value.
+     */
+    public function prepare_item_for_export($item);
 }

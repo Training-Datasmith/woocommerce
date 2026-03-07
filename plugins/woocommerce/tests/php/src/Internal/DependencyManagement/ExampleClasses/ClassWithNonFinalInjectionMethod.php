@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * ClassWithNonFinalInjectionMethod class file.
  *
@@ -10,15 +12,16 @@ namespace Automattic\WooCommerce\Tests\Internal\DependencyManagement\ExampleClas
 /**
  * An example of a class with a private injection method.
  */
-class ClassWithNonFinalInjectionMethod {
+class ClassWithNonFinalInjectionMethod
+{
+    // phpcs:disable WooCommerce.Functions.InternalInjectionMethod.MissingFinal
 
-	// phpcs:disable WooCommerce.Functions.InternalInjectionMethod.MissingFinal
-
-	/**
-	 * Initialize the class instance.
-	 *
-	 * @internal
-	 */
-	public function init() {
-	}
+    /**
+     * Initialize the class instance.
+     *
+     * @internal
+     */
+    public function init()
+    {
+    }
 }

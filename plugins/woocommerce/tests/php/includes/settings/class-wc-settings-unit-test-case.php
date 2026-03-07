@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Class WC_Settings_Unit_Test_Case file.
  *
@@ -8,48 +10,50 @@
 /**
  * Base class for settings related unit tests.
  */
-abstract class WC_Settings_Unit_Test_Case extends WC_Unit_Test_Case {
+abstract class WC_Settings_Unit_Test_Case extends WC_Unit_Test_Case
+{
+    /**
+     * Given a settings array return the one having the given identifier.
+     *
+     * @param array  $settings Settings array.
+     * @param string $id Identifier to find for.
+     *
+     * @return array|null The setting, or null if no setting exists in the supplied array with the supplied identifier.
+     */
+    public function setting_by_id($settings, $id)
+    {
+        foreach ($settings as $setting) {
+            if ($id === $setting['id']) {
+                return $setting;
+            }
+        }
 
-	/**
-	 * Given a settings array return the one having the given identifier.
-	 *
-	 * @param array  $settings Settings array.
-	 * @param string $id Identifier to find for.
-	 *
-	 * @return array|null The setting, or null if no setting exists in the supplied array with the supplied identifier.
-	 */
-	public function setting_by_id( $settings, $id ) {
-		foreach ( $settings as $setting ) {
-			if ( $id === $setting['id'] ) {
-				return $setting;
-			}
-		}
+        return null;
+    }
 
-		return null;
-	}
+    /**
+     * Given a settings array return an associative array of id => type.
+     * If more than one setting has the same id then the returned array is id => array of types.
+     *
+     * @param array $settings The settings to transform.
+     *
+     * @return array The transformed settings.
+     */
+    public function get_ids_and_types($settings)
+    {
+        $setting_ids_and_types = [];
+        foreach ($settings as $setting) {
+            $id   = array_key_exists('id', $setting) ? $setting['id'] : null;
+            $type = $setting['type'];
+            if (! array_key_exists($id, $setting_ids_and_types)) {
+                $setting_ids_and_types[ $id ] = $type;
+            } elseif (is_array($setting_ids_and_types[ $id ])) {
+                $setting_ids_and_types[ $id ][] = $type;
+            } else {
+                $setting_ids_and_types[ $id ] = [ $setting_ids_and_types[ $id ], $type ];
+            }
+        }
 
-	/**
-	 * Given a settings array return an associative array of id => type.
-	 * If more than one setting has the same id then the returned array is id => array of types.
-	 *
-	 * @param array $settings The settings to transform.
-	 *
-	 * @return array The transformed settings.
-	 */
-	public function get_ids_and_types( $settings ) {
-		$setting_ids_and_types = array();
-		foreach ( $settings as $setting ) {
-			$id   = array_key_exists( 'id', $setting ) ? $setting['id'] : null;
-			$type = $setting['type'];
-			if ( ! array_key_exists( $id, $setting_ids_and_types ) ) {
-				$setting_ids_and_types[ $id ] = $type;
-			} elseif ( is_array( $setting_ids_and_types[ $id ] ) ) {
-				$setting_ids_and_types[ $id ][] = $type;
-			} else {
-				$setting_ids_and_types[ $id ] = array( $setting_ids_and_types[ $id ], $type );
-			}
-		}
-
-		return $setting_ids_and_types;
-	}
+        return $setting_ids_and_types;
+    }
 }

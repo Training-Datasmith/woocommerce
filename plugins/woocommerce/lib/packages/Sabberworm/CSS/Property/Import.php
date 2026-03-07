@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Property;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Comment\Comment;
@@ -16,16 +18,6 @@ class Import implements AtRule, Positionable
     use Position;
 
     /**
-     * @var URL
-     */
-    private $oLocation;
-
-    /**
-     * @var string
-     */
-    private $sMediaQuery;
-
-    /**
      * @var array<array-key, Comment>
      *
      * @internal since 8.8.0
@@ -33,24 +25,19 @@ class Import implements AtRule, Positionable
     protected $aComments;
 
     /**
-     * @param URL $oLocation
      * @param string $sMediaQuery
      * @param int $iLineNo
      */
-    public function __construct(URL $oLocation, $sMediaQuery, $iLineNo = 0)
+    public function __construct(private URL $oLocation, private $sMediaQuery, $iLineNo = 0)
     {
-        $this->oLocation = $oLocation;
-        $this->sMediaQuery = $sMediaQuery;
         $this->setPosition($iLineNo);
         $this->aComments = [];
     }
 
     /**
      * @param URL $oLocation
-     *
-     * @return void
      */
-    public function setLocation($oLocation)
+    public function setLocation($oLocation): void
     {
         $this->oLocation = $oLocation;
     }
@@ -64,30 +51,23 @@ class Import implements AtRule, Positionable
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
 
     /**
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat)
+    public function render($oOutputFormat): string
     {
-        return $oOutputFormat->comments($this) . "@import " . $this->oLocation->render($oOutputFormat)
+        return $oOutputFormat->comments($this) . '@import ' . $this->oLocation->render($oOutputFormat)
             . ($this->sMediaQuery === null ? '' : ' ' . $this->sMediaQuery) . ';';
     }
 
-    /**
-     * @return string
-     */
-    public function atRuleName()
+    public function atRuleName(): string
     {
         return 'import';
     }
@@ -95,7 +75,7 @@ class Import implements AtRule, Positionable
     /**
      * @return array<int, URL|string>
      */
-    public function atRuleArgs()
+    public function atRuleArgs(): array
     {
         $aResult = [$this->oLocation];
         if ($this->sMediaQuery) {
@@ -106,10 +86,8 @@ class Import implements AtRule, Positionable
 
     /**
      * @param array<array-key, Comment> $aComments
-     *
-     * @return void
      */
-    public function addComments(array $aComments)
+    public function addComments(array $aComments): void
     {
         $this->aComments = array_merge($this->aComments, $aComments);
     }
@@ -124,10 +102,8 @@ class Import implements AtRule, Positionable
 
     /**
      * @param array<array-key, Comment> $aComments
-     *
-     * @return void
      */
-    public function setComments(array $aComments)
+    public function setComments(array $aComments): void
     {
         $this->aComments = $aComments;
     }

@@ -1,812 +1,828 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Class WC_Product_CSV_Importer unit tests.
  *
  * @package WooCommerce\Tests\Importer
  */
 
+use Automattic\WooCommerce\Enums\CatalogVisibility;
 use Automattic\WooCommerce\Enums\ProductStatus;
 use Automattic\WooCommerce\Enums\ProductStockStatus;
 use Automattic\WooCommerce\Enums\ProductTaxStatus;
 use Automattic\WooCommerce\Enums\ProductType;
-use Automattic\WooCommerce\Enums\CatalogVisibility;
 
 /**
  * Test class for WC_Product_CSV_Importer.
  */
-class WC_Tests_Product_CSV_Importer extends WC_Unit_Test_Case {
+class WC_Tests_Product_CSV_Importer extends WC_Unit_Test_Case
+{
+    /**
+     * Test CSV file path.
+     *
+     * @var string
+     */
+    protected $csv_file = '';
 
-	/**
-	 * Test CSV file path.
-	 *
-	 * @var string
-	 */
-	protected $csv_file = '';
+    /**
+     * @var WC_Product_CSV_Importer
+     */
+    private $sut;
 
-	/**
-	 * @var WC_Product_CSV_Importer
-	 */
-	private $sut;
+    /**
+     * Load up the importer classes since they aren't loaded by default.
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
 
-	/**
-	 * Load up the importer classes since they aren't loaded by default.
-	 */
-	public function setUp(): void {
-		parent::setUp();
+        $bootstrap = WC_Unit_Tests_Bootstrap::instance();
+        require_once $bootstrap->plugin_dir . '/includes/import/class-wc-product-csv-importer.php';
+        require_once $bootstrap->plugin_dir . '/includes/admin/importers/class-wc-product-csv-importer-controller.php';
 
-		$bootstrap = WC_Unit_Tests_Bootstrap::instance();
-		require_once $bootstrap->plugin_dir . '/includes/import/class-wc-product-csv-importer.php';
-		require_once $bootstrap->plugin_dir . '/includes/admin/importers/class-wc-product-csv-importer-controller.php';
+        // Initialize brands classes to register import/export hooks.
+        require_once $bootstrap->plugin_dir . '/includes/class-wc-brands.php';
+        require_once $bootstrap->plugin_dir . '/includes/admin/class-wc-admin-brands.php';
 
-		// Initialize brands classes to register import/export hooks.
-		require_once $bootstrap->plugin_dir . '/includes/class-wc-brands.php';
-		require_once $bootstrap->plugin_dir . '/includes/admin/class-wc-admin-brands.php';
+        WC_Brands::init_taxonomy();
+        new WC_Brands_Admin();
 
-		WC_Brands::init_taxonomy();
-		new WC_Brands_Admin();
+        // Callback used by WP_HTTP_TestCase to decide whether to perform HTTP requests or to provide a mocked response.
+        $this->http_responder = [ $this, 'mock_http_responses' ];
+        $this->csv_file       = dirname(__FILE__) . '/sample.csv';
+        $this->sut            = new WC_Product_CSV_Importer(
+            $this->csv_file,
+            [
+                'mapping'          => $this->get_csv_mapped_items(),
+                'parse'            => true,
+                'prevent_timeouts' => false,
+            ]
+        );
 
-		// Callback used by WP_HTTP_TestCase to decide whether to perform HTTP requests or to provide a mocked response.
-		$this->http_responder = array( $this, 'mock_http_responses' );
-		$this->csv_file       = dirname( __FILE__ ) . '/sample.csv';
-		$this->sut            = new WC_Product_CSV_Importer(
-			$this->csv_file,
-			array(
-				'mapping'          => $this->get_csv_mapped_items(),
-				'parse'            => true,
-				'prevent_timeouts' => false,
-			)
-		);
+        // Clear list of approved download directories before running tests.
+        wc_get_container()->get(\Automattic\WooCommerce\Internal\ProductDownloads\ApprovedDirectories\Register::class)->delete_all();
+    }
 
-		// Clear list of approved download directories before running tests.
-		wc_get_container()->get( \Automattic\WooCommerce\Internal\ProductDownloads\ApprovedDirectories\Register::class )->delete_all();
-	}
+    /**
+     * Get CSV mapped items.
+     *
+     * @since 3.1.0
+     * @return array
+     */
+    private function get_csv_mapped_items()
+    {
+        return [
+            'Type'                    => 'type',
+            'SKU'                     => 'sku',
+            'Name'                    => 'name',
+            'Published'               => 'published',
+            'Is featured?'            => 'featured',
+            'Visibility in catalog'   => 'catalog_visibility',
+            'Short description'       => 'short_description',
+            'Description'             => 'description',
+            'Date sale price starts'  => 'date_on_sale_from',
+            'Date sale price ends'    => 'date_on_sale_to',
+            'Tax status'              => 'tax_status',
+            'Tax class'               => 'tax_class',
+            'In stock?'               => 'stock_status',
+            'Stock'                   => 'stock_quantity',
+            'Backorders allowed?'     => 'backorders',
+            'Sold individually?'      => 'sold_individually',
+            'Weight (kg)'             => 'weight',
+            'Length (cm)'             => 'length',
+            'Width (cm)'              => 'width',
+            'Height (cm)'             => 'height',
+            'Allow customer reviews?' => 'reviews_allowed',
+            'Purchase note'           => 'purchase_note',
+            'Sale price'              => 'sale_price',
+            'Regular price'           => 'regular_price',
+            'Categories'              => 'category_ids',
+            'Tags'                    => 'tag_ids',
+            'Brands'                  => 'brand_ids',
+            'Shipping class'          => 'shipping_class_id',
+            'Images'                  => 'images',
+            'Download limit'          => 'download_limit',
+            'Download expiry days'    => 'download_expiry',
+            'Parent'                  => 'parent_id',
+            'Upsells'                 => 'upsell_ids',
+            'Cross-sells'             => 'cross_sell_ids',
+            'Grouped products'        => 'grouped_products',
+            'External URL'            => 'product_url',
+            'BUTTON TEXT'             => 'button_text',
+            'Position'                => 'menu_order',
+            'Attribute 1 Name'        => 'attributes:name1',
+            'Attribute 1 Value(s)'    => 'attributes:value2',
+            'Attribute 2 name'        => 'attributes:name2',
+            'Attribute 2 value(s)'    => 'attributes:value2',
+            'Attribute 1 default'     => 'attributes:default1',
+            'Attribute 2 default'     => 'attributes:default2',
+            'Download 1 ID'           => 'downloads:id1',
+            'Download 1 name'         => 'downloads:name1',
+            'Download 1 URL'          => 'downloads:url1',
+        ];
+    }
 
-	/**
-	 * Get CSV mapped items.
-	 *
-	 * @since 3.1.0
-	 * @return array
-	 */
-	private function get_csv_mapped_items() {
-		return array(
-			'Type'                    => 'type',
-			'SKU'                     => 'sku',
-			'Name'                    => 'name',
-			'Published'               => 'published',
-			'Is featured?'            => 'featured',
-			'Visibility in catalog'   => 'catalog_visibility',
-			'Short description'       => 'short_description',
-			'Description'             => 'description',
-			'Date sale price starts'  => 'date_on_sale_from',
-			'Date sale price ends'    => 'date_on_sale_to',
-			'Tax status'              => 'tax_status',
-			'Tax class'               => 'tax_class',
-			'In stock?'               => 'stock_status',
-			'Stock'                   => 'stock_quantity',
-			'Backorders allowed?'     => 'backorders',
-			'Sold individually?'      => 'sold_individually',
-			'Weight (kg)'             => 'weight',
-			'Length (cm)'             => 'length',
-			'Width (cm)'              => 'width',
-			'Height (cm)'             => 'height',
-			'Allow customer reviews?' => 'reviews_allowed',
-			'Purchase note'           => 'purchase_note',
-			'Sale price'              => 'sale_price',
-			'Regular price'           => 'regular_price',
-			'Categories'              => 'category_ids',
-			'Tags'                    => 'tag_ids',
-			'Brands'                  => 'brand_ids',
-			'Shipping class'          => 'shipping_class_id',
-			'Images'                  => 'images',
-			'Download limit'          => 'download_limit',
-			'Download expiry days'    => 'download_expiry',
-			'Parent'                  => 'parent_id',
-			'Upsells'                 => 'upsell_ids',
-			'Cross-sells'             => 'cross_sell_ids',
-			'Grouped products'        => 'grouped_products',
-			'External URL'            => 'product_url',
-			'BUTTON TEXT'             => 'button_text',
-			'Position'                => 'menu_order',
-			'Attribute 1 Name'        => 'attributes:name1',
-			'Attribute 1 Value(s)'    => 'attributes:value2',
-			'Attribute 2 name'        => 'attributes:name2',
-			'Attribute 2 value(s)'    => 'attributes:value2',
-			'Attribute 1 default'     => 'attributes:default1',
-			'Attribute 2 default'     => 'attributes:default2',
-			'Download 1 ID'           => 'downloads:id1',
-			'Download 1 name'         => 'downloads:name1',
-			'Download 1 URL'          => 'downloads:url1',
-		);
-	}
+    /**
+     * @testdox Test import as triggered by an admin user.
+     */
+    public function test_import_for_admin_users()
+    {
+        // In most cases, an admin user will run the import.
+        wp_set_current_user(self::factory()->user->create([ 'role' => 'administrator' ]));
+        $results = $this->sut->import();
 
-	/**
-	 * @testdox Test import as triggered by an admin user.
-	 */
-	public function test_import_for_admin_users() {
-		// In most cases, an admin user will run the import.
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
-		$results = $this->sut->import();
+        $this->assertEquals(0, count($results['failed']));
+        $this->assertEquals(0, count($results['updated']));
+        $this->assertEquals(0, count($results['skipped']));
+        $this->assertEquals(
+            7,
+            count($results['imported']) + count($results['imported_variations']),
+            'One import item references a downloadable file stored in an unapproved location: if the import is triggered by an admin user, that location will be automatically approved.'
+        );
+    }
 
-		$this->assertEquals( 0, count( $results['failed'] ) );
-		$this->assertEquals( 0, count( $results['updated'] ) );
-		$this->assertEquals( 0, count( $results['skipped'] ) );
-		$this->assertEquals(
-			7,
-			count( $results['imported'] ) + count( $results['imported_variations'] ),
-			'One import item references a downloadable file stored in an unapproved location: if the import is triggered by an admin user, that location will be automatically approved.'
-		);
-	}
+    /**
+     * @testdox Test import as triggered by a shop manager (or other non-admin user).
+     */
+    public function test_import_for_shop_managers()
+    {
+        // In some cases, a shop manager may run the import.
+        wp_set_current_user(self::factory()->user->create([ 'role' => 'shop_manager' ]));
+        $results = $this->sut->import();
 
-	/**
-	 * @testdox Test import as triggered by a shop manager (or other non-admin user).
-	 */
-	public function test_import_for_shop_managers() {
-		// In some cases, a shop manager may run the import.
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'shop_manager' ) ) );
-		$results = $this->sut->import();
+        $this->assertEquals(0, count($results['updated']));
+        $this->assertEquals(0, count($results['skipped']));
+        $this->assertEquals(6, count($results['imported']) + count($results['imported_variations']));
+        $this->assertEquals(
+            1,
+            count($results['failed']),
+            'One import item references a downloadable file stored in an unapproved location: if the import is triggered by a non-admin, that item cannot be imported.'
+        );
+    }
 
-		$this->assertEquals( 0, count( $results['updated'] ) );
-		$this->assertEquals( 0, count( $results['skipped'] ) );
-		$this->assertEquals( 6, count( $results['imported'] ) + count( $results['imported_variations'] ) );
-		$this->assertEquals(
-			1,
-			count( $results['failed'] ),
-			'One import item references a downloadable file stored in an unapproved location: if the import is triggered by a non-admin, that item cannot be imported.'
-		);
-	}
+    /**
+     * Test import should update product price and skip products with empty SKU
+     * (see https://github.com/woocommerce/woocommerce/issues/23257).
+     */
+    public function test_import_should_update_product()
+    {
+        $product = WC_Helper_Product::create_simple_product();
+        $product->set_price(15);
+        $product->set_sku('wp-pennant');
+        $product->save();
 
-	/**
-	 * Test import should update product price and skip products with empty SKU
-	 * (see https://github.com/woocommerce/woocommerce/issues/23257).
-	 */
-	public function test_import_should_update_product() {
-		$product = WC_Helper_Product::create_simple_product();
-		$product->set_price( 15 );
-		$product->set_sku( 'wp-pennant' );
-		$product->save();
+        $args = [
+            'mapping'         => $this->get_csv_mapped_items(),
+            'parse'           => true,
+            'update_existing' => true,
+        ];
 
-		$args = array(
-			'mapping'         => $this->get_csv_mapped_items(),
-			'parse'           => true,
-			'update_existing' => true,
-		);
+        $csv_file = dirname(__FILE__) . '/sample_update_product.csv';
 
-		$csv_file = dirname( __FILE__ ) . '/sample_update_product.csv';
+        $importer = new WC_Product_CSV_Importer($csv_file, $args);
+        $results  = $importer->import();
 
-		$importer = new WC_Product_CSV_Importer( $csv_file, $args );
-		$results  = $importer->import();
+        $this->assertEquals(0, count($results['imported']));
+        $this->assertEquals(0, count($results['failed']));
+        $this->assertEquals(1, count($results['updated']));
+        $this->assertEquals(2, count($results['skipped']));
 
-		$this->assertEquals( 0, count( $results['imported'] ) );
-		$this->assertEquals( 0, count( $results['failed'] ) );
-		$this->assertEquals( 1, count( $results['updated'] ) );
-		$this->assertEquals( 2, count( $results['skipped'] ) );
+        $updated_product = wc_get_product($product->get_id());
+        $this->assertEquals(20, $updated_product->get_price());
+    }
 
-		$updated_product = wc_get_product( $product->get_id() );
-		$this->assertEquals( 20, $updated_product->get_price() );
-	}
+    /**
+     * Test importing file located on another location on server.
+     *
+     * @return void
+     */
+    public function test_server_file()
+    {
+        self::file_copy($this->csv_file, ABSPATH . '/sample.csv');
+        $_POST['file_url'] = 'sample.csv';
+        $import_controller = new WC_Product_CSV_Importer_Controller();
+        $this->assertEquals(ABSPATH . 'sample.csv', $import_controller->handle_upload());
+    }
 
-	/**
-	 * Test importing file located on another location on server.
-	 *
-	 * @return void
-	 */
-	public function test_server_file() {
-		self::file_copy( $this->csv_file, ABSPATH . '/sample.csv' );
-		$_POST['file_url'] = 'sample.csv';
-		$import_controller = new WC_Product_CSV_Importer_Controller();
-		$this->assertEquals( ABSPATH . 'sample.csv', $import_controller->handle_upload() );
-	}
+    /**
+     * Test get_raw_keys.
+     * @since 3.1.0
+     */
+    public function test_get_raw_keys()
+    {
+        $importer = new WC_Product_CSV_Importer($this->csv_file, [ 'lines' => 1 ]);
+        $raw_keys = array_keys($this->get_csv_mapped_items());
 
-	/**
-	 * Test get_raw_keys.
-	 * @since 3.1.0
-	 */
-	public function test_get_raw_keys() {
-		$importer = new WC_Product_CSV_Importer( $this->csv_file, array( 'lines' => 1 ) );
-		$raw_keys = array_keys( $this->get_csv_mapped_items() );
+        $this->assertEquals($raw_keys, $importer->get_raw_keys());
+    }
 
-		$this->assertEquals( $raw_keys, $importer->get_raw_keys() );
-	}
+    /**
+     * Test get_mapped_keys.
+     * @since 3.1.0
+     */
+    public function test_get_mapped_keys()
+    {
+        $args = [
+            'mapping' => $this->get_csv_mapped_items(),
+            'lines'   => 1,
+        ];
 
-	/**
-	 * Test get_mapped_keys.
-	 * @since 3.1.0
-	 */
-	public function test_get_mapped_keys() {
-		$args = array(
-			'mapping' => $this->get_csv_mapped_items(),
-			'lines'   => 1,
-		);
+        $importer = new WC_Product_CSV_Importer($this->csv_file, $args);
 
-		$importer = new WC_Product_CSV_Importer( $this->csv_file, $args );
+        $this->assertEquals(array_values($args['mapping']), $importer->get_mapped_keys());
+    }
 
-		$this->assertEquals( array_values( $args['mapping'] ), $importer->get_mapped_keys() );
-	}
+    /**
+     * Test get_raw_data.
+     * @since 3.1.0
+     */
+    public function test_get_raw_data()
+    {
+        $importer = new WC_Product_CSV_Importer(
+            $this->csv_file,
+            [
+                'parse' => false,
+                'lines' => 2,
+            ]
+        );
+        $items    = [
+            [
+                ProductType::SIMPLE,
+                'WOOLOGO',
+                'Woo Logo',
+                '1',
+                '',
+                'visible',
+                'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                '2017-01-01',
+                '2030-01-01 0:00:00',
+                ProductTaxStatus::TAXABLE,
+                'standard',
+                '1',
+                '5',
+                'notify',
+                '1',
+                '1',
+                '1',
+                '20',
+                '40',
+                '1',
+                'Lorem ipsum dolor sit amet.',
+                '18',
+                '20',
+                'Clothing, Clothing > T-shirts',
+                '',
+                'TopBrand, TopBrand > KidCakes',
+                '',
+                'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_1_front.jpg, http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_1_back.jpg',
+                '',
+                '',
+                '',
+                'WOOALBUM',
+                'WOOALBUM',
+                '',
+                '',
+                '',
+                '0',
+                'Color',
+                'Red',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+            ],
+            [
+                'simple, downloadable, virtual',
+                'WOOALBUM',
+                'Woo Album #1',
+                '1',
+                '1',
+                'visible',
+                'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'Jul 8, 2023',
+                '1689239400',
+                ProductTaxStatus::TAXABLE,
+                'standard',
+                '1',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '1',
+                'Lorem ipsum dolor sit amet.',
+                '4',
+                '5',
+                'Music > Albums, Music',
+                'Woo',
+                'TopBrand > Slice, TopBrand',
+                '',
+                'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/cd_1_angle.jpg, http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/cd_1_flat.jpg',
+                '10',
+                '90',
+                '',
+                'WOOLOGO',
+                'WOOLOGO',
+                '',
+                '',
+                '',
+                '1',
+                'Label',
+                'WooCommerce',
+                'Vinyl',
+                '180-Gram',
+                '',
+                '',
+                '4ff604c2-97bd-4869-938b-7798ba6648ab',
+                'Album flac',
+                'http://woo.dev/albums/album.flac',
+            ],
+        ];
 
-	/**
-	 * Test get_raw_data.
-	 * @since 3.1.0
-	 */
-	public function test_get_raw_data() {
-		$importer = new WC_Product_CSV_Importer(
-			$this->csv_file,
-			array(
-				'parse' => false,
-				'lines' => 2,
-			)
-		);
-		$items    = array(
-			array(
-				ProductType::SIMPLE,
-				'WOOLOGO',
-				'Woo Logo',
-				'1',
-				'',
-				'visible',
-				'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'2017-01-01',
-				'2030-01-01 0:00:00',
-				ProductTaxStatus::TAXABLE,
-				'standard',
-				'1',
-				'5',
-				'notify',
-				'1',
-				'1',
-				'1',
-				'20',
-				'40',
-				'1',
-				'Lorem ipsum dolor sit amet.',
-				'18',
-				'20',
-				'Clothing, Clothing > T-shirts',
-				'',
-				'TopBrand, TopBrand > KidCakes',
-				'',
-				'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_1_front.jpg, http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_1_back.jpg',
-				'',
-				'',
-				'',
-				'WOOALBUM',
-				'WOOALBUM',
-				'',
-				'',
-				'',
-				'0',
-				'Color',
-				'Red',
-				'',
-				'',
-				'',
-				'',
-				'',
-				'',
-				'',
-			),
-			array(
-				'simple, downloadable, virtual',
-				'WOOALBUM',
-				'Woo Album #1',
-				'1',
-				'1',
-				'visible',
-				'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'Jul 8, 2023',
-				'1689239400',
-				ProductTaxStatus::TAXABLE,
-				'standard',
-				'1',
-				'',
-				'',
-				'',
-				'',
-				'',
-				'',
-				'',
-				'1',
-				'Lorem ipsum dolor sit amet.',
-				'4',
-				'5',
-				'Music > Albums, Music',
-				'Woo',
-				'TopBrand > Slice, TopBrand',
-				'',
-				'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/cd_1_angle.jpg, http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/cd_1_flat.jpg',
-				'10',
-				'90',
-				'',
-				'WOOLOGO',
-				'WOOLOGO',
-				'',
-				'',
-				'',
-				'1',
-				'Label',
-				'WooCommerce',
-				'Vinyl',
-				'180-Gram',
-				'',
-				'',
-				'4ff604c2-97bd-4869-938b-7798ba6648ab',
-				'Album flac',
-				'http://woo.dev/albums/album.flac',
-			),
-		);
+        $this->assertEquals($items, $importer->get_raw_data());
+    }
 
-		$this->assertEquals( $items, $importer->get_raw_data() );
-	}
+    /**
+     * Test get_parsed_data.
+     * @since 3.1.0
+     */
+    public function test_get_parsed_data()
+    {
+        $args = [
+            'mapping' => $this->get_csv_mapped_items(),
+            'parse'   => true,
+        ];
 
-	/**
-	 * Test get_parsed_data.
-	 * @since 3.1.0
-	 */
-	public function test_get_parsed_data() {
-		$args = array(
-			'mapping' => $this->get_csv_mapped_items(),
-			'parse'   => true,
-		);
+        $importer = new WC_Product_CSV_Importer($this->csv_file, $args);
+        $items    = [
+            [
+                'type'                  => ProductType::SIMPLE,
+                'sku'                   => 'WOOLOGO',
+                'name'                  => 'Woo Logo',
+                'featured'              => '',
+                'catalog_visibility'    => CatalogVisibility::VISIBLE,
+                'short_description'     => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'description'           => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'date_on_sale_from'     => '2017-01-01',
+                'date_on_sale_to'       => '2030-01-01 0:00:00',
+                'tax_status'            => ProductTaxStatus::TAXABLE,
+                'tax_class'             => 'standard',
+                'stock_status'          => ProductStockStatus::IN_STOCK,
+                'stock_quantity'        => 5,
+                'backorders'            => 'notify',
+                'sold_individually'     => true,
+                'weight'                => 1.0,
+                'length'                => 1.0,
+                'width'                 => 20.0,
+                'height'                => 40.0,
+                'reviews_allowed'       => true,
+                'purchase_note'         => 'Lorem ipsum dolor sit amet.',
+                'sale_price'            => '18',
+                'regular_price'         => '20',
+                'shipping_class_id'     => 0,
+                'download_limit'        => '',
+                'download_expiry'       => '',
+                'product_url'           => '',
+                'button_text'           => '',
+                'status'                => ProductStatus::PUBLISH,
+                'raw_image_id'          => 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_1_front.jpg',
+                'raw_gallery_image_ids' => [ 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_1_back.jpg' ],
+                'virtual'               => '',
+                'downloadable'          => '',
+                'manage_stock'          => true,
+                'virtual'               => false,
+                'downloadable'          => false,
+                'raw_attributes'        => [
+                    [
+                        'name' => 'Color',
+                    ],
+                ],
+                'menu_order'            => 0,
+            ],
+            [
+                'type'                  => ProductType::SIMPLE,
+                'sku'                   => 'WOOALBUM',
+                'name'                  => 'Woo Album #1',
+                'featured'              => true,
+                'catalog_visibility'    => CatalogVisibility::VISIBLE,
+                'short_description'     => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'description'           => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'date_on_sale_from'     => 'Jul 8, 2023',
+                'date_on_sale_to'       => '2023-07-13T09:10:00Z',
+                'tax_status'            => ProductTaxStatus::TAXABLE,
+                'tax_class'             => 'standard',
+                'stock_status'          => ProductStockStatus::IN_STOCK,
+                'stock_quantity'        => '',
+                'backorders'            => 'no',
+                'sold_individually'     => '',
+                'weight'                => '',
+                'length'                => '',
+                'width'                 => '',
+                'height'                => '',
+                'reviews_allowed'       => true,
+                'purchase_note'         => 'Lorem ipsum dolor sit amet.',
+                'sale_price'            => '4',
+                'regular_price'         => '5',
+                'shipping_class_id'     => 0,
+                'download_limit'        => 10,
+                'download_expiry'       => 90,
+                'product_url'           => '',
+                'button_text'           => '',
+                'status'                => ProductStatus::PUBLISH,
+                'raw_image_id'          => 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/cd_1_angle.jpg',
+                'raw_gallery_image_ids' => [ 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/cd_1_flat.jpg' ],
+                'virtual'               => true,
+                'downloadable'          => true,
+                'manage_stock'          => false,
+                'raw_attributes'        => [
+                    [
+                        'name' => 'Label',
+                    ],
+                    [
+                        'value' => [ '180-Gram' ],
+                        'name'  => 'Vinyl',
+                    ],
+                ],
+                'downloads'             => [
+                    [
+                        'name'        => 'Album flac',
+                        'file'        => 'http://woo.dev/albums/album.flac',
+                        'download_id' => '4ff604c2-97bd-4869-938b-7798ba6648ab',
+                    ],
+                ],
+                'menu_order'            => 1,
+            ],
+            [
+                'type'               => ProductType::EXTERNAL,
+                'sku'                => '',
+                'name'               => 'WooCommerce Product CSV Suite',
+                'featured'           => '',
+                'catalog_visibility' => CatalogVisibility::VISIBLE,
+                'short_description'  => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'description'        => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'date_on_sale_from'  => '2023-07-08 05:10:15',
+                'date_on_sale_to'    => '2023/07/13',
+                'tax_status'         => ProductTaxStatus::TAXABLE,
+                'tax_class'          => 'standard',
+                'stock_status'       => ProductStockStatus::IN_STOCK,
+                'stock_quantity'     => '',
+                'backorders'         => 'no',
+                'sold_individually'  => '',
+                'weight'             => '',
+                'length'             => '',
+                'width'              => '',
+                'height'             => '',
+                'reviews_allowed'    => false,
+                'purchase_note'      => 'Lorem ipsum dolor sit amet.',
+                'sale_price'         => '180',
+                'regular_price'      => '199',
+                'shipping_class_id'  => 0,
+                'download_limit'     => '',
+                'download_expiry'    => '',
+                'product_url'        => 'https://woocommerce.com/products/product-csv-import-suite/',
+                'button_text'        => 'Buy on WooCommerce.com',
+                'status'             => ProductStatus::PUBLISH,
+                'raw_image_id'       => null,
+                'virtual'            => false,
+                'downloadable'       => false,
+                'manage_stock'       => false,
+                'menu_order'         => 2,
+            ],
+            [
+                'type'                  => ProductType::VARIABLE,
+                'sku'                   => 'WOOIDEA',
+                'name'                  => 'Ship Your Idea',
+                'featured'              => '',
+                'catalog_visibility'    => CatalogVisibility::VISIBLE,
+                'short_description'     => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'description'           => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'date_on_sale_from'     => null,
+                'date_on_sale_to'       => null,
+                'tax_status'            => '',
+                'tax_class'             => '',
+                'stock_status'          => ProductStockStatus::OUT_OF_STOCK,
+                'stock_quantity'        => '',
+                'backorders'            => 'no',
+                'sold_individually'     => '',
+                'weight'                => '',
+                'length'                => '',
+                'width'                 => '',
+                'height'                => '',
+                'reviews_allowed'       => true,
+                'purchase_note'         => 'Lorem ipsum dolor sit amet.',
+                'sale_price'            => '',
+                'regular_price'         => '',
+                'shipping_class_id'     => 0,
+                'download_limit'        => '',
+                'download_expiry'       => '',
+                'product_url'           => '',
+                'button_text'           => '',
+                'status'                => ProductStatus::PUBLISH,
+                'raw_image_id'          => 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_4_front.jpg',
+                'raw_gallery_image_ids' => [
+                    'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_4_back.jpg',
+                    'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_3_front.jpg',
+                    'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_3_back.jpg',
+                ],
+                'virtual'               => false,
+                'downloadable'          => false,
+                'manage_stock'          => false,
+                'raw_attributes'        => [
+                    [
+                        'name'    => 'Color',
+                        'default' => 'Green',
+                    ],
+                    [
+                        'value'   => [ 'M', 'L' ],
+                        'name'    => 'Size',
+                        'default' => 'L',
+                    ],
+                ],
+                'menu_order'            => 3,
+            ],
+            [
+                'type'               => ProductType::VARIATION,
+                'sku'                => '',
+                'name'               => '',
+                'featured'           => '',
+                'catalog_visibility' => CatalogVisibility::VISIBLE,
+                'short_description'  => '',
+                'description'        => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'date_on_sale_from'  => null,
+                'date_on_sale_to'    => null,
+                'tax_status'         => ProductTaxStatus::TAXABLE,
+                'tax_class'          => 'standard',
+                'stock_status'       => ProductStockStatus::IN_STOCK,
+                'stock_quantity'     => 6,
+                'backorders'         => 'no',
+                'sold_individually'  => '',
+                'weight'             => 1.0,
+                'length'             => 2.0,
+                'width'              => 25.0,
+                'height'             => 55.0,
+                'reviews_allowed'    => '',
+                'purchase_note'      => '',
+                'sale_price'         => '',
+                'regular_price'      => '20',
+                'shipping_class_id'  => 0,
+                'download_limit'     => '',
+                'download_expiry'    => '',
+                'product_url'        => '',
+                'button_text'        => '',
+                'status'             => ProductStatus::PUBLISH,
+                'raw_image_id'       => 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_4_front.jpg',
+                'virtual'            => false,
+                'downloadable'       => false,
+                'manage_stock'       => true,
+                'raw_attributes'     => [
+                    [
+                        'name' => 'Color',
+                    ],
+                    [
+                        'value' => [ 'M' ],
+                        'name'  => 'Size',
+                    ],
+                ],
+                'menu_order'         => 1,
+            ],
+            [
+                'type'               => ProductType::VARIATION,
+                'sku'                => '',
+                'name'               => '',
+                'featured'           => '',
+                'catalog_visibility' => CatalogVisibility::VISIBLE,
+                'short_description'  => '',
+                'description'        => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'date_on_sale_from'  => null,
+                'date_on_sale_to'    => null,
+                'tax_status'         => ProductTaxStatus::TAXABLE,
+                'tax_class'          => 'standard',
+                'stock_status'       => ProductStockStatus::IN_STOCK,
+                'stock_quantity'     => 10,
+                'backorders'         => 'yes',
+                'sold_individually'  => '',
+                'weight'             => 1.0,
+                'length'             => 2.0,
+                'width'              => 25.0,
+                'height'             => 55.0,
+                'reviews_allowed'    => '',
+                'purchase_note'      => '',
+                'sale_price'         => '17.99',
+                'regular_price'      => '20',
+                'shipping_class_id'  => 0,
+                'download_limit'     => '',
+                'download_expiry'    => '',
+                'product_url'        => '',
+                'button_text'        => '',
+                'status'             => ProductStatus::PUBLISH,
+                'raw_image_id'       => 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_3_front.jpg',
+                'virtual'            => false,
+                'downloadable'       => false,
+                'manage_stock'       => true,
+                'raw_attributes'     => [
+                    [
+                        'name' => 'Color',
+                    ],
+                    [
+                        'value' => [ 'L' ],
+                        'name'  => 'Size',
+                    ],
+                ],
+                'menu_order'         => 2,
+            ],
+            [
+                'type'                  => ProductType::GROUPED,
+                'sku'                   => '',
+                'name'                  => 'Best Woo Products',
+                'featured'              => true,
+                'catalog_visibility'    => CatalogVisibility::VISIBLE,
+                'short_description'     => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'description'           => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
+                'date_on_sale_from'     => null,
+                'date_on_sale_to'       => null,
+                'tax_status'            => '',
+                'tax_class'             => '',
+                'stock_status'          => ProductStockStatus::IN_STOCK,
+                'stock_quantity'        => '',
+                'backorders'            => 'no',
+                'sold_individually'     => '',
+                'weight'                => '',
+                'length'                => '',
+                'width'                 => '',
+                'height'                => '',
+                'reviews_allowed'       => '',
+                'purchase_note'         => '',
+                'sale_price'            => '',
+                'regular_price'         => '',
+                'shipping_class_id'     => 0,
+                'download_limit'        => '',
+                'download_expiry'       => '',
+                'product_url'           => '',
+                'button_text'           => '',
+                'status'                => ProductStatus::PUBLISH,
+                'raw_image_id'          => 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_1_front.jpg',
+                'raw_gallery_image_ids' => [ 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/cd_1_angle.jpg' ],
+                'virtual'               => false,
+                'downloadable'          => false,
+                'manage_stock'          => false,
+                'menu_order'            => 4,
+            ],
+        ];
 
-		$importer = new WC_Product_CSV_Importer( $this->csv_file, $args );
-		$items    = array(
-			array(
-				'type'                  => ProductType::SIMPLE,
-				'sku'                   => 'WOOLOGO',
-				'name'                  => 'Woo Logo',
-				'featured'              => '',
-				'catalog_visibility'    => CatalogVisibility::VISIBLE,
-				'short_description'     => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'description'           => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'date_on_sale_from'     => '2017-01-01',
-				'date_on_sale_to'       => '2030-01-01 0:00:00',
-				'tax_status'            => ProductTaxStatus::TAXABLE,
-				'tax_class'             => 'standard',
-				'stock_status'          => ProductStockStatus::IN_STOCK,
-				'stock_quantity'        => 5,
-				'backorders'            => 'notify',
-				'sold_individually'     => true,
-				'weight'                => 1.0,
-				'length'                => 1.0,
-				'width'                 => 20.0,
-				'height'                => 40.0,
-				'reviews_allowed'       => true,
-				'purchase_note'         => 'Lorem ipsum dolor sit amet.',
-				'sale_price'            => '18',
-				'regular_price'         => '20',
-				'shipping_class_id'     => 0,
-				'download_limit'        => '',
-				'download_expiry'       => '',
-				'product_url'           => '',
-				'button_text'           => '',
-				'status'                => ProductStatus::PUBLISH,
-				'raw_image_id'          => 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_1_front.jpg',
-				'raw_gallery_image_ids' => array( 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_1_back.jpg' ),
-				'virtual'               => '',
-				'downloadable'          => '',
-				'manage_stock'          => true,
-				'virtual'               => false,
-				'downloadable'          => false,
-				'raw_attributes'        => array(
-					array(
-						'name' => 'Color',
-					),
-				),
-				'menu_order'            => 0,
-			),
-			array(
-				'type'                  => ProductType::SIMPLE,
-				'sku'                   => 'WOOALBUM',
-				'name'                  => 'Woo Album #1',
-				'featured'              => true,
-				'catalog_visibility'    => CatalogVisibility::VISIBLE,
-				'short_description'     => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'description'           => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'date_on_sale_from'     => 'Jul 8, 2023',
-				'date_on_sale_to'       => '2023-07-13T09:10:00Z',
-				'tax_status'            => ProductTaxStatus::TAXABLE,
-				'tax_class'             => 'standard',
-				'stock_status'          => ProductStockStatus::IN_STOCK,
-				'stock_quantity'        => '',
-				'backorders'            => 'no',
-				'sold_individually'     => '',
-				'weight'                => '',
-				'length'                => '',
-				'width'                 => '',
-				'height'                => '',
-				'reviews_allowed'       => true,
-				'purchase_note'         => 'Lorem ipsum dolor sit amet.',
-				'sale_price'            => '4',
-				'regular_price'         => '5',
-				'shipping_class_id'     => 0,
-				'download_limit'        => 10,
-				'download_expiry'       => 90,
-				'product_url'           => '',
-				'button_text'           => '',
-				'status'                => ProductStatus::PUBLISH,
-				'raw_image_id'          => 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/cd_1_angle.jpg',
-				'raw_gallery_image_ids' => array( 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/cd_1_flat.jpg' ),
-				'virtual'               => true,
-				'downloadable'          => true,
-				'manage_stock'          => false,
-				'raw_attributes'        => array(
-					array(
-						'name' => 'Label',
-					),
-					array(
-						'value' => array( '180-Gram' ),
-						'name'  => 'Vinyl',
-					),
-				),
-				'downloads'             => array(
-					array(
-						'name'        => 'Album flac',
-						'file'        => 'http://woo.dev/albums/album.flac',
-						'download_id' => '4ff604c2-97bd-4869-938b-7798ba6648ab',
-					),
-				),
-				'menu_order'            => 1,
-			),
-			array(
-				'type'               => ProductType::EXTERNAL,
-				'sku'                => '',
-				'name'               => 'WooCommerce Product CSV Suite',
-				'featured'           => '',
-				'catalog_visibility' => CatalogVisibility::VISIBLE,
-				'short_description'  => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'description'        => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'date_on_sale_from'  => '2023-07-08 05:10:15',
-				'date_on_sale_to'    => '2023/07/13',
-				'tax_status'         => ProductTaxStatus::TAXABLE,
-				'tax_class'          => 'standard',
-				'stock_status'       => ProductStockStatus::IN_STOCK,
-				'stock_quantity'     => '',
-				'backorders'         => 'no',
-				'sold_individually'  => '',
-				'weight'             => '',
-				'length'             => '',
-				'width'              => '',
-				'height'             => '',
-				'reviews_allowed'    => false,
-				'purchase_note'      => 'Lorem ipsum dolor sit amet.',
-				'sale_price'         => '180',
-				'regular_price'      => '199',
-				'shipping_class_id'  => 0,
-				'download_limit'     => '',
-				'download_expiry'    => '',
-				'product_url'        => 'https://woocommerce.com/products/product-csv-import-suite/',
-				'button_text'        => 'Buy on WooCommerce.com',
-				'status'             => ProductStatus::PUBLISH,
-				'raw_image_id'       => null,
-				'virtual'            => false,
-				'downloadable'       => false,
-				'manage_stock'       => false,
-				'menu_order'         => 2,
-			),
-			array(
-				'type'                  => ProductType::VARIABLE,
-				'sku'                   => 'WOOIDEA',
-				'name'                  => 'Ship Your Idea',
-				'featured'              => '',
-				'catalog_visibility'    => CatalogVisibility::VISIBLE,
-				'short_description'     => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'description'           => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'date_on_sale_from'     => null,
-				'date_on_sale_to'       => null,
-				'tax_status'            => '',
-				'tax_class'             => '',
-				'stock_status'          => ProductStockStatus::OUT_OF_STOCK,
-				'stock_quantity'        => '',
-				'backorders'            => 'no',
-				'sold_individually'     => '',
-				'weight'                => '',
-				'length'                => '',
-				'width'                 => '',
-				'height'                => '',
-				'reviews_allowed'       => true,
-				'purchase_note'         => 'Lorem ipsum dolor sit amet.',
-				'sale_price'            => '',
-				'regular_price'         => '',
-				'shipping_class_id'     => 0,
-				'download_limit'        => '',
-				'download_expiry'       => '',
-				'product_url'           => '',
-				'button_text'           => '',
-				'status'                => ProductStatus::PUBLISH,
-				'raw_image_id'          => 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_4_front.jpg',
-				'raw_gallery_image_ids' => array(
-					'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_4_back.jpg',
-					'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_3_front.jpg',
-					'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_3_back.jpg',
-				),
-				'virtual'               => false,
-				'downloadable'          => false,
-				'manage_stock'          => false,
-				'raw_attributes'        => array(
-					array(
-						'name'    => 'Color',
-						'default' => 'Green',
-					),
-					array(
-						'value'   => array( 'M', 'L' ),
-						'name'    => 'Size',
-						'default' => 'L',
-					),
-				),
-				'menu_order'            => 3,
-			),
-			array(
-				'type'               => ProductType::VARIATION,
-				'sku'                => '',
-				'name'               => '',
-				'featured'           => '',
-				'catalog_visibility' => CatalogVisibility::VISIBLE,
-				'short_description'  => '',
-				'description'        => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'date_on_sale_from'  => null,
-				'date_on_sale_to'    => null,
-				'tax_status'         => ProductTaxStatus::TAXABLE,
-				'tax_class'          => 'standard',
-				'stock_status'       => ProductStockStatus::IN_STOCK,
-				'stock_quantity'     => 6,
-				'backorders'         => 'no',
-				'sold_individually'  => '',
-				'weight'             => 1.0,
-				'length'             => 2.0,
-				'width'              => 25.0,
-				'height'             => 55.0,
-				'reviews_allowed'    => '',
-				'purchase_note'      => '',
-				'sale_price'         => '',
-				'regular_price'      => '20',
-				'shipping_class_id'  => 0,
-				'download_limit'     => '',
-				'download_expiry'    => '',
-				'product_url'        => '',
-				'button_text'        => '',
-				'status'             => ProductStatus::PUBLISH,
-				'raw_image_id'       => 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_4_front.jpg',
-				'virtual'            => false,
-				'downloadable'       => false,
-				'manage_stock'       => true,
-				'raw_attributes'     => array(
-					array(
-						'name' => 'Color',
-					),
-					array(
-						'value' => array( 'M' ),
-						'name'  => 'Size',
-					),
-				),
-				'menu_order'         => 1,
-			),
-			array(
-				'type'               => ProductType::VARIATION,
-				'sku'                => '',
-				'name'               => '',
-				'featured'           => '',
-				'catalog_visibility' => CatalogVisibility::VISIBLE,
-				'short_description'  => '',
-				'description'        => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'date_on_sale_from'  => null,
-				'date_on_sale_to'    => null,
-				'tax_status'         => ProductTaxStatus::TAXABLE,
-				'tax_class'          => 'standard',
-				'stock_status'       => ProductStockStatus::IN_STOCK,
-				'stock_quantity'     => 10,
-				'backorders'         => 'yes',
-				'sold_individually'  => '',
-				'weight'             => 1.0,
-				'length'             => 2.0,
-				'width'              => 25.0,
-				'height'             => 55.0,
-				'reviews_allowed'    => '',
-				'purchase_note'      => '',
-				'sale_price'         => '17.99',
-				'regular_price'      => '20',
-				'shipping_class_id'  => 0,
-				'download_limit'     => '',
-				'download_expiry'    => '',
-				'product_url'        => '',
-				'button_text'        => '',
-				'status'             => ProductStatus::PUBLISH,
-				'raw_image_id'       => 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_3_front.jpg',
-				'virtual'            => false,
-				'downloadable'       => false,
-				'manage_stock'       => true,
-				'raw_attributes'     => array(
-					array(
-						'name' => 'Color',
-					),
-					array(
-						'value' => array( 'L' ),
-						'name'  => 'Size',
-					),
-				),
-				'menu_order'         => 2,
-			),
-			array(
-				'type'                  => ProductType::GROUPED,
-				'sku'                   => '',
-				'name'                  => 'Best Woo Products',
-				'featured'              => true,
-				'catalog_visibility'    => CatalogVisibility::VISIBLE,
-				'short_description'     => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'description'           => 'Lorem ipsum dolor sit amet, at exerci civibus appetere sit, iuvaret hendrerit mea no. Eam integre feugait liberavisse an.',
-				'date_on_sale_from'     => null,
-				'date_on_sale_to'       => null,
-				'tax_status'            => '',
-				'tax_class'             => '',
-				'stock_status'          => ProductStockStatus::IN_STOCK,
-				'stock_quantity'        => '',
-				'backorders'            => 'no',
-				'sold_individually'     => '',
-				'weight'                => '',
-				'length'                => '',
-				'width'                 => '',
-				'height'                => '',
-				'reviews_allowed'       => '',
-				'purchase_note'         => '',
-				'sale_price'            => '',
-				'regular_price'         => '',
-				'shipping_class_id'     => 0,
-				'download_limit'        => '',
-				'download_expiry'       => '',
-				'product_url'           => '',
-				'button_text'           => '',
-				'status'                => ProductStatus::PUBLISH,
-				'raw_image_id'          => 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/T_1_front.jpg',
-				'raw_gallery_image_ids' => array( 'http://demo.woothemes.com/woocommerce/wp-content/uploads/sites/56/2013/06/cd_1_angle.jpg' ),
-				'virtual'               => false,
-				'downloadable'          => false,
-				'manage_stock'          => false,
-				'menu_order'            => 4,
-			),
-		);
+        $parsed_data = $importer->get_parsed_data();
 
-		$parsed_data = $importer->get_parsed_data();
+        // Remove fields that depends on product ID or term ID.
+        foreach ($parsed_data as &$data) {
+            unset($data['parent_id'], $data['upsell_ids'], $data['cross_sell_ids'], $data['children'], $data['category_ids'], $data['tag_ids'], $data['brand_ids']);
+        }
 
-		// Remove fields that depends on product ID or term ID.
-		foreach ( $parsed_data as &$data ) {
-			unset( $data['parent_id'], $data['upsell_ids'], $data['cross_sell_ids'], $data['children'], $data['category_ids'], $data['tag_ids'], $data['brand_ids'] );
-		}
+        $this->assertEquals($items, $parsed_data);
+    }
 
-		$this->assertEquals( $items, $parsed_data );
-	}
+    /**
+     * Test get_parsed_data with brands.
+     *
+     * @since 10.3.5
+     */
+    public function test_get_parsed_data_brands()
+    {
 
-	/**
-	 * Test get_parsed_data with brands.
-	 *
-	 * @since 10.3.5
-	 */
-	public function test_get_parsed_data_brands() {
+        // Set admin user to allow term creation.
+        wp_set_current_user(self::factory()->user->create([ 'role' => 'administrator' ]));
 
-		// Set admin user to allow term creation.
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+        $args = [
+            'mapping' => $this->get_csv_mapped_items(),
+            'parse'   => true,
+        ];
 
-		$args = array(
-			'mapping' => $this->get_csv_mapped_items(),
-			'parse'   => true,
-		);
+        // Expected brand strings for each product from CSV.
+        // Note: Hierarchical terms store only the leaf name, not the full path.
+        $expected_brands = [
+            [ 'TopBrand', 'KidCakes' ],                  // Woo Logo: "TopBrand, TopBrand > KidCakes".
+            [ 'Slice', 'TopBrand' ],                     // Woo Album #1: "TopBrand > Slice, TopBrand".
+            [ 'Another Brand' ],                         // WooCommerce Product CSV Suite: "Another Brand".
+            [ 'TopBrand', 'KidCakes' ],                  // Ship Your Idea: "TopBrand, TopBrand > KidCakes".
+            [],                                          // Variation 1: No brands.
+            [],                                          // Variation 2: No brands.
+            [ 'TopBrand', 'KidCakes', 'Slice' ],         // Best Woo Products: "TopBrand, TopBrand > KidCakes, TopBrand > Slice".
+        ];
 
-		// Expected brand strings for each product from CSV.
-		// Note: Hierarchical terms store only the leaf name, not the full path.
-		$expected_brands = array(
-			array( 'TopBrand', 'KidCakes' ),                  // Woo Logo: "TopBrand, TopBrand > KidCakes".
-			array( 'Slice', 'TopBrand' ),                     // Woo Album #1: "TopBrand > Slice, TopBrand".
-			array( 'Another Brand' ),                         // WooCommerce Product CSV Suite: "Another Brand".
-			array( 'TopBrand', 'KidCakes' ),                  // Ship Your Idea: "TopBrand, TopBrand > KidCakes".
-			array(),                                          // Variation 1: No brands.
-			array(),                                          // Variation 2: No brands.
-			array( 'TopBrand', 'KidCakes', 'Slice' ),         // Best Woo Products: "TopBrand, TopBrand > KidCakes, TopBrand > Slice".
-		);
+        $importer    = new WC_Product_CSV_Importer($this->csv_file, $args);
+        $parsed_data = $importer->get_parsed_data();
 
-		$importer    = new WC_Product_CSV_Importer( $this->csv_file, $args );
-		$parsed_data = $importer->get_parsed_data();
+        // Verify that each product in parsed_data has the correct brand_ids assigned.
+        foreach ($parsed_data as $index => $data) {
+            // Get the expected brand term IDs for this product.
+            $expected_brand_ids = [];
+            foreach ($expected_brands[ $index ] as $brand_name) {
+                $brand = get_term_by('name', $brand_name, 'product_brand');
+                if ($brand && ! is_wp_error($brand)) {
+                    $expected_brand_ids[] = $brand->term_id;
+                }
+            }
 
-		// Verify that each product in parsed_data has the correct brand_ids assigned.
-		foreach ( $parsed_data as $index => $data ) {
-			// Get the expected brand term IDs for this product.
-			$expected_brand_ids = array();
-			foreach ( $expected_brands[ $index ] as $brand_name ) {
-				$brand = get_term_by( 'name', $brand_name, 'product_brand' );
-				if ( $brand && ! is_wp_error( $brand ) ) {
-					$expected_brand_ids[] = $brand->term_id;
-				}
-			}
+            // Get actual brand IDs from parsed data.
+            $actual_brand_ids = isset($data['brand_ids']) ? $data['brand_ids'] : [];
 
-			// Get actual brand IDs from parsed data.
-			$actual_brand_ids = isset( $data['brand_ids'] ) ? $data['brand_ids'] : array();
+            // Ensure it's an array (handle cases where it might be a string).
+            if (! is_array($actual_brand_ids)) {
+                $actual_brand_ids = [];
+            }
 
-			// Ensure it's an array (handle cases where it might be a string).
-			if ( ! is_array( $actual_brand_ids ) ) {
-				$actual_brand_ids = array();
-			}
+            // Sort both arrays for consistent comparison.
+            sort($expected_brand_ids);
+            sort($actual_brand_ids);
 
-			// Sort both arrays for consistent comparison.
-			sort( $expected_brand_ids );
-			sort( $actual_brand_ids );
+            $this->assertEquals(
+                $expected_brand_ids,
+                $actual_brand_ids,
+                sprintf('Product at index %d should have correct brand_ids', $index)
+            );
+        }
 
-			$this->assertEquals(
-				$expected_brand_ids,
-				$actual_brand_ids,
-				sprintf( 'Product at index %d should have correct brand_ids', $index )
-			);
-		}
+        // Verify hierarchical relationships.
+        $topbrand      = get_term_by('name', 'TopBrand', 'product_brand');
+        $kidcakes      = get_term_by('name', 'KidCakes', 'product_brand');
+        $slice         = get_term_by('name', 'Slice', 'product_brand');
+        $another_brand = get_term_by('name', 'Another Brand', 'product_brand');
 
-		// Verify hierarchical relationships.
-		$topbrand      = get_term_by( 'name', 'TopBrand', 'product_brand' );
-		$kidcakes      = get_term_by( 'name', 'KidCakes', 'product_brand' );
-		$slice         = get_term_by( 'name', 'Slice', 'product_brand' );
-		$another_brand = get_term_by( 'name', 'Another Brand', 'product_brand' );
+        // Assert that terms exist.
+        $this->assertNotFalse($topbrand, 'TopBrand term should exist');
+        $this->assertNotFalse($kidcakes, 'KidCakes term should exist');
+        $this->assertNotFalse($slice, 'Slice term should exist');
+        $this->assertNotFalse($another_brand, 'Another Brand term should exist');
 
-		// Assert that terms exist.
-		$this->assertNotFalse( $topbrand, 'TopBrand term should exist' );
-		$this->assertNotFalse( $kidcakes, 'KidCakes term should exist' );
-		$this->assertNotFalse( $slice, 'Slice term should exist' );
-		$this->assertNotFalse( $another_brand, 'Another Brand term should exist' );
+        // Assert hierarchical relationships: KidCakes and Slice should be children of TopBrand.
+        $this->assertEquals(0, $topbrand->parent, 'TopBrand should be a top-level term');
+        $this->assertEquals($topbrand->term_id, $kidcakes->parent, 'KidCakes should be a child of TopBrand');
+        $this->assertEquals($topbrand->term_id, $slice->parent, 'Slice should be a child of TopBrand');
+        $this->assertEquals(0, $another_brand->parent, 'Another Brand should be a top-level term');
+    }
 
-		// Assert hierarchical relationships: KidCakes and Slice should be children of TopBrand.
-		$this->assertEquals( 0, $topbrand->parent, 'TopBrand should be a top-level term' );
-		$this->assertEquals( $topbrand->term_id, $kidcakes->parent, 'KidCakes should be a child of TopBrand' );
-		$this->assertEquals( $topbrand->term_id, $slice->parent, 'Slice should be a child of TopBrand' );
-		$this->assertEquals( 0, $another_brand->parent, 'Another Brand should be a top-level term' );
-	}
+    /**
+     * Provides a mocked response for all images that are imported together with the products.
+     * This way it is not necessary to perform a regular request to an external server which would
+     * significantly slow down the tests.
+     *
+     * This function is called by WP_HTTP_TestCase::http_request_listner().
+     *
+     * @param array  $request Request arguments.
+     * @param string $url URL of the request.
+     *
+     * @return array|false mocked response or false to let WP perform a regular request.
+     */
+    protected function mock_http_responses($request, $url)
+    {
+        $mocked_response = false;
 
-	/**
-	 * Provides a mocked response for all images that are imported together with the products.
-	 * This way it is not necessary to perform a regular request to an external server which would
-	 * significantly slow down the tests.
-	 *
-	 * This function is called by WP_HTTP_TestCase::http_request_listner().
-	 *
-	 * @param array  $request Request arguments.
-	 * @param string $url URL of the request.
-	 *
-	 * @return array|false mocked response or false to let WP perform a regular request.
-	 */
-	protected function mock_http_responses( $request, $url ) {
-		$mocked_response = false;
+        if (false !== strpos($url, 'http://demo.woothemes.com')) {
 
-		if ( false !== strpos( $url, 'http://demo.woothemes.com' ) ) {
+            if (! empty($request['filename'])) {
+                self::file_copy(WC_Unit_Tests_Bootstrap::instance()->tests_dir . '/data/Dr1Bczxq4q.png', $request['filename']);
+            }
 
-			if ( ! empty( $request['filename'] ) ) {
-				self::file_copy( WC_Unit_Tests_Bootstrap::instance()->tests_dir . '/data/Dr1Bczxq4q.png', $request['filename'] );
-			}
+            $mocked_response = [
+                'body'     => 'Mocked response',
+                'response' => [ 'code' => 200 ],
+            ];
+        }
 
-			$mocked_response = array(
-				'body'     => 'Mocked response',
-				'response' => array( 'code' => 200 ),
-			);
-		}
+        return $mocked_response;
+    }
 
-		return $mocked_response;
-	}
+    /**
+     * Test WC_Product_CSV_Importer_Controller::is_file_valid_csv.
+     */
+    public function test_is_file_valid_csv()
+    {
+        $this->assertTrue(WC_Product_CSV_Importer_Controller::is_file_valid_csv('C:/wamp64/www/test.local/wp-content/uploads/2018/10/products_all_gg-1.csv'));
+        $this->assertTrue(WC_Product_CSV_Importer_Controller::is_file_valid_csv('/srv/www/woodev/wp-content/uploads/2018/10/1098488_single.csv'));
+        $this->assertFalse(WC_Product_CSV_Importer_Controller::is_file_valid_csv('/srv/www/woodev/wp-content/uploads/2018/10/img.jpg'));
+        $this->assertFalse(WC_Product_CSV_Importer_Controller::is_file_valid_csv('file:///srv/www/woodev/wp-content/uploads/2018/10/1098488_single.csv'));
+    }
 
-	/**
-	 * Test WC_Product_CSV_Importer_Controller::is_file_valid_csv.
-	 */
-	public function test_is_file_valid_csv() {
-		$this->assertTrue( WC_Product_CSV_Importer_Controller::is_file_valid_csv( 'C:/wamp64/www/test.local/wp-content/uploads/2018/10/products_all_gg-1.csv' ) );
-		$this->assertTrue( WC_Product_CSV_Importer_Controller::is_file_valid_csv( '/srv/www/woodev/wp-content/uploads/2018/10/1098488_single.csv' ) );
-		$this->assertFalse( WC_Product_CSV_Importer_Controller::is_file_valid_csv( '/srv/www/woodev/wp-content/uploads/2018/10/img.jpg' ) );
-		$this->assertFalse( WC_Product_CSV_Importer_Controller::is_file_valid_csv( 'file:///srv/www/woodev/wp-content/uploads/2018/10/1098488_single.csv' ) );
-	}
+    /**
+     * Test that directory traversal is prevented.
+     */
+    public function test_server_path_traversal()
+    {
+        if (! file_exists(ABSPATH . '../sample.csv')) {
+            self::file_copy($this->csv_file, ABSPATH . '../sample.csv');
+        }
 
-	/**
-	 * Test that directory traversal is prevented.
-	 */
-	public function test_server_path_traversal() {
-		if ( ! file_exists( ABSPATH . '../sample.csv' ) ) {
-			self::file_copy( $this->csv_file, ABSPATH . '../sample.csv' );
-		}
+        $_POST['file_url'] = '../sample.csv';
+        $import_controller = new WC_Product_CSV_Importer_Controller();
+        $import_result     = $import_controller->handle_upload();
 
-		$_POST['file_url'] = '../sample.csv';
-		$import_controller = new WC_Product_CSV_Importer_Controller();
-		$import_result     = $import_controller->handle_upload();
-
-		$this->assertTrue( is_wp_error( $import_result ) );
-		$this->assertEquals( $import_result->get_error_code(), 'woocommerce_product_csv_importer_upload_invalid_file' );
-	}
+        $this->assertTrue(is_wp_error($import_result));
+        $this->assertEquals($import_result->get_error_code(), 'woocommerce_product_csv_importer_upload_invalid_file');
+    }
 }

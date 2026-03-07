@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Post-install patch for memory leak fixes in vendor-prefixed dependencies.
  *
@@ -16,17 +18,17 @@
 
 $base = __DIR__ . '/../packages';
 
-$patches = array();
+$patches = [];
 
 // --- Patch A: DeclarationBlockParser — add clearCache() method ---
-$patches[] = array(
-	'file'   => $base . '/Pelago/Emogrifier/Utilities/DeclarationBlockParser.php',
-	'marker' => 'public static function clearCache(): void',
-	'search' => '    private static $cache = [];
+$patches[] = [
+    'file'   => $base . '/Pelago/Emogrifier/Utilities/DeclarationBlockParser.php',
+    'marker' => 'public static function clearCache(): void',
+    'search' => '    private static $cache = [];
 
     /**
      * CSS custom properties (variables) have case-sensitive names, so their case must be preserved.',
-	'replace' => '    private static $cache = [];
+    'replace' => '    private static $cache = [];
 
     /**
      * Clears the static declaration block cache.
@@ -41,20 +43,20 @@ $patches[] = array(
 
     /**
      * CSS custom properties (variables) have case-sensitive names, so their case must be preserved.',
-);
+];
 
 // --- Patch B: CssInliner — call DeclarationBlockParser::clearCache() ---
-$patches[] = array(
-	'file'   => $base . '/Pelago/Emogrifier/CssInliner.php',
-	'marker' => 'DeclarationBlockParser::clearCache();',
-	'search' => '    private function clearAllCaches(): void
+$patches[] = [
+    'file'   => $base . '/Pelago/Emogrifier/CssInliner.php',
+    'marker' => 'DeclarationBlockParser::clearCache();',
+    'search' => '    private function clearAllCaches(): void
     {
         $this->caches = [
             self::CACHE_KEY_SELECTOR => [],
             self::CACHE_KEY_COMBINED_STYLES => [],
         ];
     }',
-	'replace' => '    private function clearAllCaches(): void
+    'replace' => '    private function clearAllCaches(): void
     {
         $this->caches = [
             self::CACHE_KEY_SELECTOR => [],
@@ -62,18 +64,18 @@ $patches[] = array(
         ];
         DeclarationBlockParser::clearCache();
     }',
-);
+];
 
 // --- Patch C: CssSelectorConverter — LRU cache ---
-$patches[] = array(
-	'file'   => $base . '/Symfony/Component/CssSelector/CssSelectorConverter.php',
-	'marker' => 'maxCachedItems',
-	'search' => '    private $translator;
+$patches[] = [
+    'file'   => $base . '/Symfony/Component/CssSelector/CssSelectorConverter.php',
+    'marker' => 'maxCachedItems',
+    'search' => '    private $translator;
     private $cache;
 
     private static $xmlCache = [];
     private static $htmlCache = [];',
-	'replace' => '    private $translator;
+    'replace' => '    private $translator;
     private $cache;
 
     /**
@@ -85,16 +87,16 @@ $patches[] = array(
 
     private static $xmlCache = [];
     private static $htmlCache = [];',
-);
+];
 
-$patches[] = array(
-	'file'   => $base . '/Symfony/Component/CssSelector/CssSelectorConverter.php',
-	'marker' => 'array_key_first',
-	'search' => '    public function toXPath(string $cssExpr, string $prefix = \'descendant-or-self::\')
+$patches[] = [
+    'file'   => $base . '/Symfony/Component/CssSelector/CssSelectorConverter.php',
+    'marker' => 'array_key_first',
+    'search' => '    public function toXPath(string $cssExpr, string $prefix = \'descendant-or-self::\')
     {
         return $this->cache[$prefix][$cssExpr] ?? $this->cache[$prefix][$cssExpr] = $this->translator->cssToXPath($cssExpr, $prefix);
     }',
-	'replace' => '    public function toXPath(string $cssExpr, string $prefix = \'descendant-or-self::\')
+    'replace' => '    public function toXPath(string $cssExpr, string $prefix = \'descendant-or-self::\')
     {
         if (isset($this->cache[$prefix][$cssExpr])) {
             // Promote to most-recently-used position.
@@ -113,40 +115,40 @@ $patches[] = array(
 
         return $this->cache[$prefix][$cssExpr] = $value;
     }',
-);
+];
 
 $failed = false;
 
-foreach ( $patches as $patch ) {
-	$name = basename( $patch['file'] );
+foreach ($patches as $patch) {
+    $name = basename($patch['file']);
 
-	if ( ! file_exists( $patch['file'] ) ) {
-		echo "FAIL: File not found: {$patch['file']}\n";
-		$failed = true;
-		continue;
-	}
+    if (! file_exists($patch['file'])) {
+        echo "FAIL: File not found: {$patch['file']}\n";
+        $failed = true;
+        continue;
+    }
 
-	$content = file_get_contents( $patch['file'] );
+    $content = file_get_contents($patch['file']);
 
-	if ( strpos( $content, $patch['marker'] ) !== false ) {
-		echo "SKIP: {$name} — already patched ({$patch['marker']})\n";
-		continue;
-	}
+    if (str_contains($content, $patch['marker'])) {
+        echo "SKIP: {$name} — already patched ({$patch['marker']})\n";
+        continue;
+    }
 
-	if ( strpos( $content, $patch['search'] ) === false ) {
-		echo "FAIL: {$name} — search string not found. File may have changed upstream.\n";
-		$failed = true;
-		continue;
-	}
+    if (!str_contains($content, $patch['search'])) {
+        echo "FAIL: {$name} — search string not found. File may have changed upstream.\n";
+        $failed = true;
+        continue;
+    }
 
-	$patched = str_replace( $patch['search'], $patch['replace'], $content );
-	file_put_contents( $patch['file'], $patched );
-	echo "OK:   {$name} — patch applied\n";
+    $patched = str_replace($patch['search'], $patch['replace'], $content);
+    file_put_contents($patch['file'], $patched);
+    echo "OK:   {$name} — patch applied\n";
 }
 
-if ( $failed ) {
-	echo "\nSome patches failed. Please check the output above.\n";
-	exit( 1 );
+if ($failed) {
+    echo "\nSome patches failed. Please check the output above.\n";
+    exit(1);
 }
 
 echo "\nAll patches applied successfully.\n";

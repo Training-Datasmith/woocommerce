@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -23,15 +25,8 @@ namespace Automattic\WooCommerce\Vendor\Symfony\Component\CssSelector\Node;
  */
 class CombinedSelectorNode extends AbstractNode
 {
-    private $selector;
-    private $combinator;
-    private $subSelector;
-
-    public function __construct(NodeInterface $selector, string $combinator, NodeInterface $subSelector)
+    public function __construct(private readonly NodeInterface $selector, private readonly string $combinator, private readonly NodeInterface $subSelector)
     {
-        $this->selector = $selector;
-        $this->combinator = $combinator;
-        $this->subSelector = $subSelector;
     }
 
     public function getSelector(): NodeInterface

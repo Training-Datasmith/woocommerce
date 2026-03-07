@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -28,11 +30,8 @@ use Automattic\WooCommerce\Vendor\Symfony\Component\CssSelector\Parser\TokenStre
  */
 class NumberHandler implements HandlerInterface
 {
-    private $patterns;
-
-    public function __construct(TokenizerPatterns $patterns)
+    public function __construct(private readonly TokenizerPatterns $patterns)
     {
-        $this->patterns = $patterns;
     }
 
     /**
@@ -47,7 +46,7 @@ class NumberHandler implements HandlerInterface
         }
 
         $stream->push(new Token(Token::TYPE_NUMBER, $match[0], $reader->getPosition()));
-        $reader->moveForward(\strlen($match[0]));
+        $reader->moveForward(\strlen((string) $match[0]));
 
         return true;
     }

@@ -1,5 +1,6 @@
 <?php
-declare( strict_types = 1 );
+
+declare(strict_types=1);
 
 namespace Automattic\WooCommerce\Blocks\AIContent;
 
@@ -9,4 +10,6 @@ namespace Automattic\WooCommerce\Blocks\AIContent;
  * @internal
  * @deprecated This class can't be removed due https://github.com/woocommerce/woocommerce/issues/52311.
  */
-class PatternsDictionary {}
+class PatternsDictionary
+{
+}

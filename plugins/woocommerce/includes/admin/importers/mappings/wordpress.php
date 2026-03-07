@@ -1,12 +1,14 @@
 <?php
+
+declare(strict_types=1);
 /**
  * WordPress mappings
  *
  * @package WooCommerce\Admin\Importers
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 /**
@@ -14,18 +16,18 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 3.1.0
  * @param array $mappings Importer columns mappings.
- * @return array
  */
-function wc_importer_wordpress_mappings( $mappings ) {
+function wc_importer_wordpress_mappings($mappings): array
+{
 
-	$wp_mappings = array(
-		'post_id'      => 'id',
-		'post_title'   => 'name',
-		'post_content' => 'description',
-		'post_excerpt' => 'short_description',
-		'post_parent'  => 'parent_id',
-	);
+    $wp_mappings = [
+        'post_id'      => 'id',
+        'post_title'   => 'name',
+        'post_content' => 'description',
+        'post_excerpt' => 'short_description',
+        'post_parent'  => 'parent_id',
+    ];
 
-	return array_merge( $mappings, $wp_mappings );
+    return array_merge($mappings, $wp_mappings);
 }
-add_filter( 'woocommerce_csv_product_import_mapping_default_columns', 'wc_importer_wordpress_mappings' );
+add_filter('woocommerce_csv_product_import_mapping_default_columns', 'wc_importer_wordpress_mappings');

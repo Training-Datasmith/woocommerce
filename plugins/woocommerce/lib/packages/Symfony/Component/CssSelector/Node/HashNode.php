@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -23,13 +25,8 @@ namespace Automattic\WooCommerce\Vendor\Symfony\Component\CssSelector\Node;
  */
 class HashNode extends AbstractNode
 {
-    private $selector;
-    private $id;
-
-    public function __construct(NodeInterface $selector, string $id)
+    public function __construct(private readonly NodeInterface $selector, private readonly string $id)
     {
-        $this->selector = $selector;
-        $this->id = $id;
     }
 
     public function getSelector(): NodeInterface

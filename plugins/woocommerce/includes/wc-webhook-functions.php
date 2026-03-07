@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * WooCommerce Webhook functions
  *
@@ -6,43 +8,44 @@
  * @version 3.3.0
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * Process the web hooks at the end of the request.
  *
  * @since 4.4.0
  */
-function wc_webhook_execute_queue() {
-	global $wc_queued_webhooks;
-	if ( empty( $wc_queued_webhooks ) ) {
-		return;
-	}
+function wc_webhook_execute_queue(): void
+{
+    global $wc_queued_webhooks;
+    if (empty($wc_queued_webhooks)) {
+        return;
+    }
 
-	foreach ( $wc_queued_webhooks as $data ) {
-		// Webhooks are processed in the background by default
-		// so as to avoid delays or failures in delivery from affecting the
-		// user who triggered it.
-		if ( apply_filters( 'woocommerce_webhook_deliver_async', true, $data['webhook'], $data['arg'] ) ) {
+    foreach ($wc_queued_webhooks as $data) {
+        // Webhooks are processed in the background by default
+        // so as to avoid delays or failures in delivery from affecting the
+        // user who triggered it.
+        if (apply_filters('woocommerce_webhook_deliver_async', true, $data['webhook'], $data['arg'])) {
 
-			$queue_args = array(
-				'webhook_id' => $data['webhook']->get_id(),
-				'arg'        => $data['arg'],
-			);
+            $queue_args = [
+                'webhook_id' => $data['webhook']->get_id(),
+                'arg'        => $data['arg'],
+            ];
 
-			$next_scheduled_date = WC()->queue()->get_next( 'woocommerce_deliver_webhook_async', $queue_args, 'woocommerce-webhooks' );
+            $next_scheduled_date = WC()->queue()->get_next('woocommerce_deliver_webhook_async', $queue_args, 'woocommerce-webhooks');
 
-			// Make webhooks unique - only schedule one webhook every 10 minutes to maintain backward compatibility with WP Cron behaviour seen in WC < 3.5.0.
-			if ( is_null( $next_scheduled_date ) || $next_scheduled_date->getTimestamp() >= ( 600 + gmdate( 'U' ) ) ) {
-				WC()->queue()->add( 'woocommerce_deliver_webhook_async', $queue_args, 'woocommerce-webhooks' );
-			}
-		} else {
-			// Deliver immediately.
-			$data['webhook']->deliver( $data['arg'] );
-		}
-	}
+            // Make webhooks unique - only schedule one webhook every 10 minutes to maintain backward compatibility with WP Cron behaviour seen in WC < 3.5.0.
+            if (is_null($next_scheduled_date) || $next_scheduled_date->getTimestamp() >= (600 + gmdate('U'))) {
+                WC()->queue()->add('woocommerce_deliver_webhook_async', $queue_args, 'woocommerce-webhooks');
+            }
+        } else {
+            // Deliver immediately.
+            $data['webhook']->deliver($data['arg']);
+        }
+    }
 }
-add_action( 'shutdown', 'wc_webhook_execute_queue' );
+add_action('shutdown', 'wc_webhook_execute_queue');
 
 /**
  * Process webhook delivery.
@@ -51,18 +54,19 @@ add_action( 'shutdown', 'wc_webhook_execute_queue' );
  * @param WC_Webhook $webhook Webhook instance.
  * @param array      $arg     Delivery arguments.
  */
-function wc_webhook_process_delivery( $webhook, $arg ) {
-	// We need to queue the webhook so that it can be ran after the request has finished processing.
-	global $wc_queued_webhooks;
-	if ( ! isset( $wc_queued_webhooks ) ) {
-		$wc_queued_webhooks = array();
-	}
-	$wc_queued_webhooks[] = array(
-		'webhook' => $webhook,
-		'arg'     => $arg,
-	);
+function wc_webhook_process_delivery($webhook, $arg): void
+{
+    // We need to queue the webhook so that it can be ran after the request has finished processing.
+    global $wc_queued_webhooks;
+    if (! isset($wc_queued_webhooks)) {
+        $wc_queued_webhooks = [];
+    }
+    $wc_queued_webhooks[] = [
+        'webhook' => $webhook,
+        'arg'     => $arg,
+    ];
 }
-add_action( 'woocommerce_webhook_process_delivery', 'wc_webhook_process_delivery', 10, 2 );
+add_action('woocommerce_webhook_process_delivery', 'wc_webhook_process_delivery', 10, 2);
 
 /**
  * Wrapper function to execute the `woocommerce_deliver_webhook_async` cron.
@@ -73,16 +77,17 @@ add_action( 'woocommerce_webhook_process_delivery', 'wc_webhook_process_delivery
  * @throws Exception        If webhook cannot be read/found and $data parameter of WC_Webhook class constructor is set.
  * @param mixed $arg        Hook argument.
  */
-function wc_deliver_webhook_async( $webhook_id, $arg ) {
-	$webhook = new WC_Webhook( $webhook_id );
+function wc_deliver_webhook_async($webhook_id, $arg): void
+{
+    $webhook = new WC_Webhook($webhook_id);
 
-	if ( 0 === $webhook->get_id() ) {
-		return;
-	}
+    if (0 === $webhook->get_id()) {
+        return;
+    }
 
-	$webhook->deliver( $arg );
+    $webhook->deliver($arg);
 }
-add_action( 'woocommerce_deliver_webhook_async', 'wc_deliver_webhook_async', 10, 2 );
+add_action('woocommerce_deliver_webhook_async', 'wc_deliver_webhook_async', 10, 2);
 
 /**
  * Check if the given topic is a valid webhook topic, a topic is valid if:
@@ -92,38 +97,38 @@ add_action( 'woocommerce_deliver_webhook_async', 'wc_deliver_webhook_async', 10,
  *
  * @since  2.2.0
  * @param  string $topic Webhook topic.
- * @return bool
  */
-function wc_is_webhook_valid_topic( $topic ) {
-	$invalid_topics = array(
-		'action.woocommerce_login_credentials',
-		'action.woocommerce_product_csv_importer_check_import_file_path',
-		'action.woocommerce_webhook_should_deliver',
-	);
+function wc_is_webhook_valid_topic($topic): bool
+{
+    $invalid_topics = [
+        'action.woocommerce_login_credentials',
+        'action.woocommerce_product_csv_importer_check_import_file_path',
+        'action.woocommerce_webhook_should_deliver',
+    ];
 
-	if ( in_array( $topic, $invalid_topics, true ) ) {
-		return false;
-	}
+    if (in_array($topic, $invalid_topics, true)) {
+        return false;
+    }
 
-	// Custom topics are prefixed with woocommerce_ or wc_ are valid.
-	if ( 0 === strpos( $topic, 'action.woocommerce_' ) || 0 === strpos( $topic, 'action.wc_' ) ) {
-		return true;
-	}
+    // Custom topics are prefixed with woocommerce_ or wc_ are valid.
+    if (str_starts_with($topic, 'action.woocommerce_') || str_starts_with($topic, 'action.wc_')) {
+        return true;
+    }
 
-	$data = explode( '.', $topic );
+    $data = explode('.', $topic);
 
-	if ( ! isset( $data[0] ) || ! isset( $data[1] ) ) {
-		return false;
-	}
+    if (! isset($data[0]) || ! isset($data[1])) {
+        return false;
+    }
 
-	$valid_resources = apply_filters( 'woocommerce_valid_webhook_resources', array( 'coupon', 'customer', 'order', 'product' ) );
-	$valid_events    = apply_filters( 'woocommerce_valid_webhook_events', array( 'created', 'updated', 'deleted', 'restored' ) );
+    $valid_resources = apply_filters('woocommerce_valid_webhook_resources', [ 'coupon', 'customer', 'order', 'product' ]);
+    $valid_events    = apply_filters('woocommerce_valid_webhook_events', [ 'created', 'updated', 'deleted', 'restored' ]);
 
-	if ( in_array( $data[0], $valid_resources, true ) && in_array( $data[1], $valid_events, true ) ) {
-		return true;
-	}
+    if (in_array($data[0], $valid_resources, true) && in_array($data[1], $valid_events, true)) {
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 /**
@@ -131,10 +136,10 @@ function wc_is_webhook_valid_topic( $topic ) {
  *
  * @since 3.5.3
  * @param string $status Status to check.
- * @return bool
  */
-function wc_is_webhook_valid_status( $status ) {
-	return in_array( $status, array_keys( wc_get_webhook_statuses() ), true );
+function wc_is_webhook_valid_status($status): bool
+{
+    return in_array($status, array_keys(wc_get_webhook_statuses()), true);
 }
 
 /**
@@ -143,15 +148,16 @@ function wc_is_webhook_valid_status( $status ) {
  * @since  2.3.0
  * @return array
  */
-function wc_get_webhook_statuses() {
-	return apply_filters(
-		'woocommerce_webhook_statuses',
-		array(
-			'active'   => __( 'Active', 'woocommerce' ),
-			'paused'   => __( 'Paused', 'woocommerce' ),
-			'disabled' => __( 'Disabled', 'woocommerce' ),
-		)
-	);
+function wc_get_webhook_statuses()
+{
+    return apply_filters(
+        'woocommerce_webhook_statuses',
+        [
+            'active'   => __('Active', 'woocommerce'),
+            'paused'   => __('Paused', 'woocommerce'),
+            'disabled' => __('Disabled', 'woocommerce'),
+        ]
+    );
 }
 
 /**
@@ -163,27 +169,28 @@ function wc_get_webhook_statuses() {
  * @param  null|int $limit Limit number of webhooks loaded. @since 3.6.0.
  * @return bool
  */
-function wc_load_webhooks( $status = '', $limit = null ) {
-	// short-circuit if webhooks should not be loaded at all.
-	if ( ! is_null( $limit ) && $limit <= 0 ) {
-		return false;
-	}
+function wc_load_webhooks($status = '', $limit = null)
+{
+    // short-circuit if webhooks should not be loaded at all.
+    if (! is_null($limit) && $limit <= 0) {
+        return false;
+    }
 
-	$data_store = WC_Data_Store::load( 'webhook' );
-	$webhooks   = $data_store->get_webhooks_ids( $status );
-	$loaded     = 0;
+    $data_store = WC_Data_Store::load('webhook');
+    $webhooks   = $data_store->get_webhooks_ids($status);
+    $loaded     = 0;
 
-	foreach ( $webhooks as $webhook_id ) {
-		if ( ! is_null( $limit ) && $loaded >= $limit ) {
-			break;
-		}
+    foreach ($webhooks as $webhook_id) {
+        if (! is_null($limit) && $loaded >= $limit) {
+            break;
+        }
 
-		$webhook = new WC_Webhook( $webhook_id );
-		$webhook->enqueue();
-		$loaded ++;
-	}
+        $webhook = new WC_Webhook($webhook_id);
+        $webhook->enqueue();
+        $loaded++;
+    }
 
-	return 0 < $loaded;
+    return 0 < $loaded;
 }
 
 /**
@@ -191,24 +198,24 @@ function wc_load_webhooks( $status = '', $limit = null ) {
  *
  * @param  int|WC_Webhook $id Webhook ID or object.
  * @throws Exception          If webhook cannot be read/found and $data parameter of WC_Webhook class constructor is set.
- * @return WC_Webhook|null
  */
-function wc_get_webhook( $id ) {
-	$webhook = new WC_Webhook( $id );
+function wc_get_webhook($id): ?\WC_Webhook
+{
+    $webhook = new WC_Webhook($id);
 
-	return 0 !== $webhook->get_id() ? $webhook : null;
+    return 0 !== $webhook->get_id() ? $webhook : null;
 }
 
 /**
  * Get webhoook REST API versions.
  *
  * @since 3.5.1
- * @return array
  */
-function wc_get_webhook_rest_api_versions() {
-	return array(
-		'wp_api_v1',
-		'wp_api_v2',
-		'wp_api_v3',
-	);
+function wc_get_webhook_rest_api_versions(): array
+{
+    return [
+        'wp_api_v1',
+        'wp_api_v2',
+        'wp_api_v3',
+    ];
 }

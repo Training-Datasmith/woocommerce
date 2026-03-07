@@ -1,21 +1,25 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\StoreApi\Routes;
 
 /**
  * RouteInterface.
  */
-interface RouteInterface {
-	/**
-	 * Get the path of this REST route.
-	 *
-	 * @return string
-	 */
-	public function get_path();
+interface RouteInterface
+{
+    /**
+     * Get the path of this REST route.
+     *
+     * @return string
+     */
+    public function get_path();
 
-	/**
-	 * Get arguments for this REST route.
-	 *
-	 * @return array An array of endpoints.
-	 */
-	public function get_args();
+    /**
+     * Get arguments for this REST route.
+     *
+     * @return array An array of endpoints.
+     */
+    public function get_args();
 }

@@ -1,6 +1,6 @@
 <?php
 
-declare( strict_types=1 );
+declare(strict_types=1);
 
 namespace Automattic\WooCommerce\Internal\EmailEditor\PersonalizationTags;
 
@@ -11,12 +11,12 @@ use Automattic\WooCommerce\EmailEditor\Engine\PersonalizationTags\Personalizatio
  *
  * @internal
  */
-abstract class AbstractTagProvider {
-	/**
-	 * Register tags with the registry.
-	 *
-	 * @param Personalization_Tags_Registry $registry The personalization tags registry.
-	 * @return void
-	 */
-	abstract public function register_tags( Personalization_Tags_Registry $registry ): void;
+abstract class AbstractTagProvider
+{
+    /**
+     * Register tags with the registry.
+     *
+     * @param Personalization_Tags_Registry $registry The personalization tags registry.
+     */
+    abstract public function register_tags(Personalization_Tags_Registry $registry): void;
 }

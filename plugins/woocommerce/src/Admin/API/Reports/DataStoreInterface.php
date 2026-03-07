@@ -1,12 +1,14 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Reports Data Store Interface
  */
 
 namespace Automattic\WooCommerce\Admin\API\Reports;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 /**
@@ -14,13 +16,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 3.5.0
  */
-interface DataStoreInterface {
-
-	/**
-	 * Get the data based on args.
-	 *
-	 * @param array $args Query parameters.
-	 * @return stdClass|WP_Error
-	 */
-	public function get_data( $args );
+interface DataStoreInterface
+{
+    /**
+     * Get the data based on args.
+     *
+     * @param array $args Query parameters.
+     * @return stdClass|WP_Error
+     */
+    public function get_data($args);
 }

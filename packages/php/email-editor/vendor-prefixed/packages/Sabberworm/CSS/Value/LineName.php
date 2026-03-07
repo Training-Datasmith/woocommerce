@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Value;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\OutputFormat;
@@ -19,14 +21,12 @@ class LineName extends ValueList
     }
 
     /**
-     * @return LineName
      *
      * @throws UnexpectedTokenException
      * @throws UnexpectedEOFException
-     *
      * @internal since V8.8.0
      */
-    public static function parse(ParserState $oParserState)
+    public static function parse(ParserState $oParserState): \Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Value\LineName
     {
         $oParserState->consume('[');
         $oParserState->consumeWhiteSpace();
@@ -50,21 +50,17 @@ class LineName extends ValueList
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
 
     /**
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat)
+    public function render($oOutputFormat): string
     {
         return '[' . parent::render(OutputFormat::createCompact()) . ']';
     }

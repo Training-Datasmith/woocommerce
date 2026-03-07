@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -23,12 +25,10 @@ namespace Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector
  */
 class SelectorNode extends AbstractNode
 {
-    private $tree;
-    private $pseudoElement;
+    private \Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector\Node\NodeInterface|string|null $pseudoElement = null;
 
-    public function __construct(NodeInterface $tree, ?string $pseudoElement = null)
+    public function __construct(private readonly NodeInterface $tree, ?string $pseudoElement = null)
     {
-        $this->tree = $tree;
         $this->pseudoElement = $pseudoElement ? strtolower($pseudoElement) : null;
     }
 

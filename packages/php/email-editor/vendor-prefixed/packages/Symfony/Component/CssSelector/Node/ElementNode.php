@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -23,13 +25,8 @@ namespace Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector
  */
 class ElementNode extends AbstractNode
 {
-    private $namespace;
-    private $element;
-
-    public function __construct(?string $namespace = null, ?string $element = null)
+    public function __construct(private readonly ?string $namespace = null, private readonly ?string $element = null)
     {
-        $this->namespace = $namespace;
-        $this->element = $element;
     }
 
     public function getNamespace(): ?string

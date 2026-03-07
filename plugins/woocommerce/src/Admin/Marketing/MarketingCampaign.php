@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Represents a marketing/ads campaign for marketing channels.
  *
@@ -12,119 +14,67 @@ namespace Automattic\WooCommerce\Admin\Marketing;
  *
  * @since x.x.x
  */
-class MarketingCampaign {
-	/**
-	 * The unique identifier.
-	 *
-	 * @var string
-	 */
-	protected $id;
+class MarketingCampaign
+{
+    /**
+     * MarketingCampaign constructor.
+     *
+     * @param string                $id         The marketing campaign's unique identifier.
+     * @param MarketingCampaignType $type       The marketing campaign type.
+     * @param string                $title      The title of the marketing campaign.
+     * @param string                $manage_url The URL to the channel's campaign management page.
+     * @param Price|null            $cost       The cost of the marketing campaign with the currency.
+     * @param Price|null            $sales      The sales of the marketing campaign with the currency.
+     */
+    public function __construct(protected string $id, protected \Automattic\WooCommerce\Admin\Marketing\MarketingCampaignType $type, protected string $title, protected string $manage_url, protected ?\Automattic\WooCommerce\Admin\Marketing\Price $cost = null, protected ?\Automattic\WooCommerce\Admin\Marketing\Price $sales = null)
+    {
+    }
 
-	/**
-	 * The marketing campaign type.
-	 *
-	 * @var MarketingCampaignType
-	 */
-	protected $type;
+    /**
+     * Returns the marketing campaign's unique identifier.
+     */
+    public function get_id(): string
+    {
+        return $this->id;
+    }
 
-	/**
-	 * Title of the marketing campaign.
-	 *
-	 * @var string
-	 */
-	protected $title;
+    /**
+     * Returns the marketing campaign type.
+     */
+    public function get_type(): MarketingCampaignType
+    {
+        return $this->type;
+    }
 
-	/**
-	 * The URL to the channel's campaign management page.
-	 *
-	 * @var string
-	 */
-	protected $manage_url;
+    /**
+     * Returns the title of the marketing campaign.
+     */
+    public function get_title(): string
+    {
+        return $this->title;
+    }
 
-	/**
-	 * The cost of the marketing campaign with the currency.
-	 *
-	 * @var Price
-	 */
-	protected $cost;
+    /**
+     * Returns the URL to manage the marketing campaign.
+     */
+    public function get_manage_url(): string
+    {
+        return $this->manage_url;
+    }
 
-	/**
-	 * The sales of the marketing campaign with the currency.
-	 *
-	 * @var Price
-	 */
-	protected $sales;
+    /**
+     * Returns the cost of the marketing campaign with the currency.
+     */
+    public function get_cost(): ?Price
+    {
+        return $this->cost;
+    }
 
-	/**
-	 * MarketingCampaign constructor.
-	 *
-	 * @param string                $id         The marketing campaign's unique identifier.
-	 * @param MarketingCampaignType $type       The marketing campaign type.
-	 * @param string                $title      The title of the marketing campaign.
-	 * @param string                $manage_url The URL to the channel's campaign management page.
-	 * @param Price|null            $cost       The cost of the marketing campaign with the currency.
-	 * @param Price|null            $sales      The sales of the marketing campaign with the currency.
-	 */
-	public function __construct( string $id, MarketingCampaignType $type, string $title, string $manage_url, ?Price $cost = null, ?Price $sales = null ) {
-		$this->id         = $id;
-		$this->type       = $type;
-		$this->title      = $title;
-		$this->manage_url = $manage_url;
-		$this->cost       = $cost;
-		$this->sales      = $sales;
-	}
-
-	/**
-	 * Returns the marketing campaign's unique identifier.
-	 *
-	 * @return string
-	 */
-	public function get_id(): string {
-		return $this->id;
-	}
-
-	/**
-	 * Returns the marketing campaign type.
-	 *
-	 * @return MarketingCampaignType
-	 */
-	public function get_type(): MarketingCampaignType {
-		return $this->type;
-	}
-
-	/**
-	 * Returns the title of the marketing campaign.
-	 *
-	 * @return string
-	 */
-	public function get_title(): string {
-		return $this->title;
-	}
-
-	/**
-	 * Returns the URL to manage the marketing campaign.
-	 *
-	 * @return string
-	 */
-	public function get_manage_url(): string {
-		return $this->manage_url;
-	}
-
-	/**
-	 * Returns the cost of the marketing campaign with the currency.
-	 *
-	 * @return Price|null
-	 */
-	public function get_cost(): ?Price {
-		return $this->cost;
-	}
-
-	/**
-	 * Returns the sales of the marketing campaign with the currency.
-	 *
-	 * @return Price|null
-	 */
-	public function get_sales(): ?Price {
-		return $this->sales;
-	}
+    /**
+     * Returns the sales of the marketing campaign with the currency.
+     */
+    public function get_sales(): ?Price
+    {
+        return $this->sales;
+    }
 }

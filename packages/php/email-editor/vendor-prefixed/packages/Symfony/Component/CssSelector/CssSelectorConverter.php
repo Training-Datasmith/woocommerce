@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -26,7 +28,7 @@ use Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector\XPath
  */
 class CssSelectorConverter
 {
-    private $translator;
+    private readonly \Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector\XPath\Translator $translator;
     private $cache;
 
     /**
@@ -36,8 +38,8 @@ class CssSelectorConverter
      */
     public static $maxCachedItems = 200;
 
-    private static $xmlCache = [];
-    private static $htmlCache = [];
+    private static array $xmlCache = [];
+    private static array $htmlCache = [];
 
     /**
      * @param bool $html Whether HTML support should be enabled. Disable it for XML documents

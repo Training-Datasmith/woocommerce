@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\CSSList;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\OutputFormat;
@@ -30,7 +32,7 @@ class KeyFrame extends CSSList implements AtRule
     /**
      * @param string $vendorKeyFrame
      */
-    public function setVendorKeyFrame($vendorKeyFrame)
+    public function setVendorKeyFrame($vendorKeyFrame): void
     {
         $this->vendorKeyFrame = $vendorKeyFrame;
     }
@@ -46,7 +48,7 @@ class KeyFrame extends CSSList implements AtRule
     /**
      * @param string $animationName
      */
-    public function setAnimationName($animationName)
+    public function setAnimationName($animationName): void
     {
         $this->animationName = $animationName;
     }
@@ -60,33 +62,25 @@ class KeyFrame extends CSSList implements AtRule
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
 
     /**
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat)
+    public function render($oOutputFormat): string
     {
         $sResult = $oOutputFormat->comments($this);
         $sResult .= "@{$this->vendorKeyFrame} {$this->animationName}{$oOutputFormat->spaceBeforeOpeningBrace()}{";
         $sResult .= $this->renderListContents($oOutputFormat);
-        $sResult .= '}';
-        return $sResult;
+        return $sResult . '}';
     }
 
-    /**
-     * @return bool
-     */
-    public function isRootList()
+    public function isRootList(): bool
     {
         return false;
     }

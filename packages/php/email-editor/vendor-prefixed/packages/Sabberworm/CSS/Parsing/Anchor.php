@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Parsing;
 
 /**
@@ -8,29 +10,13 @@ namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Parsing;
 class Anchor
 {
     /**
-     * @var int
-     */
-    private $iPosition;
-
-    /**
-     * @var \Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Parsing\ParserState
-     */
-    private $oParserState;
-
-    /**
      * @param int $iPosition
-     * @param \Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Parsing\ParserState $oParserState
      */
-    public function __construct($iPosition, ParserState $oParserState)
+    public function __construct(private $iPosition, private readonly ParserState $oParserState)
     {
-        $this->iPosition = $iPosition;
-        $this->oParserState = $oParserState;
     }
 
-    /**
-     * @return void
-     */
-    public function backtrack()
+    public function backtrack(): void
     {
         $this->oParserState->setPosition($this->iPosition);
     }

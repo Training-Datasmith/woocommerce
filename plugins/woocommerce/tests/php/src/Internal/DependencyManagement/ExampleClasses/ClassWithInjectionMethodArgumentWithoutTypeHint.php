@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * ClassWithInjectionMethodArgumentWithoutTypeHint class file.
  *
@@ -10,15 +12,16 @@ namespace Automattic\WooCommerce\Tests\Internal\DependencyManagement\ExampleClas
 /**
  * An example class that has a injector method argument without type hint.
  */
-class ClassWithInjectionMethodArgumentWithoutTypeHint {
-
-	/**
-	 * Initialize the class instance.
-	 *
-	 * @internal
-	 *
-	 * @param mixed $argument_without_type_hint Anything, really.
-	 */
-	final public function init( $argument_without_type_hint ) {
-	}
+class ClassWithInjectionMethodArgumentWithoutTypeHint
+{
+    /**
+     * Initialize the class instance.
+     *
+     * @internal
+     *
+     * @param mixed $argument_without_type_hint Anything, really.
+     */
+    final public function init($argument_without_type_hint)
+    {
+    }
 }

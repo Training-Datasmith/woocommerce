@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * DerivedDependencyClass class file.
  */
@@ -8,5 +10,6 @@ namespace Automattic\WooCommerce\Tests\Internal\DependencyManagement\ExampleClas
 /**
  * An example of a class other classes depend on and is also a derived class.
  */
-class DerivedDependencyClass extends DependencyClass {
+class DerivedDependencyClass extends DependencyClass
+{
 }

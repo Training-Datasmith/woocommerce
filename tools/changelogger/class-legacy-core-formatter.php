@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Legacy_Core_Formatter class
  *
@@ -21,72 +23,68 @@ require_once 'class-formatter.php';
  *
  * Class Formatter
  */
-class Legacy_Core_Formatter extends Formatter implements FormatterPlugin {
+class Legacy_Core_Formatter extends Formatter implements FormatterPlugin
+{
+    /**
+     * Bullet for changes.
+     *
+     * @var string
+     */
+    public $bullet = '* ';
 
-	/**
-	 * Bullet for changes.
-	 *
-	 * @var string
-	 */
-	public $bullet = '* ';
+    /**
+     * Entry pattern regex.
+     *
+     * @var string
+     */
+    public $entry_pattern = '/^##?#\s+([^\n=]+)\s+((?:(?!^##).)+)/ms';
 
+    /**
+     * Returns an mapping the subheading to the type key.
+     */
+    private function getSubheadingTypeMapping(): array
+    {
+        $woocommerce_path = dirname(__DIR__, 2) . '/plugins/woocommerce';
+        $composer_file    = $woocommerce_path . '/composer.json';
+        // phpcs:disable WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+        $composer_config = json_decode(file_get_contents($composer_file), true);
+        return array_flip($composer_config['extra']['changelogger']['types']);
+    }
 
-	/**
-	 * Entry pattern regex.
-	 *
-	 * @var string
-	 */
-	public $entry_pattern = '/^##?#\s+([^\n=]+)\s+((?:(?!^##).)+)/ms';
+    /**
+     * Write a Changelog object to a string.
+     *
+     * @param Changelog $changelog Changelog object.
+     */
+    public function format(Changelog $changelog): string
+    {
+        $ret            = '';
+        $bullet         = $this->bullet;
+        $indent         = str_repeat(' ', strlen($bullet));
+        $subheading_map = $this->getSubheadingTypeMapping();
 
-	/**
-	 * Returns an mapping the subheading to the type key.
-	 *
-	 * @return array
-	 */
-	private function getSubheadingTypeMapping() {
-		$woocommerce_path = dirname( dirname( __DIR__ ) ) . '/plugins/woocommerce';
-		$composer_file    = $woocommerce_path . '/composer.json';
-		// phpcs:disable WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-		$composer_config = json_decode( file_get_contents( $composer_file ), true );
-		return array_flip( $composer_config['extra']['changelogger']['types'] );
-	}
+        foreach ($changelog->getEntries() as $entry) {
+            $version = $entry->getVersion();
+            if (substr_count((string) $version, '.') === 1) {
+                $version .= '.0';
+            }
 
-	/**
-	 * Write a Changelog object to a string.
-	 *
-	 * @param Changelog $changelog Changelog object.
-	 * @return string
-	 */
-	public function format( Changelog $changelog ) {
-		$ret            = '';
-		$bullet         = $this->bullet;
-		$indent         = str_repeat( ' ', strlen( $bullet ) );
-		$subheading_map = $this->getSubheadingTypeMapping();
+            $ret .= "= $version YYYY-mm-dd =\n\n";
+            $ret .= "**WooCommerce**\n\n";
 
-		foreach ( $changelog->getEntries() as $entry ) {
-			$version = $entry->getVersion();
-			if ( substr_count( $version, '.' ) === 1 ) {
-				$version .= '.0';
-			}
+            foreach ($entry->getChangesBySubheading() as $heading => $changes) {
+                foreach ($changes as $change) {
+                    $text = trim((string) $change->getContent());
+                    $type = $subheading_map[ $heading ] ?? 'update';
+                    if ('' !== $text) {
+                        $preamble = $bullet . ucfirst($type) . ' - ';
+                        $ret     .= $preamble . str_replace("\n", "\n$indent", $text) . "\n";
+                    }
+                }
+            }
+            $ret = trim($ret) . "\n\n";
+        }
 
-			$ret .= "= $version YYYY-mm-dd =\n\n";
-			$ret .= "**WooCommerce**\n\n";
-
-			foreach ( $entry->getChangesBySubheading() as $heading => $changes ) {
-				foreach ( $changes as $change ) {
-					$text = trim( $change->getContent() );
-					$type = isset( $subheading_map[ $heading ] ) ? $subheading_map[ $heading ] : 'update';
-					if ( '' !== $text ) {
-						$preamble = $bullet . ucfirst( $type ) . ' - ';
-						$ret     .= $preamble . str_replace( "\n", "\n$indent", $text ) . "\n";
-					}
-				}
-			}
-			$ret = trim( $ret ) . "\n\n";
-		}
-
-		$ret = trim( $ret ) . "\n";
-
-		return $ret;
-	}
+        return trim($ret) . "\n";
+    }
 }

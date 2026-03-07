@@ -11,4 +11,6 @@ namespace Automattic\WooCommerce\Vendor\Pelago\Emogrifier\HtmlProcessor;
  * - add HEAD and BODY elements (if they are missing)
  * - reformat the HTML
  */
-final class HtmlNormalizer extends AbstractHtmlProcessor {}
+final class HtmlNormalizer extends AbstractHtmlProcessor
+{
+}

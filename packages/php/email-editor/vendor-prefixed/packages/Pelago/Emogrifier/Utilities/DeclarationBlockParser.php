@@ -17,7 +17,7 @@ final class DeclarationBlockParser
     /**
      * @var array<string, array<non-empty-string, string>>
      */
-    private static $cache = [];
+    private static array $cache = [];
 
     /**
      * Clears the static declaration block cache.
@@ -40,11 +40,10 @@ final class DeclarationBlockParser
      */
     public function normalizePropertyName(string $name): string
     {
-        if (\substr($name, 0, 2) === '--') {
+        if (str_starts_with($name, '--')) {
             return $name;
-        } else {
-            return \strtolower($name);
         }
+        return \strtolower($name);
     }
 
     /**

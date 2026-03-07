@@ -6,10 +6,10 @@
  */
 declare(strict_types=1);
 
-$header        = __( 'Our services', 'woocommerce' );
-$product_title = __( 'Create anything', 'woocommerce' );
-$description   = __( 'Navigating life\'s intricate fabric, choices unfold paths to the extraordinary, demanding creativity, curiosity, and courage for a truly fulfilling journey.', 'woocommerce' );
-$button_link   = __( 'Get started', 'woocommerce' );
+$header        = __('Our services', 'woocommerce');
+$product_title = __('Create anything', 'woocommerce');
+$description   = __('Navigating life\'s intricate fabric, choices unfold paths to the extraordinary, demanding creativity, curiosity, and courage for a truly fulfilling journey.', 'woocommerce');
+$button_link   = __('Get started', 'woocommerce');
 ?>
 
 
@@ -21,7 +21,7 @@ $button_link   = __( 'Get started', 'woocommerce' );
 
 <!-- wp:group {"align":"wide","layout":{"type":"constrained"}} -->
 <div class="wp-block-group alignwide"><!-- wp:heading {"textAlign":"left","align":"full","style":{"typography":{"fontStyle":"normal"}}} -->
-<h2 class="wp-block-heading alignfull has-text-align-left" style="font-style:normal;"><?php echo esc_html( $header ); ?></h2>
+<h2 class="wp-block-heading alignfull has-text-align-left" style="font-style:normal;"><?php echo esc_html($header); ?></h2>
 <!-- /wp:heading --></div>
 <!-- /wp:group -->
 
@@ -32,43 +32,43 @@ $button_link   = __( 'Get started', 'woocommerce' );
 <!-- wp:columns {"align":"wide","style":{"spacing":{"blockGap":{"top":"var:preset|spacing|40","left":"var:preset|spacing|30"}}}} -->
 <div class="wp-block-columns alignwide"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:heading {"level":3,"className":"is-service-name","style":{"typography":{"fontStyle":"normal","fontWeight":"700"}},"fontSize":"medium"} -->
-<h3 class="wp-block-heading is-service-name has-medium-font-size" style="font-style:normal;font-weight:700"><?php echo esc_html( $product_title ); ?></h3>
+<h3 class="wp-block-heading is-service-name has-medium-font-size" style="font-style:normal;font-weight:700"><?php echo esc_html($product_title); ?></h3>
 <!-- /wp:heading -->
 
 <!-- wp:paragraph {"className":"is-service-description"} -->
-<p class="is-service-description"><?php echo esc_html( $description ); ?></p>
+<p class="is-service-description"><?php echo esc_html($description); ?></p>
 <!-- /wp:paragraph -->
 
 <!-- wp:paragraph {"className":"is-service-link"} -->
-<p class="is-service-link"><a href="#"><?php echo esc_html( $button_link ); ?></a> →</p>
+<p class="is-service-link"><a href="#"><?php echo esc_html($button_link); ?></a> →</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:column -->
 
 <!-- wp:column -->
 <div class="wp-block-column"><!-- wp:heading {"level":3,"className":"is-service-name","style":{"typography":{"fontStyle":"normal","fontWeight":"700"}},"fontSize":"medium"} -->
-<h3 class="wp-block-heading is-service-name has-medium-font-size" style="font-style:normal;font-weight:700"><?php echo esc_html( $product_title ); ?></h3>
+<h3 class="wp-block-heading is-service-name has-medium-font-size" style="font-style:normal;font-weight:700"><?php echo esc_html($product_title); ?></h3>
 <!-- /wp:heading -->
 
 <!-- wp:paragraph {"className":"is-service-description"} -->
-<p class="is-service-description"><?php echo esc_html( $description ); ?></p>
+<p class="is-service-description"><?php echo esc_html($description); ?></p>
 <!-- /wp:paragraph -->
 
 <!-- wp:paragraph {"className":"is-service-link"} -->
-<p class="is-service-link"><a href="#"><?php echo esc_html( $button_link ); ?></a> →</p>
+<p class="is-service-link"><a href="#"><?php echo esc_html($button_link); ?></a> →</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:column -->
 
 <!-- wp:column -->
 <div class="wp-block-column"><!-- wp:heading {"level":3,"className":"is-service-name","style":{"typography":{"fontStyle":"normal","fontWeight":"700"}},"fontSize":"medium"} -->
-<h3 class="wp-block-heading is-service-name has-medium-font-size" style="font-style:normal;font-weight:700"><?php echo esc_html( $product_title ); ?></h3>
+<h3 class="wp-block-heading is-service-name has-medium-font-size" style="font-style:normal;font-weight:700"><?php echo esc_html($product_title); ?></h3>
 <!-- /wp:heading -->
 
 <!-- wp:paragraph {"className":"is-service-description"} -->
-<p class="is-service-description"><?php echo esc_html( $description ); ?></p>
+<p class="is-service-description"><?php echo esc_html($description); ?></p>
 <!-- /wp:paragraph -->
 
 <!-- wp:paragraph {"className":"is-service-link"} -->
-<p class="is-service-link"><a href="#"><?php echo esc_html( $button_link ); ?></a> →</p>
+<p class="is-service-link"><a href="#"><?php echo esc_html($button_link); ?></a> →</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->

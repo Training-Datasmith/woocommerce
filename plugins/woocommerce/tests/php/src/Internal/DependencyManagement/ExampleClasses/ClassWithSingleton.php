@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * ClassWithSingleton class file.
  */
@@ -8,30 +10,31 @@
 /**
  * An example of a class that holds a singleton instance.
  */
-class ClassWithSingleton {
+class ClassWithSingleton
+{
+    /**
+     * @var ClassWithSingleton The singleton instance of the class.
+     */
+    public static $instance;
 
-	/**
-	 * @var ClassWithSingleton The singleton instance of the class.
-	 */
-	public static $instance;
+    /**
+     * @var array The arguments supplied to 'instance'.
+     */
+    public static $instance_args;
 
-	/**
-	 * @var array The arguments supplied to 'instance'.
-	 */
-	public static $instance_args;
-
-	/**
-	 * Gets the singleton instance of the class.
-	 *
-	 * @param mixed ...$args Any arguments required by the method.
-	 *
-	 * @return ClassWithSingleton The singleton instance of the class.
-	 */
-	public static function instance( ...$args ) {
-		if ( is_null( self::$instance ) ) {
-			self::$instance      = new ClassWithSingleton();
-			self::$instance_args = $args;
-		}
-		return self::$instance;
-	}
+    /**
+     * Gets the singleton instance of the class.
+     *
+     * @param mixed ...$args Any arguments required by the method.
+     *
+     * @return ClassWithSingleton The singleton instance of the class.
+     */
+    public static function instance(...$args)
+    {
+        if (is_null(self::$instance)) {
+            self::$instance      = new ClassWithSingleton();
+            self::$instance_args = $args;
+        }
+        return self::$instance;
+    }
 }

@@ -1,15 +1,17 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Load up extra automatic mappings for the CSV importer.
  *
  * @package WooCommerce\Admin\Importers
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
-require dirname( __FILE__ ) . '/default.php';
-require dirname( __FILE__ ) . '/generic.php';
-require dirname( __FILE__ ) . '/shopify.php';
-require dirname( __FILE__ ) . '/wordpress.php';
+require __DIR__ . '/default.php';
+require __DIR__ . '/generic.php';
+require __DIR__ . '/shopify.php';
+require __DIR__ . '/wordpress.php';

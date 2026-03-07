@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
 
 use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
@@ -7,67 +9,65 @@ use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
 /**
  * Review Shipping Options Task
  */
-class ReviewShippingOptions extends Task {
-	/**
-	 * ID.
-	 *
-	 * @return string
-	 */
-	public function get_id() {
-		return 'review-shipping';
-	}
+class ReviewShippingOptions extends Task
+{
+    /**
+     * ID.
+     */
+    public function get_id(): string
+    {
+        return 'review-shipping';
+    }
 
-	/**
-	 * Title.
-	 *
-	 * @return string
-	 */
-	public function get_title() {
-		return __( 'Review shipping options', 'woocommerce' );
-	}
+    /**
+     * Title.
+     *
+     * @return string
+     */
+    public function get_title()
+    {
+        return __('Review shipping options', 'woocommerce');
+    }
 
-	/**
-	 * Content.
-	 *
-	 * @return string
-	 */
-	public function get_content() {
-		return '';
-	}
+    /**
+     * Content.
+     */
+    public function get_content(): string
+    {
+        return '';
+    }
 
-	/**
-	 * Time.
-	 *
-	 * @return string
-	 */
-	public function get_time() {
-		return '';
-	}
+    /**
+     * Time.
+     */
+    public function get_time(): string
+    {
+        return '';
+    }
 
-	/**
-	 * Task completion.
-	 *
-	 * @return bool
-	 */
-	public function is_complete() {
-		return get_option( 'woocommerce_admin_reviewed_default_shipping_zones' ) === 'yes';
-	}
+    /**
+     * Task completion.
+     */
+    public function is_complete(): bool
+    {
+        return get_option('woocommerce_admin_reviewed_default_shipping_zones') === 'yes';
+    }
 
-	/**
-	 * Task visibility.
-	 *
-	 * @return bool
-	 */
-	public function can_view() {
-		return get_option( 'woocommerce_admin_created_default_shipping_zones' ) === 'yes';
-	}
+    /**
+     * Task visibility.
+     */
+    public function can_view(): bool
+    {
+        return get_option('woocommerce_admin_created_default_shipping_zones') === 'yes';
+    }
 
-	/**
-	 * Action URL.
-	 *
-	 * @return string
-	 */
-	public function get_action_url() {
-		return admin_url( 'admin.php?page=wc-settings&tab=shipping' );
-	}
+    /**
+     * Action URL.
+     *
+     * @return string
+     */
+    public function get_action_url()
+    {
+        return admin_url('admin.php?page=wc-settings&tab=shipping');
+    }
 }

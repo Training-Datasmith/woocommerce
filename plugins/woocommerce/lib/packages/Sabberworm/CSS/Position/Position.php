@@ -38,7 +38,7 @@ trait Position
     {
         $lineNumber = $this->getLineNumber();
 
-        return $lineNumber !== null ? $lineNumber : 0;
+        return $lineNumber ?? 0;
     }
 
     /**
@@ -56,14 +56,14 @@ trait Position
     {
         $columnNumber = $this->getColumnNumber();
 
-        return $columnNumber !== null ? $columnNumber : 0;
+        return $columnNumber ?? 0;
     }
 
     /**
      * @param int<0, max>|null $lineNumber
      * @param int<0, max>|null $columnNumber
      */
-    public function setPosition($lineNumber, $columnNumber = null)
+    public function setPosition($lineNumber, $columnNumber = null): void
     {
         // The conditional is for backwards compatibility (backcompat); `0` will not be allowed in future.
         $this->lineNumber = $lineNumber !== 0 ? $lineNumber : null;

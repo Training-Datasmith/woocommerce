@@ -59,19 +59,18 @@ abstract class AbstractHtmlProcessor
     /**
      * @var ?\DOMDocument
      */
-    protected $domDocument = null;
+    protected $domDocument;
 
-    /**
-     * @var ?\DOMXPath
-     */
-    private $xPath = null;
+    private ?\DOMXPath $xPath = null;
 
     /**
      * The constructor.
      *
      * Please use `::fromHtml` or `::fromDomDocument` instead.
      */
-    private function __construct() {}
+    private function __construct()
+    {
+    }
 
     /**
      * Builds a new instance from the given HTML.
@@ -122,7 +121,6 @@ abstract class AbstractHtmlProcessor
     /**
      * Provides access to the internal DOMDocument representation of the HTML in its current state.
      *
-     * @return \DOMDocument
      *
      * @throws \UnexpectedValueException
      */
@@ -136,9 +134,6 @@ abstract class AbstractHtmlProcessor
         return $this->domDocument;
     }
 
-    /**
-     * @param \DOMDocument $domDocument
-     */
     private function setDomDocument(\DOMDocument $domDocument): void
     {
         $this->domDocument = $domDocument;
@@ -146,8 +141,6 @@ abstract class AbstractHtmlProcessor
     }
 
     /**
-     * @return \DOMXPath
-     *
      * @throws \UnexpectedValueException
      */
     protected function getXPath(): \DOMXPath
@@ -162,8 +155,6 @@ abstract class AbstractHtmlProcessor
 
     /**
      * Renders the normalized and processed HTML.
-     *
-     * @return string
      */
     public function render(): string
     {
@@ -174,8 +165,6 @@ abstract class AbstractHtmlProcessor
 
     /**
      * Renders the content of the BODY element of the normalized and processed HTML.
-     *
-     * @return string
      */
     public function renderBodyContent(): string
     {
@@ -188,9 +177,7 @@ abstract class AbstractHtmlProcessor
     /**
      * Eliminates any invalid closing tags for void elements from the given HTML.
      *
-     * @param string $html
      *
-     * @return string
      */
     private function removeSelfClosingTagsClosingTags(string $html): string
     {
@@ -219,7 +206,6 @@ abstract class AbstractHtmlProcessor
      *
      * This method assumes that there always is a BODY element.
      *
-     * @return \DOMElement
      *
      * @throws \RuntimeException
      */
@@ -237,8 +223,6 @@ abstract class AbstractHtmlProcessor
      * Creates a DOM document from the given HTML and stores it in $this->domDocument.
      *
      * The DOM document will always have a BODY element and a document type.
-     *
-     * @param string $html
      */
     private function createUnifiedDomDocument(string $html): void
     {
@@ -248,8 +232,6 @@ abstract class AbstractHtmlProcessor
 
     /**
      * Creates a DOMDocument instance from the given HTML and stores it in $this->domDocument.
-     *
-     * @param string $html
      */
     private function createRawDomDocument(string $html): void
     {
@@ -268,7 +250,6 @@ abstract class AbstractHtmlProcessor
      * Returns the HTML with added document type, Content-Type meta tag, and self-closing slashes, if needed,
      * ensuring that the HTML will be good for creating a DOM document from it.
      *
-     * @param string $html
      *
      * @return string the unified HTML
      */
@@ -283,7 +264,6 @@ abstract class AbstractHtmlProcessor
     /**
      * Makes sure that the passed HTML has a document type, with lowercase "html".
      *
-     * @param string $html
      *
      * @return string HTML with document type
      */
@@ -300,7 +280,6 @@ abstract class AbstractHtmlProcessor
     /**
      * Makes sure the document type in the passed HTML has lowercase "html".
      *
-     * @param string $html
      *
      * @return string HTML with normalized document type
      */
@@ -320,7 +299,6 @@ abstract class AbstractHtmlProcessor
      *
      * This method also ensures that there is a HEAD element.
      *
-     * @param string $html
      *
      * @return string the HTML with the meta tag added
      */
@@ -359,9 +337,7 @@ abstract class AbstractHtmlProcessor
      * omission rules, HTML parsers are expected to end the `<head>` element and start the `<body>` element upon
      * encountering a start tag for any element which is permitted only within the `<body>`.
      *
-     * @param string $html
      *
-     * @return bool
      */
     private function hasContentTypeMetaTagInHead(string $html): bool
     {
@@ -391,9 +367,7 @@ abstract class AbstractHtmlProcessor
      * expected to end the `<head>` element and start the `<body>` element upon encountering a start tag for any element
      * which is permitted only within the `<body>`.
      *
-     * @param string $html
      *
-     * @return bool
      *
      * @throws \RuntimeException
      */
@@ -406,22 +380,18 @@ abstract class AbstractHtmlProcessor
             // An exception to the implicit end of the `<head>` is any content within a `<template>` element, as well in
             // comments.  As an optimization, this is only checked for if a potential `<head>` end tag is found.
             $htmlWithoutCommentsOrTemplates = $this->removeHtmlTemplateElements($this->removeHtmlComments($html));
-            $hasEndOfHeadElement = $htmlWithoutCommentsOrTemplates === $html
+            return $htmlWithoutCommentsOrTemplates === $html
                 || $this->hasEndOfHeadElement($htmlWithoutCommentsOrTemplates);
-        } else {
-            $hasEndOfHeadElement = false;
         }
 
-        return $hasEndOfHeadElement;
+        return false;
     }
 
     /**
      * Removes comments from the given HTML, including any which are unterminated, for which the remainder of the string
      * is removed.
      *
-     * @param string $html
      *
-     * @return string
      *
      * @throws \RuntimeException
      */
@@ -434,9 +404,7 @@ abstract class AbstractHtmlProcessor
      * Removes `<template>` elements from the given HTML, including any without an end tag, for which the remainder of
      * the string is removed.
      *
-     * @param string $html
      *
-     * @return string
      *
      * @throws \RuntimeException
      */
@@ -449,7 +417,6 @@ abstract class AbstractHtmlProcessor
      * Makes sure that any self-closing tags not recognized as such by PHP's DOMDocument implementation have a
      * self-closing slash.
      *
-     * @param string $html
      *
      * @return string HTML with problematic tags converted.
      */

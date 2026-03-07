@@ -1,34 +1,37 @@
 <?php
+
+declare(strict_types=1);
 /**
  * RemoteInboxNotificationsEngine tests.
  *
  * @package WooCommerce\Admin\Tests\RemoteInboxNotifications
  */
 
-use Automattic\WooCommerce\Admin\RemoteInboxNotifications\RemoteInboxNotificationsEngine;
-use Automattic\WooCommerce\Admin\RemoteInboxNotifications\RemoteInboxNotificationsDataSourcePoller;
 use Automattic\WooCommerce\Admin\Notes\Note;
+use Automattic\WooCommerce\Admin\RemoteInboxNotifications\RemoteInboxNotificationsDataSourcePoller;
+use Automattic\WooCommerce\Admin\RemoteInboxNotifications\RemoteInboxNotificationsEngine;
 
 /**
  * class WC_Admin_Tests_RemoteInboxNotifications_SpecRunner
  */
-class WC_Admin_Tests_RemoteInboxNotifications_RemoteInboxNotificationsEngine extends WC_Unit_Test_Case {
+class WC_Admin_Tests_RemoteInboxNotifications_RemoteInboxNotificationsEngine extends WC_Unit_Test_Case
+{
+    /**
+     * Set up.
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
 
-	/**
-	 * Set up.
-	 */
-	public function setUp(): void {
-		parent::setUp();
-
-		add_filter(
-			'transient_woocommerce_admin_' . RemoteInboxNotificationsDataSourcePoller::ID . '_specs',
-			function( $value ) {
-				if ( $value ) {
-					return $value;
-				}
-				$specs = array(
-					'zh_TW' => json_decode(
-						'[{
+        add_filter(
+            'transient_woocommerce_admin_' . RemoteInboxNotificationsDataSourcePoller::ID . '_specs',
+            function ($value) {
+                if ($value) {
+                    return $value;
+                }
+                $specs = [
+                    'zh_TW' => json_decode(
+                        '[{
 						"slug": "test",
 						"status": "unactioned",
 						"type": "info",
@@ -50,73 +53,76 @@ class WC_Admin_Tests_RemoteInboxNotifications_RemoteInboxNotificationsEngine ext
 							"status": "unactioned"
 						}]
 					}]'
-					),
-				);
+                    ),
+                ];
 
-				return $specs;
-			}
-		);
-	}
+                return $specs;
+            }
+        );
+    }
 
-	/**
-	 * Tear down.
-	 */
-	public function tearDown(): void {
-		parent::tearDown();
-		delete_transient( 'woocommerce_admin_' . RemoteInboxNotificationsDataSourcePoller::ID . '_specs' );
-		remove_all_filters( 'transient_woocommerce_admin_' . RemoteInboxNotificationsDataSourcePoller::ID . '_specs' );
-	}
+    /**
+     * Tear down.
+     */
+    public function tearDown(): void
+    {
+        parent::tearDown();
+        delete_transient('woocommerce_admin_' . RemoteInboxNotificationsDataSourcePoller::ID . '_specs');
+        remove_all_filters('transient_woocommerce_admin_' . RemoteInboxNotificationsDataSourcePoller::ID . '_specs');
+    }
 
+    /**
+     * Tests get_note_from_db function with a invalid note.
+     *
+     */
+    public function test_get_note_from_db_with_invalid_note()
+    {
+        $invalid_note = [
+            'note_name' => 'invalid',
+        ];
+        $this->assertEquals(RemoteInboxNotificationsEngine::get_note_from_db($invalid_note), $invalid_note);
+    }
 
-	/**
-	 * Tests get_note_from_db function with a invalid note.
-	 *
-	 */
-	public function test_get_note_from_db_with_invalid_note() {
-		$invalid_note = array(
-			'note_name' => 'invalid',
-		);
-		$this->assertEquals( RemoteInboxNotificationsEngine::get_note_from_db( $invalid_note ), $invalid_note );
-	}
+    /**
+     * Tests get_note_from_db function when locale is the same
+     *
+     */
+    public function test_get_note_from_db_when_the_locale_is_the_same()
+    {
+        $note = new Note();
+        $note->set_locale(get_user_locale());
+        $this->assertEquals(RemoteInboxNotificationsEngine::get_note_from_db($note), $note);
+    }
 
-	/**
-	 * Tests get_note_from_db function when locale is the same
-	 *
-	 */
-	public function test_get_note_from_db_when_the_locale_is_the_same() {
-		$note = new Note();
-		$note->set_locale( get_user_locale() );
-		$this->assertEquals( RemoteInboxNotificationsEngine::get_note_from_db( $note ), $note );
-	}
+    /**
+     * Tests get_note_from_db function when locales are different
+     *
+     */
+    public function test_get_note_from_db_when_locales_are_different()
+    {
+        $note_from_db = new Note();
+        $note_from_db->set_locale('en_US');
+        $note_from_db->set_name('test');
+        $note_from_db->set_actions(
+            [
+                (object) [
+                    'id'   => 123,
+                    'name' => 'test-action',
+                ],
+            ]
+        );
+        add_filter(
+            'locale',
+            function ($locale) {
+                return 'zh_TW';
+            }
+        );
 
-	/**
-	 * Tests get_note_from_db function when locales are different
-	 *
-	 */
-	public function test_get_note_from_db_when_locales_are_different() {
-		$note_from_db = new Note();
-		$note_from_db->set_locale( 'en_US' );
-		$note_from_db->set_name( 'test' );
-		$note_from_db->set_actions(
-			array(
-				(object) array(
-					'id'   => 123,
-					'name' => 'test-action',
-				),
-			)
-		);
-		add_filter(
-			'locale',
-			function( $locale ) {
-				return 'zh_TW';
-			}
-		);
+        $note = RemoteInboxNotificationsEngine::get_note_from_db($note_from_db);
+        $this->assertEquals($note->get_title(), '名稱');
+        $this->assertEquals($note->get_content(), '內容');
+        $this->assertEquals($note->get_actions()[0]->label, '標籤');
+        $this->assertEquals($note->get_actions()[0]->id, 123);
 
-		$note = RemoteInboxNotificationsEngine::get_note_from_db( $note_from_db );
-		$this->assertEquals( $note->get_title(), '名稱' );
-		$this->assertEquals( $note->get_content(), '內容' );
-		$this->assertEquals( $note->get_actions()[0]->label, '標籤' );
-		$this->assertEquals( $note->get_actions()[0]->id, 123 );
-
-	}
+    }
 }

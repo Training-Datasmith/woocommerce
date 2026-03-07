@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Helper code for wc-admin unit tests.
  *
@@ -7,56 +9,59 @@
 
 namespace Automattic\WooCommerce\RestApi\UnitTests\Helpers;
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * Class QueueHelper.
  *
  * This helper class should ONLY be used for unit tests!.
  */
-class QueueHelper {
+class QueueHelper
+{
+    /**
+     * Get all pending queued actions.
+     *
+     * @return array Pending jobs.
+     */
+    public static function get_all_pending()
+    {
+        $jobs = WC()->queue()->search(
+            [
+                'per_page' => -1,
+                'status'   => 'pending',
+                'claimed'  => false,
+            ]
+        );
 
-	/**
-	 * Get all pending queued actions.
-	 *
-	 * @return array Pending jobs.
-	 */
-	public static function get_all_pending() {
-		$jobs = WC()->queue()->search(
-			array(
-				'per_page' => -1,
-				'status'   => 'pending',
-				'claimed'  => false,
-			)
-		);
+        return $jobs;
+    }
 
-		return $jobs;
-	}
+    /**
+     * Run all pending queued actions.
+     *
+     * @return void
+     */
+    public static function run_all_pending()
+    {
+        $jobs = self::get_all_pending();
 
-	/**
-	 * Run all pending queued actions.
-	 *
-	 * @return void
-	 */
-	public static function run_all_pending() {
-		$jobs = self::get_all_pending();
+        foreach ($jobs as $job) {
+            $job->execute();
+        }
+    }
 
-		foreach ( $jobs as $job ) {
-			$job->execute();
-		}
-	}
+    /**
+     * Run all pending queued actions.
+     *
+     * @return void
+     */
+    public static function process_pending()
+    {
+        $jobs = self::get_all_pending();
 
-	/**
-	 * Run all pending queued actions.
-	 *
-	 * @return void
-	 */
-	public static function process_pending() {
-		$jobs = self::get_all_pending();
-
-		$queue_runner = new \ActionScheduler_QueueRunner();
-		foreach ( $jobs as $job_id => $job ) {
-			$queue_runner->process_action( $job_id );
-		}
-	}
+        $queue_runner = new \ActionScheduler_QueueRunner();
+        foreach ($jobs as $job_id => $job) {
+            $queue_runner->process_action($job_id);
+        }
+    }
 }

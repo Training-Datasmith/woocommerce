@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Value;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\OutputFormat;
@@ -20,34 +22,27 @@ abstract class ValueList extends Value
     protected $aComponents;
 
     /**
-     * @var string
-     *
-     * @internal since 8.8.0
-     */
-    protected $sSeparator;
-
-    /**
      * phpcs:ignore Generic.Files.LineLength
      * @param array<int, RuleValueList|CSSFunction|CSSString|LineName|Size|URL|string>|RuleValueList|CSSFunction|CSSString|LineName|Size|URL|string $aComponents
      * @param string $sSeparator
      * @param int $iLineNo
      */
-    public function __construct($aComponents = [], $sSeparator = ',', $iLineNo = 0)
+    public function __construct($aComponents = [], /**
+     * @internal since 8.8.0
+     */
+        protected $sSeparator = ',', $iLineNo = 0)
     {
         parent::__construct($iLineNo);
         if (!is_array($aComponents)) {
             $aComponents = [$aComponents];
         }
         $this->aComponents = $aComponents;
-        $this->sSeparator = $sSeparator;
     }
 
     /**
      * @param RuleValueList|CSSFunction|CSSString|LineName|Size|URL|string $mComponent
-     *
-     * @return void
      */
-    public function addListComponent($mComponent)
+    public function addListComponent($mComponent): void
     {
         $this->aComponents[] = $mComponent;
     }
@@ -62,10 +57,8 @@ abstract class ValueList extends Value
 
     /**
      * @param array<int, RuleValueList|CSSFunction|CSSString|LineName|Size|URL|string> $aComponents
-     *
-     * @return void
      */
-    public function setListComponents(array $aComponents)
+    public function setListComponents(array $aComponents): void
     {
         $this->aComponents = $aComponents;
     }
@@ -80,20 +73,16 @@ abstract class ValueList extends Value
 
     /**
      * @param string $sSeparator
-     *
-     * @return void
      */
-    public function setListSeparator($sSeparator)
+    public function setListSeparator($sSeparator): void
     {
         $this->sSeparator = $sSeparator;
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Value;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\OutputFormat;
@@ -14,29 +16,21 @@ use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Parsing\UnexpectedTo
 class URL extends PrimitiveValue
 {
     /**
-     * @var CSSString
-     */
-    private $oURL;
-
-    /**
      * @param int $iLineNo
      */
-    public function __construct(CSSString $oURL, $iLineNo = 0)
+    public function __construct(private CSSString $oURL, $iLineNo = 0)
     {
         parent::__construct($iLineNo);
-        $this->oURL = $oURL;
     }
 
     /**
-     * @return URL
      *
      * @throws SourceException
      * @throws UnexpectedEOFException
      * @throws UnexpectedTokenException
-     *
      * @internal since V8.8.0
      */
-    public static function parse(ParserState $oParserState)
+    public static function parse(ParserState $oParserState): \Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Value\URL
     {
         $oAnchor = $oParserState->anchor();
         $sIdentifier = '';
@@ -63,10 +57,7 @@ class URL extends PrimitiveValue
         return $oResult;
     }
 
-    /**
-     * @return void
-     */
-    public function setURL(CSSString $oURL)
+    public function setURL(CSSString $oURL): void
     {
         $this->oURL = $oURL;
     }
@@ -80,21 +71,17 @@ class URL extends PrimitiveValue
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
 
     /**
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat)
+    public function render($oOutputFormat): string
     {
         return "url({$this->oURL->render($oOutputFormat)})";
     }

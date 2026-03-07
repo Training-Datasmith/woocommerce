@@ -1,11 +1,12 @@
 <?php
+
 /**
  * This file is part of the WooCommerce Email Editor package.
  *
  * @package Automattic\WooCommerce\EmailEditor
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Automattic\WooCommerce\EmailEditor\Engine;
 
@@ -15,215 +16,214 @@ use Automattic\WooCommerce\EmailEditor\Engine\PersonalizationTags\Personalizatio
 /**
  * Class for replacing personalization tags with their values in the email content.
  */
-class Personalizer {
+class Personalizer
+{
+    /**
+     * Regex pattern for matching personalization tag names (e.g., "woocommerce/store-url", "user-firstname").
+     * Used in both tag detection and parsing.
+     */
+    private const TAG_NAME_PATTERN = '[a-zA-Z0-9\-\/]+';
 
-	/**
-	 * Regex pattern for matching personalization tag names (e.g., "woocommerce/store-url", "user-firstname").
-	 * Used in both tag detection and parsing.
-	 */
-	private const TAG_NAME_PATTERN = '[a-zA-Z0-9\-\/]+';
+    /**
+     * Context for personalization tags.
+     *
+     * The `context` is an associative array containing recipient-specific or
+     * campaign-specific data. This data is used to resolve personalization tags
+     * and provide input for tag callbacks during email content processing.
+     *
+     * Example context:
+     * array(
+     *     'recipient_email' => 'john@example.com', // Recipient's email
+     *     'custom_field'    => 'Special Value',    // Custom campaign-specific data
+     * )
+     *
+     * @var array<string, mixed>
+     */
+    private array $context;
 
-	/**
-	 * Personalization tags registry.
-	 *
-	 * @var Personalization_Tags_Registry
-	 */
-	private Personalization_Tags_Registry $tags_registry;
+    /**
+     * Class constructor with required dependencies.
+     *
+     * @param Personalization_Tags_Registry $tags_registry Personalization tags registry.
+     */
+    public function __construct(/**
+     * Personalization tags registry.
+     */
+        private readonly Personalization_Tags_Registry $tags_registry
+    ) {
+        $this->context       = [];
+    }
 
-	/**
-	 * Context for personalization tags.
-	 *
-	 * The `context` is an associative array containing recipient-specific or
-	 * campaign-specific data. This data is used to resolve personalization tags
-	 * and provide input for tag callbacks during email content processing.
-	 *
-	 * Example context:
-	 * array(
-	 *     'recipient_email' => 'john@example.com', // Recipient's email
-	 *     'custom_field'    => 'Special Value',    // Custom campaign-specific data
-	 * )
-	 *
-	 * @var array<string, mixed>
-	 */
-	private array $context;
+    /**
+     * Set the context for personalization.
+     *
+     * The `context` provides data required for resolving personalization tags
+     * during content processing. This method allows the context to be set or updated.
+     *
+     * Example usage:
+     * $personalizer->set_context(array(
+     *     'recipient_email' => 'john@example.com',
+     * ));
+     *
+     * @param array<string, mixed> $context Associative array containing personalization data.
+     */
+    public function set_context(array $context): void
+    {
+        $this->context = $context;
+    }
 
-	/**
-	 * Class constructor with required dependencies.
-	 *
-	 * @param Personalization_Tags_Registry $tags_registry Personalization tags registry.
-	 */
-	public function __construct( Personalization_Tags_Registry $tags_registry ) {
-		$this->tags_registry = $tags_registry;
-		$this->context       = array();
-	}
+    /**
+     * Get the current context.
+     *
+     * The `context` is an associative array containing recipient-specific or
+     * campaign-specific data. This data is used to resolve personalization tags
+     * and provide input for tag callbacks during email content processing.
+     *
+     * @return array<string, mixed> The current context.
+     */
+    public function get_context(): array
+    {
+        return $this->context;
+    }
 
-	/**
-	 * Set the context for personalization.
-	 *
-	 * The `context` provides data required for resolving personalization tags
-	 * during content processing. This method allows the context to be set or updated.
-	 *
-	 * Example usage:
-	 * $personalizer->set_context(array(
-	 *     'recipient_email' => 'john@example.com',
-	 * ));
-	 *
-	 * @param array<string, mixed> $context Associative array containing personalization data.
-	 * @return void
-	 */
-	public function set_context( array $context ) {
-		$this->context = $context;
-	}
+    /**
+     * Personalize the content by replacing the personalization tags with their values.
+     *
+     * @param string $content The content to personalize.
+     * @return string The personalized content.
+     */
+    public function personalize_content(string $content): string
+    {
+        $content_processor = new HTML_Tag_Processor($content);
+        while ($content_processor->next_token()) {
+            if ($content_processor->get_token_type() === '#comment') {
+                $modifiable_text = $content_processor->get_modifiable_text();
+                $token           = $this->parse_token($modifiable_text);
+                $tag             = $this->tags_registry->get_by_token($token['token']);
+                if (! $tag) {
+                    continue;
+                }
 
-	/**
-	 * Get the current context.
-	 *
-	 * The `context` is an associative array containing recipient-specific or
-	 * campaign-specific data. This data is used to resolve personalization tags
-	 * and provide input for tag callbacks during email content processing.
-	 *
-	 * @return array<string, mixed> The current context.
-	 */
-	public function get_context(): array {
-		return $this->context;
-	}
+                $value = $tag->execute_callback($this->context, $token['arguments']);
+                $content_processor->replace_token($value);
 
-	/**
-	 * Personalize the content by replacing the personalization tags with their values.
-	 *
-	 * @param string $content The content to personalize.
-	 * @return string The personalized content.
-	 */
-	public function personalize_content( string $content ): string {
-		$content_processor = new HTML_Tag_Processor( $content );
-		while ( $content_processor->next_token() ) {
-			if ( $content_processor->get_token_type() === '#comment' ) {
-				$modifiable_text = $content_processor->get_modifiable_text();
-				$token           = $this->parse_token( $modifiable_text );
-				$tag             = $this->tags_registry->get_by_token( $token['token'] );
-				if ( ! $tag ) {
-					continue;
-				}
+            } elseif ($content_processor->get_token_type() === '#tag' && $content_processor->get_tag() === 'TITLE') {
+                // The title tag contains the subject of the email which should be personalized. HTML_Tag_Processor does parse the header tags.
+                $modifiable_text = $content_processor->get_modifiable_text();
+                $title           = $this->personalize_content($modifiable_text);
+                $content_processor->set_modifiable_text($title);
 
-				$value = $tag->execute_callback( $this->context, $token['arguments'] );
-				$content_processor->replace_token( $value );
+            } elseif ($content_processor->get_token_type() === '#tag' && $content_processor->get_tag() === 'A' && $content_processor->get_attribute('data-link-href')) {
+                // The anchor tag contains the data-link-href attribute which should be personalized.
+                $href  = $content_processor->get_attribute('data-link-href');
+                $token = $this->parse_token($href);
+                $tag   = $this->tags_registry->get_by_token($token['token']);
+                if (! $tag) {
+                    continue;
+                }
 
-			} elseif ( $content_processor->get_token_type() === '#tag' && $content_processor->get_tag() === 'TITLE' ) {
-				// The title tag contains the subject of the email which should be personalized. HTML_Tag_Processor does parse the header tags.
-				$modifiable_text = $content_processor->get_modifiable_text();
-				$title           = $this->personalize_content( $modifiable_text );
-				$content_processor->set_modifiable_text( $title );
+                $value = $tag->execute_callback($this->context, $token['arguments']);
+                $value = $this->replace_link_href($href, $tag->get_token(), $value);
+                if ($value) {
+                    $content_processor->set_attribute('href', $value);
+                    $content_processor->remove_attribute('data-link-href');
+                    $content_processor->remove_attribute('contenteditable');
+                }
+            } elseif ($content_processor->get_token_type() === '#tag' && $content_processor->get_tag() === 'A') {
+                $href = $content_processor->get_attribute('href');
+                if (! is_string($href)) {
+                    continue;
+                }
 
-			} elseif ( $content_processor->get_token_type() === '#tag' && $content_processor->get_tag() === 'A' && $content_processor->get_attribute( 'data-link-href' ) ) {
-				// The anchor tag contains the data-link-href attribute which should be personalized.
-				$href  = (string) $content_processor->get_attribute( 'data-link-href' );
-				$token = $this->parse_token( $href );
-				$tag   = $this->tags_registry->get_by_token( $token['token'] );
-				if ( ! $tag ) {
-					continue;
-				}
+                // Decode both URL encoding (%XX) and HTML entities (&#039;) to handle various encoding scenarios.
+                $decoded_href = html_entity_decode(urldecode($href), ENT_QUOTES, 'UTF-8');
+                if (! preg_match('/\[' . self::TAG_NAME_PATTERN . '(?:\s+[^\]]+)?\]/', $decoded_href, $matches)) {
+                    continue;
+                }
 
-				$value = $tag->execute_callback( $this->context, $token['arguments'] );
-				$value = $this->replace_link_href( $href, $tag->get_token(), $value );
-				if ( $value ) {
-					$content_processor->set_attribute( 'href', $value );
-					$content_processor->remove_attribute( 'data-link-href' );
-					$content_processor->remove_attribute( 'contenteditable' );
-				}
-			} elseif ( $content_processor->get_token_type() === '#tag' && $content_processor->get_tag() === 'A' ) {
-				$href = $content_processor->get_attribute( 'href' );
-				if ( ! is_string( $href ) ) {
-					continue;
-				}
+                $token = $this->parse_token($matches[0]);
+                $tag   = $this->tags_registry->get_by_token($token['token']);
 
-				// Decode both URL encoding (%XX) and HTML entities (&#039;) to handle various encoding scenarios.
-				$decoded_href = html_entity_decode( urldecode( $href ), ENT_QUOTES, 'UTF-8' );
-				if ( ! preg_match( '/\[' . self::TAG_NAME_PATTERN . '(?:\s+[^\]]+)?\]/', $decoded_href, $matches ) ) {
-					continue;
-				}
+                if (! $tag) {
+                    continue;
+                }
 
-				$token = $this->parse_token( $matches[0] );
-				$tag   = $this->tags_registry->get_by_token( $token['token'] );
+                $value = $tag->execute_callback($this->context, $token['arguments']);
 
-				if ( ! $tag ) {
-					continue;
-				}
+                if ($value) {
+                    $content_processor->set_attribute('href', $value);
+                }
+            }
+        }
 
-				$value = $tag->execute_callback( $this->context, $token['arguments'] );
+        $content_processor->flush_updates();
+        return $content_processor->get_updated_html();
+    }
 
-				if ( $value ) {
-					$content_processor->set_attribute( 'href', $value );
-				}
-			}
-		}
+    /**
+     * Parse a personalization tag to the token and attributes.
+     *
+     * @param string $token The token to parse.
+     * @return array{token: string, arguments: array<string, string>} The parsed token.
+     */
+    private function parse_token(string $token): array
+    {
+        $result = [
+            'token'     => '',
+            'arguments' => [],
+        ];
 
-		$content_processor->flush_updates();
-		return $content_processor->get_updated_html();
-	}
+        // Step 1: Separate the tag and attributes.
+        if (preg_match('/^\[(' . self::TAG_NAME_PATTERN . ')\s*(.*?)\]$/', trim($token), $matches)) {
+            $result['token']   = "[{$matches[1]}]"; // The tag part (e.g., "[mailpoet/subscriber-firstname]").
+            $attributes_string = $matches[2]; // The attributes part (e.g., 'default="subscriber"').
 
-	/**
-	 * Parse a personalization tag to the token and attributes.
-	 *
-	 * @param string $token The token to parse.
-	 * @return array{token: string, arguments: array<string, string>} The parsed token.
-	 */
-	private function parse_token( string $token ): array {
-		$result = array(
-			'token'     => '',
-			'arguments' => array(),
-		);
+            // Step 2: Extract attributes from the attribute string.
+            // Match quoted values (double or single quotes separately to avoid mixing) and unquoted values.
+            // Unquoted values can occur when esc_url() strips quotes from personalization tags.
+            // For unquoted values with spaces, capture until the next key= pattern or closing bracket.
+            // The negative lookahead (?!\w+=) is critical for preventing ReDoS:
+            // it ensures the inner loop terminates as soon as the next key= pattern appears,
+            // preventing excessive backtracking despite the nested quantifiers.
+            if (preg_match_all('/(\w+)=(?:"([^"]*)"|\'([^\']*)\'|([^\s\]]+(?:\s+(?!\w+=)[^\s\]]+)*))/', $attributes_string, $attribute_matches, PREG_SET_ORDER)) {
+                foreach ($attribute_matches as $attribute) {
+                    // $attribute[2] is double-quoted value, $attribute[3] is single-quoted value,
+                    // $attribute[4] is unquoted value (may contain spaces).
+                    // Use null coalescing as only one of these will be populated depending on which pattern matched.
+                    $double_quoted_value = $attribute[2] ?? '';
+                    $single_quoted_value = $attribute[3] ?? '';
+                    $unquoted_value      = $attribute[4] ?? '';
 
-		// Step 1: Separate the tag and attributes.
-		if ( preg_match( '/^\[(' . self::TAG_NAME_PATTERN . ')\s*(.*?)\]$/', trim( $token ), $matches ) ) {
-			$result['token']   = "[{$matches[1]}]"; // The tag part (e.g., "[mailpoet/subscriber-firstname]").
-			$attributes_string = $matches[2]; // The attributes part (e.g., 'default="subscriber"').
+                    if ('' !== $double_quoted_value) {
+                        $result['arguments'][ $attribute[1] ] = $double_quoted_value;
+                    } elseif ('' !== $single_quoted_value) {
+                        $result['arguments'][ $attribute[1] ] = $single_quoted_value;
+                    } else {
+                        $result['arguments'][ $attribute[1] ] = $unquoted_value;
+                    }
+                }
+            }
+        }
 
-			// Step 2: Extract attributes from the attribute string.
-			// Match quoted values (double or single quotes separately to avoid mixing) and unquoted values.
-			// Unquoted values can occur when esc_url() strips quotes from personalization tags.
-			// For unquoted values with spaces, capture until the next key= pattern or closing bracket.
-			// The negative lookahead (?!\w+=) is critical for preventing ReDoS:
-			// it ensures the inner loop terminates as soon as the next key= pattern appears,
-			// preventing excessive backtracking despite the nested quantifiers.
-			if ( preg_match_all( '/(\w+)=(?:"([^"]*)"|\'([^\']*)\'|([^\s\]]+(?:\s+(?!\w+=)[^\s\]]+)*))/', $attributes_string, $attribute_matches, PREG_SET_ORDER ) ) {
-				foreach ( $attribute_matches as $attribute ) {
-					// $attribute[2] is double-quoted value, $attribute[3] is single-quoted value,
-					// $attribute[4] is unquoted value (may contain spaces).
-					// Use null coalescing as only one of these will be populated depending on which pattern matched.
-					$double_quoted_value = $attribute[2] ?? '';
-					$single_quoted_value = $attribute[3] ?? '';
-					$unquoted_value      = $attribute[4] ?? '';
+        return $result;
+    }
 
-					if ( '' !== $double_quoted_value ) {
-						$result['arguments'][ $attribute[1] ] = $double_quoted_value;
-					} elseif ( '' !== $single_quoted_value ) {
-						$result['arguments'][ $attribute[1] ] = $single_quoted_value;
-					} else {
-						$result['arguments'][ $attribute[1] ] = $unquoted_value;
-					}
-				}
-			}
-		}
+    /**
+     * Replace the href attribute of the anchor tag with the personalized value.
+     * The replacement uses regular expression to match the shortcode and its attributes.
+     *
+     * @param string $content The content to replace the link href.
+     * @param string $token Personalization tag token.
+     * @param string $replacement The callback output to replace the link href.
+     */
+    private function replace_link_href(string $content, string $token, string $replacement): string
+    {
+        // Escape the shortcode name for safe regex usage and strip the brackets.
+        $escaped_shortcode = preg_quote(substr($token, 1, strlen($token) - 2), '/');
 
-		return $result;
-	}
+        // Create a regex pattern dynamically.
+        $pattern = '/\[' . $escaped_shortcode . '(?:\s+[^\]]+)?\]/';
 
-	/**
-	 * Replace the href attribute of the anchor tag with the personalized value.
-	 * The replacement uses regular expression to match the shortcode and its attributes.
-	 *
-	 * @param string $content The content to replace the link href.
-	 * @param string $token Personalization tag token.
-	 * @param string $replacement The callback output to replace the link href.
-	 * @return string
-	 */
-	private function replace_link_href( string $content, string $token, string $replacement ) {
-		// Escape the shortcode name for safe regex usage and strip the brackets.
-		$escaped_shortcode = preg_quote( substr( $token, 1, strlen( $token ) - 2 ), '/' );
-
-		// Create a regex pattern dynamically.
-		$pattern = '/\[' . $escaped_shortcode . '(?:\s+[^\]]+)?\]/';
-
-		return trim( (string) preg_replace( $pattern, $replacement, $content ) );
-	}
+        return trim((string) preg_replace($pattern, $replacement, $content));
+    }
 }

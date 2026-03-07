@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Legacy WC_Product_Cat_Dropdown_Walker file
  *
@@ -6,6 +8,6 @@
  * @deprecated 3.4.0
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
-require dirname( __FILE__ ) . '/class-wc-product-cat-dropdown-walker.php';
+require __DIR__ . '/class-wc-product-cat-dropdown-walker.php';

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * REST API WC System Status Tools Controller
  *
@@ -8,7 +10,7 @@
  * @since   3.0.0
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * System status tools controller.
@@ -16,12 +18,12 @@ defined( 'ABSPATH' ) || exit;
  * @package WooCommerce\RestApi
  * @extends WC_REST_System_Status_Tools_V2_Controller
  */
-class WC_REST_System_Status_Tools_Controller extends WC_REST_System_Status_Tools_V2_Controller {
-
-	/**
-	 * Endpoint namespace.
-	 *
-	 * @var string
-	 */
-	protected $namespace = 'wc/v3';
+class WC_REST_System_Status_Tools_Controller extends WC_REST_System_Status_Tools_V2_Controller
+{
+    /**
+     * Endpoint namespace.
+     *
+     * @var string
+     */
+    protected $namespace = 'wc/v3';
 }

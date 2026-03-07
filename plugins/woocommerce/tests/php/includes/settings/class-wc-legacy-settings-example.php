@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Class WC_Legacy_Settings_Example file.
  *
@@ -9,18 +11,21 @@
  * Helper class to test base functionality of WC_Settings_Page.
  * This simulates a legacy class that overrides the get_settings method directly.
  */
-class WC_Legacy_Settings_Example extends WC_Settings_Page {
-	// phpcs:disable Squiz.Commenting.FunctionComment.Missing
+class WC_Legacy_Settings_Example extends WC_Settings_Page
+{
+    // phpcs:disable Squiz.Commenting.FunctionComment.Missing
 
-	public function __construct() {
-		$this->id    = 'example';
-		$this->label = 'Example';
-		parent::__construct();
-	}
+    public function __construct()
+    {
+        $this->id    = 'example';
+        $this->label = 'Example';
+        parent::__construct();
+    }
 
-	public function get_settings() {
-		return array( 'foo' => 'bar' );
-	}
+    public function get_settings()
+    {
+        return [ 'foo' => 'bar' ];
+    }
 
-	// phpcs:enable Squiz.Commenting.FunctionComment.Missing
+    // phpcs:enable Squiz.Commenting.FunctionComment.Missing
 }

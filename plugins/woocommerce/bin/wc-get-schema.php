@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Helper methods for extracting database schema.
  *
@@ -9,12 +11,11 @@
 /**
  * Get database schema.
  */
-function wc_get_schema() {
-	$schema = function () {
-		return static::get_schema();
-	};
+function wc_get_schema(): mixed
+{
+    $schema = (fn () => static::get_schema());
 
-	return $schema->call( new \WC_Install() );
+    return $schema->call(new \WC_Install());
 }
 
-echo( esc_sql( wc_get_schema() ) );
+echo(esc_sql(wc_get_schema()));

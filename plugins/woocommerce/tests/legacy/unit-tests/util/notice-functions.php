@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Class Notice_Functions.
  * @package WooCommerce\Tests\Util
@@ -8,266 +10,280 @@
 /**
  * WC_Tests_Notice_Functions class.
  */
-class WC_Tests_Notice_Functions extends WC_Unit_Test_Case {
+class WC_Tests_Notice_Functions extends WC_Unit_Test_Case
+{
+    /**
+     * Clear out notices after each test.
+     *
+     * @since 2.2
+     */
+    public function tearDown(): void
+    {
 
-	/**
-	 * Clear out notices after each test.
-	 *
-	 * @since 2.2
-	 */
-	public function tearDown(): void {
+        WC()->session->set('wc_notices', null);
+    }
 
-		WC()->session->set( 'wc_notices', null );
-	}
+    /**
+     * Test wc_notice_count().
+     *
+     * @since 2.2
+     */
+    public function test_wc_notice_count()
+    {
 
-	/**
-	 * Test wc_notice_count().
-	 *
-	 * @since 2.2
-	 */
-	public function test_wc_notice_count() {
+        // No error notices.
+        $this->assertEquals(0, wc_notice_count('error'));
 
-		// No error notices.
-		$this->assertEquals( 0, wc_notice_count( 'error' ) );
+        // Single notice.
+        wc_add_notice('Bogus Notice', 'success');
+        $this->assertEquals(1, wc_notice_count());
 
-		// Single notice.
-		wc_add_notice( 'Bogus Notice', 'success' );
-		$this->assertEquals( 1, wc_notice_count() );
+        // Specific notice.
+        wc_add_notice('Bogus Error Notice', 'error');
+        $this->assertEquals(1, wc_notice_count('error'));
 
-		// Specific notice.
-		wc_add_notice( 'Bogus Error Notice', 'error' );
-		$this->assertEquals( 1, wc_notice_count( 'error' ) );
+        // Multiple notices of different types.
+        wc_clear_notices();
+        wc_add_notice('Bogus 1', 'success');
+        wc_add_notice('Bogus 2', 'success');
+        wc_add_notice('Bogus Notice 1', 'notice');
+        wc_add_notice('Bogus Notice 2', 'notice');
+        wc_add_notice('Bogus Error Notice 1', 'error');
+        wc_add_notice('Bogus Error Notice 2', 'error');
+        $this->assertEquals(6, wc_notice_count());
 
-		// Multiple notices of different types.
-		wc_clear_notices();
-		wc_add_notice( 'Bogus 1', 'success' );
-		wc_add_notice( 'Bogus 2', 'success' );
-		wc_add_notice( 'Bogus Notice 1', 'notice' );
-		wc_add_notice( 'Bogus Notice 2', 'notice' );
-		wc_add_notice( 'Bogus Error Notice 1', 'error' );
-		wc_add_notice( 'Bogus Error Notice 2', 'error' );
-		$this->assertEquals( 6, wc_notice_count() );
+        // repeat with duplicates.
+        wc_add_notice('Bogus 1', 'success');
+        wc_add_notice('Bogus 2', 'success');
+        wc_add_notice('Bogus Notice 1', 'notice');
+        wc_add_notice('Bogus Notice 2', 'notice');
+        wc_add_notice('Bogus Error Notice 1', 'error');
+        wc_add_notice('Bogus Error Notice 2', 'error');
+        $this->assertEquals(12, wc_notice_count());
+    }
 
-		// repeat with duplicates.
-		wc_add_notice( 'Bogus 1', 'success' );
-		wc_add_notice( 'Bogus 2', 'success' );
-		wc_add_notice( 'Bogus Notice 1', 'notice' );
-		wc_add_notice( 'Bogus Notice 2', 'notice' );
-		wc_add_notice( 'Bogus Error Notice 1', 'error' );
-		wc_add_notice( 'Bogus Error Notice 2', 'error' );
-		$this->assertEquals( 12, wc_notice_count() );
-	}
+    /**
+     * Test wc_has_notice().
+     *
+     * @since 2.2
+     */
+    public function test_wc_has_notice()
+    {
 
-	/**
-	 * Test wc_has_notice().
-	 *
-	 * @since 2.2
-	 */
-	public function test_wc_has_notice() {
+        // Negative.
+        wc_add_notice('Bogus Notice', 'success');
+        $this->assertFalse(wc_has_notice('Legit Notice'));
 
-		// Negative.
-		wc_add_notice( 'Bogus Notice', 'success' );
-		$this->assertFalse( wc_has_notice( 'Legit Notice' ) );
+        // Positive.
+        wc_add_notice('One True Notice', 'notice');
+        $this->assertTrue(wc_has_notice('One True Notice', 'notice'));
+    }
 
-		// Positive.
-		wc_add_notice( 'One True Notice', 'notice' );
-		$this->assertTrue( wc_has_notice( 'One True Notice', 'notice' ) );
-	}
+    /**
+     * Test wc_notice_add_notice().
+     *
+     * @since 2.2
+     */
+    public function test_wc_add_notice()
+    {
 
-	/**
-	 * Test wc_notice_add_notice().
-	 *
-	 * @since 2.2
-	 */
-	public function test_wc_add_notice() {
+        // Default type.
+        wc_add_notice('Test Notice');
+        $notices = wc_get_notices();
+        $this->assertArrayHasKey('success', $notices);
+        $this->assertEquals('Test Notice', $notices['success'][0]['notice']);
 
-		// Default type.
-		wc_add_notice( 'Test Notice' );
-		$notices = wc_get_notices();
-		$this->assertArrayHasKey( 'success', $notices );
-		$this->assertEquals( 'Test Notice', $notices['success'][0]['notice'] );
+        // Clear notices.
+        WC()->session->set('wc_notices', null);
 
-		// Clear notices.
-		WC()->session->set( 'wc_notices', null );
+        // Specific type.
+        wc_add_notice('Test Error Notice', 'error', [ 'id' => 'billing_postcode' ]);
+        $notices = wc_get_notices();
+        $this->assertArrayHasKey('error', $notices);
+        $this->assertEquals('Test Error Notice', $notices['error'][0]['notice']);
+        $this->assertEquals([ 'id' => 'billing_postcode' ], $notices['error'][0]['data']);
+    }
 
-		// Specific type.
-		wc_add_notice( 'Test Error Notice', 'error', array( 'id' => 'billing_postcode' ) );
-		$notices = wc_get_notices();
-		$this->assertArrayHasKey( 'error', $notices );
-		$this->assertEquals( 'Test Error Notice', $notices['error'][0]['notice'] );
-		$this->assertEquals( array( 'id' => 'billing_postcode' ), $notices['error'][0]['data'] );
-	}
+    /**
+     * Test wc_clear_notices().
+     *
+     * @since 2.2
+     */
+    public function test_wc_clear_notices()
+    {
 
-	/**
-	 * Test wc_clear_notices().
-	 *
-	 * @since 2.2
-	 */
-	public function test_wc_clear_notices() {
+        wc_add_notice('Test Notice');
+        wc_clear_notices();
+        $this->assertEmpty(WC()->session->get('wc_notices'));
+    }
 
-		wc_add_notice( 'Test Notice' );
-		wc_clear_notices();
-		$this->assertEmpty( WC()->session->get( 'wc_notices' ) );
-	}
+    /**
+     * Test wc_print_notices().
+     *
+     * @since 2.2
+     */
+    public function test_wc_print_notices()
+    {
+        wc_add_notice('One True Notice', 'notice');
+        wc_add_notice('Second True Notice', 'notice', [ 'id' => 'second_notice' ]);
 
-	/**
-	 * Test wc_print_notices().
-	 *
-	 * @since 2.2
-	 */
-	public function test_wc_print_notices() {
-		wc_add_notice( 'One True Notice', 'notice' );
-		wc_add_notice( 'Second True Notice', 'notice', array( 'id' => 'second_notice' ) );
+        $this->expectOutputString('<div class="woocommerce-info" role="status">One True Notice</div><div class="woocommerce-info" data-id="second_notice" role="status">Second True Notice</div>');
 
-		$this->expectOutputString( '<div class="woocommerce-info" role="status">One True Notice</div><div class="woocommerce-info" data-id="second_notice" role="status">Second True Notice</div>' );
+        wc_print_notices();
 
-		wc_print_notices();
+        $this->assertEmpty(WC()->session->get('wc_notices'));
+    }
 
-		$this->assertEmpty( WC()->session->get( 'wc_notices' ) );
-	}
+    /**
+     * Test wc_print_notices() should return notices
+     * when first parameter is set to true.
+     */
+    public function test_wc_print_notices_should_return_notices()
+    {
+        $expected_return = "\n	<div class=\"woocommerce-info\" role=\"status\">\n		One True Notice	</div>\n";
 
-	/**
-	 * Test wc_print_notices() should return notices
-	 * when first parameter is set to true.
-	 */
-	public function test_wc_print_notices_should_return_notices() {
-		$expected_return = "\n	<div class=\"woocommerce-info\" role=\"status\">\n		One True Notice	</div>\n";
+        wc_add_notice('One True Notice', 'notice');
 
-		wc_add_notice( 'One True Notice', 'notice' );
+        $actual_return              = wc_print_notices(true);
+        $normalized_actual_return   = preg_replace('/\s+/', '', $actual_return);
+        $normalized_expected_return = preg_replace('/\s+/', '', $expected_return);
 
-		$actual_return              = wc_print_notices( true );
-		$normalized_actual_return   = preg_replace( '/\s+/', '', $actual_return );
-		$normalized_expected_return = preg_replace( '/\s+/', '', $expected_return );
+        $this->assertEquals($normalized_expected_return, $normalized_actual_return);
+    }
 
-		$this->assertEquals( $normalized_expected_return, $normalized_actual_return );
-	}
+    /**
+     * Test wc_print_notice() w/ success type.
+     *
+     * @since 2.2
+     */
+    public function test_wc_print_success_notice()
+    {
 
-	/**
-	 * Test wc_print_notice() w/ success type.
-	 *
-	 * @since 2.2
-	 */
-	public function test_wc_print_success_notice() {
+        $this->expectOutputString('<div class="woocommerce-message" role="alert">Success!</div>');
 
-		$this->expectOutputString( '<div class="woocommerce-message" role="alert">Success!</div>' );
+        wc_print_notice('Success!');
+    }
 
-		wc_print_notice( 'Success!' );
-	}
+    /**
+     * Test wc_print_notice() w/ notice type.
+     *
+     * @since 2.2
+     */
+    public function test_wc_print_info_notice()
+    {
 
-	/**
-	 * Test wc_print_notice() w/ notice type.
-	 *
-	 * @since 2.2
-	 */
-	public function test_wc_print_info_notice() {
+        $this->expectOutputString('<div class="woocommerce-info" role="status">Info!</div>');
 
-		$this->expectOutputString( '<div class="woocommerce-info" role="status">Info!</div>' );
+        wc_print_notice('Info!', 'notice');
+    }
 
-		wc_print_notice( 'Info!', 'notice' );
-	}
+    /**
+     * Test wc_print_notice() w/ error type.
+     *
+     * @since 2.2
+     */
+    public function test_wc_print_error_notice()
+    {
 
-	/**
-	 * Test wc_print_notice() w/ error type.
-	 *
-	 * @since 2.2
-	 */
-	public function test_wc_print_error_notice() {
+        // Specific type.
+        $this->expectOutputString('<ul class="woocommerce-error" role="alert"><li>Error!</li></ul>');
 
-		// Specific type.
-		$this->expectOutputString( '<ul class="woocommerce-error" role="alert"><li>Error!</li></ul>' );
+        wc_print_notice('Error!', 'error');
+    }
 
-		wc_print_notice( 'Error!', 'error' );
-	}
+    /**
+     * Test wc_print_notice() w/ data.
+     *
+     * @since 2.2
+     */
+    public function test_wc_print_notice_data()
+    {
 
-	/**
-	 * Test wc_print_notice() w/ data.
-	 *
-	 * @since 2.2
-	 */
-	public function test_wc_print_notice_data() {
+        // Specific type.
+        $this->expectOutputString('<ul class="woocommerce-error" role="alert"><li data-id="billing_postcode">Error!</li></ul>');
 
-		// Specific type.
-		$this->expectOutputString( '<ul class="woocommerce-error" role="alert"><li data-id="billing_postcode">Error!</li></ul>' );
+        wc_print_notice('Error!', 'error', [ 'id' => 'billing_postcode' ]);
+    }
 
-		wc_print_notice( 'Error!', 'error', array( 'id' => 'billing_postcode' ) );
-	}
+    /**
+     * Test wc_get_notices().
+     *
+     * @since 2.2
+     */
+    public function test_wc_get_notices()
+    {
 
-	/**
-	 * Test wc_get_notices().
-	 *
-	 * @since 2.2
-	 */
-	public function test_wc_get_notices() {
+        // No notices.
+        $notices = wc_get_notices();
+        $this->assertIsArray($notices);
+        $this->assertEmpty($notices);
 
-		// No notices.
-		$notices = wc_get_notices();
-		$this->assertIsArray( $notices );
-		$this->assertEmpty( $notices );
+        // Default type.
+        wc_add_notice('Another Notice');
+        $this->assertEquals(
+            [
+                'success' => [
+                    [
+                        'notice' => 'Another Notice',
+                        'data'   => [],
+                    ],
+                ],
+            ],
+            wc_get_notices()
+        );
 
-		// Default type.
-		wc_add_notice( 'Another Notice' );
-		$this->assertEquals(
-			array(
-				'success' => array(
-					array(
-						'notice' => 'Another Notice',
-						'data'   => array(),
-					),
-				),
-			),
-			wc_get_notices()
-		);
+        // Specific type.
+        wc_add_notice('Error Notice', 'error', [ 'id' => 'billing_email' ]);
+        $this->assertEquals(
+            [
+                [
+                    'notice' => 'Error Notice',
+                    'data'   => [ 'id' => 'billing_email' ],
+                ],
+            ],
+            wc_get_notices('error')
+        );
 
-		// Specific type.
-		wc_add_notice( 'Error Notice', 'error', array( 'id' => 'billing_email' ) );
-		$this->assertEquals(
-			array(
-				array(
-					'notice' => 'Error Notice',
-					'data'   => array( 'id' => 'billing_email' ),
-				),
-			),
-			wc_get_notices( 'error' )
-		);
+        // Invalid type.
+        $notices = wc_get_notices('bogus_type');
+        $this->assertIsArray($notices);
+        $this->assertEmpty($notices);
+    }
 
-		// Invalid type.
-		$notices = wc_get_notices( 'bogus_type' );
-		$this->assertIsArray( $notices );
-		$this->assertEmpty( $notices );
-	}
+    /**
+     * Test wc_get_notices() with no session.
+     */
+    public function test_wc_get_notices_no_session()
+    {
+        $original_session = WC()->session;
 
-	/**
-	 * Test wc_get_notices() with no session.
-	 */
-	public function test_wc_get_notices_no_session() {
-		$original_session = WC()->session;
+        WC()->session = null;
 
-		WC()->session = null;
+        $notices = wc_get_notices();
+        $this->assertIsArray($notices);
+        $this->assertEmpty($notices);
 
-		$notices = wc_get_notices();
-		$this->assertIsArray( $notices );
-		$this->assertEmpty( $notices );
+        WC()->session = $original_session;
+    }
 
-		WC()->session = $original_session;
-	}
+    /**
+     * Test wc_add_notice() with no session.
+     */
+    public function test_wc_add_notice_no_session()
+    {
+        $this->setExpectedIncorrectUsage('wc_add_notice');
 
-	/**
-	 * Test wc_add_notice() with no session.
-	 */
-	public function test_wc_add_notice_no_session() {
-		$this->setExpectedIncorrectUsage( 'wc_add_notice' );
+        $original_session = WC()->session;
 
-		$original_session = WC()->session;
+        WC()->session = null;
 
-		WC()->session = null;
+        // Should not throw an error when session is null, but should trigger doing_it_wrong.
+        wc_add_notice('Test Notice');
 
-		// Should not throw an error when session is null, but should trigger doing_it_wrong.
-		wc_add_notice( 'Test Notice' );
+        WC()->session = $original_session;
 
-		WC()->session = $original_session;
-
-		// Notice should not have been added since there was no session.
-		$notices = wc_get_notices();
-		$this->assertEmpty( $notices );
-	}
+        // Notice should not have been added since there was no session.
+        $notices = wc_get_notices();
+        $this->assertEmpty($notices);
+    }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  Feed Validator class.
  *
@@ -11,8 +12,8 @@ namespace Automattic\WooCommerce\Internal\ProductFeed\Integrations\POSCatalog;
 
 use Automattic\WooCommerce\Internal\ProductFeed\Feed\FeedValidatorInterface;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 /**
@@ -20,15 +21,16 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 10.5.0
  */
-final class FeedValidator implements FeedValidatorInterface {
-	/**
-	 * Validate single feed row using schema.
-	 *
-	 * @param array       $entry   Product data row to validate.
-	 * @param \WC_Product $product The related product. Will be updated with validation status.
-	 * @return array Array of validation issues.
-	 */
-	public function validate_entry( array $entry, \WC_Product $product ): array { //phpcs:ignore VariableAnalysis
-		return array();
-	}
+final class FeedValidator implements FeedValidatorInterface
+{
+    /**
+     * Validate single feed row using schema.
+     *
+     * @param array       $entry   Product data row to validate.
+     * @param \WC_Product $product The related product. Will be updated with validation status.
+     * @return array Array of validation issues.
+     */
+    public function validate_entry(array $entry, \WC_Product $product): array //phpcs:ignore VariableAnalysis
+    {return [];
+    }
 }

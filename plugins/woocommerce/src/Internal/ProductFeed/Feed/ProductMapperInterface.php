@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Product Mapper Interface.
  *
@@ -14,12 +15,13 @@ namespace Automattic\WooCommerce\Internal\ProductFeed\Feed;
  *
  * @since 10.5.0
  */
-interface ProductMapperInterface {
-	/**
-	 * Map a product to a feed row.
-	 *
-	 * @param \WC_Product $product The product to map.
-	 * @return array The feed row.
-	 */
-	public function map_product( \WC_Product $product ): array;
+interface ProductMapperInterface
+{
+    /**
+     * Map a product to a feed row.
+     *
+     * @param \WC_Product $product The product to map.
+     * @return array The feed row.
+     */
+    public function map_product(\WC_Product $product): array;
 }

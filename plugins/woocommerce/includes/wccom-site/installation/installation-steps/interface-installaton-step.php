@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Interface for installation steps.
  *
@@ -6,18 +8,19 @@
  * @since   7.7.0
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
-interface WC_WCCOM_Site_Installation_Step {
-	/**
-	 * Constructor.
-	 *
-	 * @param array $state The current installation state.
-	 */
-	public function __construct( $state );
+interface WC_WCCOM_Site_Installation_Step
+{
+    /**
+     * Constructor.
+     *
+     * @param array $state The current installation state.
+     */
+    public function __construct($state);
 
-	/**
-	 * Run the step installation process.
-	 */
-	public function run();
+    /**
+     * Run the step installation process.
+     */
+    public function run();
 }

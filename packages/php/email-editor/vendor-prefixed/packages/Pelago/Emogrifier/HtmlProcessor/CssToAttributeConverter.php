@@ -25,7 +25,7 @@ final class CssToAttributeConverter extends AbstractHtmlProcessor
      *
      * @var array<string, array{attribute: string, nodes?: array<int, string>, values?: array<int, string>}>
      */
-    private $cssToHtmlMap = [
+    private array $cssToHtmlMap = [
         'background-color' => [
             'attribute' => 'bgcolor',
         ],
@@ -64,8 +64,6 @@ final class CssToAttributeConverter extends AbstractHtmlProcessor
 
     /**
      * Returns a list with all DOM nodes that have a style attribute.
-     *
-     * @return \DOMNodeList
      */
     private function getAllNodesWithStyleAttribute(): \DOMNodeList
     {
@@ -170,7 +168,7 @@ final class CssToAttributeConverter extends AbstractHtmlProcessor
         /** @var array<int, string> $styles */
         $styles = \explode(' ', $value, 2);
         $first = $styles[0];
-        if (\is_numeric($first[0]) || \strncmp($first, 'url', 3) === 0) {
+        if (\is_numeric($first[0]) || str_starts_with($first, 'url')) {
             return;
         }
 
@@ -227,11 +225,6 @@ final class CssToAttributeConverter extends AbstractHtmlProcessor
         }
     }
 
-    /**
-     * @param \DOMElement $node
-     *
-     * @return bool
-     */
     private function isTableOrImageNode(\DOMElement $node): bool
     {
         return $node->nodeName === 'table' || $node->nodeName === 'img';

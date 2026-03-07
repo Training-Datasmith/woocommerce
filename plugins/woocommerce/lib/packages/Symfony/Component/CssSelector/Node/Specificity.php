@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -29,15 +31,8 @@ class Specificity
     public const B_FACTOR = 10;
     public const C_FACTOR = 1;
 
-    private $a;
-    private $b;
-    private $c;
-
-    public function __construct(int $a, int $b, int $c)
+    public function __construct(private readonly int $a, private readonly int $b, private readonly int $c)
     {
-        $this->a = $a;
-        $this->b = $b;
-        $this->c = $c;
     }
 
     public function plus(self $specificity): self

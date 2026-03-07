@@ -1,4 +1,7 @@
-<?php // @codingStandardsIgnoreFile.
+<?php
+
+declare(strict_types=1);
+// @codingStandardsIgnoreFile.
 /**
  * Settings class file.
  *
@@ -6,6 +9,6 @@
  * @todo remove in 4.0.
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 return include __DIR__ . '/class-wc-settings-advanced.php';

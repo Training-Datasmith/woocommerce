@@ -5,33 +5,33 @@
  * @package WooCommerce\Admin\Logs
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 $delete_confirmation_js = sprintf(
-	"return window.confirm( '%s' )",
-	esc_js( __( 'Are you sure you want to clear all logs from the database?', 'woocommerce' ) )
+    "return window.confirm( '%s' )",
+    esc_js(__('Are you sure you want to clear all logs from the database?', 'woocommerce'))
 );
 ?>
 <form method="get" id="mainform">
 	<input type="hidden" name="page" value="wc-status" />
 	<input type="hidden" name="tab" value="logs" />
 
-	<?php $log_table_list->search_box( __( 'Search logs', 'woocommerce' ), 'log' ); ?>
+	<?php $log_table_list->search_box(__('Search logs', 'woocommerce'), 'log'); ?>
 	<?php $log_table_list->display(); ?>
 
 	<?php
-	submit_button(
-		__( 'Flush all logs', 'woocommerce' ),
-		'delete',
-		'flush-logs',
-		true,
-		array(
-			'onclick' => esc_attr( $delete_confirmation_js ),
-		)
-	);
-	?>
+    submit_button(
+        __('Flush all logs', 'woocommerce'),
+        'delete',
+        'flush-logs',
+        true,
+        [
+            'onclick' => esc_attr($delete_confirmation_js),
+        ]
+    );
+?>
 </form>
 <script>
 	document.addEventListener( 'DOMContentLoaded', function() {

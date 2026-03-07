@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Property;
 
 /**
  * Class representing a single CSS selector. Selectors have to be split by the comma prior to being passed into this
  * class.
  */
-class Selector
+class Selector implements \Stringable
 {
     /**
      * regexp for specificity calculations
@@ -15,7 +17,7 @@ class Selector
      *
      * @internal
      */
-    const NON_ID_ATTRIBUTES_AND_PSEUDO_CLASSES_RX = '/
+    public const NON_ID_ATTRIBUTES_AND_PSEUDO_CLASSES_RX = '/
         (\.[\w]+)                   # classes
         |
         \[(\w+)                     # attributes
@@ -41,7 +43,7 @@ class Selector
      *
      * @internal
      */
-    const ELEMENTS_AND_PSEUDO_ELEMENTS_RX = '/
+    public const ELEMENTS_AND_PSEUDO_ELEMENTS_RX = '/
         ((^|[\s\+\>\~]+)[\w]+   # elements
         |
         \:{1,2}(                # pseudo-elements
@@ -56,7 +58,7 @@ class Selector
      *
      * @internal since 8.5.2
      */
-    const SELECTOR_VALIDATION_RX = '/
+    public const SELECTOR_VALIDATION_RX = '/
         ^(
             (?:
                 [a-zA-Z0-9\x{00A0}-\x{FFFF}_^$|*="\'~\[\]()\-\s\.:#+>]* # any sequence of valid unescaped characters
@@ -66,24 +68,17 @@ class Selector
         )$
         /ux';
 
-    /**
-     * @var string
-     */
-    private $sSelector;
+    private string $sSelector;
 
-    /**
-     * @var int|null
-     */
-    private $iSpecificity;
+    private ?int $iSpecificity = null;
 
     /**
      * @param string $sSelector
      *
-     * @return bool
      *
      * @internal since V8.8.0
      */
-    public static function isValid($sSelector)
+    public static function isValid($sSelector): int|false
     {
         return preg_match(static::SELECTOR_VALIDATION_RX, $sSelector);
     }
@@ -110,21 +105,17 @@ class Selector
 
     /**
      * @param string $sSelector
-     *
-     * @return void
      */
-    public function setSelector($sSelector)
+    public function setSelector($sSelector): void
     {
         $this->sSelector = trim($sSelector);
         $this->iSpecificity = null;
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->getSelector();
     }

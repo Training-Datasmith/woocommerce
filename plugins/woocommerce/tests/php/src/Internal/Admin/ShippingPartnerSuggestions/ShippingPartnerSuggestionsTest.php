@@ -1,13 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Tests\Internal\Admin\ShippingPartnerSuggestions;
 
-use Automattic\WooCommerce\Admin\RemoteSpecs\DataSourcePoller;
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks\Shipping;
+use Automattic\WooCommerce\Admin\Features\PaymentGatewaySuggestions\EvaluateSuggestion;
 use Automattic\WooCommerce\Admin\Features\ShippingPartnerSuggestions\DefaultShippingPartners;
 use Automattic\WooCommerce\Admin\Features\ShippingPartnerSuggestions\ShippingPartnerSuggestions;
 use Automattic\WooCommerce\Admin\Features\ShippingPartnerSuggestions\ShippingPartnerSuggestionsDataSourcePoller;
-use Automattic\WooCommerce\Admin\Features\PaymentGatewaySuggestions\EvaluateSuggestion;
+use Automattic\WooCommerce\Admin\RemoteSpecs\DataSourcePoller;
 use WC_Unit_Test_Case;
 
 /**
@@ -15,246 +16,256 @@ use WC_Unit_Test_Case;
  *
  * @covers \Automattic\WooCommerce\Admin\Features\ShippingPartnerSuggestions\ShippingPartnerSuggestions
  */
-class ShippingPartnerSuggestionsTest extends WC_Unit_Test_Case {
+class ShippingPartnerSuggestionsTest extends WC_Unit_Test_Case
+{
+    /**
+     * The mock logger.
+     *
+     * @var WC_Logger_Interface|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $mock_logger;
 
-	/**
-	 * The mock logger.
-	 *
-	 * @var WC_Logger_Interface|\PHPUnit\Framework\MockObject\MockObject
-	 */
-	private $mock_logger;
+    /**
+     * Set up.
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
 
-	/**
-	 * Set up.
-	 */
-	public function setUp(): void {
-		parent::setUp();
+        $this->user = $this->factory->user->create(
+            [
+                'role' => 'administrator',
+            ]
+        );
+        delete_option('woocommerce_show_marketplace_suggestions');
+        add_filter(
+            'transient_woocommerce_admin_' . ShippingPartnerSuggestionsDataSourcePoller::ID . '_specs',
+            function ($value) {
+                if ($value) {
+                    return $value;
+                }
 
-		$this->user = $this->factory->user->create(
-			array(
-				'role' => 'administrator',
-			)
-		);
-		delete_option( 'woocommerce_show_marketplace_suggestions' );
-		add_filter(
-			'transient_woocommerce_admin_' . ShippingPartnerSuggestionsDataSourcePoller::ID . '_specs',
-			function ( $value ) {
-				if ( $value ) {
-					return $value;
-				}
+                $locale = get_user_locale();
 
-				$locale = get_user_locale();
+                return [
+                    $locale => [
+                        (object) [
+                            'id'         => 'mock-shipping-partner-1',
+                            'is_visible' => (object) [
+                                'type'      => 'base_location_country',
+                                'value'     => 'ZA',
+                                'operation' => '=',
+                            ],
+                        ],
+                        (object) [
+                            'id'         => 'mock-shipping-partner-2',
+                            'is_visible' => (object) [
+                                'type'      => 'base_location_country',
+                                'value'     => 'US',
+                                'operation' => '=',
+                            ],
+                        ],
+                    ],
+                ];
+            }
+        );
 
-				return array(
-					$locale => array(
-						(object) array(
-							'id'         => 'mock-shipping-partner-1',
-							'is_visible' => (object) array(
-								'type'      => 'base_location_country',
-								'value'     => 'ZA',
-								'operation' => '=',
-							),
-						),
-						(object) array(
-							'id'         => 'mock-shipping-partner-2',
-							'is_visible' => (object) array(
-								'type'      => 'base_location_country',
-								'value'     => 'US',
-								'operation' => '=',
-							),
-						),
-					),
-				);
-			}
-		);
+        // Have a mock logger used by the suggestions rule evaluator.
+        $this->mock_logger = $this->getMockBuilder('WC_Logger_Interface')->getMock();
+        add_filter('woocommerce_logging_class', [ $this, 'override_wc_logger' ]);
 
-		// Have a mock logger used by the suggestions rule evaluator.
-		$this->mock_logger = $this->getMockBuilder( 'WC_Logger_Interface' )->getMock();
-		add_filter( 'woocommerce_logging_class', array( $this, 'override_wc_logger' ) );
+        EvaluateSuggestion::reset_memo();
+    }
 
-		EvaluateSuggestion::reset_memo();
-	}
+    /**
+     * Tear down.
+     */
+    public function tearDown(): void
+    {
+        ShippingPartnerSuggestionsDataSourcePoller::get_instance()->delete_specs_transient();
+        remove_all_filters('transient_woocommerce_admin_' . ShippingPartnerSuggestionsDataSourcePoller::ID . '_specs');
+        update_option('woocommerce_default_country', 'US');
+        remove_filter('woocommerce_logging_class', [ $this, 'override_wc_logger' ]);
 
-	/**
-	 * Tear down.
-	 */
-	public function tearDown(): void {
-		ShippingPartnerSuggestionsDataSourcePoller::get_instance()->delete_specs_transient();
-		remove_all_filters( 'transient_woocommerce_admin_' . ShippingPartnerSuggestionsDataSourcePoller::ID . '_specs' );
-		update_option( 'woocommerce_default_country', 'US' );
-		remove_filter( 'woocommerce_logging_class', array( $this, 'override_wc_logger' ) );
+        parent::tearDown();
+    }
 
-		parent::tearDown();
-	}
+    /**
+     * Test that default specs are provided when remote sources don't exist.
+     */
+    public function test_get_default_specs()
+    {
+        remove_all_filters('transient_woocommerce_admin_' . ShippingPartnerSuggestionsDataSourcePoller::ID . '_specs');
+        add_filter(
+            DataSourcePoller::FILTER_NAME,
+            function () {
+                return [];
+            }
+        );
+        $specs    = ShippingPartnerSuggestions::get_specs();
+        $defaults = DefaultShippingPartners::get_all();
+        remove_all_filters(DataSourcePoller::FILTER_NAME);
+        $this->assertEquals($defaults, $specs);
+    }
 
-	/**
-	 * Test that default specs are provided when remote sources don't exist.
-	 */
-	public function test_get_default_specs() {
-		remove_all_filters( 'transient_woocommerce_admin_' . ShippingPartnerSuggestionsDataSourcePoller::ID . '_specs' );
-		add_filter(
-			DataSourcePoller::FILTER_NAME,
-			function () {
-				return array();
-			}
-		);
-		$specs    = ShippingPartnerSuggestions::get_specs();
-		$defaults = DefaultShippingPartners::get_all();
-		remove_all_filters( DataSourcePoller::FILTER_NAME );
-		$this->assertEquals( $defaults, $specs );
-	}
+    /**
+     * Test that specs are read from cache when they exist.
+     */
+    public function test_specs_transient()
+    {
+        set_transient(
+            'woocommerce_admin_' . ShippingPartnerSuggestionsDataSourcePoller::ID . '_specs',
+            [
+                'en_US' => [
+                    [
+                        'id' => 'mock1',
+                    ],
+                    [
+                        'id' => 'mock2',
+                    ],
+                ],
+            ]
+        );
+        $specs = ShippingPartnerSuggestions::get_specs();
+        $this->assertCount(2, $specs);
+    }
 
-	/**
-	 * Test that specs are read from cache when they exist.
-	 */
-	public function test_specs_transient() {
-		set_transient(
-			'woocommerce_admin_' . ShippingPartnerSuggestionsDataSourcePoller::ID . '_specs',
-			array(
-				'en_US' => array(
-					array(
-						'id' => 'mock1',
-					),
-					array(
-						'id' => 'mock2',
-					),
-				),
-			)
-		);
-		$specs = ShippingPartnerSuggestions::get_specs();
-		$this->assertCount( 2, $specs );
-	}
+    /**
+     * Test that non-matching suggestions are not shown.
+     */
+    public function test_non_matching_suggestions()
+    {
+        update_option('woocommerce_default_country', 'US');
+        $suggestions = ShippingPartnerSuggestions::get_suggestions();
+        $this->assertCount(1, $suggestions);
+    }
 
-	/**
-	 * Test that non-matching suggestions are not shown.
-	 */
-	public function test_non_matching_suggestions() {
-		update_option( 'woocommerce_default_country', 'US' );
-		$suggestions = ShippingPartnerSuggestions::get_suggestions();
-		$this->assertCount( 1, $suggestions );
-	}
+    /**
+     * Test that matched suggestions are shown.
+     */
+    public function test_matching_suggestions()
+    {
+        update_option('woocommerce_default_country', 'ZA');
+        $suggestions = ShippingPartnerSuggestions::get_suggestions();
+        $this->assertEquals('mock-shipping-partner-1', $suggestions[0]->id);
+    }
 
-	/**
-	 * Test that matched suggestions are shown.
-	 */
-	public function test_matching_suggestions() {
-		update_option( 'woocommerce_default_country', 'ZA' );
-		$suggestions = ShippingPartnerSuggestions::get_suggestions();
-		$this->assertEquals( 'mock-shipping-partner-1', $suggestions[0]->id );
-	}
+    /**
+     * Test that suggestions rules evaluations are logged.
+     */
+    public function test_suggestion_evaluations_are_logged()
+    {
+        add_filter('woocommerce_admin_remote_specs_evaluator_should_log', '__return_true');
 
-	/**
-	 * Test that suggestions rules evaluations are logged.
-	 */
-	public function test_suggestion_evaluations_are_logged() {
-		add_filter( 'woocommerce_admin_remote_specs_evaluator_should_log', '__return_true' );
+        $logger_debug_calls_args = [
+            [
+                '[mock-shipping-partner-1] base_location_country: passed',
+                [ 'source' => 'wc-shipping-partner-suggestions' ],
+            ],
+            [
+                '[mock-shipping-partner-2] base_location_country: failed',
+                [ 'source' => 'wc-shipping-partner-suggestions' ],
+            ],
+        ];
+        $this->mock_logger
+            ->expects($this->exactly(count($logger_debug_calls_args)))
+            ->method('debug')
+            ->willReturnCallback(
+                function (...$args) use (&$logger_debug_calls_args) {
+                    $expected_args = array_shift($logger_debug_calls_args);
+                    $this->assertSame($expected_args, $args);
+                }
+            );
 
-		$logger_debug_calls_args = array(
-			array(
-				'[mock-shipping-partner-1] base_location_country: passed',
-				array( 'source' => 'wc-shipping-partner-suggestions' ),
-			),
-			array(
-				'[mock-shipping-partner-2] base_location_country: failed',
-				array( 'source' => 'wc-shipping-partner-suggestions' ),
-			),
-		);
-		$this->mock_logger
-			->expects( $this->exactly( count( $logger_debug_calls_args ) ) )
-			->method( 'debug' )
-			->willReturnCallback(
-				function ( ...$args ) use ( &$logger_debug_calls_args ) {
-					$expected_args = array_shift( $logger_debug_calls_args );
-					$this->assertSame( $expected_args, $args );
-				}
-			);
+        update_option('woocommerce_default_country', 'ZA');
+        ShippingPartnerSuggestions::get_suggestions();
 
-		update_option( 'woocommerce_default_country', 'ZA' );
-		ShippingPartnerSuggestions::get_suggestions();
+        remove_filter('woocommerce_admin_remote_specs_evaluator_should_log', '__return_true');
+    }
 
-		remove_filter( 'woocommerce_admin_remote_specs_evaluator_should_log', '__return_true' );
-	}
+    /**
+     * Test that primary suggestions are sorted before non-primary ones.
+     */
+    public function test_sort_primary_suggestions_first()
+    {
+        update_option('woocommerce_default_country', 'US');
 
-	/**
-	 * Test that primary suggestions are sorted before non-primary ones.
-	 */
-	public function test_sort_primary_suggestions_first() {
-		update_option( 'woocommerce_default_country', 'US' );
+        $specs = [
+            (object) [
+                'id'         => 'non-primary',
+                'is_visible' => true,
+            ],
+            (object) [
+                'id'                      => 'primary-partner',
+                'is_visible'              => true,
+                'countries_where_primary' => [ 'US' ],
+            ],
+            (object) [
+                'id'         => 'another-non-primary',
+                'is_visible' => true,
+            ],
+        ];
 
-		$specs = array(
-			(object) array(
-				'id'         => 'non-primary',
-				'is_visible' => true,
-			),
-			(object) array(
-				'id'                      => 'primary-partner',
-				'is_visible'              => true,
-				'countries_where_primary' => array( 'US' ),
-			),
-			(object) array(
-				'id'         => 'another-non-primary',
-				'is_visible' => true,
-			),
-		);
+        $suggestions = ShippingPartnerSuggestions::get_suggestions($specs);
+        $ids         = array_map(
+            function ($s) {
+                return $s->id;
+            },
+            $suggestions
+        );
 
-		$suggestions = ShippingPartnerSuggestions::get_suggestions( $specs );
-		$ids         = array_map(
-			function ( $s ) {
-				return $s->id;
-			},
-			$suggestions
-		);
+        $this->assertSame('primary-partner', $ids[0]);
+    }
 
-		$this->assertSame( 'primary-partner', $ids[0] );
-	}
+    /**
+     * Test that suggestions with equal primary status preserve their original order (stable sort).
+     */
+    public function test_sort_preserves_order_for_equal_priority()
+    {
+        update_option('woocommerce_default_country', 'US');
 
-	/**
-	 * Test that suggestions with equal primary status preserve their original order (stable sort).
-	 */
-	public function test_sort_preserves_order_for_equal_priority() {
-		update_option( 'woocommerce_default_country', 'US' );
+        $specs = [
+            (object) [
+                'id'                      => 'primary-a',
+                'is_visible'              => true,
+                'countries_where_primary' => [ 'US' ],
+            ],
+            (object) [
+                'id'                      => 'primary-b',
+                'is_visible'              => true,
+                'countries_where_primary' => [ 'US' ],
+            ],
+            (object) [
+                'id'         => 'non-primary-a',
+                'is_visible' => true,
+            ],
+            (object) [
+                'id'         => 'non-primary-b',
+                'is_visible' => true,
+            ],
+        ];
 
-		$specs = array(
-			(object) array(
-				'id'                      => 'primary-a',
-				'is_visible'              => true,
-				'countries_where_primary' => array( 'US' ),
-			),
-			(object) array(
-				'id'                      => 'primary-b',
-				'is_visible'              => true,
-				'countries_where_primary' => array( 'US' ),
-			),
-			(object) array(
-				'id'         => 'non-primary-a',
-				'is_visible' => true,
-			),
-			(object) array(
-				'id'         => 'non-primary-b',
-				'is_visible' => true,
-			),
-		);
+        $suggestions = ShippingPartnerSuggestions::get_suggestions($specs);
+        $ids         = array_map(
+            function ($s) {
+                return $s->id;
+            },
+            $suggestions
+        );
 
-		$suggestions = ShippingPartnerSuggestions::get_suggestions( $specs );
-		$ids         = array_map(
-			function ( $s ) {
-				return $s->id;
-			},
-			$suggestions
-		);
+        $this->assertSame(
+            [ 'primary-a', 'primary-b', 'non-primary-a', 'non-primary-b' ],
+            $ids
+        );
+    }
 
-		$this->assertSame(
-			array( 'primary-a', 'primary-b', 'non-primary-a', 'non-primary-b' ),
-			$ids
-		);
-	}
-
-	/**
-	 * Overrides the WC logger.
-	 *
-	 * @return mixed
-	 */
-	public function override_wc_logger() {
-		return $this->mock_logger;
-	}
+    /**
+     * Overrides the WC logger.
+     *
+     * @return mixed
+     */
+    public function override_wc_logger()
+    {
+        return $this->mock_logger;
+    }
 }

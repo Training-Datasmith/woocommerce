@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Property;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Comment\Comment;
@@ -21,11 +23,6 @@ class Charset implements AtRule, Positionable
     use Position;
 
     /**
-     * @var CSSString
-     */
-    private $oCharset;
-
-    /**
      * @var int
      *
      * @internal since 8.8.0
@@ -40,22 +37,18 @@ class Charset implements AtRule, Positionable
     protected $aComments;
 
     /**
-     * @param CSSString $oCharset
      * @param int $iLineNo
      */
-    public function __construct(CSSString $oCharset, $iLineNo = 0)
+    public function __construct(private CSSString $oCharset, $iLineNo = 0)
     {
-        $this->oCharset = $oCharset;
         $this->setPosition($iLineNo);
         $this->aComments = [];
     }
 
     /**
      * @param string|CSSString $oCharset
-     *
-     * @return void
      */
-    public function setCharset($sCharset)
+    public function setCharset($sCharset): void
     {
         $sCharset = $sCharset instanceof CSSString ? $sCharset : new CSSString($sCharset);
         $this->oCharset = $sCharset;
@@ -70,29 +63,22 @@ class Charset implements AtRule, Positionable
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
 
     /**
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat)
+    public function render($oOutputFormat): string
     {
         return "{$oOutputFormat->comments($this)}@charset {$this->oCharset->render($oOutputFormat)};";
     }
 
-    /**
-     * @return string
-     */
-    public function atRuleName()
+    public function atRuleName(): string
     {
         return 'charset';
     }
@@ -107,10 +93,8 @@ class Charset implements AtRule, Positionable
 
     /**
      * @param array<array-key, Comment> $aComments
-     *
-     * @return void
      */
-    public function addComments(array $aComments)
+    public function addComments(array $aComments): void
     {
         $this->aComments = array_merge($this->aComments, $aComments);
     }
@@ -125,10 +109,8 @@ class Charset implements AtRule, Positionable
 
     /**
      * @param array<array-key, Comment> $aComments
-     *
-     * @return void
      */
-    public function setComments(array $aComments)
+    public function setComments(array $aComments): void
     {
         $this->aComments = $aComments;
     }

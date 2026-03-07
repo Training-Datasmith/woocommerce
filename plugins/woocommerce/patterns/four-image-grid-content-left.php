@@ -6,14 +6,14 @@
  */
 declare(strict_types=1);
 
-$header  = __( 'Create anything', 'woocommerce' );
-$content = __( 'Navigating life\'s intricate fabric, choices unfold paths to the extraordinary, demanding creativity, curiosity, and courage for a truly fulfilling journey.', 'woocommerce' );
-$button  = __( 'Get Started', 'woocommerce' );
+$header  = __('Create anything', 'woocommerce');
+$content = __('Navigating life\'s intricate fabric, choices unfold paths to the extraordinary, demanding creativity, curiosity, and courage for a truly fulfilling journey.', 'woocommerce');
+$button  = __('Get Started', 'woocommerce');
 
-$image_0 = plugins_url( 'assets/images/pattern-placeholders/sun-glass-vase-green-ceramic-shelf.jpg', WC_PLUGIN_FILE );
-$image_1 = plugins_url( 'assets/images/pattern-placeholders/white-vase-decoration-pattern-ceramic-lamp.jpg', WC_PLUGIN_FILE );
-$image_2 = plugins_url( 'assets/images/pattern-placeholders/plant-white-leaf-flower-vase-green.jpg', WC_PLUGIN_FILE );
-$image_3 = plugins_url( 'assets/images/pattern-placeholders/tree-branch-plant-wood-leaf-flower.jpg', WC_PLUGIN_FILE );
+$image_0 = plugins_url('assets/images/pattern-placeholders/sun-glass-vase-green-ceramic-shelf.jpg', WC_PLUGIN_FILE);
+$image_1 = plugins_url('assets/images/pattern-placeholders/white-vase-decoration-pattern-ceramic-lamp.jpg', WC_PLUGIN_FILE);
+$image_2 = plugins_url('assets/images/pattern-placeholders/plant-white-leaf-flower-vase-green.jpg', WC_PLUGIN_FILE);
+$image_3 = plugins_url('assets/images/pattern-placeholders/tree-branch-plant-wood-leaf-flower.jpg', WC_PLUGIN_FILE);
 
 ?>
 
@@ -25,15 +25,15 @@ $image_3 = plugins_url( 'assets/images/pattern-placeholders/tree-branch-plant-wo
 <!-- wp:columns {"align":"wide","style":{"spacing":{"blockGap":{"left":"var:preset|spacing|40"}}}} -->
 <div class="wp-block-columns alignwide"><!-- wp:column {"verticalAlignment":"center","width":"40%","layout":{"type":"constrained","justifyContent":"left","contentSize":"400px"}} -->
 <div class="wp-block-column is-vertically-aligned-center" style="flex-basis:40%"><!-- wp:heading -->
-<h2 class="wp-block-heading"><?php echo esc_html( $header ); ?></h2>
+<h2 class="wp-block-heading"><?php echo esc_html($header); ?></h2>
 <!-- /wp:heading -->
 
 <!-- wp:paragraph -->
-<p><?php echo esc_html( $content ); ?></p>
+<p><?php echo esc_html($content); ?></p>
 <!-- /wp:paragraph -->
 
 <!-- wp:buttons -->
-<div class="wp-block-buttons"><!-- wp:button --><div class="wp-block-button"><a class="wp-block-button__link wp-element-button"><?php echo esc_html( $button ); ?></a></div><!-- /wp:button --></div>
+<div class="wp-block-buttons"><!-- wp:button --><div class="wp-block-button"><a class="wp-block-button__link wp-element-button"><?php echo esc_html($button); ?></a></div><!-- /wp:button --></div>
 <!-- /wp:buttons --></div>
 <!-- /wp:column -->
 
@@ -41,21 +41,21 @@ $image_3 = plugins_url( 'assets/images/pattern-placeholders/tree-branch-plant-wo
 <div class="wp-block-column"><!-- wp:columns {"align":"wide","style":{"spacing":{"blockGap":{"top":"8px","left":"8px"}}}} -->
 <div class="wp-block-columns alignwide"><!-- wp:column {"style":{"spacing":{"blockGap":"8px"}}} -->
 <div class="wp-block-column"><!-- wp:image {"id":13699,"aspectRatio":"1","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"is-style-default"} -->
-<figure class="wp-block-image size-full is-style-default"><img src="<?php echo esc_html( $image_0 ); ?>" alt="" class="wp-image-13699" style="aspect-ratio:1;object-fit:cover" /></figure>
+<figure class="wp-block-image size-full is-style-default"><img src="<?php echo esc_html($image_0); ?>" alt="" class="wp-image-13699" style="aspect-ratio:1;object-fit:cover" /></figure>
 <!-- /wp:image -->
 
 <!-- wp:image {"id":13707,"aspectRatio":"1","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"is-style-default"} -->
-<figure class="wp-block-image size-full is-style-default"><img src="<?php echo esc_html( $image_1 ); ?>" alt="" class="wp-image-13707" style="aspect-ratio:1;object-fit:cover" /></figure>
+<figure class="wp-block-image size-full is-style-default"><img src="<?php echo esc_html($image_1); ?>" alt="" class="wp-image-13707" style="aspect-ratio:1;object-fit:cover" /></figure>
 <!-- /wp:image --></div>
 <!-- /wp:column -->
 
 <!-- wp:column {"style":{"spacing":{"blockGap":"8px"}}} -->
 <div class="wp-block-column"><!-- wp:image {"id":13707,"aspectRatio":"1","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"is-style-default"} -->
-<figure class="wp-block-image size-full is-style-default"><img src="<?php echo esc_html( $image_2 ); ?>" alt="" class="wp-image-13707" style="aspect-ratio:1;object-fit:cover" /></figure>
+<figure class="wp-block-image size-full is-style-default"><img src="<?php echo esc_html($image_2); ?>" alt="" class="wp-image-13707" style="aspect-ratio:1;object-fit:cover" /></figure>
 <!-- /wp:image -->
 
 <!-- wp:image {"id":13699,"aspectRatio":"1","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"is-style-default"} -->
-<figure class="wp-block-image size-full is-style-default"><img src="<?php echo esc_html( $image_3 ); ?>" alt="" class="wp-image-13699" style="aspect-ratio:1;object-fit:cover" /></figure>
+<figure class="wp-block-image size-full is-style-default"><img src="<?php echo esc_html($image_3); ?>" alt="" class="wp-image-13699" style="aspect-ratio:1;object-fit:cover" /></figure>
 <!-- /wp:image --></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns --></div>

@@ -1,4 +1,5 @@
 <?php
+
 namespace Automattic\WooCommerce\Blocks\BlockTypes;
 
 use Automattic\WooCommerce\Admin\Features\Features;
@@ -7,66 +8,69 @@ use Automattic\WooCommerce\Blocks\Utils\BlocksSharedState;
 /**
  * FilledMiniCartContentsBlock class.
  */
-class FilledMiniCartContentsBlock extends AbstractInnerBlock {
-	/**
-	 * Block name.
-	 *
-	 * @var string
-	 */
-	protected $block_name = 'filled-mini-cart-contents-block';
+class FilledMiniCartContentsBlock extends AbstractInnerBlock
+{
+    /**
+     * Block name.
+     *
+     * @var string
+     */
+    protected $block_name = 'filled-mini-cart-contents-block';
 
-	/**
-	 * Render the markup for the Filled Mini-Cart Contents block.
-	 *
-	 * @param array    $attributes Block attributes.
-	 * @param string   $content    Block content.
-	 * @param WP_Block $block      Block instance.
-	 * @return string Rendered block type output.
-	 */
-	protected function render( $attributes, $content, $block ) {
-		if ( Features::is_enabled( 'experimental-iapi-mini-cart' ) ) {
-			return $this->render_experimental_filled_mini_cart_contents( $attributes, $content, $block );
-		}
+    /**
+     * Render the markup for the Filled Mini-Cart Contents block.
+     *
+     * @param array    $attributes Block attributes.
+     * @param string   $content    Block content.
+     * @param WP_Block $block      Block instance.
+     * @return string Rendered block type output.
+     */
+    protected function render($attributes, $content, $block)
+    {
+        if (Features::is_enabled('experimental-iapi-mini-cart')) {
+            return $this->render_experimental_filled_mini_cart_contents($attributes, $content, $block);
+        }
 
-		return $content;
-	}
+        return $content;
+    }
 
-	/**
-	 * Render the experimental interactivity API powered Filled Mini-Cart Contents block.
-	 *
-	 * @param array    $attributes Block attributes.
-	 * @param string   $content    Block content.
-	 * @param WP_Block $block      Block instance.
-	 * @return string Rendered block type output.
-	 */
-	protected function render_experimental_filled_mini_cart_contents( $attributes, $content, $block ) {
-		$consent = 'I acknowledge that using private APIs means my theme or plugin will inevitably break in the next version of WooCommerce';
-		$notices = BlocksSharedState::get_cart_error_notices( $consent );
+    /**
+     * Render the experimental interactivity API powered Filled Mini-Cart Contents block.
+     *
+     * @param array    $attributes Block attributes.
+     * @param string   $content    Block content.
+     * @param WP_Block $block      Block instance.
+     * @return string Rendered block type output.
+     */
+    protected function render_experimental_filled_mini_cart_contents($attributes, $content, $block): string|false
+    {
+        $consent = 'I acknowledge that using private APIs means my theme or plugin will inevitably break in the next version of WooCommerce';
+        $notices = BlocksSharedState::get_cart_error_notices($consent);
 
-		$context = wp_json_encode(
-			array(
-				'notices' => $notices,
-			),
-			JSON_NUMERIC_CHECK
-				| JSON_HEX_TAG
-				| JSON_HEX_APOS
-				| JSON_HEX_QUOT
-				| JSON_HEX_AMP
-		);
+        $context = wp_json_encode(
+            [
+                'notices' => $notices,
+            ],
+            JSON_NUMERIC_CHECK
+                | JSON_HEX_TAG
+                | JSON_HEX_APOS
+                | JSON_HEX_QUOT
+                | JSON_HEX_AMP
+        );
 
-		$wrapper_attributes = get_block_wrapper_attributes(
-			array(
-				'data-wp-interactive'  => 'woocommerce/mini-cart',
-				'data-wp-context'      => 'woocommerce/store-notices::' . $context,
-				'data-wp-bind--hidden' => 'state.cartIsEmpty',
-			)
-		);
+        $wrapper_attributes = get_block_wrapper_attributes(
+            [
+                'data-wp-interactive'  => 'woocommerce/mini-cart',
+                'data-wp-context'      => 'woocommerce/store-notices::' . $context,
+                'data-wp-bind--hidden' => 'state.cartIsEmpty',
+            ]
+        );
 
-		$dismiss_aria_label = __( 'Dismiss this notice', 'woocommerce' );
+        $dismiss_aria_label = __('Dismiss this notice', 'woocommerce');
 
-		ob_start();
-		?>
-		<div <?php echo $wrapper_attributes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+        ob_start();
+        ?>
+		<div <?php echo $wrapper_attributes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>>
 			<div
 				class="wc-block-components-notices"
 				data-wp-interactive="woocommerce/store-notices"
@@ -89,7 +93,7 @@ class FilledMiniCartContentsBlock extends AbstractInnerBlock {
 						<button
 							data-wp-bind--hidden="!context.notice.dismissible"
 							class="wc-block-components-button wp-element-button wc-block-components-notice-banner__dismiss contained"
-							aria-label="<?php echo esc_attr( $dismiss_aria_label ); ?>"
+							aria-label="<?php echo esc_attr($dismiss_aria_label); ?>"
 							data-wp-on--click="actions.removeNotice"
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -100,11 +104,11 @@ class FilledMiniCartContentsBlock extends AbstractInnerBlock {
 				</template>
 			</div>
 			<?php
-				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-				echo $content;
-			?>
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                echo $content;
+        ?>
 		</div>
 		<?php
-		return ob_get_clean();
-	}
+        return ob_get_clean();
+    }
 }

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Class WC_Customer_Download_Log_Data_Store file.
  *
@@ -6,264 +8,268 @@
  * @package WooCommerce\Classes
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * WC_Customer_Download_Log_Data_Store class.
  */
-class WC_Customer_Download_Log_Data_Store implements WC_Customer_Download_Log_Data_Store_Interface {
+class WC_Customer_Download_Log_Data_Store implements WC_Customer_Download_Log_Data_Store_Interface
+{
+    // Table name for download logs.
+    public const WC_DOWNLOAD_LOG_TABLE = 'wc_download_log';
 
-	// Table name for download logs.
-	const WC_DOWNLOAD_LOG_TABLE = 'wc_download_log';
+    /**
+     * Get the table name for download logs.
+     */
+    public static function get_table_name(): string
+    {
+        return self::WC_DOWNLOAD_LOG_TABLE;
+    }
 
-	/**
-	 * Get the table name for download logs.
-	 *
-	 * @return string
-	 */
-	public static function get_table_name() {
-		return self::WC_DOWNLOAD_LOG_TABLE;
-	}
+    /**
+     * Create download log entry.
+     *
+     * @param WC_Customer_Download_Log $download_log Customer download log object.
+     */
+    public function create(WC_Customer_Download_Log &$download_log): void
+    {
+        global $wpdb;
 
-	/**
-	 * Create download log entry.
-	 *
-	 * @param WC_Customer_Download_Log $download_log Customer download log object.
-	 */
-	public function create( WC_Customer_Download_Log &$download_log ) {
-		global $wpdb;
+        // Always set a timestamp.
+        if (is_null($download_log->get_timestamp('edit'))) {
+            $download_log->set_timestamp(time());
+        }
 
-		// Always set a timestamp.
-		if ( is_null( $download_log->get_timestamp( 'edit' ) ) ) {
-			$download_log->set_timestamp( time() );
-		}
+        $data = [
+            'timestamp'       => date('Y-m-d H:i:s', $download_log->get_timestamp('edit')->getTimestamp()),
+            'permission_id'   => $download_log->get_permission_id('edit'),
+            'user_id'         => $download_log->get_user_id('edit'),
+            'user_ip_address' => $download_log->get_user_ip_address('edit'),
+        ];
 
-		$data = array(
-			'timestamp'       => date( 'Y-m-d H:i:s', $download_log->get_timestamp( 'edit' )->getTimestamp() ),
-			'permission_id'   => $download_log->get_permission_id( 'edit' ),
-			'user_id'         => $download_log->get_user_id( 'edit' ),
-			'user_ip_address' => $download_log->get_user_ip_address( 'edit' ),
-		);
+        $format = [
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+        ];
 
-		$format = array(
-			'%s',
-			'%s',
-			'%s',
-			'%s',
-		);
+        $result = $wpdb->insert(
+            $wpdb->prefix . self::get_table_name(),
+            apply_filters('woocommerce_downloadable_product_download_log_insert_data', $data),
+            apply_filters('woocommerce_downloadable_product_download_log_insert_format', $format, $data)
+        );
 
-		$result = $wpdb->insert(
-			$wpdb->prefix . self::get_table_name(),
-			apply_filters( 'woocommerce_downloadable_product_download_log_insert_data', $data ),
-			apply_filters( 'woocommerce_downloadable_product_download_log_insert_format', $format, $data )
-		);
+        do_action('woocommerce_downloadable_product_download_log_insert', $data);
 
-		do_action( 'woocommerce_downloadable_product_download_log_insert', $data );
+        if ($result) {
+            $download_log->set_id($wpdb->insert_id);
+            $download_log->apply_changes();
+        } else {
+            wp_die(esc_html__('Unable to insert download log entry in database.', 'woocommerce'));
+        }
+    }
 
-		if ( $result ) {
-			$download_log->set_id( $wpdb->insert_id );
-			$download_log->apply_changes();
-		} else {
-			wp_die( esc_html__( 'Unable to insert download log entry in database.', 'woocommerce' ) );
-		}
-	}
+    /**
+     * Method to read a download log from the database.
+     *
+     * @param WC_Customer_Download_Log $download_log Download log object.
+     * @throws Exception Exception when read is not possible.
+     */
+    public function read(&$download_log): void
+    {
+        global $wpdb;
 
-	/**
-	 * Method to read a download log from the database.
-	 *
-	 * @param WC_Customer_Download_Log $download_log Download log object.
-	 * @throws Exception Exception when read is not possible.
-	 */
-	public function read( &$download_log ) {
-		global $wpdb;
+        $download_log->set_defaults();
 
-		$download_log->set_defaults();
+        // Ensure we have an id to pull from the DB.
+        if (! $download_log->get_id()) {
+            throw new Exception(__('Invalid download log: no ID.', 'woocommerce'));
+        }
 
-		// Ensure we have an id to pull from the DB.
-		if ( ! $download_log->get_id() ) {
-			throw new Exception( __( 'Invalid download log: no ID.', 'woocommerce' ) );
-		}
+        $table = $wpdb->prefix . self::get_table_name();
 
-		$table = $wpdb->prefix . self::get_table_name();
+        // Query the DB for the download log.
+        $raw_download_log = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE download_log_id = %d", $download_log->get_id())); // WPCS: unprepared SQL ok.
 
-		// Query the DB for the download log.
-		$raw_download_log = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE download_log_id = %d", $download_log->get_id() ) ); // WPCS: unprepared SQL ok.
+        if (! $raw_download_log) {
+            throw new Exception(__('Invalid download log: not found.', 'woocommerce'));
+        }
 
-		if ( ! $raw_download_log ) {
-			throw new Exception( __( 'Invalid download log: not found.', 'woocommerce' ) );
-		}
+        $download_log->set_props(
+            [
+                'timestamp'       => strtotime((string) $raw_download_log->timestamp),
+                'permission_id'   => $raw_download_log->permission_id,
+                'user_id'         => $raw_download_log->user_id,
+                'user_ip_address' => $raw_download_log->user_ip_address,
+            ]
+        );
 
-		$download_log->set_props(
-			array(
-				'timestamp'       => strtotime( $raw_download_log->timestamp ),
-				'permission_id'   => $raw_download_log->permission_id,
-				'user_id'         => $raw_download_log->user_id,
-				'user_ip_address' => $raw_download_log->user_ip_address,
-			)
-		);
+        $download_log->set_object_read(true);
+    }
 
-		$download_log->set_object_read( true );
-	}
+    /**
+     * Method to update a download log in the database.
+     *
+     * @param WC_Customer_Download_Log $download_log Download log object.
+     */
+    public function update(&$download_log): void
+    {
+        global $wpdb;
 
-	/**
-	 * Method to update a download log in the database.
-	 *
-	 * @param WC_Customer_Download_Log $download_log Download log object.
-	 */
-	public function update( &$download_log ) {
-		global $wpdb;
+        $data = [
+            'timestamp'       => date('Y-m-d H:i:s', $download_log->get_timestamp('edit')->getTimestamp()),
+            'permission_id'   => $download_log->get_permission_id('edit'),
+            'user_id'         => $download_log->get_user_id('edit'),
+            'user_ip_address' => $download_log->get_user_ip_address('edit'),
+        ];
 
-		$data = array(
-			'timestamp'       => date( 'Y-m-d H:i:s', $download_log->get_timestamp( 'edit' )->getTimestamp() ),
-			'permission_id'   => $download_log->get_permission_id( 'edit' ),
-			'user_id'         => $download_log->get_user_id( 'edit' ),
-			'user_ip_address' => $download_log->get_user_ip_address( 'edit' ),
-		);
+        $format = [
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+        ];
 
-		$format = array(
-			'%s',
-			'%s',
-			'%s',
-			'%s',
-		);
+        $wpdb->update(
+            $wpdb->prefix . self::get_table_name(),
+            $data,
+            [
+                'download_log_id' => $download_log->get_id(),
+            ],
+            $format
+        );
+        $download_log->apply_changes();
+    }
 
-		$wpdb->update(
-			$wpdb->prefix . self::get_table_name(),
-			$data,
-			array(
-				'download_log_id' => $download_log->get_id(),
-			),
-			$format
-		);
-		$download_log->apply_changes();
-	}
+    /**
+     * Get a download log object.
+     *
+     * @param  array $data From the DB.
+     */
+    private function get_download_log($data): \WC_Customer_Download_Log
+    {
+        return new WC_Customer_Download_Log($data);
+    }
 
-	/**
-	 * Get a download log object.
-	 *
-	 * @param  array $data From the DB.
-	 * @return WC_Customer_Download_Log
-	 */
-	private function get_download_log( $data ) {
-		return new WC_Customer_Download_Log( $data );
-	}
+    /**
+     * Get array of download logs, or the count of existing logs, by specified args.
+     *
+     * @param  array $args Arguments to define download logs to retrieve. If $args['return'] is 'count' then the count of existing logs will be returned.
+     * @return array|int
+     */
+    public function get_download_logs($args = [])
+    {
+        global $wpdb;
 
-	/**
-	 * Get array of download logs, or the count of existing logs, by specified args.
-	 *
-	 * @param  array $args Arguments to define download logs to retrieve. If $args['return'] is 'count' then the count of existing logs will be returned.
-	 * @return array|int
-	 */
-	public function get_download_logs( $args = array() ) {
-		global $wpdb;
+        $args = wp_parse_args(
+            $args,
+            [
+                'permission_id'   => '',
+                'user_id'         => '',
+                'user_ip_address' => '',
+                'orderby'         => 'download_log_id',
+                'order'           => 'ASC',
+                'limit'           => -1,
+                'page'            => 1,
+                'return'          => 'objects',
+            ]
+        );
 
-		$args = wp_parse_args(
-			$args,
-			array(
-				'permission_id'   => '',
-				'user_id'         => '',
-				'user_ip_address' => '',
-				'orderby'         => 'download_log_id',
-				'order'           => 'ASC',
-				'limit'           => -1,
-				'page'            => 1,
-				'return'          => 'objects',
-			)
-		);
+        $is_count = 'count' === $args['return'];
 
-		$is_count = 'count' === $args['return'];
+        $query   = [];
+        $table   = $wpdb->prefix . self::get_table_name();
+        $query[] = 'SELECT ' . ($is_count ? 'COUNT(1)' : '*') . " FROM {$table} WHERE 1=1";
 
-		$query   = array();
-		$table   = $wpdb->prefix . self::get_table_name();
-		$query[] = 'SELECT ' . ( $is_count ? 'COUNT(1)' : '*' ) . " FROM {$table} WHERE 1=1";
+        if ($args['permission_id']) {
+            $query[] = $wpdb->prepare('AND permission_id = %d', $args['permission_id']);
+        }
 
-		if ( $args['permission_id'] ) {
-			$query[] = $wpdb->prepare( 'AND permission_id = %d', $args['permission_id'] );
-		}
+        if ($args['user_id']) {
+            $query[] = $wpdb->prepare('AND user_id = %d', $args['user_id']);
+        }
 
-		if ( $args['user_id'] ) {
-			$query[] = $wpdb->prepare( 'AND user_id = %d', $args['user_id'] );
-		}
+        if ($args['user_ip_address']) {
+            $query[] = $wpdb->prepare('AND user_ip_address = %s', $args['user_ip_address']);
+        }
 
-		if ( $args['user_ip_address'] ) {
-			$query[] = $wpdb->prepare( 'AND user_ip_address = %s', $args['user_ip_address'] );
-		}
+        $allowed_orders = [ 'download_log_id', 'timestamp', 'permission_id', 'user_id' ];
+        $orderby        = in_array($args['orderby'], $allowed_orders, true) ? $args['orderby'] : 'download_log_id';
+        $order          = 'DESC' === strtoupper((string) $args['order']) ? 'DESC' : 'ASC';
+        $orderby_sql    = sanitize_sql_orderby("{$orderby} {$order}");
+        $query[]        = "ORDER BY {$orderby_sql}";
 
-		$allowed_orders = array( 'download_log_id', 'timestamp', 'permission_id', 'user_id' );
-		$orderby        = in_array( $args['orderby'], $allowed_orders, true ) ? $args['orderby'] : 'download_log_id';
-		$order          = 'DESC' === strtoupper( $args['order'] ) ? 'DESC' : 'ASC';
-		$orderby_sql    = sanitize_sql_orderby( "{$orderby} {$order}" );
-		$query[]        = "ORDER BY {$orderby_sql}";
+        if (0 < $args['limit']) {
+            $query[] = $wpdb->prepare('LIMIT %d, %d', absint($args['limit']) * absint($args['page'] - 1), absint($args['limit']));
+        }
 
-		if ( 0 < $args['limit'] ) {
-			$query[] = $wpdb->prepare( 'LIMIT %d, %d', absint( $args['limit'] ) * absint( $args['page'] - 1 ), absint( $args['limit'] ) );
-		}
+        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+        if ($is_count) {
+            return absint($wpdb->get_var(implode(' ', $query)));
+        }
 
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
-		if ( $is_count ) {
-			return absint( $wpdb->get_var( implode( ' ', $query ) ) );
-		}
+        $raw_download_logs = $wpdb->get_results(implode(' ', $query));
+        // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
 
-		$raw_download_logs = $wpdb->get_results( implode( ' ', $query ) );
-		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
+        return match ($args['return']) {
+            'ids' => wp_list_pluck($raw_download_logs, 'download_log_id'),
+            default => array_map($this->get_download_log(...), $raw_download_logs),
+        };
+    }
 
-		switch ( $args['return'] ) {
-			case 'ids':
-				return wp_list_pluck( $raw_download_logs, 'download_log_id' );
-			default:
-				return array_map( array( $this, 'get_download_log' ), $raw_download_logs );
-		}
-	}
+    /**
+     * Get download logs for a given download permission.
+     *
+     * @param int $permission_id Permission to get logs for.
+     * @return array
+     */
+    public function get_download_logs_for_permission($permission_id)
+    {
+        // If no permission_id is passed, return an empty array.
+        if (empty($permission_id)) {
+            return [];
+        }
 
-	/**
-	 * Get download logs for a given download permission.
-	 *
-	 * @param int $permission_id Permission to get logs for.
-	 * @return array
-	 */
-	public function get_download_logs_for_permission( $permission_id ) {
-		// If no permission_id is passed, return an empty array.
-		if ( empty( $permission_id ) ) {
-			return array();
-		}
+        return $this->get_download_logs(
+            [
+                'permission_id' => $permission_id,
+            ]
+        );
+    }
 
-		return $this->get_download_logs(
-			array(
-				'permission_id' => $permission_id,
-			)
-		);
-	}
+    /**
+     * Get the count of download logs for a given download permission.
+     *
+     * @param int $permission_id Permission to get logs count for.
+     * @return int
+     */
+    public function get_download_logs_count_for_permission($permission_id)
+    {
+        // If no permission_id is passed, return an empty array.
+        if (empty($permission_id)) {
+            return 0;
+        }
 
-	/**
-	 * Get the count of download logs for a given download permission.
-	 *
-	 * @param int $permission_id Permission to get logs count for.
-	 * @return int
-	 */
-	public function get_download_logs_count_for_permission( $permission_id ) {
-		// If no permission_id is passed, return an empty array.
-		if ( empty( $permission_id ) ) {
-			return 0;
-		}
+        return $this->get_download_logs(
+            [
+                'permission_id' => $permission_id,
+                'return'        => 'count',
+            ]
+        );
+    }
 
-		return $this->get_download_logs(
-			array(
-				'permission_id' => $permission_id,
-				'return'        => 'count',
-			)
-		);
-	}
-
-	/**
-	 * Method to delete download logs for a given permission ID.
-	 *
-	 * @since 3.4.0
-	 * @param int $id download_id of the downloads that will be deleted.
-	 */
-	public function delete_by_permission_id( $id ) {
-		global $wpdb;
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}woocommerce_downloadable_product_permissions WHERE permission_id = %d", $id ) );
-		// Delete related records in wc_download_log (aka ON DELETE CASCADE).
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}wc_download_log WHERE permission_id = %d", $id ) );
-	}
+    /**
+     * Method to delete download logs for a given permission ID.
+     *
+     * @since 3.4.0
+     * @param int $id download_id of the downloads that will be deleted.
+     */
+    public function delete_by_permission_id($id): void
+    {
+        global $wpdb;
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}woocommerce_downloadable_product_permissions WHERE permission_id = %d", $id));
+        // Delete related records in wc_download_log (aka ON DELETE CASCADE).
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}wc_download_log WHERE permission_id = %d", $id));
+    }
 }

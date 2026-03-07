@@ -17,14 +17,14 @@ namespace Automattic\WooCommerce\EmailEditorVendor\Pelago\Emogrifier\Utilities;
  *
  * @internal
  */
-final class ArrayIntersector
+final readonly class ArrayIntersector
 {
     /**
      * the array with which the object was constructed, with all its keys exchanged with their associated values
      *
      * @var array<array-key, array-key>
      */
-    private $invertedArray;
+    private array $invertedArray;
 
     /**
      * Constructs the object with the array that will be reused for many intersection computations.

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Stub file for wc_admin_get_feature_config function.
  * This file is auto-generated and git-ignored, so we provide a stub for PHPStan.
@@ -9,6 +11,6 @@
  *
  * @return array<string, bool> Associative array of feature names (keys) to their enabled status (values).
  */
-function wc_admin_get_feature_config() {
+function wc_admin_get_feature_config(): void
+{
 }
-

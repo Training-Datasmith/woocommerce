@@ -25,7 +25,7 @@ final class SimpleStringCache
     /**
      * @var array<string, string>
      */
-    private $values = [];
+    private array $values = [];
 
     /**
      * Checks whether there is an entry stored for the given key.

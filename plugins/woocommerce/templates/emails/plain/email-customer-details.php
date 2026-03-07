@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Additional Customer Details (plain)
  *
@@ -17,10 +19,10 @@
  * @version 3.4.0
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
-echo esc_html( wc_strtoupper( esc_html__( 'Customer details', 'woocommerce' ) ) ) . "\n\n";
+echo esc_html(wc_strtoupper(esc_html__('Customer details', 'woocommerce'))) . "\n\n";
 
-foreach ( $fields as $field ) {
-	echo wp_kses_post( $field['label'] ) . ': ' . wp_kses_post( $field['value'] ) . "\n";
+foreach ($fields as $field) {
+    echo wp_kses_post($field['label']) . ': ' . wp_kses_post($field['value']) . "\n";
 }

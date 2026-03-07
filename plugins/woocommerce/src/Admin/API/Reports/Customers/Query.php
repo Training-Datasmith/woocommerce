@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Class for parameter-based Customers Report querying
  *
@@ -18,34 +20,33 @@ namespace Automattic\WooCommerce\Admin\API\Reports\Customers;
 
 use Automattic\WooCommerce\Admin\API\Reports\GenericQuery;
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * API\Reports\Customers\Query
  */
-class Query extends GenericQuery {
+class Query extends GenericQuery
+{
+    /**
+     * Specific query name.
+     * Will be used to load the `report-{name}` data store,
+     * and to call `woocommerce_analytics_{snake_case(name)}_*` filters.
+     *
+     * @var string
+     */
+    protected $name = 'customers';
 
-	/**
-	 * Specific query name.
-	 * Will be used to load the `report-{name}` data store,
-	 * and to call `woocommerce_analytics_{snake_case(name)}_*` filters.
-	 *
-	 * @var string
-	 */
-	protected $name = 'customers';
-
-	/**
-	 * Valid fields for Customers report.
-	 *
-	 * @return array
-	 */
-	protected function get_default_query_vars() {
-		return array(
-			'per_page' => get_option( 'posts_per_page' ), // not sure if this should be the default.
-			'page'     => 1,
-			'order'    => 'DESC',
-			'orderby'  => 'date_registered',
-			'fields'   => '*',
-		);
-	}
+    /**
+     * Valid fields for Customers report.
+     */
+    protected function get_default_query_vars(): array
+    {
+        return [
+            'per_page' => get_option('posts_per_page'), // not sure if this should be the default.
+            'page'     => 1,
+            'order'    => 'DESC',
+            'orderby'  => 'date_registered',
+            'fields'   => '*',
+        ];
+    }
 }

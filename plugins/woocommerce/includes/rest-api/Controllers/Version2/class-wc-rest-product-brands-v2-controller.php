@@ -1,4 +1,5 @@
 <?php
+
 /**
  * REST API Brands controller for WC 3.5+
  *
@@ -10,10 +11,10 @@
  * @since   9.4.0
  */
 
-declare( strict_types = 1);
+declare(strict_types=1);
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 /**
@@ -22,19 +23,19 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @package WooCommerce\RestApi
  * @extends WC_REST_Product_Categories_Controller
  */
-class WC_REST_Product_Brands_V2_Controller extends WC_REST_Product_Categories_V2_Controller {
+class WC_REST_Product_Brands_V2_Controller extends WC_REST_Product_Categories_V2_Controller
+{
+    /**
+     * Route base.
+     *
+     * @var string
+     */
+    protected $rest_base = 'products/brands';
 
-	/**
-	 * Route base.
-	 *
-	 * @var string
-	 */
-	protected $rest_base = 'products/brands';
-
-	/**
-	 * Taxonomy.
-	 *
-	 * @var string
-	 */
-	protected $taxonomy = 'product_brand';
+    /**
+     * Taxonomy.
+     *
+     * @var string
+     */
+    protected $taxonomy = 'product_brand';
 }

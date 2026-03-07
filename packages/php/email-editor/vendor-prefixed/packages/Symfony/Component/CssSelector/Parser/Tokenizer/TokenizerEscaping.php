@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -23,11 +25,8 @@ namespace Automattic\WooCommerce\EmailEditorVendor\Symfony\Component\CssSelector
  */
 class TokenizerEscaping
 {
-    private $patterns;
-
-    public function __construct(TokenizerPatterns $patterns)
+    public function __construct(private readonly TokenizerPatterns $patterns)
     {
-        $this->patterns = $patterns;
     }
 
     public function escapeUnicode(string $value): string
@@ -46,8 +45,8 @@ class TokenizerEscaping
 
     private function replaceUnicodeSequences(string $value): string
     {
-        return preg_replace_callback($this->patterns->getUnicodeEscapePattern(), function ($match) {
-            $c = hexdec($match[1]);
+        return preg_replace_callback($this->patterns->getUnicodeEscapePattern(), function ($match): string {
+            $c = hexdec((string) $match[1]);
 
             if (0x80 > $c %= 0x200000) {
                 return \chr($c);

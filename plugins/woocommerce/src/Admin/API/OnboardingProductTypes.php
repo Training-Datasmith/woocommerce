@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * REST API Onboarding Product Types Controller
  *
@@ -9,7 +11,7 @@ namespace Automattic\WooCommerce\Admin\API;
 
 use Automattic\WooCommerce\Internal\Admin\Onboarding\OnboardingProducts;
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * Onboarding Product Types Controller.
@@ -17,63 +19,66 @@ defined( 'ABSPATH' ) || exit;
  * @internal
  * @extends WC_REST_Data_Controller
  */
-class OnboardingProductTypes extends \WC_REST_Data_Controller {
+class OnboardingProductTypes extends \WC_REST_Data_Controller
+{
+    /**
+     * Endpoint namespace.
+     *
+     * @var string
+     */
+    protected $namespace = 'wc-admin';
 
-	/**
-	 * Endpoint namespace.
-	 *
-	 * @var string
-	 */
-	protected $namespace = 'wc-admin';
+    /**
+     * Route base.
+     *
+     * @var string
+     */
+    protected $rest_base = 'onboarding/product-types';
 
-	/**
-	 * Route base.
-	 *
-	 * @var string
-	 */
-	protected $rest_base = 'onboarding/product-types';
+    /**
+     * Register routes.
+     */
+    public function register_routes(): void
+    {
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base,
+            [
+                [
+                    'methods'             => \WP_REST_Server::READABLE,
+                    'callback'            => $this->get_product_types(...),
+                    'permission_callback' => $this->get_items_permissions_check(...),
+                ],
+                'schema' => [ $this, 'get_public_item_schema' ],
+            ]
+        );
+    }
 
-	/**
-	 * Register routes.
-	 */
-	public function register_routes() {
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base,
-			array(
-				array(
-					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_product_types' ),
-					'permission_callback' => array( $this, 'get_items_permissions_check' ),
-				),
-				'schema' => array( $this, 'get_public_item_schema' ),
-			)
-		);
-	}
+    /**
+     * Check whether a given request has permission to read onboarding profile data.
+     *
+     * @param  WP_REST_Request $request Full details about the request.
+     * @return WP_Error|boolean
+     */
+    public function get_items_permissions_check($request): \WP_Error|true
+    {
+        if (! wc_rest_check_manager_permissions('settings', 'read')) {
+            return new \WP_Error('woocommerce_rest_cannot_view', __('Sorry, you cannot list resources.', 'woocommerce'), [ 'status' => rest_authorization_required_code() ]);
+        }
 
-	/**
-	 * Check whether a given request has permission to read onboarding profile data.
-	 *
-	 * @param  WP_REST_Request $request Full details about the request.
-	 * @return WP_Error|boolean
-	 */
-	public function get_items_permissions_check( $request ) {
-		if ( ! wc_rest_check_manager_permissions( 'settings', 'read' ) ) {
-			return new \WP_Error( 'woocommerce_rest_cannot_view', __( 'Sorry, you cannot list resources.', 'woocommerce' ), array( 'status' => rest_authorization_required_code() ) );
-		}
+        return true;
+    }
 
-		return true;
-	}
-
-	/**
-	 * Return available product types.
-	 *
-	 * @param \WP_REST_Request $request Request data.
-	 *
-	 * @return \WP_Error|\WP_REST_Response
-	 */
-	public function get_product_types( $request ) {
-		return OnboardingProducts::get_product_types_with_data();
-	}
+    /**
+     * Return available product types.
+     *
+     * @param \WP_REST_Request $request Request data.
+     *
+     * @return \WP_Error|\WP_REST_Response
+     */
+    public function get_product_types($request)
+    {
+        return OnboardingProducts::get_product_types_with_data();
+    }
 
 }

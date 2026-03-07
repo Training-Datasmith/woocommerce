@@ -1,57 +1,59 @@
 <?php
+
+declare(strict_types=1);
 /**
  * AssignDefaultCategory class file.
  */
 
 namespace Automattic\WooCommerce\Internal;
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * Class to assign default category to products.
  */
-class AssignDefaultCategory {
-	/**
-	 * Class initialization, to be executed when the class is resolved by the container.
-	 *
-	 * @internal
-	 */
-	final public function init() {
-		add_action( 'wc_schedule_update_product_default_cat', array( $this, 'maybe_assign_default_product_cat' ) );
-	}
+class AssignDefaultCategory
+{
+    /**
+     * Class initialization, to be executed when the class is resolved by the container.
+     *
+     * @internal
+     */
+    final public function init(): void
+    {
+        add_action('wc_schedule_update_product_default_cat', $this->maybe_assign_default_product_cat(...));
+    }
 
-	/**
-	 * When a product category is deleted, we need to check
-	 * if the product has no categories assigned. Then assign
-	 * it a default category. We delay this with a scheduled
-	 * action job to not block the response.
-	 *
-	 * @return void
-	 */
-	public function schedule_action() {
-		WC()->queue()->schedule_single(
-			time(),
-			'wc_schedule_update_product_default_cat',
-			array(),
-			'wc_update_product_default_cat'
-		);
-	}
+    /**
+     * When a product category is deleted, we need to check
+     * if the product has no categories assigned. Then assign
+     * it a default category. We delay this with a scheduled
+     * action job to not block the response.
+     */
+    public function schedule_action(): void
+    {
+        WC()->queue()->schedule_single(
+            time(),
+            'wc_schedule_update_product_default_cat',
+            [],
+            'wc_update_product_default_cat'
+        );
+    }
 
-	/**
-	 * Assigns default product category for products
-	 * that have no categories.
-	 *
-	 * @return void
-	 */
-	public function maybe_assign_default_product_cat() {
-		global $wpdb;
+    /**
+     * Assigns default product category for products
+     * that have no categories.
+     */
+    public function maybe_assign_default_product_cat(): void
+    {
+        global $wpdb;
 
-		$default_category = get_option( 'default_product_cat', 0 );
+        $default_category = get_option('default_product_cat', 0);
 
-		if ( $default_category ) {
-			$affected_rows = $wpdb->query(
-				$wpdb->prepare(
-					"INSERT INTO {$wpdb->term_relationships} (object_id, term_taxonomy_id)
+        if ($default_category) {
+            $affected_rows = $wpdb->query(
+                $wpdb->prepare(
+                    "INSERT INTO {$wpdb->term_relationships} (object_id, term_taxonomy_id)
 					SELECT DISTINCT posts.ID, %s FROM {$wpdb->posts} posts
 					LEFT JOIN
 						(
@@ -62,14 +64,14 @@ class AssignDefaultCategory {
 					ON posts.ID = tax_query.object_id
 					WHERE posts.post_type = 'product'
 					AND tax_query.object_id IS NULL",
-					$default_category
-				)
-			);
-			if ( $affected_rows > 0 ) {
-				wp_cache_flush();
-				delete_transient( 'wc_term_counts' );
-				wp_update_term_count_now( array( $default_category ), 'product_cat' );
-			}
-		}
-	}
+                    $default_category
+                )
+            );
+            if ($affected_rows > 0) {
+                wp_cache_flush();
+                delete_transient('wc_term_counts');
+                wp_update_term_count_now([ $default_category ], 'product_cat');
+            }
+        }
+    }
 }

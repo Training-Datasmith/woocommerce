@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Blueprint\ResourceStorages;
 
 /**
@@ -11,20 +13,19 @@ namespace Automattic\WooCommerce\Blueprint\ResourceStorages;
  *
  * @package Automattic\WooCommerce\Blueprint\ResourceStorages
  */
-interface ResourceStorage {
-	/**
-	 * Return supported resource type.
-	 *
-	 * @return string
-	 */
-	public function get_supported_resource(): string;
+interface ResourceStorage
+{
+    /**
+     * Return supported resource type.
+     */
+    public function get_supported_resource(): string;
 
-	/**
-	 * Download the resource.
-	 *
-	 * @param string $slug resource slug.
-	 *
-	 * @return string|null downloaded local path.
-	 */
-	public function download( $slug ): ?string;
+    /**
+     * Download the resource.
+     *
+     * @param string $slug resource slug.
+     *
+     * @return string|null downloaded local path.
+     */
+    public function download($slug): ?string;
 }

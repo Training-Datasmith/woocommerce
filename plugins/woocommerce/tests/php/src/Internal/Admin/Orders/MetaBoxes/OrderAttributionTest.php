@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * \Automattic\WooCommerce\Internal\Admin\Orders\MetaBoxes\OrderAttribution test class.
  */
@@ -14,184 +16,191 @@ require_once WC_ABSPATH . '/includes/admin/marketplace-suggestions/class-wc-mark
 /**
  * Tests for the OrderAttribution class.
  */
-class OrderAttributionTest extends WP_UnitTestCase {
+class OrderAttributionTest extends WP_UnitTestCase
+{
+    /**
+     * System under test.
+     *
+     * @var OrderAttribution
+     */
+    private $sut;
 
-	/**
-	 * System under test.
-	 *
-	 * @var OrderAttribution
-	 */
-	private $sut;
+    /**
+     * Set up the test fixture.
+     *
+     * @return void
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->sut = new OrderAttribution();
+    }
 
-	/**
-	 * Set up the test fixture.
-	 *
-	 * @return void
-	 */
-	public function setUp(): void {
-		parent::setUp();
-		$this->sut = new OrderAttribution();
-	}
+    /**
+     * Tear down the test fixture.
+     *
+     * @return void
+     */
+    public function tearDown(): void
+    {
+        update_option('woocommerce_show_marketplace_suggestions', 'yes');
+        wp_set_current_user(0);
+        parent::tearDown();
+    }
 
-	/**
-	 * Tear down the test fixture.
-	 *
-	 * @return void
-	 */
-	public function tearDown(): void {
-		update_option( 'woocommerce_show_marketplace_suggestions', 'yes' );
-		wp_set_current_user( 0 );
-		parent::tearDown();
-	}
+    /**
+     * Test default output.
+     *
+     * @return void
+     */
+    public function test_default_arguments_passed_into_output()
+    {
+        $order = WC_Helper_Order::create_order();
 
-	/**
-	 * Test default output.
-	 *
-	 * @return void
-	 */
-	public function test_default_arguments_passed_into_output() {
-		$order = WC_Helper_Order::create_order();
+        // Hook into the template to check the args.
+        add_action(
+            'woocommerce_before_template_part',
+            function ($template_name, $template_path, $located, $args) {
+                $this->assertEquals('Unknown', $args['meta']['origin'] ?? '');
+                $this->assertFalse($args['has_more_details']);
+            },
+            10,
+            4
+        );
 
-		// Hook into the template to check the args.
-		add_action(
-			'woocommerce_before_template_part',
-			function( $template_name, $template_path, $located, $args ) {
-				$this->assertEquals( 'Unknown', $args['meta']['origin'] ?? '' );
-				$this->assertFalse( $args['has_more_details'] );
-			},
-			10,
-			4
-		);
+        ob_start();
+        $this->sut->output($order);
+        ob_end_clean();
+    }
 
-		ob_start();
-		$this->sut->output( $order );
-		ob_end_clean();
-	}
+    /**
+     * Test that additional order meta passed into the output changes `show more details` value.
+     *
+     * @return void
+     */
+    public function test_more_than_one_related_meta_affects_show_more()
+    {
+        $order = WC_Helper_Order::create_order();
+        $order->add_meta_data('_wc_order_attribution_device_type', 'Desktop');
 
-	/**
-	 * Test that additional order meta passed into the output changes `show more details` value.
-	 *
-	 * @return void
-	 */
-	public function test_more_than_one_related_meta_affects_show_more() {
-		$order = WC_Helper_Order::create_order();
-		$order->add_meta_data( '_wc_order_attribution_device_type', 'Desktop' );
+        // Hook into the template to check the args.
+        add_action(
+            'woocommerce_before_template_part',
+            function ($template_name, $template_path, $located, $args) {
+                $this->assertEquals('Unknown', $args['meta']['origin'] ?? '');
+                $this->assertEquals('Desktop', $args['meta']['device_type'] ?? '');
+                $this->assertTrue($args['has_more_details']);
+            },
+            10,
+            4
+        );
 
-		// Hook into the template to check the args.
-		add_action(
-			'woocommerce_before_template_part',
-			function( $template_name, $template_path, $located, $args ) {
-				$this->assertEquals( 'Unknown', $args['meta']['origin'] ?? '' );
-				$this->assertEquals( 'Desktop', $args['meta']['device_type'] ?? '' );
-				$this->assertTrue( $args['has_more_details'] );
-			},
-			10,
-			4
-		);
+        ob_start();
+        $this->sut->output($order);
+        ob_get_contents();
+        ob_end_clean();
+    }
 
-		ob_start();
-		$this->sut->output( $order );
-		ob_get_contents();
-		ob_end_clean();
-	}
+    /**
+     * Test that additional order meta passed into the output.
+     *
+     * @return void
+     */
+    public function test_additional_order_meta_affects_arguments()
+    {
+        $order = WC_Helper_Order::create_order();
 
-	/**
-	 * Test that additional order meta passed into the output.
-	 *
-	 * @return void
-	 */
-	public function test_additional_order_meta_affects_arguments() {
-		$order = WC_Helper_Order::create_order();
+        $meta = [
+            '_wc_order_attribution_origin'             => 'Referral: WooCommerce.com',
+            '_wc_order_attribution_device_type'        => 'Desktop',
+            '_wc_order_attribution_user_agent'         => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            '_wc_order_attribution_session_count'      => 1,
+            '_wc_order_attribution_session_pages'      => 4,
+            '_wc_order_attribution_session_start_time' => '2023-11-16 13:47:50',
+            '_wc_order_attribution_session_entry'      => 'https://wordpress.ddev.site/product/belt/',
+            '_wc_order_attribution_utm_content'        => '/',
+            '_wc_order_attribution_utm_medium'         => 'referral',
+            '_wc_order_attribution_utm_source'         => 'woocommerce.com',
+            '_wc_order_attribution_referrer'           => 'https://woocommerce.com/',
+            '_wc_order_attribution_source_type'        => 'referral',
+        ];
+        foreach ($meta as $key => $value) {
+            $order->add_meta_data($key, $value);
+        }
 
-		$meta = array(
-			'_wc_order_attribution_origin'             => 'Referral: WooCommerce.com',
-			'_wc_order_attribution_device_type'        => 'Desktop',
-			'_wc_order_attribution_user_agent'         => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-			'_wc_order_attribution_session_count'      => 1,
-			'_wc_order_attribution_session_pages'      => 4,
-			'_wc_order_attribution_session_start_time' => '2023-11-16 13:47:50',
-			'_wc_order_attribution_session_entry'      => 'https://wordpress.ddev.site/product/belt/',
-			'_wc_order_attribution_utm_content'        => '/',
-			'_wc_order_attribution_utm_medium'         => 'referral',
-			'_wc_order_attribution_utm_source'         => 'woocommerce.com',
-			'_wc_order_attribution_referrer'           => 'https://woocommerce.com/',
-			'_wc_order_attribution_source_type'        => 'referral',
-		);
-		foreach ( $meta as $key => $value ) {
-			$order->add_meta_data( $key, $value );
-		}
+        // Hook into the template to check the args.
+        add_action(
+            'woocommerce_before_template_part',
+            function ($template_name, $template_path, $located, $args) {
+                $this->assertEquals('Referral: Woocommerce.com', $args['meta']['origin'] ?? '');
+                $this->assertEquals('Desktop', $args['meta']['device_type'] ?? '');
+                $this->assertEquals(
+                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+                    $args['meta']['user_agent'] ?? ''
+                );
+                $this->assertEquals(1, $args['meta']['session_count'] ?? '');
+                $this->assertEquals(4, $args['meta']['session_pages'] ?? '');
+                $this->assertEquals('2023-11-16 13:47:50', $args['meta']['session_start_time'] ?? '');
+                $this->assertEquals('https://wordpress.ddev.site/product/belt/', $args['meta']['session_entry'] ?? '');
+                $this->assertEquals('/', $args['meta']['utm_content'] ?? '');
+                $this->assertEquals('referral', $args['meta']['utm_medium'] ?? '');
+                $this->assertEquals('woocommerce.com', $args['meta']['utm_source'] ?? '');
+                $this->assertEquals('https://woocommerce.com/', $args['meta']['referrer'] ?? '');
+                $this->assertEquals('referral', $args['meta']['source_type'] ?? '');
 
-		// Hook into the template to check the args.
-		add_action(
-			'woocommerce_before_template_part',
-			function( $template_name, $template_path, $located, $args ) {
-				$this->assertEquals( 'Referral: Woocommerce.com', $args['meta']['origin'] ?? '' );
-				$this->assertEquals( 'Desktop', $args['meta']['device_type'] ?? '' );
-				$this->assertEquals(
-					'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-					$args['meta']['user_agent'] ?? ''
-				);
-				$this->assertEquals( 1, $args['meta']['session_count'] ?? '' );
-				$this->assertEquals( 4, $args['meta']['session_pages'] ?? '' );
-				$this->assertEquals( '2023-11-16 13:47:50', $args['meta']['session_start_time'] ?? '' );
-				$this->assertEquals( 'https://wordpress.ddev.site/product/belt/', $args['meta']['session_entry'] ?? '' );
-				$this->assertEquals( '/', $args['meta']['utm_content'] ?? '' );
-				$this->assertEquals( 'referral', $args['meta']['utm_medium'] ?? '' );
-				$this->assertEquals( 'woocommerce.com', $args['meta']['utm_source'] ?? '' );
-				$this->assertEquals( 'https://woocommerce.com/', $args['meta']['referrer'] ?? '' );
-				$this->assertEquals( 'referral', $args['meta']['source_type'] ?? '' );
+                $this->assertTrue($args['has_more_details']);
+            },
+            10,
+            4
+        );
 
-				$this->assertTrue( $args['has_more_details'] );
-			},
-			10,
-			4
-		);
+        ob_start();
+        $this->sut->output($order);
+        ob_get_contents();
+        ob_end_clean();
+    }
 
-		ob_start();
-		$this->sut->output( $order );
-		ob_get_contents();
-		ob_end_clean();
-	}
+    /**
+     * Test that marketplace suggestions banner is shown when suggestions are allowed.
+     *
+     * @return void
+     */
+    public function test_marketplace_suggestions_banner_shown_when_allowed()
+    {
+        $order = WC_Helper_Order::create_order();
 
-	/**
-	 * Test that marketplace suggestions banner is shown when suggestions are allowed.
-	 *
-	 * @return void
-	 */
-	public function test_marketplace_suggestions_banner_shown_when_allowed() {
-		$order = WC_Helper_Order::create_order();
+        $admin_user = $this->factory->user->create(
+            [
+                'role' => 'administrator',
+            ]
+        );
+        wp_set_current_user($admin_user);
+        update_option('woocommerce_show_marketplace_suggestions', 'yes');
+        $this->assertTrue(\WC_Marketplace_Suggestions::allow_suggestions());
 
-		$admin_user = $this->factory->user->create(
-			array(
-				'role' => 'administrator',
-			)
-		);
-		wp_set_current_user( $admin_user );
-		update_option( 'woocommerce_show_marketplace_suggestions', 'yes' );
-		$this->assertTrue( \WC_Marketplace_Suggestions::allow_suggestions() );
+        ob_start();
+        $this->sut->output($order);
+        $output = ob_get_clean();
 
-		ob_start();
-		$this->sut->output( $order );
-		$output = ob_get_clean();
+        $this->assertStringContainsString('<div id="order-attribution-install-banner-slotfill"></div>', $output);
+    }
 
-		$this->assertStringContainsString( '<div id="order-attribution-install-banner-slotfill"></div>', $output );
-	}
+    /**
+     * Test that marketplace suggestions banner is not shown when suggestions are not allowed.
+     *
+     * @return void
+     */
+    public function test_marketplace_suggestions_banner_not_shown_when_not_allowed()
+    {
+        $order = WC_Helper_Order::create_order();
 
-	/**
-	 * Test that marketplace suggestions banner is not shown when suggestions are not allowed.
-	 *
-	 * @return void
-	 */
-	public function test_marketplace_suggestions_banner_not_shown_when_not_allowed() {
-		$order = WC_Helper_Order::create_order();
+        update_option('woocommerce_show_marketplace_suggestions', 'no');
+        $this->assertFalse(\WC_Marketplace_Suggestions::allow_suggestions());
 
-		update_option( 'woocommerce_show_marketplace_suggestions', 'no' );
-		$this->assertFalse( \WC_Marketplace_Suggestions::allow_suggestions() );
+        ob_start();
+        $this->sut->output($order);
+        $output = ob_get_clean();
 
-		ob_start();
-		$this->sut->output( $order );
-		$output = ob_get_clean();
-
-		$this->assertStringNotContainsString( '<div id="order-attribution-install-banner-slotfill"></div>', $output );
-	}
+        $this->assertStringNotContainsString('<div id="order-attribution-install-banner-slotfill"></div>', $output);
+    }
 }

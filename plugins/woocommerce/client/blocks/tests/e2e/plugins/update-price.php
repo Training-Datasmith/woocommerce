@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Plugin Name: WooCommerce Blocks Test Update Price
  * Description: Update price of products.
@@ -8,10 +10,11 @@
  * @package woocommerce-blocks-test-update-price
  */
 
-function calc_price( $cart_object ) {
-	foreach ( $cart_object->get_cart() as $hash => $value ) {
-		$value['data']->set_price( 50 );
-	}
+function calc_price($cart_object)
+{
+    foreach ($cart_object->get_cart() as $hash => $value) {
+        $value['data']->set_price(50);
+    }
 }
 
-add_action( 'woocommerce_before_calculate_totals', 'calc_price' );
+add_action('woocommerce_before_calculate_totals', 'calc_price');

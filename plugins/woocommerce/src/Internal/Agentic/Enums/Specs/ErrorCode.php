@@ -1,38 +1,41 @@
 <?php
+
 declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Internal\Agentic\Enums\Specs;
 
 /**
  * Error codes for message errors as defined in the Agentic Commerce Protocol.
  */
-class ErrorCode {
-	/**
-	 * Required field is missing.
-	 */
-	const MISSING = 'missing';
+class ErrorCode
+{
+    /**
+     * Required field is missing.
+     */
+    public const MISSING = 'missing';
 
-	/**
-	 * Field value is invalid.
-	 */
-	const INVALID = 'invalid';
+    /**
+     * Field value is invalid.
+     */
+    public const INVALID = 'invalid';
 
-	/**
-	 * Product is out of stock.
-	 */
-	const OUT_OF_STOCK = 'out_of_stock';
+    /**
+     * Product is out of stock.
+     */
+    public const OUT_OF_STOCK = 'out_of_stock';
 
-	/**
-	 * Payment was declined.
-	 */
-	const PAYMENT_DECLINED = 'payment_declined';
+    /**
+     * Payment was declined.
+     */
+    public const PAYMENT_DECLINED = 'payment_declined';
 
-	/**
-	 * User sign-in is required.
-	 */
-	const REQUIRES_SIGN_IN = 'requires_sign_in';
+    /**
+     * User sign-in is required.
+     */
+    public const REQUIRES_SIGN_IN = 'requires_sign_in';
 
-	/**
-	 * 3D Secure authentication is required.
-	 */
-	const REQUIRES_3DS = 'requires_3ds';
+    /**
+     * 3D Secure authentication is required.
+     */
+    public const REQUIRES_3DS = 'requires_3ds';
 }

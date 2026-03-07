@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * WooCommerce Admin Input Parameter Exception Class
  *
@@ -7,9 +9,11 @@
 
 namespace Automattic\WooCommerce\Admin\API\Reports;
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * API\Reports\ParameterException class.
  */
-class ParameterException extends \WC_Data_Exception {}
+class ParameterException extends \WC_Data_Exception
+{
+}

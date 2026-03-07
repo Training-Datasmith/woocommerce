@@ -1,11 +1,13 @@
 <?php
+
 /**
  * This file is part of the WooCommerce Email Editor package
  *
  * @package Automattic\WooCommerce\EmailEditor
  */
 
-declare( strict_types = 1 );
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditor\Integrations\Core;
 
 use Automattic\WooCommerce\EmailEditor\Engine\Renderer\ContentRenderer\Layout\Flex_Layout_Renderer;
@@ -25,229 +27,190 @@ use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Image;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\List_Block;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\List_Item;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Media_Text;
-use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Post_Content;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Quote;
-use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Video;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Social_Link;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Social_Links;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Table;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Text;
+use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Video;
 
 /**
  * Initializes the core blocks renderers.
  */
-class Initializer {
-	/**
-	 * List of supported WordPress core blocks in the email editor.
-	 */
-	const ALLOWED_BLOCK_TYPES = array(
-		'core/button',
-		'core/buttons',
-		'core/column',
-		'core/columns',
-		'core/group',
-		'core/heading',
-		'core/image',
-		'core/list',
-		'core/list-item',
-		'core/paragraph',
-		'core/quote',
-		'core/spacer',
-		'core/social-link',
-		'core/social-links',
-		'core/site-logo',
-		'core/site-title',
-		'core/table',
-	);
+class Initializer
+{
+    /**
+     * List of supported WordPress core blocks in the email editor.
+     */
+    public const ALLOWED_BLOCK_TYPES = [
+        'core/button',
+        'core/buttons',
+        'core/column',
+        'core/columns',
+        'core/group',
+        'core/heading',
+        'core/image',
+        'core/list',
+        'core/list-item',
+        'core/paragraph',
+        'core/quote',
+        'core/spacer',
+        'core/social-link',
+        'core/social-links',
+        'core/site-logo',
+        'core/site-title',
+        'core/table',
+    ];
 
-	/**
-	 * List of blocks that only need rendering capabilities (not available in email editor).
-	 *
-	 * To add a new render-only block:
-	 * 1. Add the block name to this array
-	 * 2. Optionally create a specific renderer in the Renderer/Blocks directory
-	 * 3. Add the renderer case in the get_block_renderer method
-	 */
-	const RENDER_ONLY_BLOCK_TYPES = array(
-		'core/gallery',
-		'core/media-text',
-		'core/audio',
-		'core/embed',
-		'core/cover',
-		'core/video',
-		'core/post-title',
-	);
+    /**
+     * List of blocks that only need rendering capabilities (not available in email editor).
+     *
+     * To add a new render-only block:
+     * 1. Add the block name to this array
+     * 2. Optionally create a specific renderer in the Renderer/Blocks directory
+     * 3. Add the renderer case in the get_block_renderer method
+     */
+    public const RENDER_ONLY_BLOCK_TYPES = [
+        'core/gallery',
+        'core/media-text',
+        'core/audio',
+        'core/embed',
+        'core/cover',
+        'core/video',
+        'core/post-title',
+    ];
 
-	/**
-	 * Cache renderers by block name.
-	 *
-	 * @var array<string, Abstract_Block_Renderer>
-	 */
-	private array $renderers = array();
+    /**
+     * Cache renderers by block name.
+     *
+     * @var array<string, Abstract_Block_Renderer>
+     */
+    private array $renderers = [];
 
-	/**
-	 * Initializes the core blocks renderers.
-	 */
-	public function initialize(): void {
-		add_filter( 'woocommerce_email_editor_theme_json', array( $this, 'adjust_theme_json' ), 10, 1 );
-		add_filter( 'safe_style_css', array( $this, 'allow_styles' ) );
-	}
+    /**
+     * Initializes the core blocks renderers.
+     */
+    public function initialize(): void
+    {
+        add_filter('woocommerce_email_editor_theme_json', $this->adjust_theme_json(...), 10, 1);
+        add_filter('safe_style_css', $this->allow_styles(...));
+    }
 
-	/**
-	 * Adjusts the editor's theme to add blocks specific settings for core blocks.
-	 *
-	 * @param \WP_Theme_JSON $editor_theme_json Editor theme JSON.
-	 */
-	public function adjust_theme_json( \WP_Theme_JSON $editor_theme_json ): \WP_Theme_JSON {
-		$theme_json = (string) file_get_contents( __DIR__ . '/theme.json' );
-		$theme_json = json_decode( $theme_json, true );
-		/**
-		 * Loaded theme json.
-		 *
-		 * @var array $theme_json
-		 */
-		$editor_theme_json->merge( new \WP_Theme_JSON( $theme_json, 'default' ) );
-		return $editor_theme_json;
-	}
+    /**
+     * Adjusts the editor's theme to add blocks specific settings for core blocks.
+     *
+     * @param \WP_Theme_JSON $editor_theme_json Editor theme JSON.
+     */
+    public function adjust_theme_json(\WP_Theme_JSON $editor_theme_json): \WP_Theme_JSON
+    {
+        $theme_json = (string) file_get_contents(__DIR__ . '/theme.json');
+        $theme_json = json_decode($theme_json, true);
+        /**
+         * Loaded theme json.
+         *
+         * @var array $theme_json
+         */
+        $editor_theme_json->merge(new \WP_Theme_JSON($theme_json, 'default'));
+        return $editor_theme_json;
+    }
 
-	/**
-	 * Allow styles for the email editor.
-	 *
-	 * @param array|null $allowed_styles Allowed styles.
-	 */
-	public function allow_styles( ?array $allowed_styles ): array {
-		// The styles can be null in some cases.
-		if ( ! is_array( $allowed_styles ) ) {
-			$allowed_styles = array();
-		}
-		$allowed_styles[] = 'display';
-		$allowed_styles[] = 'mso-padding-alt';
-		$allowed_styles[] = 'mso-font-width';
-		$allowed_styles[] = 'mso-text-raise';
-		return $allowed_styles;
-	}
+    /**
+     * Allow styles for the email editor.
+     *
+     * @param array|null $allowed_styles Allowed styles.
+     */
+    public function allow_styles(?array $allowed_styles): array
+    {
+        // The styles can be null in some cases.
+        if (! is_array($allowed_styles)) {
+            $allowed_styles = [];
+        }
+        $allowed_styles[] = 'display';
+        $allowed_styles[] = 'mso-padding-alt';
+        $allowed_styles[] = 'mso-font-width';
+        $allowed_styles[] = 'mso-text-raise';
+        return $allowed_styles;
+    }
 
-	/**
-	 * Configure block settings for email editor support and rendering.
-	 *
-	 * This method handles three types of blocks:
-	 * 1. Editor-available blocks: Set supports.email = true and render_email_callback
-	 * 2. Render-only blocks: Only set render_email_callback (not available in editor)
-	 * 3. Special blocks: Custom handling (e.g., core/post-content stateless renderer)
-	 *
-	 * @param array $settings Block settings.
-	 * @return array Modified block settings.
-	 */
-	public function update_block_settings( array $settings ): array {
-		// Enable blocks in email editor and set rendering callback.
-		if ( in_array( $settings['name'], self::ALLOWED_BLOCK_TYPES, true ) ) {
-			$settings['supports']['email']     = true;
-			$settings['render_email_callback'] = array( $this, 'render_block' );
-		}
+    /**
+     * Configure block settings for email editor support and rendering.
+     *
+     * This method handles three types of blocks:
+     * 1. Editor-available blocks: Set supports.email = true and render_email_callback
+     * 2. Render-only blocks: Only set render_email_callback (not available in editor)
+     * 3. Special blocks: Custom handling (e.g., core/post-content stateless renderer)
+     *
+     * @param array $settings Block settings.
+     * @return array Modified block settings.
+     */
+    public function update_block_settings(array $settings): array
+    {
+        // Enable blocks in email editor and set rendering callback.
+        if (in_array($settings['name'], self::ALLOWED_BLOCK_TYPES, true)) {
+            $settings['supports']['email']     = true;
+            $settings['render_email_callback'] = $this->render_block(...);
+        }
 
-		// Set rendering callback for render-only blocks (without enabling in editor).
-		if ( in_array( $settings['name'], self::RENDER_ONLY_BLOCK_TYPES, true ) ) {
-			$settings['render_email_callback'] = array( $this, 'render_block' );
-		}
+        // Set rendering callback for render-only blocks (without enabling in editor).
+        if (in_array($settings['name'], self::RENDER_ONLY_BLOCK_TYPES, true)) {
+            $settings['render_email_callback'] = $this->render_block(...);
+        }
 
-		return $settings;
-	}
+        return $settings;
+    }
 
-	/**
-	 * Returns the block content rendered by the block renderer.
-	 *
-	 * @param string            $block_content Block content.
-	 * @param array             $parsed_block Parsed block settings.
-	 * @param Rendering_Context $rendering_context Rendering context.
-	 * @return string
-	 */
-	public function render_block( string $block_content, array $parsed_block, Rendering_Context $rendering_context ): string {
-		if ( isset( $parsed_block['blockName'] ) ) {
-			$block_renderer = $this->get_block_renderer( $parsed_block['blockName'] );
-			return $block_renderer->render( $block_content, $parsed_block, $rendering_context );
-		}
+    /**
+     * Returns the block content rendered by the block renderer.
+     *
+     * @param string            $block_content Block content.
+     * @param array             $parsed_block Parsed block settings.
+     * @param Rendering_Context $rendering_context Rendering context.
+     */
+    public function render_block(string $block_content, array $parsed_block, Rendering_Context $rendering_context): string
+    {
+        if (isset($parsed_block['blockName'])) {
+            $block_renderer = $this->get_block_renderer($parsed_block['blockName']);
+            return $block_renderer->render($block_content, $parsed_block, $rendering_context);
+        }
 
-		return $block_content;
-	}
+        return $block_content;
+    }
 
-	/**
-	 * Return an instance of Abstract_Block_Renderer by the block name.
-	 *
-	 * @param string $block_name Block name.
-	 * @return Abstract_Block_Renderer
-	 */
-	private function get_block_renderer( string $block_name ): Abstract_Block_Renderer {
-		if ( isset( $this->renderers[ $block_name ] ) ) {
-			return $this->renderers[ $block_name ];
-		}
+    /**
+     * Return an instance of Abstract_Block_Renderer by the block name.
+     *
+     * @param string $block_name Block name.
+     */
+    private function get_block_renderer(string $block_name): Abstract_Block_Renderer
+    {
+        if (isset($this->renderers[ $block_name ])) {
+            return $this->renderers[ $block_name ];
+        }
 
-		switch ( $block_name ) {
-			case 'core/heading':
-			case 'core/paragraph':
-			case 'core/site-title':
-			case 'core/post-title':
-				$renderer = new Text();
-				break;
-			case 'core/column':
-				$renderer = new Column();
-				break;
-			case 'core/columns':
-				$renderer = new Columns();
-				break;
-			case 'core/list':
-				$renderer = new List_Block();
-				break;
-			case 'core/list-item':
-				$renderer = new List_Item();
-				break;
-			case 'core/image':
-				$renderer = new Image();
-				break;
-			case 'core/button':
-				$renderer = new Button();
-				break;
-			case 'core/buttons':
-				$renderer = new Buttons( new Flex_Layout_Renderer() );
-				break;
-			case 'core/group':
-				$renderer = new Group();
-				break;
-			case 'core/quote':
-				$renderer = new Quote();
-				break;
-			case 'core/social-link':
-				$renderer = new Social_Link();
-				break;
-			case 'core/social-links':
-				$renderer = new Social_Links();
-				break;
-			case 'core/table':
-				$renderer = new Table();
-				break;
-			case 'core/gallery':
-				$renderer = new Gallery();
-				break;
-			case 'core/media-text':
-				$renderer = new Media_Text();
-				break;
-			case 'core/audio':
-				$renderer = new Audio();
-				break;
-			case 'core/embed':
-				$renderer = new Embed();
-				break;
-			case 'core/cover':
-				$renderer = new Cover();
-				break;
-			case 'core/video':
-				$renderer = new Video();
-				break;
-			default:
-				$renderer = new Fallback();
-				break;
-		}
+        $renderer = match ($block_name) {
+            'core/heading', 'core/paragraph', 'core/site-title', 'core/post-title' => new Text(),
+            'core/column' => new Column(),
+            'core/columns' => new Columns(),
+            'core/list' => new List_Block(),
+            'core/list-item' => new List_Item(),
+            'core/image' => new Image(),
+            'core/button' => new Button(),
+            'core/buttons' => new Buttons(new Flex_Layout_Renderer()),
+            'core/group' => new Group(),
+            'core/quote' => new Quote(),
+            'core/social-link' => new Social_Link(),
+            'core/social-links' => new Social_Links(),
+            'core/table' => new Table(),
+            'core/gallery' => new Gallery(),
+            'core/media-text' => new Media_Text(),
+            'core/audio' => new Audio(),
+            'core/embed' => new Embed(),
+            'core/cover' => new Cover(),
+            'core/video' => new Video(),
+            default => new Fallback(),
+        };
 
-		$this->renderers[ $block_name ] = $renderer;
-		return $renderer;
-	}
+        $this->renderers[ $block_name ] = $renderer;
+        return $renderer;
+    }
 }

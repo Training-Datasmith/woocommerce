@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Rule;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Comment\Comment;
@@ -24,24 +26,16 @@ class Rule implements Commentable, CSSElement, Positionable
     use Position;
 
     /**
-     * @var string
-     */
-    private $sRule;
-
-    /**
      * @var RuleValueList|string|null
      */
     private $mValue;
 
-    /**
-     * @var bool
-     */
-    private $bIsImportant;
+    private bool $bIsImportant;
 
     /**
      * @var array<int, int>
      */
-    private $aIeHack;
+    private array $aIeHack;
 
     /**
      * @var array<array-key, Comment>
@@ -55,9 +49,8 @@ class Rule implements Commentable, CSSElement, Positionable
      * @param int $iLineNo
      * @param int $iColNo
      */
-    public function __construct($sRule, $iLineNo = 0, $iColNo = 0)
+    public function __construct(private $sRule, $iLineNo = 0, $iColNo = 0)
     {
-        $this->sRule = $sRule;
         $this->mValue = null;
         $this->bIsImportant = false;
         $this->aIeHack = [];
@@ -68,18 +61,16 @@ class Rule implements Commentable, CSSElement, Positionable
     /**
      * @param array<int, Comment> $commentsBeforeRule
      *
-     * @return Rule
      *
      * @throws UnexpectedEOFException
      * @throws UnexpectedTokenException
-     *
      * @internal since V8.8.0
      */
-    public static function parse(ParserState $oParserState, $commentsBeforeRule = [])
+    public static function parse(ParserState $oParserState, $commentsBeforeRule = []): \Automattic\WooCommerce\Vendor\Sabberworm\CSS\Rule\Rule
     {
         $aComments = \array_merge($commentsBeforeRule, $oParserState->consumeWhiteSpace());
         $oRule = new Rule(
-            $oParserState->parseIdentifier(!$oParserState->comes("--")),
+            $oParserState->parseIdentifier(!$oParserState->comes('--')),
             $oParserState->currentLine(),
             $oParserState->currentColumn()
         );
@@ -119,26 +110,22 @@ class Rule implements Commentable, CSSElement, Positionable
      *
      * @return list<non-empty-string>
      */
-    private static function listDelimiterForRule($sRule)
+    private static function listDelimiterForRule($sRule): array
     {
         if (preg_match('/^font($|-)/', $sRule)) {
             return [',', '/', ' '];
         }
 
-        switch ($sRule) {
-            case 'src':
-                return [' ', ','];
-            default:
-                return [',', ' ', '/'];
-        }
+        return match ($sRule) {
+            'src' => [' ', ','],
+            default => [',', ' ', '/'],
+        };
     }
 
     /**
      * @param string $sRule
-     *
-     * @return void
      */
-    public function setRule($sRule)
+    public function setRule($sRule): void
     {
         $this->sRule = $sRule;
     }
@@ -161,10 +148,8 @@ class Rule implements Commentable, CSSElement, Positionable
 
     /**
      * @param RuleValueList|string|null $mValue
-     *
-     * @return void
      */
-    public function setValue($mValue)
+    public function setValue($mValue): void
     {
         $this->mValue = $mValue;
     }
@@ -203,9 +188,8 @@ class Rule implements Commentable, CSSElement, Positionable
             if (!$oSpaceSeparatedList) {
                 $this->mValue = $oCommaSeparatedList;
                 return $oCommaSeparatedList;
-            } else {
-                $oSpaceSeparatedList->addListComponent($oCommaSeparatedList);
             }
+            $oSpaceSeparatedList->addListComponent($oCommaSeparatedList);
         }
         $this->mValue = $oSpaceSeparatedList;
         return $oSpaceSeparatedList;
@@ -218,7 +202,7 @@ class Rule implements Commentable, CSSElement, Positionable
      *             Old-Style 2-dimensional array returned. Retained for (some) backwards-compatibility.
      *             Use `getValue()` instead and check for the existence of a (nested set of) ValueList object(s).
      */
-    public function getValues()
+    public function getValues(): array
     {
         if (!$this->mValue instanceof RuleValueList) {
             return [[$this->mValue]];
@@ -248,10 +232,8 @@ class Rule implements Commentable, CSSElement, Positionable
      *
      * @param RuleValueList|array<int, RuleValueList> $mValue
      * @param string $sType
-     *
-     * @return void
      */
-    public function addValue($mValue, $sType = ' ')
+    public function addValue($mValue, $sType = ' '): void
     {
         if (!is_array($mValue)) {
             $mValue = [$mValue];
@@ -271,11 +253,10 @@ class Rule implements Commentable, CSSElement, Positionable
     /**
      * @param int $iModifier
      *
-     * @return void
      *
      * @deprecated since V8.8.0, will be removed in V9.0
      */
-    public function addIeHack($iModifier)
+    public function addIeHack($iModifier): void
     {
         $this->aIeHack[] = $iModifier;
     }
@@ -283,11 +264,10 @@ class Rule implements Commentable, CSSElement, Positionable
     /**
      * @param array<int, int> $aModifiers
      *
-     * @return void
      *
      * @deprecated since V8.8.0, will be removed in V9.0
      */
-    public function setIeHack(array $aModifiers)
+    public function setIeHack(array $aModifiers): void
     {
         $this->aIeHack = $aModifiers;
     }
@@ -304,10 +284,8 @@ class Rule implements Commentable, CSSElement, Positionable
 
     /**
      * @param bool $bIsImportant
-     *
-     * @return void
      */
-    public function setIsImportant($bIsImportant)
+    public function setIsImportant($bIsImportant): void
     {
         $this->bIsImportant = $bIsImportant;
     }
@@ -321,21 +299,17 @@ class Rule implements Commentable, CSSElement, Positionable
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
 
     /**
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat)
+    public function render($oOutputFormat): string
     {
         $sResult = "{$oOutputFormat->comments($this)}{$this->sRule}:{$oOutputFormat->spaceAfterRuleName()}";
         if ($this->mValue instanceof Value) { // Can also be a ValueList
@@ -349,16 +323,13 @@ class Rule implements Commentable, CSSElement, Positionable
         if ($this->bIsImportant) {
             $sResult .= ' !important';
         }
-        $sResult .= ';';
-        return $sResult;
+        return $sResult . ';';
     }
 
     /**
      * @param array<array-key, Comment> $aComments
-     *
-     * @return void
      */
-    public function addComments(array $aComments)
+    public function addComments(array $aComments): void
     {
         $this->aComments = array_merge($this->aComments, $aComments);
     }
@@ -373,10 +344,8 @@ class Rule implements Commentable, CSSElement, Positionable
 
     /**
      * @param array<array-key, Comment> $aComments
-     *
-     * @return void
      */
-    public function setComments(array $aComments)
+    public function setComments(array $aComments): void
     {
         $this->aComments = $aComments;
     }

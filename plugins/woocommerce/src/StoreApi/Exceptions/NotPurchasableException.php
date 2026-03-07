@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\StoreApi\Exceptions;
 
 /**
@@ -6,4 +9,6 @@ namespace Automattic\WooCommerce\StoreApi\Exceptions;
  *
  * This exception is thrown when an item in the cart is not able to be purchased.
  */
-class NotPurchasableException extends StockAvailabilityException {}
+class NotPurchasableException extends StockAvailabilityException
+{
+}

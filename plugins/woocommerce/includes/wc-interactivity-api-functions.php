@@ -1,4 +1,5 @@
 <?php
+
 /**
  * WooCommerce Interactivity API Functions
  *
@@ -8,12 +9,12 @@
  * @package WooCommerce\Functions
  */
 
-declare( strict_types = 1 );
+declare(strict_types=1);
 
 use Automattic\WooCommerce\Blocks\SharedStores\ProductsStore;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 /**
@@ -26,8 +27,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return array The product data.
  * @throws InvalidArgumentException If consent statement doesn't match.
  */
-function wc_interactivity_api_load_product( string $consent_statement, int $product_id ): array {
-	return ProductsStore::load_product( $consent_statement, $product_id );
+function wc_interactivity_api_load_product(string $consent_statement, int $product_id): array
+{
+    return ProductsStore::load_product($consent_statement, $product_id);
 }
 
 /**
@@ -40,8 +42,9 @@ function wc_interactivity_api_load_product( string $consent_statement, int $prod
  * @return array The purchasable child products keyed by ID.
  * @throws InvalidArgumentException If consent statement doesn't match.
  */
-function wc_interactivity_api_load_purchasable_child_products( string $consent_statement, int $parent_id ): array {
-	return ProductsStore::load_purchasable_child_products( $consent_statement, $parent_id );
+function wc_interactivity_api_load_purchasable_child_products(string $consent_statement, int $parent_id): array
+{
+    return ProductsStore::load_purchasable_child_products($consent_statement, $parent_id);
 }
 
 /**
@@ -54,6 +57,7 @@ function wc_interactivity_api_load_purchasable_child_products( string $consent_s
  * @return array The variations keyed by ID.
  * @throws InvalidArgumentException If consent statement doesn't match.
  */
-function wc_interactivity_api_load_variations( string $consent_statement, int $parent_id ): array {
-	return ProductsStore::load_variations( $consent_statement, $parent_id );
+function wc_interactivity_api_load_variations(string $consent_statement, int $parent_id): array
+{
+    return ProductsStore::load_variations($consent_statement, $parent_id);
 }

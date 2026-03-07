@@ -1,36 +1,39 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Provider for order-related queries and operations.
  */
 
 namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * Provider for order-related queries and operations.
  */
-class OrdersProvider {
-	/**
-	 * Allowed order statuses for calculating milestones.
-	 *
-	 * @var array
-	 */
-	protected $allowed_statuses = array(
-		'pending',
-		'processing',
-		'completed',
-	);
+class OrdersProvider
+{
+    /**
+     * Allowed order statuses for calculating milestones.
+     *
+     * @var array
+     */
+    protected $allowed_statuses = [
+        'pending',
+        'processing',
+        'completed',
+    ];
 
-	/**
-	 * Returns the number of orders.
-	 *
-	 * @return integer The number of orders.
-	 */
-	public function get_order_count() {
-		$status_counts = array_map( 'wc_orders_count', $this->allowed_statuses );
-		$orders_count  = array_sum( $status_counts );
+    /**
+     * Returns the number of orders.
+     *
+     * @return integer The number of orders.
+     */
+    public function get_order_count(): float|int
+    {
+        $status_counts = array_map(wc_orders_count(...), $this->allowed_statuses);
 
-		return $orders_count;
-	}
+        return array_sum($status_counts);
+    }
 }

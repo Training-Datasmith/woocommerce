@@ -1,3 +1,5 @@
 <?php
 
-add_filter( 'woocommerce_use_block_notices_in_classic_theme', '__return_true' );
+declare(strict_types=1);
+
+add_filter('woocommerce_use_block_notices_in_classic_theme', '__return_true');

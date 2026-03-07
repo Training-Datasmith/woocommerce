@@ -1,5 +1,6 @@
 <?php
-declare( strict_types = 1 );
+
+declare(strict_types=1);
 
 namespace Automattic\WooCommerce\Tests\Admin\Features\ShippingPartnerSuggestions;
 
@@ -12,107 +13,112 @@ use WC_Unit_Test_Case;
  *
  * @class DefaultShippingPartnersTest
  */
-class DefaultShippingPartnersTest extends WC_Unit_Test_Case {
+class DefaultShippingPartnersTest extends WC_Unit_Test_Case
+{
+    /**
+     * Set things up before each test case.
+     *
+     * @return void
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
 
-	/**
-	 * Set things up before each test case.
-	 *
-	 * @return void
-	 */
-	public function setUp(): void {
-		parent::setUp();
+        update_option('woocommerce_default_country', 'US:CA');
 
-		update_option( 'woocommerce_default_country', 'US:CA' );
+        /*
+         * Required for the BaseLocationCountryRuleProcessor
+         * to not return false for "US:CA" country-state combo.
+         */
+        update_option('woocommerce_store_address', 'foo');
 
-		/*
-		 * Required for the BaseLocationCountryRuleProcessor
-		 * to not return false for "US:CA" country-state combo.
-		 */
-		update_option( 'woocommerce_store_address', 'foo' );
+        update_option('active_plugins', [ 'foo/foo.php' ]);
 
-		update_option( 'active_plugins', array( 'foo/foo.php' ) );
+        EvaluateSuggestion::reset_memo();
+    }
 
-		EvaluateSuggestion::reset_memo();
-	}
+    /**
+     * Tests if in a default situation there are no errors.
+     *
+     * @return void
+     */
+    public function test_it_evaluates_with_no_errors()
+    {
+        $specs   = DefaultShippingPartners::get_all();
+        $results = EvaluateSuggestion::evaluate_specs($specs);
 
-	/**
-	 * Tests if in a default situation there are no errors.
-	 *
-	 * @return void
-	 */
-	public function test_it_evaluates_with_no_errors() {
-		$specs   = DefaultShippingPartners::get_all();
-		$results = EvaluateSuggestion::evaluate_specs( $specs );
+        $this->assertCount(0, $results['errors']);
+    }
 
-		$this->assertCount( 0, $results['errors'] );
-	}
+    /**
+     * Tests if WooCommerce Shipping is present by default.
+     *
+     * @return void
+     */
+    public function test_wcshipping_is_present()
+    {
+        $specs   = DefaultShippingPartners::get_all();
+        $results = EvaluateSuggestion::evaluate_specs($specs);
 
-	/**
-	 * Tests if WooCommerce Shipping is present by default.
-	 *
-	 * @return void
-	 */
-	public function test_wcshipping_is_present() {
-		$specs   = DefaultShippingPartners::get_all();
-		$results = EvaluateSuggestion::evaluate_specs( $specs );
+        $this->assertCount(0, $results['errors']);
 
-		$this->assertCount( 0, $results['errors'] );
+        $ids = array_map(
+            function ($s) {
+                return $s->id;
+            },
+            $results['suggestions']
+        );
+        $this->assertContains('woocommerce-shipping', $ids);
+    }
 
-		$ids = array_map(
-			function ( $s ) {
-				return $s->id;
-			},
-			$results['suggestions']
-		);
-		$this->assertContains( 'woocommerce-shipping', $ids );
-	}
+    /**
+     * Asserts WooCommerce Shipping is not recommended in unsupported countries.
+     *
+     * @return void
+     */
+    public function test_wcshipping_is_absent_if_in_an_unsupported_country()
+    {
+        update_option('woocommerce_default_country', 'FOO');
 
-	/**
-	 * Asserts WooCommerce Shipping is not recommended in unsupported countries.
-	 *
-	 * @return void
-	 */
-	public function test_wcshipping_is_absent_if_in_an_unsupported_country() {
-		update_option( 'woocommerce_default_country', 'FOO' );
+        $specs   = DefaultShippingPartners::get_all();
+        $results = EvaluateSuggestion::evaluate_specs($specs);
 
-		$specs   = DefaultShippingPartners::get_all();
-		$results = EvaluateSuggestion::evaluate_specs( $specs );
+        $this->assertCount(0, $results['errors']);
+        $this->assertCount(0, $results['suggestions']);
+    }
 
-		$this->assertCount( 0, $results['errors'] );
-		$this->assertCount( 0, $results['suggestions'] );
-	}
+    /**
+     * Asserts no extensions are recommended if WooCommerce Shipping is active.
+     *
+     * @return void
+     */
+    public function test_no_extensions_are_recommended_if_woocommerce_shipping_is_active()
+    {
+        // Arrange.
+        // Make sure the plugin passes as active.
+        $shipping_plugin_file = 'woocommerce-shipping/woocommerce-shipping.php';
+        // To pass the validation, we need to the plugin file to exist.
+        $shipping_plugin_file_path = WP_PLUGIN_DIR . '/' . $shipping_plugin_file;
+        self::touch($shipping_plugin_file_path);
+        update_option('active_plugins', [ $shipping_plugin_file ]);
 
-	/**
-	 * Asserts no extensions are recommended if WooCommerce Shipping is active.
-	 *
-	 * @return void
-	 */
-	public function test_no_extensions_are_recommended_if_woocommerce_shipping_is_active() {
-		// Arrange.
-		// Make sure the plugin passes as active.
-		$shipping_plugin_file = 'woocommerce-shipping/woocommerce-shipping.php';
-		// To pass the validation, we need to the plugin file to exist.
-		$shipping_plugin_file_path = WP_PLUGIN_DIR . '/' . $shipping_plugin_file;
-		self::touch( $shipping_plugin_file_path );
-		update_option( 'active_plugins', array( $shipping_plugin_file ) );
+        // Act.
+        $specs   = DefaultShippingPartners::get_all();
+        $results = EvaluateSuggestion::evaluate_specs($specs);
 
-		// Act.
-		$specs   = DefaultShippingPartners::get_all();
-		$results = EvaluateSuggestion::evaluate_specs( $specs );
+        // Assert.
+        $this->assertCount(0, $results['errors']);
 
-		// Assert.
-		$this->assertCount( 0, $results['errors'] );
+        $ids = array_map(
+            function ($s) {
+                return $s->id;
+            },
+            $results['suggestions']
+        );
+        $this->assertNotContains('woocommerce-shipping', $ids);
 
-		$ids = array_map(
-			function ( $s ) {
-				return $s->id;
-			},
-			$results['suggestions']
-		);
-		$this->assertNotContains( 'woocommerce-shipping', $ids );
-
-		// Clean up.
-		self::rmdir( dirname( $shipping_plugin_file_path ) );
-		self::delete_folders( dirname( $shipping_plugin_file_path ) );
-	}
+        // Clean up.
+        self::rmdir(dirname($shipping_plugin_file_path));
+        self::delete_folders(dirname($shipping_plugin_file_path));
+    }
 }

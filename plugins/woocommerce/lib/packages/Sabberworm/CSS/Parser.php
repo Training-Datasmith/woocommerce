@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\CSSList\Document;
@@ -11,10 +13,7 @@ use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing\SourceException;
  */
 class Parser
 {
-    /**
-     * @var ParserState
-     */
-    private $oParserState;
+    private readonly \Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing\ParserState $oParserState;
 
     /**
      * @param string $sText the complete CSS as text (i.e., usually the contents of a CSS file)
@@ -34,11 +33,10 @@ class Parser
      *
      * @param string $sCharset
      *
-     * @return void
      *
      * @deprecated since 8.7.0, will be removed in version 9.0.0 with #687
      */
-    public function setCharset($sCharset)
+    public function setCharset($sCharset): void
     {
         $this->oParserState->setCharset($sCharset);
     }
@@ -46,11 +44,10 @@ class Parser
     /**
      * Returns the charset that is used if the CSS does not contain an `@charset` declaration.
      *
-     * @return void
      *
      * @deprecated since 8.7.0, will be removed in version 9.0.0 with #687
      */
-    public function getCharset()
+    public function getCharset(): void
     {
         // Note: The `return` statement is missing here. This is a bug that needs to be fixed.
         $this->oParserState->getCharset();

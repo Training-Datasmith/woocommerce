@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Plugin Name: Blueprint
  * Plugin URI: https://woocommerce.com/

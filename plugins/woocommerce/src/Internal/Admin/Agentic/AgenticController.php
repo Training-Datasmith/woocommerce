@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Automattic\WooCommerce\Internal\Admin\Agentic;
@@ -15,36 +16,39 @@ use Automattic\WooCommerce\Utilities\FeaturesUtil;
  *
  * @since 10.3.0
  */
-class AgenticController implements RegisterHooksInterface {
-	/**
-	 * Register this class instance to the appropriate hooks.
-	 *
-	 * @internal
-	 */
-	public function register() {
-		// Don't register hooks during installation.
-		if ( Constants::is_true( 'WC_INSTALLING' ) ) {
-			return;
-		}
+class AgenticController implements RegisterHooksInterface
+{
+    /**
+     * Register this class instance to the appropriate hooks.
+     *
+     * @internal
+     */
+    public function register(): void
+    {
+        // Don't register hooks during installation.
+        if (Constants::is_true('WC_INSTALLING')) {
+            return;
+        }
 
-		// We want to run on init for translations but before woocommerce_init so that
-		// we can hook the new integration settings page. We should be able to simplify
-		// this by just hooking here when we no longer need to check if the feature is enabled.
-		add_action( 'before_woocommerce_init', array( $this, 'on_init' ) );
-	}
+        // We want to run on init for translations but before woocommerce_init so that
+        // we can hook the new integration settings page. We should be able to simplify
+        // this by just hooking here when we no longer need to check if the feature is enabled.
+        add_action('before_woocommerce_init', $this->on_init(...));
+    }
 
-	/**
-	 * Hook into WordPress on init.
-	 *
-	 * @internal
-	 */
-	public function on_init() {
-		// Bail if the feature is not enabled.
-		if ( ! FeaturesUtil::feature_is_enabled( 'agentic_checkout' ) ) {
-			return;
-		}
+    /**
+     * Hook into WordPress on init.
+     *
+     * @internal
+     */
+    public function on_init(): void
+    {
+        // Bail if the feature is not enabled.
+        if (! FeaturesUtil::feature_is_enabled('agentic_checkout')) {
+            return;
+        }
 
-		// Resolve webhook manager from container.
-		wc_get_container()->get( AgenticWebhookManager::class )->register();
-	}
+        // Resolve webhook manager from container.
+        wc_get_container()->get(AgenticWebhookManager::class)->register();
+    }
 }

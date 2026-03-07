@@ -11,84 +11,88 @@ use Automattic\WooCommerce\Enums\ProductStockStatus;
  *
  * Provides utility methods for ProductCollection block tests.
  */
-class Utils {
-	/**
-	 * Return starting point for parsed block test data.
-	 * Using a method instead of property to avoid sharing data between tests.
-	 */
-	public static function get_base_parsed_block() {
-		return array(
-			'blockName' => 'woocommerce/product-collection',
-			'attrs'     => array(
-				'query' => array(
-					'perPage'                  => 9,
-					'pages'                    => 0,
-					'offset'                   => 0,
-					'postType'                 => 'product',
-					'order'                    => 'desc',
-					'orderBy'                  => 'date',
-					'search'                   => '',
-					'exclude'                  => array(),
-					'sticky'                   => '',
-					'inherit'                  => true,
-					'isProductCollectionBlock' => true,
-					'woocommerceAttributes'    => array(),
-					'woocommerceStockStatus'   => array(
-						ProductStockStatus::IN_STOCK,
-						ProductStockStatus::OUT_OF_STOCK,
-						ProductStockStatus::ON_BACKORDER,
-					),
-				),
-			),
-		);
-	}
+class Utils
+{
+    /**
+     * Return starting point for parsed block test data.
+     * Using a method instead of property to avoid sharing data between tests.
+     */
+    public static function get_base_parsed_block()
+    {
+        return [
+            'blockName' => 'woocommerce/product-collection',
+            'attrs'     => [
+                'query' => [
+                    'perPage'                  => 9,
+                    'pages'                    => 0,
+                    'offset'                   => 0,
+                    'postType'                 => 'product',
+                    'order'                    => 'desc',
+                    'orderBy'                  => 'date',
+                    'search'                   => '',
+                    'exclude'                  => [],
+                    'sticky'                   => '',
+                    'inherit'                  => true,
+                    'isProductCollectionBlock' => true,
+                    'woocommerceAttributes'    => [],
+                    'woocommerceStockStatus'   => [
+                        ProductStockStatus::IN_STOCK,
+                        ProductStockStatus::OUT_OF_STOCK,
+                        ProductStockStatus::ON_BACKORDER,
+                    ],
+                ],
+            ],
+        ];
+    }
 
-	/**
-	 * Build a simplified request for testing.
-	 *
-	 * @param array $params The parameters to set on the request.
-	 * @return WP_REST_Request
-	 */
-	public static function build_request( $params = array() ) {
-		$params = wp_parse_args(
-			$params,
-			array(
-				'featured'               => false,
-				'woocommerceOnSale'      => false,
-				'woocommerceAttributes'  => array(),
-				'woocommerceStockStatus' => array(),
-				'timeFrame'              => array(),
-				'priceRange'             => array(),
-			)
-		);
+    /**
+     * Build a simplified request for testing.
+     *
+     * @param array $params The parameters to set on the request.
+     * @return WP_REST_Request
+     */
+    public static function build_request($params = [])
+    {
+        $params = wp_parse_args(
+            $params,
+            [
+                'featured'               => false,
+                'woocommerceOnSale'      => false,
+                'woocommerceAttributes'  => [],
+                'woocommerceStockStatus' => [],
+                'timeFrame'              => [],
+                'priceRange'             => [],
+            ]
+        );
 
-		$params['isProductCollectionBlock'] = true;
+        $params['isProductCollectionBlock'] = true;
 
-		$request = new \WP_REST_Request( 'GET', '/wp/v2/product' );
-		foreach ( $params as $param => $value ) {
-			$request->set_param( $param, $value );
-		}
+        $request = new \WP_REST_Request('GET', '/wp/v2/product');
+        foreach ($params as $param => $value) {
+            $request->set_param($param, $value);
+        }
 
-		return $request;
-	}
+        return $request;
+    }
 
-	/**
-	 * Build the merged_query for testing
-	 *
-	 * @param object $block_instance The block instance.
-	 * @param array  $parsed_block Parsed block data.
-	 * @param array  $query        Query data.
-	 */
-	public static function initialize_merged_query( $block_instance, $parsed_block = array(), $query = array() ) {
-		if ( empty( $parsed_block ) ) {
-			$parsed_block = self::get_base_parsed_block();
-		}
+    /**
+     * Build the merged_query for testing
+     *
+     * @param object $block_instance The block instance.
+     * @param array  $parsed_block Parsed block data.
+     * @param array  $query        Query data.
+     */
+    public static function initialize_merged_query($block_instance, $parsed_block = [], $query = [])
+    {
+        if (empty($parsed_block)) {
+            $parsed_block = self::get_base_parsed_block();
+        }
 
-		$block_instance->set_parsed_block( $parsed_block );
+        $block_instance->set_parsed_block($parsed_block);
 
-		$block          = new \stdClass();
-		$block->context = $parsed_block['attrs'];
+        $block          = new \stdClass();
+        $block->context = $parsed_block['attrs'];
 
-		return $block_instance->build_frontend_query( $query, $block, 1 );
-	}
+        return $block_instance->build_frontend_query($query, $block, 1);
+    }
 }

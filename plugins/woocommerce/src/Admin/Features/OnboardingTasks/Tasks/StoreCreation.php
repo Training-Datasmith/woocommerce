@@ -1,77 +1,70 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
 
-use Automattic\WooCommerce\Admin\Features\Onboarding;
 use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
 
 /**
  * Store Details Task
  */
-class StoreCreation extends Task {
+class StoreCreation extends Task
+{
+    /**
+     * ID.
+     */
+    public function get_id(): string
+    {
+        return 'store_creation';
+    }
 
-	/**
-	 * ID.
-	 *
-	 * @return string
-	 */
-	public function get_id() {
-		return 'store_creation';
-	}
+    /**
+     * Title.
+     */
+    public function get_title(): string
+    {
+        /* translators: Store name */
+        return sprintf(__('You created %s', 'woocommerce'), get_bloginfo('name'));
+    }
 
-	/**
-	 * Title.
-	 *
-	 * @return string
-	 */
-	public function get_title() {
-		/* translators: Store name */
-		return sprintf( __( 'You created %s', 'woocommerce' ), get_bloginfo( 'name' ) );
-	}
+    /**
+     * Content.
+     */
+    public function get_content(): string
+    {
+        return '';
+    }
 
-	/**
-	 * Content.
-	 *
-	 * @return string
-	 */
-	public function get_content() {
-		return '';
-	}
+    /**
+     * Time.
+     */
+    public function get_time(): string
+    {
+        return '';
+    }
 
-	/**
-	 * Time.
-	 *
-	 * @return string
-	 */
-	public function get_time() {
-		return '';
-	}
+    /**
+     * Time.
+     */
+    public function get_action_url(): string
+    {
+        return '';
+    }
 
-	/**
-	 * Time.
-	 *
-	 * @return string
-	 */
-	public function get_action_url() {
-		return '';
-	}
+    /**
+     * Task completion.
+     */
+    public function is_complete(): bool
+    {
+        return true;
+    }
 
-	/**
-	 * Task completion.
-	 *
-	 * @return bool
-	 */
-	public function is_complete() {
-		return true;
-	}
-
-	/**
-	 * Check if task is disabled.
-	 *
-	 * @return bool
-	 */
-	public function is_disabled() {
-		return true;
-	}
+    /**
+     * Check if task is disabled.
+     */
+    public function is_disabled(): bool
+    {
+        return true;
+    }
 }
-

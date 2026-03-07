@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -42,14 +44,14 @@ class HtmlExtension extends AbstractExtension
     public function getPseudoClassTranslators(): array
     {
         return [
-            'checked' => [$this, 'translateChecked'],
-            'link' => [$this, 'translateLink'],
-            'disabled' => [$this, 'translateDisabled'],
-            'enabled' => [$this, 'translateEnabled'],
-            'selected' => [$this, 'translateSelected'],
-            'invalid' => [$this, 'translateInvalid'],
-            'hover' => [$this, 'translateHover'],
-            'visited' => [$this, 'translateVisited'],
+            'checked' => $this->translateChecked(...),
+            'link' => $this->translateLink(...),
+            'disabled' => $this->translateDisabled(...),
+            'enabled' => $this->translateEnabled(...),
+            'selected' => $this->translateSelected(...),
+            'invalid' => $this->translateInvalid(...),
+            'hover' => $this->translateHover(...),
+            'visited' => $this->translateVisited(...),
         ];
     }
 
@@ -59,7 +61,7 @@ class HtmlExtension extends AbstractExtension
     public function getFunctionTranslators(): array
     {
         return [
-            'lang' => [$this, 'translateLang'],
+            'lang' => $this->translateLang(...),
         ];
     }
 
@@ -153,7 +155,7 @@ class HtmlExtension extends AbstractExtension
             ."translate(@%s, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '-')"
             .', %s)]',
             'lang',
-            Translator::getXpathLiteral(strtolower($arguments[0]->getValue()).'-')
+            Translator::getXpathLiteral(strtolower((string) $arguments[0]->getValue()).'-')
         ));
     }
 

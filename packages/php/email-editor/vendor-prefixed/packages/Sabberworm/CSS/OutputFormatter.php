@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Comment\Commentable;
@@ -10,14 +12,8 @@ use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Parsing\OutputExcept
  */
 class OutputFormatter
 {
-    /**
-     * @var OutputFormat
-     */
-    private $oFormat;
-
-    public function __construct(OutputFormat $oFormat)
+    public function __construct(private readonly OutputFormat $oFormat)
     {
-        $this->oFormat = $oFormat;
     }
 
     /**
@@ -121,11 +117,8 @@ class OutputFormatter
     public function spaceBeforeListArgumentSeparator($sSeparator)
     {
         $spaceForSeparator = $this->oFormat->getSpaceBeforeListArgumentSeparators();
-        if (isset($spaceForSeparator[$sSeparator])) {
-            return $spaceForSeparator[$sSeparator];
-        }
 
-        return $this->space('BeforeListArgumentSeparator', $sSeparator);
+        return $spaceForSeparator[$sSeparator] ?? $this->space('BeforeListArgumentSeparator', $sSeparator);
     }
 
     /**
@@ -136,11 +129,8 @@ class OutputFormatter
     public function spaceAfterListArgumentSeparator($sSeparator)
     {
         $spaceForSeparator = $this->oFormat->getSpaceAfterListArgumentSeparators();
-        if (isset($spaceForSeparator[$sSeparator])) {
-            return $spaceForSeparator[$sSeparator];
-        }
 
-        return $this->space('AfterListArgumentSeparator', $sSeparator);
+        return $spaceForSeparator[$sSeparator] ?? $this->space('AfterListArgumentSeparator', $sSeparator);
     }
 
     /**
@@ -164,7 +154,7 @@ class OutputFormatter
             // If output exceptions are ignored, run the code with exception guards
             try {
                 return $cCode();
-            } catch (OutputException $e) {
+            } catch (OutputException) {
                 return null;
             } // Do nothing
         } else {
@@ -176,13 +166,11 @@ class OutputFormatter
     /**
      * Clone of the `implode` function, but calls `render` with the current output format instead of `__toString()`.
      *
-     * @param string $sSeparator
      * @param array<array-key, Renderable|string> $aValues
      * @param bool $bIncreaseLevel
      *
-     * @return string
      */
-    public function implode($sSeparator, array $aValues, $bIncreaseLevel = false)
+    public function implode(string $sSeparator, array $aValues, $bIncreaseLevel = false): string
     {
         $sResult = '';
         $oFormat = $this->oFormat;
@@ -228,10 +216,8 @@ class OutputFormatter
     /**
      *
      * @param array<Commentable> $aComments
-     *
-     * @return string
      */
-    public function comments(Commentable $oCommentable)
+    public function comments(Commentable $oCommentable): string
     {
         if (!$this->oFormat->bRenderComments) {
             return '';
@@ -250,18 +236,13 @@ class OutputFormatter
 
     /**
      * @param string $sSpaceString
-     *
-     * @return string
      */
-    private function prepareSpace($sSpaceString)
+    private function prepareSpace($sSpaceString): string
     {
         return str_replace("\n", "\n" . $this->indent(), $sSpaceString);
     }
 
-    /**
-     * @return string
-     */
-    private function indent()
+    private function indent(): string
     {
         return str_repeat($this->oFormat->sIndentation, $this->oFormat->getIndentationLevel());
     }

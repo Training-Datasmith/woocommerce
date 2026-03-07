@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\CSSList;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\OutputFormat;
@@ -11,25 +13,13 @@ use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Property\AtRule;
 class AtRuleBlockList extends CSSBlockList implements AtRule
 {
     /**
-     * @var string
-     */
-    private $sType;
-
-    /**
-     * @var string
-     */
-    private $sArgs;
-
-    /**
      * @param string $sType
      * @param string $sArgs
      * @param int $iLineNo
      */
-    public function __construct($sType, $sArgs = '', $iLineNo = 0)
+    public function __construct(private $sType, private $sArgs = '', $iLineNo = 0)
     {
         parent::__construct($iLineNo);
-        $this->sType = $sType;
-        $this->sArgs = $sArgs;
     }
 
     /**
@@ -49,21 +39,17 @@ class AtRuleBlockList extends CSSBlockList implements AtRule
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
 
     /**
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat)
+    public function render($oOutputFormat): string
     {
         $sResult = $oOutputFormat->comments($this);
         $sResult .= $oOutputFormat->sBeforeAtRuleBlock;
@@ -74,14 +60,10 @@ class AtRuleBlockList extends CSSBlockList implements AtRule
         $sResult .= "@{$this->sType}$sArgs{$oOutputFormat->spaceBeforeOpeningBrace()}{";
         $sResult .= $this->renderListContents($oOutputFormat);
         $sResult .= '}';
-        $sResult .= $oOutputFormat->sAfterAtRuleBlock;
-        return $sResult;
+        return $sResult . $oOutputFormat->sAfterAtRuleBlock;
     }
 
-    /**
-     * @return bool
-     */
-    public function isRootList()
+    public function isRootList(): bool
     {
         return false;
     }

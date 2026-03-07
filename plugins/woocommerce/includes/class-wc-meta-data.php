@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Wraps an array (meta data for now) and tells if there was any changes.
  *
@@ -9,112 +11,114 @@
  * @package WooCommerce
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * Meta data class.
  */
-class WC_Meta_Data implements JsonSerializable {
+class WC_Meta_Data implements JsonSerializable
+{
+    /**
+     * Metadata data
+     *
+     * @since 3.2.0
+     * @var array
+     */
+    protected $data;
 
-	/**
-	 * Current data for metadata
-	 *
-	 * @since 3.2.0
-	 * @var array
-	 */
-	protected $current_data;
+    /**
+     * Constructor.
+     *
+     * @param array $current_data Data to wrap behind this function.
+     */
+    public function __construct(/**
+     * Current data for metadata
+     *
+     * @since 3.2.0
+     */
+        protected $current_data = []
+    ) {
+        $this->apply_changes();
+    }
 
-	/**
-	 * Metadata data
-	 *
-	 * @since 3.2.0
-	 * @var array
-	 */
-	protected $data;
+    /**
+     * When converted to JSON.
+     *
+     * @return object|array
+     */
+    #[\ReturnTypeWillChange]
+    public function jsonSerialize()
+    {
+        return $this->get_data();
+    }
 
-	/**
-	 * Constructor.
-	 *
-	 * @param array $meta Data to wrap behind this function.
-	 */
-	public function __construct( $meta = array() ) {
-		$this->current_data = $meta;
-		$this->apply_changes();
-	}
+    /**
+     * Merge changes with data and clear.
+     */
+    public function apply_changes(): void
+    {
+        $this->data = $this->current_data;
+    }
 
-	/**
-	 * When converted to JSON.
-	 *
-	 * @return object|array
-	 */
-	#[\ReturnTypeWillChange]
-	public function jsonSerialize() {
-		return $this->get_data();
-	}
+    /**
+     * Creates or updates a property in the metadata object.
+     *
+     * @param string $key Key to set.
+     * @param mixed  $value Value to set.
+     */
+    public function __set(string $key, mixed $value)
+    {
+        $this->current_data[ $key ] = $value;
+    }
 
-	/**
-	 * Merge changes with data and clear.
-	 */
-	public function apply_changes() {
-		$this->data = $this->current_data;
-	}
+    /**
+     * Checks if a given key exists in our data. This is called internally
+     * by `empty` and `isset`.
+     *
+     * @param string $key Key to check if set.
+     *
+     * @return bool
+     */
+    public function __isset(string $key)
+    {
+        return array_key_exists($key, $this->current_data);
+    }
 
-	/**
-	 * Creates or updates a property in the metadata object.
-	 *
-	 * @param string $key Key to set.
-	 * @param mixed  $value Value to set.
-	 */
-	public function __set( $key, $value ) {
-		$this->current_data[ $key ] = $value;
-	}
+    /**
+     * Returns the value of any property.
+     *
+     * @param string $key Key to get.
+     * @return mixed Property value or NULL if it does not exists
+     */
+    public function __get(string $key): mixed
+    {
+        if (array_key_exists($key, $this->current_data)) {
+            return $this->current_data[ $key ];
+        }
+        return null;
+    }
 
-	/**
-	 * Checks if a given key exists in our data. This is called internally
-	 * by `empty` and `isset`.
-	 *
-	 * @param string $key Key to check if set.
-	 *
-	 * @return bool
-	 */
-	public function __isset( $key ) {
-		return array_key_exists( $key, $this->current_data );
-	}
+    /**
+     * Return data changes only.
+     */
+    public function get_changes(): array
+    {
+        $changes = [];
+        foreach ($this->current_data as $id => $value) {
+            if (! array_key_exists($id, $this->data) || $value !== $this->data[ $id ]) {
+                $changes[ $id ] = $value;
+            }
+        }
+        return $changes;
+    }
 
-	/**
-	 * Returns the value of any property.
-	 *
-	 * @param string $key Key to get.
-	 * @return mixed Property value or NULL if it does not exists
-	 */
-	public function __get( $key ) {
-		if ( array_key_exists( $key, $this->current_data ) ) {
-			return $this->current_data[ $key ];
-		}
-		return null;
-	}
-
-	/**
-	 * Return data changes only.
-	 *
-	 * @return array
-	 */
-	public function get_changes() {
-		$changes = array();
-		foreach ( $this->current_data as $id => $value ) {
-			if ( ! array_key_exists( $id, $this->data ) || $value !== $this->data[ $id ] ) {
-				$changes[ $id ] = $value;
-			}
-		}
-		return $changes;
-	}
-
-	/**
-	 * Return all data as an array.
-	 *
-	 * @return array
-	 */
-	public function get_data() {
-		return $this->data;
-	}
+    /**
+     * Return all data as an array.
+     *
+     * @return array
+     */
+    public function get_data()
+    {
+        return $this->data;
+    }
 }

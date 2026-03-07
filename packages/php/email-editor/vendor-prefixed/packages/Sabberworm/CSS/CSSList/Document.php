@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\CSSList;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\OutputFormat;
@@ -16,21 +18,11 @@ use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\RuleSet\RuleSet;
 class Document extends CSSBlockList
 {
     /**
-     * @param int $iLineNo
-     */
-    public function __construct($iLineNo = 0)
-    {
-        parent::__construct($iLineNo);
-    }
-
-    /**
-     * @return Document
      *
      * @throws SourceException
-     *
      * @internal since V8.8.0
      */
-    public static function parse(ParserState $oParserState)
+    public static function parse(ParserState $oParserState): \Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\CSSList\Document
     {
         $oDocument = new Document($oParserState->currentLine());
         CSSList::parseList($oParserState, $oDocument);
@@ -43,7 +35,7 @@ class Document extends CSSBlockList
      *
      * @return array<int, DeclarationBlock>
      */
-    public function getAllDeclarationBlocks()
+    public function getAllDeclarationBlocks(): array
     {
         /** @var array<int, DeclarationBlock> $aResult */
         $aResult = [];
@@ -68,7 +60,7 @@ class Document extends CSSBlockList
      *
      * @return array<int, RuleSet>
      */
-    public function getAllRuleSets()
+    public function getAllRuleSets(): array
     {
         /** @var array<int, RuleSet> $aResult */
         $aResult = [];
@@ -90,7 +82,7 @@ class Document extends CSSBlockList
      * @example `getSelectorsBySpecificity('>= 100')`
      *
      */
-    public function getSelectorsBySpecificity($sSpecificitySearch = null)
+    public function getSelectorsBySpecificity($sSpecificitySearch = null): array
     {
         /** @var array<int, Selector> $aResult */
         $aResult = [];
@@ -101,11 +93,10 @@ class Document extends CSSBlockList
     /**
      * Expands all shorthand properties to their long value.
      *
-     * @return void
      *
      * @deprecated since 8.7.0, will be removed without substitution in version 9.0 in #511
      */
-    public function expandShorthands()
+    public function expandShorthands(): void
     {
         foreach ($this->getAllDeclarationBlocks() as $oDeclaration) {
             $oDeclaration->expandShorthands();
@@ -115,11 +106,10 @@ class Document extends CSSBlockList
     /**
      * Create shorthands properties whenever possible.
      *
-     * @return void
      *
      * @deprecated since 8.7.0, will be removed without substitution in version 9.0 in #511
      */
-    public function createShorthands()
+    public function createShorthands(): void
     {
         foreach ($this->getAllDeclarationBlocks() as $oDeclaration) {
             $oDeclaration->createShorthands();
@@ -130,10 +120,8 @@ class Document extends CSSBlockList
      * Overrides `render()` to make format argument optional.
      *
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat = null)
+    public function render($oOutputFormat = null): string
     {
         if ($oOutputFormat === null) {
             $oOutputFormat = new OutputFormat();
@@ -141,10 +129,7 @@ class Document extends CSSBlockList
         return $oOutputFormat->comments($this) . $this->renderListContents($oOutputFormat);
     }
 
-    /**
-     * @return bool
-     */
-    public function isRootList()
+    public function isRootList(): bool
     {
         return true;
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Value;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\CSSElement;
@@ -161,11 +163,11 @@ abstract class Value implements CSSElement, Positionable
             $oValue = Color::parse($oParserState);
         } elseif ($oParserState->comes("'") || $oParserState->comes('"')) {
             $oValue = CSSString::parse($oParserState);
-        } elseif ($oParserState->comes("progid:") && $oParserState->getSettings()->bLenientParsing) {
+        } elseif ($oParserState->comes('progid:') && $oParserState->getSettings()->bLenientParsing) {
             $oValue = self::parseMicrosoftFilter($oParserState);
-        } elseif ($oParserState->comes("[")) {
+        } elseif ($oParserState->comes('[')) {
             $oValue = LineName::parse($oParserState);
-        } elseif ($oParserState->comes("U+")) {
+        } elseif ($oParserState->comes('U+')) {
             $oValue = self::parseUnicodeRangeValue($oParserState);
         } else {
             $sNextChar = $oParserState->peek(1);
@@ -184,12 +186,11 @@ abstract class Value implements CSSElement, Positionable
     }
 
     /**
-     * @return CSSFunction
      *
      * @throws UnexpectedEOFException
      * @throws UnexpectedTokenException
      */
-    private static function parseMicrosoftFilter(ParserState $oParserState)
+    private static function parseMicrosoftFilter(ParserState $oParserState): \Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Value\CSSFunction
     {
         $sFunction = $oParserState->consumeUntil('(', false, true);
         $aArguments = Value::parseValue($oParserState, [',', '=']);
@@ -197,16 +198,15 @@ abstract class Value implements CSSElement, Positionable
     }
 
     /**
-     * @return string
      *
      * @throws UnexpectedEOFException
      * @throws UnexpectedTokenException
      */
-    private static function parseUnicodeRangeValue(ParserState $oParserState)
+    private static function parseUnicodeRangeValue(ParserState $oParserState): string
     {
         $iCodepointMaxLength = 6; // Code points outside BMP can use up to six digits
-        $sRange = "";
-        $oParserState->consume("U+");
+        $sRange = '';
+        $oParserState->consume('U+');
         do {
             if ($oParserState->comes('-')) {
                 $iCodepointMaxLength = 13; // Max length is 2 six digit code points + the dash(-) between them

@@ -1,11 +1,13 @@
 <?php
+
+declare(strict_types=1);
 /**
  * API initialization for beta testing.
  *
  * @package WC_Beta_Tester
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * Register the test helper route.
@@ -14,33 +16,34 @@ defined( 'ABSPATH' ) || exit;
  * @param string $callback Callback function name.
  * @param array  $additional_options Additional options passed to route registration.
  */
-function register_woocommerce_admin_test_helper_rest_route( $route, $callback, $additional_options = array() ) {
-	add_action(
-		'rest_api_init',
-		function () use ( $route, $callback, $additional_options ) {
-			$default_options = array(
-				'methods'             => 'POST',
-				'callback'            => $callback,
-				'permission_callback' => function ( $request ) {
-					if ( ! wc_rest_check_manager_permissions( 'settings', 'edit' ) ) {
-						return new \WP_Error(
-							'woocommerce_rest_cannot_edit',
-							__( 'Sorry, you cannot perform this action', 'woocommerce-beta-tester' )
-						);
-					}
-					return true;
-				},
-			);
+function register_woocommerce_admin_test_helper_rest_route($route, $callback, $additional_options = []): void
+{
+    add_action(
+        'rest_api_init',
+        function () use ($route, $callback, $additional_options): void {
+            $default_options = [
+                'methods'             => 'POST',
+                'callback'            => $callback,
+                'permission_callback' => function ($request): \WP_Error|true {
+                    if (! wc_rest_check_manager_permissions('settings', 'edit')) {
+                        return new \WP_Error(
+                            'woocommerce_rest_cannot_edit',
+                            __('Sorry, you cannot perform this action', 'woocommerce-beta-tester')
+                        );
+                    }
+                    return true;
+                },
+            ];
 
-			$default_options = array_merge( $default_options, $additional_options );
+            $default_options = array_merge($default_options, $additional_options);
 
-			register_rest_route(
-				'wc-admin-test-helper',
-				$route,
-				$default_options
-			);
-		}
-	);
+            register_rest_route(
+                'wc-admin-test-helper',
+                $route,
+                $default_options
+            );
+        }
+    );
 }
 
 require 'admin-notes/delete-all-notes.php';

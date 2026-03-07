@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Plugin_Formatter class
  *
@@ -20,18 +22,19 @@ require_once 'class-formatter.php';
  *
  * Class Formatter
  */
-class Plugin_Formatter extends Formatter implements FormatterPlugin {
-	/**
-	 * Epilogue text.
-	 *
-	 * @var string
-	 */
-	public $epilogue = "---\n\n[See changelogs for previous versions](https://raw.githubusercontent.com/woocommerce/woocommerce/trunk/changelog.txt).";
+class Plugin_Formatter extends Formatter implements FormatterPlugin
+{
+    /**
+     * Epilogue text.
+     *
+     * @var string
+     */
+    public $epilogue = "---\n\n[See changelogs for previous versions](https://raw.githubusercontent.com/woocommerce/woocommerce/trunk/changelog.txt).";
 
-	/**
-	 * Entry pattern regex.
-	 *
-	 * @var string
-	 */
-	public $entry_pattern = '/^##?#\s+([^\n=]+)\s+((?:(?!^##).)+)/ms';
+    /**
+     * Entry pattern regex.
+     *
+     * @var string
+     */
+    public $entry_pattern = '/^##?#\s+([^\n=]+)\s+((?:(?!^##).)+)/ms';
 }

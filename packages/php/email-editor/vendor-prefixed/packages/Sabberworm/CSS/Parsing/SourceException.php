@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Parsing;
 
 use Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Position\Position;

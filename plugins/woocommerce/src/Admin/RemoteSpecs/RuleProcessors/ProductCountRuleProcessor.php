@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Rule processor that performs a comparison operation against the number of
  * products.
@@ -8,73 +10,74 @@ namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
 
 use Automattic\WooCommerce\Enums\ProductStatus;
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * Rule processor that performs a comparison operation against the number of
  * products.
  */
-class ProductCountRuleProcessor implements RuleProcessorInterface {
+class ProductCountRuleProcessor implements RuleProcessorInterface
+{
+    /**
+     * The product query.
+     *
+     * @var WC_Product_Query
+     */
+    protected $product_query;
 
-	/**
-	 * The product query.
-	 *
-	 * @var WC_Product_Query
-	 */
-	protected $product_query;
+    /**
+     * Constructor.
+     *
+     * @param object $product_query The product query.
+     */
+    public function __construct($product_query = null)
+    {
+        $this->product_query = $product_query ?? new \WC_Product_Query(
+            [
+                    'limit'    => 1,
+                    'paginate' => true,
+                    'return'   => 'ids',
+                    'status'   => [ ProductStatus::PUBLISH ],
+                ]
+        );
+    }
 
-	/**
-	 * Constructor.
-	 *
-	 * @param object $product_query The product query.
-	 */
-	public function __construct( $product_query = null ) {
-		$this->product_query = null === $product_query
-			? new \WC_Product_Query(
-				array(
-					'limit'    => 1,
-					'paginate' => true,
-					'return'   => 'ids',
-					'status'   => array( ProductStatus::PUBLISH ),
-				)
-			)
-			: $product_query;
-	}
+    /**
+     * Performs a comparison operation against the number of products.
+     *
+     * @param object $rule         The specific rule being processed by this rule processor.
+     * @param object $stored_state Stored state.
+     *
+     * @return bool The result of the operation.
+     */
+    public function process($rule, $stored_state)
+    {
+        $products = $this->product_query->get_products();
 
-	/**
-	 * Performs a comparison operation against the number of products.
-	 *
-	 * @param object $rule         The specific rule being processed by this rule processor.
-	 * @param object $stored_state Stored state.
-	 *
-	 * @return bool The result of the operation.
-	 */
-	public function process( $rule, $stored_state ) {
-		$products = $this->product_query->get_products();
+        return ComparisonOperation::compare(
+            $products->total,
+            $rule->value,
+            $rule->operation
+        );
+    }
 
-		return ComparisonOperation::compare(
-			$products->total,
-			$rule->value,
-			$rule->operation
-		);
-	}
+    /**
+     * Validates the rule.
+     *
+     * @param object $rule The rule to validate.
+     *
+     * @return bool Pass/fail.
+     */
+    public function validate($rule): bool
+    {
+        if (! isset($rule->value)) {
+            return false;
+        }
 
-	/**
-	 * Validates the rule.
-	 *
-	 * @param object $rule The rule to validate.
-	 *
-	 * @return bool Pass/fail.
-	 */
-	public function validate( $rule ) {
-		if ( ! isset( $rule->value ) ) {
-			return false;
-		}
+        if (! isset($rule->operation)) {
+            return false;
+        }
 
-		if ( ! isset( $rule->operation ) ) {
-			return false;
-		}
-
-		return true;
-	}
+        return true;
+    }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Value;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\OutputFormat;
@@ -15,34 +17,30 @@ use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing\UnexpectedTokenExceptio
 class CSSFunction extends ValueList
 {
     /**
-     * @var string
-     *
-     * @internal since 8.8.0
-     */
-    protected $sName;
-
-    /**
      * @param string $sName
      * @param RuleValueList|array<int, RuleValueList|CSSFunction|CSSString|LineName|Size|URL|string> $aArguments
      * @param string $sSeparator
      * @param int $iLineNo
      */
-    public function __construct($sName, $aArguments, $sSeparator = ',', $iLineNo = 0)
-    {
+    public function __construct(/**
+     * @internal since 8.8.0
+     */
+        protected $sName,
+        $aArguments,
+        $sSeparator = ',',
+        $iLineNo = 0
+    ) {
         if ($aArguments instanceof RuleValueList) {
             $sSeparator = $aArguments->getListSeparator();
             $aArguments = $aArguments->getListComponents();
         }
-        $this->sName = $sName;
         $this->setPosition($iLineNo); // TODO: redundant?
         parent::__construct($aArguments, $sSeparator, $iLineNo);
     }
 
     /**
-     * @param ParserState $oParserState
      * @param bool $bIgnoreCase
      *
-     * @return CSSFunction
      *
      * @throws SourceException
      * @throws UnexpectedEOFException
@@ -50,7 +48,7 @@ class CSSFunction extends ValueList
      *
      * @internal since V8.8.0
      */
-    public static function parse(ParserState $oParserState, $bIgnoreCase = false)
+    public static function parse(ParserState $oParserState, $bIgnoreCase = false): \Automattic\WooCommerce\Vendor\Sabberworm\CSS\Value\CSSFunction
     {
         $mResult = $oParserState->parseIdentifier($bIgnoreCase);
         $oParserState->consume('(');
@@ -70,10 +68,8 @@ class CSSFunction extends ValueList
 
     /**
      * @param string $sName
-     *
-     * @return void
      */
-    public function setName($sName)
+    public function setName($sName): void
     {
         $this->sName = $sName;
     }
@@ -87,21 +83,17 @@ class CSSFunction extends ValueList
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
 
     /**
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat)
+    public function render($oOutputFormat): string
     {
         $aArguments = parent::render($oOutputFormat);
         return "{$this->sName}({$aArguments})";

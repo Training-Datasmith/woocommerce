@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS;
 
 /**
@@ -47,7 +49,7 @@ class Settings
     /**
      * @return self new instance
      */
-    public static function create()
+    public static function create(): \Automattic\WooCommerce\EmailEditorVendor\Sabberworm\CSS\Settings
     {
         return new Settings();
     }
@@ -62,7 +64,7 @@ class Settings
      *
      * @return self fluent interface
      */
-    public function withMultibyteSupport($bMultibyteSupport = true)
+    public function withMultibyteSupport($bMultibyteSupport = true): static
     {
         $this->bMultibyteSupport = $bMultibyteSupport;
         return $this;
@@ -75,7 +77,7 @@ class Settings
      *
      * @return self fluent interface
      */
-    public function withDefaultCharset($sDefaultCharset)
+    public function withDefaultCharset($sDefaultCharset): static
     {
         $this->sDefaultCharset = $sDefaultCharset;
         return $this;
@@ -88,7 +90,7 @@ class Settings
      *
      * @return self fluent interface
      */
-    public function withLenientParsing($bLenientParsing = true)
+    public function withLenientParsing($bLenientParsing = true): static
     {
         $this->bLenientParsing = $bLenientParsing;
         return $this;

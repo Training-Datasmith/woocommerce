@@ -13,8 +13,6 @@ namespace Automattic\WooCommerce\Vendor\League\ISO3166;
 
 class ISO3166WithAliases implements ISO3166DataProvider
 {
-    private ISO3166DataProvider $source;
-
     /** @type array<string, string> */
     public const aliases = [
         'Bolivia' => 'Bolivia (Plurinational State of)',
@@ -41,9 +39,8 @@ class ISO3166WithAliases implements ISO3166DataProvider
         'Vietnam' => 'Viet Nam',
     ];
 
-    public function __construct(ISO3166DataProvider $iso3166)
+    public function __construct(private readonly ISO3166DataProvider $source)
     {
-        $this->source = $iso3166;
     }
 
     public function name(string $name): array

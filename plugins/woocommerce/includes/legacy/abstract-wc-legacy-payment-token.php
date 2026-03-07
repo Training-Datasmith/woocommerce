@@ -1,6 +1,8 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+
+declare(strict_types=1);
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 /**
@@ -15,56 +17,60 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @category Class
  * @author   WooCommerce
  */
-abstract class WC_Legacy_Payment_Token extends WC_Data {
+abstract class WC_Legacy_Payment_Token extends WC_Data
+{
+    /**
+     * Sets the type of this payment token (CC, eCheck, or something else).
+     *
+     * @param string Payment Token Type (CC, eCheck)
+     */
+    public function set_type($type): void
+    {
+        wc_deprecated_function('WC_Payment_Token::set_type', '3.0.0', 'Type cannot be overwritten.');
+    }
 
-	/**
-	 * Sets the type of this payment token (CC, eCheck, or something else).
-	 *
-	 * @param string Payment Token Type (CC, eCheck)
-	 */
-	public function set_type( $type ) {
-		wc_deprecated_function( 'WC_Payment_Token::set_type', '3.0.0', 'Type cannot be overwritten.' );
-	}
+    /**
+     * Read a token by ID.
+     * @deprecated 3.0.0 - Init a token class with an ID.
+     *
+     * @param int $token_id
+     */
+    public function read($token_id): void
+    {
+        wc_deprecated_function('WC_Payment_Token::read', '3.0.0', 'a new token class initialized with an ID.');
+        $this->set_id($token_id);
+        $data_store = WC_Data_Store::load('payment-token');
+        $data_store->read($this);
+    }
 
-	/**
-	 * Read a token by ID.
-	 * @deprecated 3.0.0 - Init a token class with an ID.
-	 *
-	 * @param int $token_id
-	 */
-	public function read( $token_id ) {
-		wc_deprecated_function( 'WC_Payment_Token::read', '3.0.0', 'a new token class initialized with an ID.' );
-		$this->set_id( $token_id );
-		$data_store = WC_Data_Store::load( 'payment-token' );
-		$data_store->read( $this );
-	}
+    /**
+     * Update a token.
+     * @deprecated 3.0.0 - Use ::save instead.
+     */
+    public function update()
+    {
+        wc_deprecated_function('WC_Payment_Token::update', '3.0.0', 'WC_Payment_Token::save instead.');
+        $data_store = WC_Data_Store::load('payment-token');
+        try {
+            $data_store->update($this);
+        } catch (Exception) {
+            return false;
+        }
+    }
 
-	/**
-	 * Update a token.
-	 * @deprecated 3.0.0 - Use ::save instead.
-	 */
-	public function update() {
-		wc_deprecated_function( 'WC_Payment_Token::update', '3.0.0', 'WC_Payment_Token::save instead.' );
-		$data_store = WC_Data_Store::load( 'payment-token' );
-		try {
-			$data_store->update( $this );
-		} catch ( Exception $e ) {
-			return false;
-		}
-	}
-
-	/**
-	 * Create a token.
-	 * @deprecated 3.0.0 - Use ::save instead.
-	 */
-	public function create() {
-		wc_deprecated_function( 'WC_Payment_Token::create', '3.0.0', 'WC_Payment_Token::save instead.' );
-		$data_store = WC_Data_Store::load( 'payment-token' );
-		try {
-			$data_store->create( $this );
-		} catch ( Exception $e ) {
-			return false;
-		}
-	}
+    /**
+     * Create a token.
+     * @deprecated 3.0.0 - Use ::save instead.
+     */
+    public function create()
+    {
+        wc_deprecated_function('WC_Payment_Token::create', '3.0.0', 'WC_Payment_Token::save instead.');
+        $data_store = WC_Data_Store::load('payment-token');
+        try {
+            $data_store->create($this);
+        } catch (Exception) {
+            return false;
+        }
+    }
 
 }

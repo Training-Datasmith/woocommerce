@@ -13,20 +13,20 @@ $fonts               = ComingSoonTemplate::get_font_families();
 $heading_font_family = $fonts['heading'];
 $body_font_family    = $fonts['body'];
 
-$featured_image_urls = array(
-	plugins_url( 'assets/images/pattern-placeholders/gallery-1.jpg', WC_PLUGIN_FILE ),
-	plugins_url( 'assets/images/pattern-placeholders/gallery-2.jpg', WC_PLUGIN_FILE ),
-	plugins_url( 'assets/images/pattern-placeholders/gallery-3.jpg', WC_PLUGIN_FILE ),
-	plugins_url( 'assets/images/pattern-placeholders/gallery-4.jpg', WC_PLUGIN_FILE ),
-	plugins_url( 'assets/images/pattern-placeholders/gallery-5.jpg', WC_PLUGIN_FILE ),
-	plugins_url( 'assets/images/pattern-placeholders/gallery-6.jpg', WC_PLUGIN_FILE ),
-	plugins_url( 'assets/images/pattern-placeholders/gallery-7.jpg', WC_PLUGIN_FILE ),
-	plugins_url( 'assets/images/pattern-placeholders/gallery-8.jpg', WC_PLUGIN_FILE ),
-	plugins_url( 'assets/images/pattern-placeholders/gallery-9.jpg', WC_PLUGIN_FILE ),
-	plugins_url( 'assets/images/pattern-placeholders/gallery-10.jpg', WC_PLUGIN_FILE ),
-	plugins_url( 'assets/images/pattern-placeholders/gallery-11.jpg', WC_PLUGIN_FILE ),
-	plugins_url( 'assets/images/pattern-placeholders/gallery-12.jpg', WC_PLUGIN_FILE ),
-);
+$featured_image_urls = [
+    plugins_url('assets/images/pattern-placeholders/gallery-1.jpg', WC_PLUGIN_FILE),
+    plugins_url('assets/images/pattern-placeholders/gallery-2.jpg', WC_PLUGIN_FILE),
+    plugins_url('assets/images/pattern-placeholders/gallery-3.jpg', WC_PLUGIN_FILE),
+    plugins_url('assets/images/pattern-placeholders/gallery-4.jpg', WC_PLUGIN_FILE),
+    plugins_url('assets/images/pattern-placeholders/gallery-5.jpg', WC_PLUGIN_FILE),
+    plugins_url('assets/images/pattern-placeholders/gallery-6.jpg', WC_PLUGIN_FILE),
+    plugins_url('assets/images/pattern-placeholders/gallery-7.jpg', WC_PLUGIN_FILE),
+    plugins_url('assets/images/pattern-placeholders/gallery-8.jpg', WC_PLUGIN_FILE),
+    plugins_url('assets/images/pattern-placeholders/gallery-9.jpg', WC_PLUGIN_FILE),
+    plugins_url('assets/images/pattern-placeholders/gallery-10.jpg', WC_PLUGIN_FILE),
+    plugins_url('assets/images/pattern-placeholders/gallery-11.jpg', WC_PLUGIN_FILE),
+    plugins_url('assets/images/pattern-placeholders/gallery-12.jpg', WC_PLUGIN_FILE),
+];
 ?>
 
 <!-- wp:woocommerce/coming-soon {"comingSoonPatternId":"page-coming-soon-image-gallery","className":"woocommerce-coming-soon-image-gallery"} -->
@@ -39,14 +39,14 @@ $featured_image_urls = array(
 				<div class="wp-block-group"><!-- wp:site-logo {"width":60} /-->
 
 					<!-- wp:group {"style":{"spacing":{"blockGap":"0px"}}} -->
-					<div class="wp-block-group"><!-- wp:site-title {"level":0,"style":{"typography":{"fontSize":"20px","letterSpacing":"0px"},"color":{"text":"#000000"},"elements":{"link":{"color":{"text":"#000000"}}}},"fontFamily":"<?php echo esc_html( $body_font_family ); ?>"} /--></div>
+					<div class="wp-block-group"><!-- wp:site-title {"level":0,"style":{"typography":{"fontSize":"20px","letterSpacing":"0px"},"color":{"text":"#000000"},"elements":{"link":{"color":{"text":"#000000"}}}},"fontFamily":"<?php echo esc_html($body_font_family); ?>"} /--></div>
 					<!-- /wp:group --></div>
 				<!-- /wp:group -->
 
 				<!-- wp:group {"className":"woocommerce-coming-soon-social-login","style":{"spacing":{"blockGap":"48px"}},"layout":{"type":"flex","flexWrap":"nowrap"}} -->
 				<div class="wp-block-group woocommerce-coming-soon-social-login"><!-- wp:template-part {"slug":"coming-soon-social-links","theme":"woocommerce/woocommerce","tagName":"div"} /-->
 
-					<!-- wp:loginout {"style":{"elements":{"link":{"color":{"text":"#ffffff"}}},"color":{"background":"#000000"},"spacing":{"padding":{"top":"12px","bottom":"12px","left":"16px","right":"16px"}},"typography":{"fontSize":"14px","lineHeight":"1.2"},"border":{"radius":"6px"}}, "fontFamily":"<?php echo esc_html( $body_font_family ); ?>"} /--></div>
+					<!-- wp:loginout {"style":{"elements":{"link":{"color":{"text":"#ffffff"}}},"color":{"background":"#000000"},"spacing":{"padding":{"top":"12px","bottom":"12px","left":"16px","right":"16px"}},"typography":{"fontSize":"14px","lineHeight":"1.2"},"border":{"radius":"6px"}}, "fontFamily":"<?php echo esc_html($body_font_family); ?>"} /--></div>
 				<!-- /wp:group --></div>
 			<!-- /wp:group --></div>
 		<!-- /wp:group -->
@@ -55,8 +55,8 @@ $featured_image_urls = array(
 		<div class="wp-block-group alignwide">
 			<!-- wp:group {"align":"wide","style":{"spacing":{"padding":{"top":"100px","bottom":"100px"}}},"layout":{"type":"flex","flexWrap":"nowrap"}} -->
 			<div class="wp-block-group alignwide">
-				<!-- wp:heading {"level":1,"style":{"typography":{"fontSize":"48px","lineHeight":"1.3","fontStyle":"normal","fontWeight":"400"},"spacing":{"padding":{"top":"100px","bottom":"100px"}}},"fontFamily":"<?php echo esc_html( $heading_font_family ); ?>"} -->
-					<h1 class="wp-block-heading has-<?php echo esc_html( $heading_font_family ); ?>-font-family" style="padding-top:100px;padding-bottom:100px;font-size:48px;font-style:normal;font-weight:400;line-height:1.3"><em><?php echo esc_html__( 'Great things are coming soon', 'woocommerce' ); ?></em></h1>
+				<!-- wp:heading {"level":1,"style":{"typography":{"fontSize":"48px","lineHeight":"1.3","fontStyle":"normal","fontWeight":"400"},"spacing":{"padding":{"top":"100px","bottom":"100px"}}},"fontFamily":"<?php echo esc_html($heading_font_family); ?>"} -->
+					<h1 class="wp-block-heading has-<?php echo esc_html($heading_font_family); ?>-font-family" style="padding-top:100px;padding-bottom:100px;font-size:48px;font-style:normal;font-weight:400;line-height:1.3"><em><?php echo esc_html__('Great things are coming soon', 'woocommerce'); ?></em></h1>
 				<!-- /wp:heading -->
 			</div>
 			<!-- /wp:group -->
@@ -73,27 +73,27 @@ $featured_image_urls = array(
 			<div class="wp-block-columns alignwide" style="margin-top:0;margin-bottom:0">
 				<!-- wp:column {"style":{"spacing":{"blockGap":"0"}}} -->
 				<div class="wp-block-column">
-					<?php if ( isset( $featured_image_urls[0] ) ) : ?>
+					<?php if (isset($featured_image_urls[0])) : ?>
 					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
-					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url( $featured_image_urls[0] ); ?>" alt="" style="border-radius:14px"/></figure>
+					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url($featured_image_urls[0]); ?>" alt="" style="border-radius:14px"/></figure>
 					<!-- /wp:image -->
 					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
 					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
 					</div>
 					<!-- /wp:spacer -->
 					<?php endif ?>
-					<?php if ( isset( $featured_image_urls[4] ) ) : ?>
+					<?php if (isset($featured_image_urls[4])) : ?>
 					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
-					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url( $featured_image_urls[4] ); ?>" alt="" style="border-radius:14px"/></figure>
+					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url($featured_image_urls[4]); ?>" alt="" style="border-radius:14px"/></figure>
 					<!-- /wp:image -->
 					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
 					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
 					</div>
 					<!-- /wp:spacer -->
 					<?php endif ?>
-					<?php if ( isset( $featured_image_urls[8] ) ) : ?>
+					<?php if (isset($featured_image_urls[8])) : ?>
 					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
-					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url( $featured_image_urls[8] ); ?>" alt="" style="border-radius:14px"/></figure>
+					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url($featured_image_urls[8]); ?>" alt="" style="border-radius:14px"/></figure>
 					<!-- /wp:image -->
 					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
 					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
@@ -110,59 +110,27 @@ $featured_image_urls = array(
 					</div>
 					<!-- /wp:spacer -->
 
-					<?php if ( isset( $featured_image_urls[1] ) ) : ?>
+					<?php if (isset($featured_image_urls[1])) : ?>
 					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
-					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url( $featured_image_urls[1] ); ?>" alt="" style="border-radius:14px"/></figure>
+					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url($featured_image_urls[1]); ?>" alt="" style="border-radius:14px"/></figure>
 					<!-- /wp:image -->
 					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
 					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
 					</div>
 					<!-- /wp:spacer -->
 					<?php endif ?>
-					<?php if ( isset( $featured_image_urls[5] ) ) : ?>
+					<?php if (isset($featured_image_urls[5])) : ?>
 					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
-					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url( $featured_image_urls[5] ); ?>" alt="" style="border-radius:14px"/></figure>
+					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url($featured_image_urls[5]); ?>" alt="" style="border-radius:14px"/></figure>
 					<!-- /wp:image -->
 					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
 					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
 					</div>
 					<!-- /wp:spacer -->
 					<?php endif ?>
-					<?php if ( isset( $featured_image_urls[9] ) ) : ?>
+					<?php if (isset($featured_image_urls[9])) : ?>
 					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
-					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url( $featured_image_urls[9] ); ?>" alt="" style="border-radius:14px"/></figure>
-					<!-- /wp:image -->
-					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
-					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
-					</div>
-					<!-- /wp:spacer -->
-					<?php endif ?>
-				</div>
-				<!-- /wp:column -->
-
-				<!-- wp:column {"style":{"spacing":{"blockGap":"0"}}} -->
-				<div class="wp-block-column">
-					<?php if ( isset( $featured_image_urls[2] ) ) : ?>
-					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
-					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url( $featured_image_urls[2] ); ?>" alt="" style="border-radius:14px"/></figure>
-					<!-- /wp:image -->
-					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
-					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
-					</div>
-					<!-- /wp:spacer -->
-					<?php endif ?>
-					<?php if ( isset( $featured_image_urls[6] ) ) : ?>
-					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
-					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url( $featured_image_urls[6] ); ?>" alt="" style="border-radius:14px"/></figure>
-					<!-- /wp:image -->
-					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
-					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
-					</div>
-					<!-- /wp:spacer -->
-					<?php endif ?>
-					<?php if ( isset( $featured_image_urls[10] ) ) : ?>
-					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
-					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url( $featured_image_urls[10] ); ?>" alt="" style="border-radius:14px"/></figure>
+					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url($featured_image_urls[9]); ?>" alt="" style="border-radius:14px"/></figure>
 					<!-- /wp:image -->
 					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
 					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
@@ -174,31 +142,63 @@ $featured_image_urls = array(
 
 				<!-- wp:column {"style":{"spacing":{"blockGap":"0"}}} -->
 				<div class="wp-block-column">
-					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
-					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
-					</div>
-					<!-- /wp:spacer -->
-					<?php if ( isset( $featured_image_urls[3] ) ) : ?>
+					<?php if (isset($featured_image_urls[2])) : ?>
 					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
-					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url( $featured_image_urls[3] ); ?>" alt="" style="border-radius:14px"/></figure>
+					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url($featured_image_urls[2]); ?>" alt="" style="border-radius:14px"/></figure>
 					<!-- /wp:image -->
 					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
 					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
 					</div>
 					<!-- /wp:spacer -->
 					<?php endif ?>
-					<?php if ( isset( $featured_image_urls[7] ) ) : ?>
+					<?php if (isset($featured_image_urls[6])) : ?>
 					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
-					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url( $featured_image_urls[7] ); ?>" alt="" style="border-radius:14px"/></figure>
+					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url($featured_image_urls[6]); ?>" alt="" style="border-radius:14px"/></figure>
 					<!-- /wp:image -->
 					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
 					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
 					</div>
 					<!-- /wp:spacer -->
 					<?php endif ?>
-					<?php if ( isset( $featured_image_urls[11] ) ) : ?>
+					<?php if (isset($featured_image_urls[10])) : ?>
 					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
-					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url( $featured_image_urls[11] ); ?>" alt="" style="border-radius:14px"/></figure>
+					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url($featured_image_urls[10]); ?>" alt="" style="border-radius:14px"/></figure>
+					<!-- /wp:image -->
+					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
+					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
+					</div>
+					<!-- /wp:spacer -->
+					<?php endif ?>
+				</div>
+				<!-- /wp:column -->
+
+				<!-- wp:column {"style":{"spacing":{"blockGap":"0"}}} -->
+				<div class="wp-block-column">
+					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
+					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
+					</div>
+					<!-- /wp:spacer -->
+					<?php if (isset($featured_image_urls[3])) : ?>
+					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
+					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url($featured_image_urls[3]); ?>" alt="" style="border-radius:14px"/></figure>
+					<!-- /wp:image -->
+					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
+					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
+					</div>
+					<!-- /wp:spacer -->
+					<?php endif ?>
+					<?php if (isset($featured_image_urls[7])) : ?>
+					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
+					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url($featured_image_urls[7]); ?>" alt="" style="border-radius:14px"/></figure>
+					<!-- /wp:image -->
+					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
+					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">
+					</div>
+					<!-- /wp:spacer -->
+					<?php endif ?>
+					<?php if (isset($featured_image_urls[11])) : ?>
+					<!-- wp:image {"sizeSlug":"full","linkDestination":"none","align":"center","style":{"border":{"radius":"14px"}}} -->
+					<figure class="wp-block-image aligncenter size-full has-custom-border"><img src="<?php echo esc_url($featured_image_urls[11]); ?>" alt="" style="border-radius:14px"/></figure>
 					<!-- /wp:image -->
 					<!-- wp:spacer {"height":"var:preset|spacing|50"} -->
 					<div style="height:var(--wp--preset--spacing--50)" aria-hidden="true" class="wp-block-spacer">

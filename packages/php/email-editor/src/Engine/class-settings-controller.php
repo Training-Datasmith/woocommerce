@@ -1,248 +1,244 @@
 <?php
+
 /**
  * This file is part of the WooCommerce Email Editor package
  *
  * @package Automattic\WooCommerce\EmailEditor
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\EmailEditor\Engine;
 
 /**
  * Class managing the settings for the email editor.
  */
-class Settings_Controller {
+class Settings_Controller
+{
+    public const DEFAULT_SETTINGS = [
+        'enableCustomUnits' => [ 'px', '%' ],
+    ];
 
-	const DEFAULT_SETTINGS = array(
-		'enableCustomUnits' => array( 'px', '%' ),
-	);
+    /**
+     * Allowed iframe style handles.
+     *
+     * @var string[]
+     */
+    private array $allowed_iframe_style_handles = [];
 
-	/**
-	 * Theme controller.
-	 *
-	 * @var Theme_Controller
-	 */
-	private Theme_Controller $theme_controller;
+    /**
+     * Assets for iframe editor (component styles, scripts, etc.)
+     */
+    private array $iframe_assets = [];
 
-	/**
-	 * Allowed iframe style handles.
-	 *
-	 * @var string[]
-	 */
-	private array $allowed_iframe_style_handles = array();
+    /**
+     * Class constructor.
+     *
+     * @param Theme_Controller $theme_controller Theme controller.
+     */
+    public function __construct(
+        /**
+         * Theme controller.
+         */
+        private readonly Theme_Controller $theme_controller
+    ) {
+    }
 
-	/**
-	 * Assets for iframe editor (component styles, scripts, etc.)
-	 *
-	 * @var array
-	 */
-	private array $iframe_assets = array();
+    /**
+     * Get the settings for the email editor.
+     */
+    public function get_settings(): array
+    {
+        $this->init_iframe_assets();
 
-	/**
-	 * Class constructor.
-	 *
-	 * @param Theme_Controller $theme_controller Theme controller.
-	 */
-	public function __construct(
-		Theme_Controller $theme_controller
-	) {
-		$this->theme_controller = $theme_controller;
-	}
+        $core_default_settings = \get_default_block_editor_settings();
+        $theme_settings        = $this->theme_controller->get_settings();
 
-	/**
-	 * Get the settings for the email editor.
-	 *
-	 * @return array
-	 */
-	public function get_settings(): array {
-		$this->init_iframe_assets();
+        $settings = array_merge($core_default_settings, self::DEFAULT_SETTINGS);
+        // Assets for iframe editor (component styles, scripts, etc.).
+        $settings['__unstableResolvedAssets']  = $this->iframe_assets;
+        $settings['allowedIframeStyleHandles'] = $this->allowed_iframe_style_handles;
+        $editor_content_styles                 = file_get_contents(__DIR__ . '/content-editor.css');
+        $shares_content_styles                 = file_get_contents(__DIR__ . '/content-shared.css');
+        $settings['styles']                    = [
+            [ 'css' => $editor_content_styles ],
+            [ 'css' => $shares_content_styles ],
+        ];
 
-		$core_default_settings = \get_default_block_editor_settings();
-		$theme_settings        = $this->theme_controller->get_settings();
+        $settings['autosaveInterval'] = 60;
+        // Disable code editing in the email editor. We manipulate HTML in renderer so it doesn't make sense to have it enabled.
+        $settings['codeEditingEnabled'] = false;
 
-		$settings = array_merge( $core_default_settings, self::DEFAULT_SETTINGS );
-		// Assets for iframe editor (component styles, scripts, etc.).
-		$settings['__unstableResolvedAssets']  = $this->iframe_assets;
-		$settings['allowedIframeStyleHandles'] = $this->allowed_iframe_style_handles;
-		$editor_content_styles                 = file_get_contents( __DIR__ . '/content-editor.css' );
-		$shares_content_styles                 = file_get_contents( __DIR__ . '/content-shared.css' );
-		$settings['styles']                    = array(
-			array( 'css' => $editor_content_styles ),
-			array( 'css' => $shares_content_styles ),
-		);
+        $settings['__experimentalFeatures'] = $theme_settings;
+        // Controls which alignment options are available for blocks.
+        $settings['supportsLayout']              = true; // Allow using default layouts.
+        $settings['__unstableIsBlockBasedTheme'] = true; // For default setting this to true disables wide and full alignments.
+        return $settings;
+    }
 
-		$settings['autosaveInterval'] = 60;
-		// Disable code editing in the email editor. We manipulate HTML in renderer so it doesn't make sense to have it enabled.
-		$settings['codeEditingEnabled'] = false;
+    /**
+     * Returns the layout settings for the email editor.
+     *
+     * @return array{contentSize: string, wideSize: string}
+     */
+    public function get_layout(): array
+    {
+        $layout_settings = $this->theme_controller->get_layout_settings();
+        return [
+            'contentSize' => $layout_settings['contentSize'],
+            'wideSize'    => $layout_settings['wideSize'],
+        ];
+    }
 
-		$settings['__experimentalFeatures'] = $theme_settings;
-		// Controls which alignment options are available for blocks.
-		$settings['supportsLayout']              = true; // Allow using default layouts.
-		$settings['__unstableIsBlockBasedTheme'] = true; // For default setting this to true disables wide and full alignments.
-		return $settings;
-	}
+    /**
+     * Get the email styles.
+     *
+     * @return array{
+     *   spacing: array{
+     *     blockGap: string,
+     *     padding: array{bottom: string, left: string, right: string, top: string}
+     *   },
+     *   color: array{
+     *     background: string,
+     *     text: string
+     *   },
+     *   typography: array{
+     *     fontFamily: string
+     *   }
+     * }
+     */
+    public function get_email_styles(): array
+    {
+        $theme = $this->get_theme();
+        return $theme->get_data()['styles'];
+    }
 
-	/**
-	 * Returns the layout settings for the email editor.
-	 *
-	 * @return array{contentSize: string, wideSize: string}
-	 */
-	public function get_layout(): array {
-		$layout_settings = $this->theme_controller->get_layout_settings();
-		return array(
-			'contentSize' => $layout_settings['contentSize'],
-			'wideSize'    => $layout_settings['wideSize'],
-		);
-	}
+    /**
+     * Returns the width of the layout without padding.
+     */
+    public function get_layout_width_without_padding(): string
+    {
+        $styles = $this->get_email_styles();
+        $layout = $this->get_layout();
+        $width  = $this->parse_number_from_string_with_pixels($layout['contentSize']);
+        $width -= $this->parse_number_from_string_with_pixels($styles['spacing']['padding']['left']);
+        $width -= $this->parse_number_from_string_with_pixels($styles['spacing']['padding']['right']);
+        return "{$width}px";
+    }
 
-	/**
-	 * Get the email styles.
-	 *
-	 * @return array{
-	 *   spacing: array{
-	 *     blockGap: string,
-	 *     padding: array{bottom: string, left: string, right: string, top: string}
-	 *   },
-	 *   color: array{
-	 *     background: string,
-	 *     text: string
-	 *   },
-	 *   typography: array{
-	 *     fontFamily: string
-	 *   }
-	 * }
-	 */
-	public function get_email_styles(): array {
-		$theme = $this->get_theme();
-		return $theme->get_data()['styles'];
-	}
+    /**
+     * Parse styles string to array.
+     *
+     * @param string $styles Styles string.
+     */
+    public function parse_styles_to_array(string $styles): array
+    {
+        $styles        = explode(';', $styles);
+        $parsed_styles = [];
+        foreach ($styles as $style) {
+            $style = explode(':', $style);
+            if (count($style) === 2) {
+                $parsed_styles[ trim($style[0]) ] = trim($style[1]);
+            }
+        }
+        return $parsed_styles;
+    }
 
-	/**
-	 * Returns the width of the layout without padding.
-	 *
-	 * @return string
-	 */
-	public function get_layout_width_without_padding(): string {
-		$styles = $this->get_email_styles();
-		$layout = $this->get_layout();
-		$width  = $this->parse_number_from_string_with_pixels( $layout['contentSize'] );
-		$width -= $this->parse_number_from_string_with_pixels( $styles['spacing']['padding']['left'] );
-		$width -= $this->parse_number_from_string_with_pixels( $styles['spacing']['padding']['right'] );
-		return "{$width}px";
-	}
+    /**
+     * Returns float number parsed from string with pixels.
+     *
+     * @param string $value Value with pixels.
+     */
+    public function parse_number_from_string_with_pixels(string $value): float
+    {
+        return (float) str_replace('px', '', $value);
+    }
 
-	/**
-	 * Parse styles string to array.
-	 *
-	 * @param string $styles Styles string.
-	 * @return array
-	 */
-	public function parse_styles_to_array( string $styles ): array {
-		$styles        = explode( ';', $styles );
-		$parsed_styles = array();
-		foreach ( $styles as $style ) {
-			$style = explode( ':', $style );
-			if ( count( $style ) === 2 ) {
-				$parsed_styles[ trim( $style[0] ) ] = trim( $style[1] );
-			}
-		}
-		return $parsed_styles;
-	}
+    /**
+     * Returns the theme.
+     */
+    public function get_theme(): \WP_Theme_JSON
+    {
+        return $this->theme_controller->get_theme();
+    }
 
-	/**
-	 * Returns float number parsed from string with pixels.
-	 *
-	 * @param string $value Value with pixels.
-	 * @return float
-	 */
-	public function parse_number_from_string_with_pixels( string $value ): float {
-		return (float) str_replace( 'px', '', $value );
-	}
+    /**
+     * Translate slug to font size.
+     *
+     * @param string $font_size Font size slug.
+     */
+    public function translate_slug_to_font_size(string $font_size): string
+    {
+        return $this->theme_controller->translate_slug_to_font_size($font_size);
+    }
 
-	/**
-	 * Returns the theme.
-	 *
-	 * @return \WP_Theme_JSON
-	 */
-	public function get_theme(): \WP_Theme_JSON {
-		return $this->theme_controller->get_theme();
-	}
+    /**
+     * Translate slug to color.
+     *
+     * @param string $color_slug Color slug.
+     */
+    public function translate_slug_to_color(string $color_slug): string
+    {
+        return $this->theme_controller->translate_slug_to_color($color_slug);
+    }
 
-	/**
-	 * Translate slug to font size.
-	 *
-	 * @param string $font_size Font size slug.
-	 * @return string
-	 */
-	public function translate_slug_to_font_size( string $font_size ): string {
-		return $this->theme_controller->translate_slug_to_font_size( $font_size );
-	}
+    /**
+     * Get the allowed iframe style handles.
+     *
+     * @return array
+     */
+    private function get_allowed_iframe_style_handles()
+    {
+        // Core style handles.
+        $allowed_iframe_style_handles = [
+            'wp-components-css',
+            'wp-reset-editor-styles-css',
+            'wp-block-library-css',
+            'wp-block-editor-content-css',
+            'wp-edit-blocks-css',
+        ];
 
-	/**
-	 * Translate slug to color.
-	 *
-	 * @param string $color_slug Color slug.
-	 * @return string
-	 */
-	public function translate_slug_to_color( string $color_slug ): string {
-		return $this->theme_controller->translate_slug_to_color( $color_slug );
-	}
+        foreach (\WP_Block_Type_Registry::get_instance()->get_all_registered() as $block) {
+            if (! isset($block->supports['email'])) {
+                continue;
+            }
+            if (! $block->supports['email']) {
+                continue;
+            }
+            foreach ($block->style_handles as $handle) {
+                $allowed_iframe_style_handles[] = $handle . '-css';
+            }
 
-	/**
-	 * Get the allowed iframe style handles.
-	 *
-	 * @return array
-	 */
-	private function get_allowed_iframe_style_handles() {
-		// Core style handles.
-		$allowed_iframe_style_handles = array(
-			'wp-components-css',
-			'wp-reset-editor-styles-css',
-			'wp-block-library-css',
-			'wp-block-editor-content-css',
-			'wp-edit-blocks-css',
-		);
+            foreach ($block->editor_style_handles as $handle) {
+                $allowed_iframe_style_handles[] = $handle . '-css';
+            }
+        }
 
-		foreach ( \WP_Block_Type_Registry::get_instance()->get_all_registered() as $block ) {
-			if ( ! isset( $block->supports['email'] ) || ! $block->supports['email'] ) {
-				continue;
-			}
+        return apply_filters('woocommerce_email_editor_allowed_iframe_style_handles', $allowed_iframe_style_handles);
+    }
 
-			foreach ( $block->style_handles as $handle ) {
-				$allowed_iframe_style_handles[] = $handle . '-css';
-			}
+    /**
+     * Method to initialize iframe assets.
+     */
+    private function init_iframe_assets(): void
+    {
+        if (! empty($this->iframe_assets)) {
+            return;
+        }
 
-			foreach ( $block->editor_style_handles as $handle ) {
-				$allowed_iframe_style_handles[] = $handle . '-css';
-			}
-		}
+        $this->iframe_assets                = _wp_get_iframed_editor_assets();
+        $this->allowed_iframe_style_handles = $this->get_allowed_iframe_style_handles();
 
-		return apply_filters( 'woocommerce_email_editor_allowed_iframe_style_handles', $allowed_iframe_style_handles );
-	}
+        $cleaned_styles = [];
+        foreach (explode("\n", (string) $this->iframe_assets['styles']) as $asset) {
+            foreach ($this->allowed_iframe_style_handles as $handle) {
+                if (str_contains($asset, (string) $handle)) {
+                    $cleaned_styles[] = $asset;
+                    break;
+                }
+            }
+        }
 
-	/**
-	 * Method to initialize iframe assets.
-	 *
-	 * @return void
-	 */
-	private function init_iframe_assets(): void {
-		if ( ! empty( $this->iframe_assets ) ) {
-			return;
-		}
-
-		$this->iframe_assets                = _wp_get_iframed_editor_assets();
-		$this->allowed_iframe_style_handles = $this->get_allowed_iframe_style_handles();
-
-		$cleaned_styles = array();
-		foreach ( explode( "\n", (string) $this->iframe_assets['styles'] ) as $asset ) {
-			foreach ( $this->allowed_iframe_style_handles as $handle ) {
-				if ( strpos( $asset, $handle ) !== false ) {
-					$cleaned_styles[] = $asset;
-					break;
-				}
-			}
-		}
-
-		$this->iframe_assets['styles'] = implode( "\n", $cleaned_styles );
-	}
+        $this->iframe_assets['styles'] = implode("\n", $cleaned_styles);
+    }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\Property;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Comment\Comment;
@@ -13,16 +15,6 @@ use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Position\Positionable;
 class CSSNamespace implements AtRule, Positionable
 {
     use Position;
-
-    /**
-     * @var string
-     */
-    private $mUrl;
-
-    /**
-     * @var string
-     */
-    private $sPrefix;
 
     /**
      * @var int
@@ -41,30 +33,24 @@ class CSSNamespace implements AtRule, Positionable
      * @param string|null $sPrefix
      * @param int $iLineNo
      */
-    public function __construct($mUrl, $sPrefix = null, $iLineNo = 0)
+    public function __construct(private $mUrl, private $sPrefix = null, $iLineNo = 0)
     {
-        $this->mUrl = $mUrl;
-        $this->sPrefix = $sPrefix;
         $this->setPosition($iLineNo);
         $this->aComments = [];
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
 
     /**
      * @param OutputFormat|null $oOutputFormat
-     *
-     * @return string
      */
-    public function render($oOutputFormat)
+    public function render($oOutputFormat): string
     {
         return '@namespace ' . ($this->sPrefix === null ? '' : $this->sPrefix . ' ')
             . $this->mUrl->render($oOutputFormat) . ';';
@@ -88,28 +74,21 @@ class CSSNamespace implements AtRule, Positionable
 
     /**
      * @param string $mUrl
-     *
-     * @return void
      */
-    public function setUrl($mUrl)
+    public function setUrl($mUrl): void
     {
         $this->mUrl = $mUrl;
     }
 
     /**
      * @param string $sPrefix
-     *
-     * @return void
      */
-    public function setPrefix($sPrefix)
+    public function setPrefix($sPrefix): void
     {
         $this->sPrefix = $sPrefix;
     }
 
-    /**
-     * @return string
-     */
-    public function atRuleName()
+    public function atRuleName(): string
     {
         return 'namespace';
     }
@@ -117,7 +96,7 @@ class CSSNamespace implements AtRule, Positionable
     /**
      * @return array<int, string>
      */
-    public function atRuleArgs()
+    public function atRuleArgs(): array
     {
         $aResult = [$this->mUrl];
         if ($this->sPrefix) {
@@ -128,10 +107,8 @@ class CSSNamespace implements AtRule, Positionable
 
     /**
      * @param array<array-key, Comment> $aComments
-     *
-     * @return void
      */
-    public function addComments(array $aComments)
+    public function addComments(array $aComments): void
     {
         $this->aComments = array_merge($this->aComments, $aComments);
     }
@@ -146,10 +123,8 @@ class CSSNamespace implements AtRule, Positionable
 
     /**
      * @param array<array-key, Comment> $aComments
-     *
-     * @return void
      */
-    public function setComments(array $aComments)
+    public function setComments(array $aComments): void
     {
         $this->aComments = $aComments;
     }

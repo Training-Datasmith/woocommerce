@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -23,13 +25,8 @@ namespace Automattic\WooCommerce\Vendor\Symfony\Component\CssSelector\Node;
  */
 class NegationNode extends AbstractNode
 {
-    private $selector;
-    private $subSelector;
-
-    public function __construct(NodeInterface $selector, NodeInterface $subSelector)
+    public function __construct(private readonly NodeInterface $selector, private readonly NodeInterface $subSelector)
     {
-        $this->selector = $selector;
-        $this->subSelector = $subSelector;
     }
 
     public function getSelector(): NodeInterface

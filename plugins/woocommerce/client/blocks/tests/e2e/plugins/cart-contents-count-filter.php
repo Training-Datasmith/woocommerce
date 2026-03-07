@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Name: WooCommerce Blocks Test Cart Contents Count Filter
  * Description: Overrides the cart contents count to always return 999 for e2e testing.
@@ -8,11 +9,11 @@
  * @package woocommerce-blocks-test-cart-contents-count-filter
  */
 
-declare( strict_types = 1 );
+declare(strict_types=1);
 
 add_filter(
-	'woocommerce_cart_contents_count',
-	function () {
-		return 999;
-	}
+    'woocommerce_cart_contents_count',
+    function () {
+        return 999;
+    }
 );

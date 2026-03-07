@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Product Short Description
  *
@@ -8,30 +10,31 @@
  * @version     2.1.0
  */
 
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * WC_Meta_Box_Product_Short_Description Class.
  */
-class WC_Meta_Box_Product_Short_Description {
+class WC_Meta_Box_Product_Short_Description
+{
+    /**
+     * Output the metabox.
+     *
+     * @param WP_Post $post Post object.
+     */
+    public static function output($post): void
+    {
 
-	/**
-	 * Output the metabox.
-	 *
-	 * @param WP_Post $post Post object.
-	 */
-	public static function output( $post ) {
+        $settings = [
+            'textarea_name' => 'excerpt',
+            'quicktags'     => [ 'buttons' => 'em,strong,link' ],
+            'tinymce'       => [
+                'theme_advanced_buttons1' => 'bold,italic,strikethrough,separator,bullist,numlist,separator,blockquote,separator,justifyleft,justifycenter,justifyright,separator,link,unlink,separator,undo,redo,separator',
+                'theme_advanced_buttons2' => '',
+            ],
+            'editor_css'    => '<style>#wp-excerpt-editor-container .wp-editor-area{height:175px; width:100%;}</style>',
+        ];
 
-		$settings = array(
-			'textarea_name' => 'excerpt',
-			'quicktags'     => array( 'buttons' => 'em,strong,link' ),
-			'tinymce'       => array(
-				'theme_advanced_buttons1' => 'bold,italic,strikethrough,separator,bullist,numlist,separator,blockquote,separator,justifyleft,justifycenter,justifyright,separator,link,unlink,separator,undo,redo,separator',
-				'theme_advanced_buttons2' => '',
-			),
-			'editor_css'    => '<style>#wp-excerpt-editor-container .wp-editor-area{height:175px; width:100%;}</style>',
-		);
-
-		wp_editor( htmlspecialchars_decode( $post->post_excerpt, ENT_QUOTES ), 'excerpt', apply_filters( 'woocommerce_product_short_description_editor_settings', $settings ) );
-	}
+        wp_editor(htmlspecialchars_decode((string) $post->post_excerpt, ENT_QUOTES), 'excerpt', apply_filters('woocommerce_product_short_description_editor_settings', $settings));
+    }
 }

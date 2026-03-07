@@ -12,25 +12,15 @@ use Automattic\WooCommerce\Vendor\Sabberworm\CSS\RuleSet\DeclarationBlock;
  *
  * @internal
  */
-final class StyleRule
+final readonly class StyleRule
 {
-    /**
-     * @var DeclarationBlock
-     */
-    private $declarationBlock;
+    private string $containingAtRule;
 
     /**
-     * @var string
-     */
-    private $containingAtRule;
-
-    /**
-     * @param DeclarationBlock $declarationBlock
      * @param string $containingAtRule e.g. `@media screen and (max-width: 480px)`
      */
-    public function __construct(DeclarationBlock $declarationBlock, string $containingAtRule = '')
+    public function __construct(private DeclarationBlock $declarationBlock, string $containingAtRule = '')
     {
-        $this->declarationBlock = $declarationBlock;
         $this->containingAtRule = \trim($containingAtRule);
     }
 
@@ -42,9 +32,7 @@ final class StyleRule
         /** @var array<int, Selector> $selectors */
         $selectors = $this->declarationBlock->getSelectors();
         return \array_map(
-            static function (Selector $selector): string {
-                return (string) $selector;
-            },
+            static fn (Selector $selector): string => (string) $selector,
             $selectors
         );
     }

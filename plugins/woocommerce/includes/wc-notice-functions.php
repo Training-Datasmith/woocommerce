@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * WooCommerce Message Functions
  *
@@ -8,8 +10,8 @@
  * @version 2.1.0
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
 
 /**
@@ -20,29 +22,30 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @param  string $notice_type Optional. The name of the notice type - either error, success or notice.
  * @return int
  */
-function wc_notice_count( $notice_type = '' ) {
-	if ( ! did_action( 'woocommerce_init' ) ) {
-		wc_doing_it_wrong( __FUNCTION__, __( 'This function should not be called before woocommerce_init.', 'woocommerce' ), '2.3' );
-		return;
-	}
+function wc_notice_count($notice_type = '')
+{
+    if (! did_action('woocommerce_init')) {
+        wc_doing_it_wrong(__FUNCTION__, __('This function should not be called before woocommerce_init.', 'woocommerce'), '2.3');
+        return;
+    }
 
-	$notice_count = 0;
-	$all_notices  = WC()->session->get( 'wc_notices', array() );
+    $notice_count = 0;
+    $all_notices  = WC()->session->get('wc_notices', []);
 
-	if ( isset( $all_notices[ $notice_type ] ) && is_array( $all_notices[ $notice_type ] ) ) {
+    if (isset($all_notices[ $notice_type ]) && is_array($all_notices[ $notice_type ])) {
 
-		$notice_count = count( $all_notices[ $notice_type ] );
+        $notice_count = count($all_notices[ $notice_type ]);
 
-	} elseif ( empty( $notice_type ) ) {
+    } elseif (empty($notice_type)) {
 
-		foreach ( $all_notices as $notices ) {
-			if ( is_countable( $notices ) ) {
-				$notice_count += count( $notices );
-			}
-		}
-	}
+        foreach ($all_notices as $notices) {
+            if (is_countable($notices)) {
+                $notice_count += count($notices);
+            }
+        }
+    }
 
-	return $notice_count;
+    return $notice_count;
 }
 
 /**
@@ -53,15 +56,16 @@ function wc_notice_count( $notice_type = '' ) {
  * @param  string $notice_type Optional. The name of the notice type - either error, success or notice.
  * @return bool
  */
-function wc_has_notice( $message, $notice_type = 'success' ) {
-	if ( ! did_action( 'woocommerce_init' ) ) {
-		wc_doing_it_wrong( __FUNCTION__, __( 'This function should not be called before woocommerce_init.', 'woocommerce' ), '2.3' );
-		return false;
-	}
+function wc_has_notice($message, $notice_type = 'success')
+{
+    if (! did_action('woocommerce_init')) {
+        wc_doing_it_wrong(__FUNCTION__, __('This function should not be called before woocommerce_init.', 'woocommerce'), '2.3');
+        return false;
+    }
 
-	$notices = WC()->session->get( 'wc_notices', array() );
-	$notices = isset( $notices[ $notice_type ] ) ? $notices[ $notice_type ] : array();
-	return array_search( $message, wp_list_pluck( $notices, 'notice' ), true ) !== false;
+    $notices = WC()->session->get('wc_notices', []);
+    $notices = $notices[ $notice_type ] ?? [];
+    return array_search($message, wp_list_pluck($notices, 'notice'), true) !== false;
 }
 
 /**
@@ -73,36 +77,37 @@ function wc_has_notice( $message, $notice_type = 'success' ) {
  * @param string $notice_type Optional. The name of the notice type - either error, success or notice.
  * @param array  $data        Optional notice data.
  */
-function wc_add_notice( $message, $notice_type = 'success', $data = array() ) {
-	if ( ! did_action( 'woocommerce_init' ) ) {
-		wc_doing_it_wrong( __FUNCTION__, __( 'This function should not be called before woocommerce_init.', 'woocommerce' ), '2.3' );
-		return;
-	}
+function wc_add_notice($message, string $notice_type = 'success', $data = []): void
+{
+    if (! did_action('woocommerce_init')) {
+        wc_doing_it_wrong(__FUNCTION__, __('This function should not be called before woocommerce_init.', 'woocommerce'), '2.3');
+        return;
+    }
 
-	// If this is called before the session is initialized, for example if a plugin includes this file incorrectly on
-	// the admin, skip doing anything to prevent errors.
-	if ( ! WC()->session ) {
-		wc_doing_it_wrong( __FUNCTION__, __( 'This function should not be called before the WooCommerce session is initialized, or places where there is no session, e.g. WordPress admin.', 'woocommerce' ), '10.5' );
-		return;
-	}
+    // If this is called before the session is initialized, for example if a plugin includes this file incorrectly on
+    // the admin, skip doing anything to prevent errors.
+    if (! WC()->session) {
+        wc_doing_it_wrong(__FUNCTION__, __('This function should not be called before the WooCommerce session is initialized, or places where there is no session, e.g. WordPress admin.', 'woocommerce'), '10.5');
+        return;
+    }
 
-	$notices = WC()->session->get( 'wc_notices', array() );
+    $notices = WC()->session->get('wc_notices', []);
 
-	// Backward compatibility.
-	if ( 'success' === $notice_type ) {
-		$message = apply_filters( 'woocommerce_add_message', $message );
-	}
+    // Backward compatibility.
+    if ('success' === $notice_type) {
+        $message = apply_filters('woocommerce_add_message', $message);
+    }
 
-	$message = apply_filters( 'woocommerce_add_' . $notice_type, $message );
+    $message = apply_filters('woocommerce_add_' . $notice_type, $message);
 
-	if ( ! empty( $message ) ) {
-		$notices[ $notice_type ][] = array(
-			'notice' => $message,
-			'data'   => $data,
-		);
-	}
+    if (! empty($message)) {
+        $notices[ $notice_type ][] = [
+            'notice' => $message,
+            'data'   => $data,
+        ];
+    }
 
-	WC()->session->set( 'wc_notices', $notices );
+    WC()->session->set('wc_notices', $notices);
 }
 
 /**
@@ -111,13 +116,14 @@ function wc_add_notice( $message, $notice_type = 'success', $data = array() ) {
  * @since 2.6.0
  * @param array[] $notices Array of notices.
  */
-function wc_set_notices( $notices ) {
-	if ( ! did_action( 'woocommerce_init' ) ) {
-		wc_doing_it_wrong( __FUNCTION__, __( 'This function should not be called before woocommerce_init.', 'woocommerce' ), '2.6' );
-		return;
-	}
+function wc_set_notices($notices): void
+{
+    if (! did_action('woocommerce_init')) {
+        wc_doing_it_wrong(__FUNCTION__, __('This function should not be called before woocommerce_init.', 'woocommerce'), '2.6');
+        return;
+    }
 
-	WC()->session->set( 'wc_notices', empty( $notices ) ? null : $notices );
+    WC()->session->set('wc_notices', empty($notices) ? null : $notices);
 }
 
 /**
@@ -125,12 +131,13 @@ function wc_set_notices( $notices ) {
  *
  * @since 2.1
  */
-function wc_clear_notices() {
-	if ( ! did_action( 'woocommerce_init' ) ) {
-		wc_doing_it_wrong( __FUNCTION__, __( 'This function should not be called before woocommerce_init.', 'woocommerce' ), '2.3' );
-		return;
-	}
-	WC()->session->set( 'wc_notices', null );
+function wc_clear_notices(): void
+{
+    if (! did_action('woocommerce_init')) {
+        wc_doing_it_wrong(__FUNCTION__, __('This function should not be called before woocommerce_init.', 'woocommerce'), '2.3');
+        return;
+    }
+    WC()->session->set('wc_notices', null);
 }
 
 /**
@@ -140,52 +147,53 @@ function wc_clear_notices() {
  * @param bool $return true to return rather than echo. @since 3.5.0.
  * @return string|void
  */
-function wc_print_notices( $return = false ) {
-	if ( ! did_action( 'woocommerce_init' ) ) {
-		wc_doing_it_wrong( __FUNCTION__, __( 'This function should not be called before woocommerce_init.', 'woocommerce' ), '2.3' );
-		return;
-	}
+function wc_print_notices($return = false)
+{
+    if (! did_action('woocommerce_init')) {
+        wc_doing_it_wrong(__FUNCTION__, __('This function should not be called before woocommerce_init.', 'woocommerce'), '2.3');
+        return;
+    }
 
-	$session = WC()->session;
+    $session = WC()->session;
 
-	// If the session handler has not initialized, there will be no notices for us to read.
-	if ( null === $session ) {
-		return;
-	}
+    // If the session handler has not initialized, there will be no notices for us to read.
+    if (null === $session) {
+        return;
+    }
 
-	$all_notices  = $session->get( 'wc_notices', array() );
-	$notice_types = apply_filters( 'woocommerce_notice_types', array( 'error', 'success', 'notice' ) );
+    $all_notices  = $session->get('wc_notices', []);
+    $notice_types = apply_filters('woocommerce_notice_types', [ 'error', 'success', 'notice' ]);
 
-	// Buffer output.
-	ob_start();
+    // Buffer output.
+    ob_start();
 
-	foreach ( $notice_types as $notice_type ) {
-		if ( wc_notice_count( $notice_type ) > 0 ) {
-			$messages = array();
+    foreach ($notice_types as $notice_type) {
+        if (wc_notice_count($notice_type) > 0) {
+            $messages = [];
 
-			foreach ( $all_notices[ $notice_type ] as $notice ) {
-				$messages[] = isset( $notice['notice'] ) ? $notice['notice'] : $notice;
-			}
+            foreach ($all_notices[ $notice_type ] as $notice) {
+                $messages[] = $notice['notice'] ?? $notice;
+            }
 
-			wc_get_template(
-				"notices/{$notice_type}.php",
-				array(
-					'messages' => array_filter( $messages ), // @deprecated 3.9.0
-					'notices'  => array_filter( $all_notices[ $notice_type ] ),
-				)
-			);
-		}
-	}
+            wc_get_template(
+                "notices/{$notice_type}.php",
+                [
+                    'messages' => array_filter($messages), // @deprecated 3.9.0
+                    'notices'  => array_filter($all_notices[ $notice_type ]),
+                ]
+            );
+        }
+    }
 
-	wc_clear_notices();
+    wc_clear_notices();
 
-	$notices = wc_kses_notice( ob_get_clean() );
+    $notices = wc_kses_notice(ob_get_clean());
 
-	if ( $return ) {
-		return $notices;
-	}
+    if ($return) {
+        return $notices;
+    }
 
-	echo $notices; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    echo $notices; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }
 
 /**
@@ -198,36 +206,37 @@ function wc_print_notices( $return = false ) {
  * @param array  $data        Optional notice data. @since 3.9.0.
  * @param bool   $return      true to return rather than echo. @since 7.7.0.
  */
-function wc_print_notice( $message, $notice_type = 'success', $data = array(), $return = false ) {
-	if ( 'success' === $notice_type ) {
-		$message = apply_filters( 'woocommerce_add_message', $message );
-	}
+function wc_print_notice($message, string $notice_type = 'success', $data = [], $return = false)
+{
+    if ('success' === $notice_type) {
+        $message = apply_filters('woocommerce_add_message', $message);
+    }
 
-	$message = apply_filters( 'woocommerce_add_' . $notice_type, $message );
+    $message = apply_filters('woocommerce_add_' . $notice_type, $message);
 
-	// Buffer output.
-	ob_start();
+    // Buffer output.
+    ob_start();
 
-	wc_get_template(
-		"notices/{$notice_type}.php",
-		array(
-			'messages' => array( $message ), // @deprecated 3.9.0
-			'notices'  => array(
-				array(
-					'notice' => $message,
-					'data'   => $data,
-				),
-			),
-		)
-	);
+    wc_get_template(
+        "notices/{$notice_type}.php",
+        [
+            'messages' => [ $message ], // @deprecated 3.9.0
+            'notices'  => [
+                [
+                    'notice' => $message,
+                    'data'   => $data,
+                ],
+            ],
+        ]
+    );
 
-	$notice = wc_kses_notice( ob_get_clean() );
+    $notice = wc_kses_notice(ob_get_clean());
 
-	if ( $return ) {
-		return $notice;
-	}
+    if ($return) {
+        return $notice;
+    }
 
-	echo $notice; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    echo $notice; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }
 
 /**
@@ -238,26 +247,27 @@ function wc_print_notice( $message, $notice_type = 'success', $data = array(), $
  * @param  string $notice_type Optional. The singular name of the notice type - either error, success or notice.
  * @return array[]
  */
-function wc_get_notices( $notice_type = '' ) {
-	if ( ! did_action( 'woocommerce_init' ) ) {
-		wc_doing_it_wrong( __FUNCTION__, __( 'This function should not be called before woocommerce_init.', 'woocommerce' ), '2.3' );
-		return;
-	}
+function wc_get_notices($notice_type = '')
+{
+    if (! did_action('woocommerce_init')) {
+        wc_doing_it_wrong(__FUNCTION__, __('This function should not be called before woocommerce_init.', 'woocommerce'), '2.3');
+        return;
+    }
 
-	$notices = array();
-	if ( ! WC()->session ) {
-		return $notices;
-	}
+    $notices = [];
+    if (! WC()->session) {
+        return $notices;
+    }
 
-	$all_notices = WC()->session->get( 'wc_notices', array() );
+    $all_notices = WC()->session->get('wc_notices', []);
 
-	if ( empty( $notice_type ) ) {
-		$notices = $all_notices;
-	} elseif ( isset( $all_notices[ $notice_type ] ) ) {
-		$notices = $all_notices[ $notice_type ];
-	}
+    if (empty($notice_type)) {
+        $notices = $all_notices;
+    } elseif (isset($all_notices[ $notice_type ])) {
+        $notices = $all_notices[ $notice_type ];
+    }
 
-	return $notices;
+    return $notices;
 }
 
 /**
@@ -265,12 +275,13 @@ function wc_get_notices( $notice_type = '' ) {
  *
  * @param WP_Error $errors Errors.
  */
-function wc_add_wp_error_notices( $errors ) {
-	if ( is_wp_error( $errors ) && $errors->get_error_messages() ) {
-		foreach ( $errors->get_error_messages() as $error ) {
-			wc_add_notice( $error, 'error' );
-		}
-	}
+function wc_add_wp_error_notices($errors): void
+{
+    if (is_wp_error($errors) && $errors->get_error_messages()) {
+        foreach ($errors->get_error_messages() as $error) {
+            wc_add_notice($error, 'error');
+        }
+    }
 }
 
 /**
@@ -280,23 +291,24 @@ function wc_add_wp_error_notices( $errors ) {
  * @param string $message Content to filter through kses.
  * @return string
  */
-function wc_kses_notice( $message ) {
-	$allowed_tags = array_replace_recursive(
-		wp_kses_allowed_html( 'post' ),
-		array(
-			'a' => array(
-				'tabindex' => true,
-			),
-		)
-	);
+function wc_kses_notice($message)
+{
+    $allowed_tags = array_replace_recursive(
+        wp_kses_allowed_html('post'),
+        [
+            'a' => [
+                'tabindex' => true,
+            ],
+        ]
+    );
 
-	/**
-	 * Kses notice allowed tags.
-	 *
-	 * @since 3.9.0
-	 * @param array[]|string $allowed_tags An array of allowed HTML elements and attributes, or a context name such as 'post'.
-	 */
-	return wp_kses( $message, apply_filters( 'woocommerce_kses_notice_allowed_tags', $allowed_tags ) );
+    /**
+     * Kses notice allowed tags.
+     *
+     * @since 3.9.0
+     * @param array[]|string $allowed_tags An array of allowed HTML elements and attributes, or a context name such as 'post'.
+     */
+    return wp_kses($message, apply_filters('woocommerce_kses_notice_allowed_tags', $allowed_tags));
 }
 
 /**
@@ -306,20 +318,21 @@ function wc_kses_notice( $message ) {
  * @param array $notice Notice data.
  * @return string
  */
-function wc_get_notice_data_attr( $notice ) {
-	if ( empty( $notice['data'] ) ) {
-		return;
-	}
+function wc_get_notice_data_attr(array $notice)
+{
+    if (empty($notice['data'])) {
+        return;
+    }
 
-	$attr = '';
+    $attr = '';
 
-	foreach ( $notice['data'] as $key => $value ) {
-		$attr .= sprintf(
-			' data-%1$s="%2$s"',
-			sanitize_title( $key ),
-			esc_attr( $value )
-		);
-	}
+    foreach ($notice['data'] as $key => $value) {
+        $attr .= sprintf(
+            ' data-%1$s="%2$s"',
+            sanitize_title($key),
+            esc_attr($value)
+        );
+    }
 
-	return $attr;
+    return $attr;
 }

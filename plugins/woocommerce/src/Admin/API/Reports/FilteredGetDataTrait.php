@@ -1,13 +1,13 @@
 <?php
-declare( strict_types = 1);
+
+declare(strict_types=1);
 
 namespace Automattic\WooCommerce\Admin\API\Reports;
 
 // Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (! defined('ABSPATH')) {
+    exit;
 }
-
 
 /**
  * Trait to call filters on `get_data` methods for data stores.
@@ -26,33 +26,35 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @see DataStore
  */
-trait FilteredGetDataTrait {
-	/**
-	 * Get the data based on args.
-	 *
-	 * Filters query args, calls DataStore::get_data, and returns the filtered data.
-	 *
-	 * @override ReportsDataStore::get_data()
-	 *
-	 * @param array $query_args Query parameters.
-	 * @return stdClass|WP_Error
-	 */
-	public function get_data( $query_args ) {
-		/**
-		 * Called before the data is fetched.
-		 *
-		 * @since 9.3.0
-		 * @param array $query_args Query parameters.
-		 */
-		$args    = apply_filters( "woocommerce_analytics_{$this->context}_query_args", $query_args );
-		$results = parent::get_data( $args );
-		/**
-		 * Called after the data is fetched.
-		 * The results can be modified here.
-		 *
-		 * @since 9.3.0
-		 * @param stdClass|WP_Error $results The results of the query.
-		 */
-		return apply_filters( "woocommerce_analytics_{$this->context}_select_query", $results, $args );
-	}
+trait FilteredGetDataTrait
+{
+    /**
+     * Get the data based on args.
+     *
+     * Filters query args, calls DataStore::get_data, and returns the filtered data.
+     *
+     * @override ReportsDataStore::get_data()
+     *
+     * @param array $query_args Query parameters.
+     * @return stdClass|WP_Error
+     */
+    public function get_data($query_args)
+    {
+        /**
+         * Called before the data is fetched.
+         *
+         * @since 9.3.0
+         * @param array $query_args Query parameters.
+         */
+        $args    = apply_filters("woocommerce_analytics_{$this->context}_query_args", $query_args);
+        $results = parent::get_data($args);
+        /**
+         * Called after the data is fetched.
+         * The results can be modified here.
+         *
+         * @since 9.3.0
+         * @param stdClass|WP_Error $results The results of the query.
+         */
+        return apply_filters("woocommerce_analytics_{$this->context}_select_query", $results, $args);
+    }
 }

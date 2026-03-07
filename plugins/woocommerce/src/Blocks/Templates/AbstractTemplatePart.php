@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Blocks\Templates;
 
 /**
@@ -8,11 +11,12 @@ namespace Automattic\WooCommerce\Blocks\Templates;
  *
  * @internal
  */
-abstract class AbstractTemplatePart extends AbstractTemplate {
-	/**
-	 * The template part area where the template part belongs.
-	 *
-	 * @var string
-	 */
-	public $template_area;
+abstract class AbstractTemplatePart extends AbstractTemplate
+{
+    /**
+     * The template part area where the template part belongs.
+     *
+     * @var string
+     */
+    public $template_area;
 }

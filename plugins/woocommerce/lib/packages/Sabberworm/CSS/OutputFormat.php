@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS;
 
 /**
@@ -227,12 +229,12 @@ class OutputFormat
     /**
      * @var OutputFormatter|null
      */
-    private $oFormatter = null;
+    private $oFormatter;
 
     /**
      * @var OutputFormat|null
      */
-    private $oNextLevelFormat = null;
+    private $oNextLevelFormat;
 
     /**
      * @var int
@@ -273,10 +275,10 @@ class OutputFormat
      *
      * @deprecated since 8.8.0, will be removed in 9.0.0. Use specific setters instead.
      */
-    public function set($aNames, $mValue)
+    public function set($aNames, $mValue): self|false
     {
         $aVarPrefixes = ['a', 's', 'm', 'b', 'f', 'o', 'c', 'i'];
-        if (is_string($aNames) && strpos($aNames, '*') !== false) {
+        if (is_string($aNames) && str_contains($aNames, '*')) {
             $aNames =
                 [
                     str_replace('*', 'Before', $aNames),
@@ -304,25 +306,24 @@ class OutputFormat
     }
 
     /**
-     * @param string $sMethodName
      * @param array<array-key, mixed> $aArguments
      *
      * @return mixed
-     *
      * @throws \Exception
      */
-    public function __call($sMethodName, array $aArguments)
+    public function __call(string $sMethodName, array $aArguments)
     {
-        if (strpos($sMethodName, 'set') === 0) {
+        if (str_starts_with($sMethodName, 'set')) {
             return $this->set(substr($sMethodName, 3), $aArguments[0]);
-        } elseif (strpos($sMethodName, 'get') === 0) {
+        }
+        if (str_starts_with($sMethodName, 'get')) {
             return $this->get(substr($sMethodName, 3));
-        } elseif (method_exists(OutputFormatter::class, $sMethodName)) {
+        }
+        if (method_exists(OutputFormatter::class, $sMethodName)) {
             // @deprecated since 8.8.0, will be removed in 9.0.0. Call the method on the formatter directly instead.
             return call_user_func_array([$this->getFormatter(), $sMethodName], $aArguments);
-        } else {
-            throw new \Exception('Unknown OutputFormat method called: ' . $sMethodName);
         }
+        throw new \Exception('Unknown OutputFormat method called: ' . $sMethodName);
     }
 
     /**
@@ -342,7 +343,7 @@ class OutputFormat
      */
     public function indentWithSpaces($iNumber = 2)
     {
-        return $this->setIndentation(str_repeat(" ", $iNumber));
+        return $this->setIndentation(str_repeat(' ', $iNumber));
     }
 
     /**
@@ -360,10 +361,7 @@ class OutputFormat
         return $this->oNextLevelFormat;
     }
 
-    /**
-     * @return void
-     */
-    public function beLenient()
+    public function beLenient(): void
     {
         $this->bIgnoreExceptions = true;
     }
@@ -394,10 +392,8 @@ class OutputFormat
 
     /**
      * Creates an instance of this class without any particular formatting settings.
-     *
-     * @return self
      */
-    public static function create()
+    public static function create(): \Automattic\WooCommerce\Vendor\Sabberworm\CSS\OutputFormat
     {
         return new OutputFormat();
     }
@@ -410,8 +406,8 @@ class OutputFormat
     public static function createCompact()
     {
         $format = self::create();
-        $format->set('Space*Rules', "")
-            ->set('Space*Blocks', "")
+        $format->set('Space*Rules', '')
+            ->set('Space*Blocks', '')
             ->setSpaceAfterRuleName('')
             ->setSpaceBeforeOpeningBrace('')
             ->setSpaceAfterSelectorSeparator('')

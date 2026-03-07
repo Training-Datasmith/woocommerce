@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * WooCommerce Admin Dummy File
  *
@@ -7,4 +9,3 @@
  * @package WooCommerce\Admin
  * @version 6.9.0
  */
-

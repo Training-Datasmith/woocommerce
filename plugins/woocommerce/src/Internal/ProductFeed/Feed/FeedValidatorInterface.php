@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Feed Validator Interface.
  *
@@ -14,13 +15,14 @@ namespace Automattic\WooCommerce\Internal\ProductFeed\Feed;
  *
  * @since 10.5.0
  */
-interface FeedValidatorInterface {
-	/**
-	 * Validate a single entry.
-	 *
-	 * @param array       $row     The entry to validate.
-	 * @param \WC_Product $product The related product. Will be updated with validation status.
-	 * @return string[]            Validation issues.
-	 */
-	public function validate_entry( array $row, \WC_Product $product ): array;
+interface FeedValidatorInterface
+{
+    /**
+     * Validate a single entry.
+     *
+     * @param array       $row     The entry to validate.
+     * @param \WC_Product $product The related product. Will be updated with validation status.
+     * @return string[]            Validation issues.
+     */
+    public function validate_entry(array $row, \WC_Product $product): array;
 }

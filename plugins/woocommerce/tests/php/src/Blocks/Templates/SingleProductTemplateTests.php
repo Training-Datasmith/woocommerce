@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Tests\Blocks\Templates;
 
 use Automattic\WooCommerce\Blocks\Templates\SingleProductTemplate;
@@ -9,81 +11,84 @@ use WP_UnitTestCase;
  * Tests the SingleProductTemplate class
  *
  */
-class SingleProductTemplateTests extends WP_UnitTestCase {
-
-	/**
-	 * Test that the Product Catalog template content isn't updated mistakenly.
-	 * In other words, make sure the Single Product template logic doesn't leak
-	 * into other templates.
-	 *
-	 */
-	public function test_dont_update_single_product_content_for_other_templates() {
-		$single_product_template                  = new SingleProductTemplate();
-		$default_product_catalog_template_content = '
+class SingleProductTemplateTests extends WP_UnitTestCase
+{
+    /**
+     * Test that the Product Catalog template content isn't updated mistakenly.
+     * In other words, make sure the Single Product template logic doesn't leak
+     * into other templates.
+     *
+     */
+    public function test_dont_update_single_product_content_for_other_templates()
+    {
+        $single_product_template                  = new SingleProductTemplate();
+        $default_product_catalog_template_content = '
 			<!-- wp:template-part {"slug":"header","theme":"twentytwentythree","tagName":"header"} /-->
 			<!-- wp:woocommerce/product-image-gallery /-->
 			<!-- wp:template-part {"slug":"footer","theme":"twentytwentythree","tagName":"footer"} /-->';
 
-		$template          = new \WP_Block_Template();
-		$template->slug    = 'archive-product';
-		$template->title   = 'Product Catalog';
-		$template->content = $default_product_catalog_template_content;
-		$template->type    = 'wp_template';
+        $template          = new \WP_Block_Template();
+        $template->slug    = 'archive-product';
+        $template->title   = 'Product Catalog';
+        $template->content = $default_product_catalog_template_content;
+        $template->type    = 'wp_template';
 
-		$result = $single_product_template->update_single_product_content(
-			array(
-				$template,
-			),
-		);
+        $result = $single_product_template->update_single_product_content(
+            [
+                $template,
+            ],
+        );
 
-		$this->assertEquals(
-			$default_product_catalog_template_content,
-			$result[0]->content
-		);
-	}
+        $this->assertEquals(
+            $default_product_catalog_template_content,
+            $result[0]->content
+        );
+    }
 
-	/**
-	 * Test that the Single Product template content isn't updated if it
-	 * contains the Legacy Template block.
-	 *
-	 */
-	public function test_dont_update_single_product_content_with_legacy_template() {
-		$single_product_template                 = new SingleProductTemplate();
-		$default_single_product_template_content = '
+    /**
+     * Test that the Single Product template content isn't updated if it
+     * contains the Legacy Template block.
+     *
+     */
+    public function test_dont_update_single_product_content_with_legacy_template()
+    {
+        $single_product_template                 = new SingleProductTemplate();
+        $default_single_product_template_content = '
 			<!-- wp:template-part {"slug":"header","theme":"twentytwentythree","tagName":"header"} /-->
 			<!-- wp:woocommerce/legacy-template {"template":"single-product"} /-->
 			<!-- wp:template-part {"slug":"footer","theme":"twentytwentythree","tagName":"footer"} /-->';
 
-		$template          = new \WP_Block_Template();
-		$template->slug    = 'single-product';
-		$template->title   = 'Single Product';
-		$template->content = $default_single_product_template_content;
-		$template->type    = 'wp_template';
+        $template          = new \WP_Block_Template();
+        $template->slug    = 'single-product';
+        $template->title   = 'Single Product';
+        $template->content = $default_single_product_template_content;
+        $template->type    = 'wp_template';
 
-		$result = $single_product_template->update_single_product_content(
-			array(
-				$template,
-			),
-		);
+        $result = $single_product_template->update_single_product_content(
+            [
+                $template,
+            ],
+        );
 
-		$this->assertEquals(
-			$default_single_product_template_content,
-			$result[0]->content
-		);
-	}
+        $this->assertEquals(
+            $default_single_product_template_content,
+            $result[0]->content
+        );
+    }
 
-	/**
-	 * Test that the Single Product template content is updated if it doesn't
-	 * contain the Legacy Template block.
-	 *
-	 */
-	public function test_update_single_product_content_with_legacy_template() {
-		$single_product_template                  = new SingleProductTemplate();
-		$default_single_product_template_content  = '
+    /**
+     * Test that the Single Product template content is updated if it doesn't
+     * contain the Legacy Template block.
+     *
+     */
+    public function test_update_single_product_content_with_legacy_template()
+    {
+        $single_product_template                  = new SingleProductTemplate();
+        $default_single_product_template_content  = '
 			<!-- wp:template-part {"slug":"header","theme":"twentytwentythree","tagName":"header"} /-->
 			<!-- wp:woocommerce/product-image-gallery /-->
 			<!-- wp:template-part {"slug":"footer","theme":"twentytwentythree","tagName":"footer"} /-->';
-		$expected_single_product_template_content = '
+        $expected_single_product_template_content = '
 			<!-- wp:template-part {"slug":"header","theme":"twentytwentythree","tagName":"header"} /-->
 			<!-- wp:group {"className":"woocommerce product","__wooCommerceIsFirstBlock":true,"__wooCommerceIsLastBlock":true} -->
 			<div class="wp-block-group woocommerce product">
@@ -92,89 +97,91 @@ class SingleProductTemplateTests extends WP_UnitTestCase {
 			<!-- /wp:group -->
 			<!-- wp:template-part {"slug":"footer","theme":"twentytwentythree","tagName":"footer"} /-->';
 
-		$template          = new \WP_Block_Template();
-		$template->slug    = 'single-product';
-		$template->title   = 'Single Product';
-		$template->content = $default_single_product_template_content;
-		$template->type    = 'wp_template';
+        $template          = new \WP_Block_Template();
+        $template->slug    = 'single-product';
+        $template->title   = 'Single Product';
+        $template->content = $default_single_product_template_content;
+        $template->type    = 'wp_template';
 
-		$result = $single_product_template->update_single_product_content(
-			array(
-				$template,
-			),
-		);
+        $result = $single_product_template->update_single_product_content(
+            [
+                $template,
+            ],
+        );
 
-		$expected_single_product_template_without_whitespace = preg_replace(
-			'/\s+/',
-			'',
-			$expected_single_product_template_content
-		);
-		$result_without_whitespace                           = preg_replace( '/\s+/', '', $result[0]->content );
+        $expected_single_product_template_without_whitespace = preg_replace(
+            '/\s+/',
+            '',
+            $expected_single_product_template_content
+        );
+        $result_without_whitespace                           = preg_replace('/\s+/', '', $result[0]->content);
 
-		$this->assertEquals(
-			$expected_single_product_template_without_whitespace,
-			$result_without_whitespace
-		);
-	}
+        $this->assertEquals(
+            $expected_single_product_template_without_whitespace,
+            $result_without_whitespace
+        );
+    }
 
-	/**
-	 * Test that the Single Product template content isn't updated if it
-	 * contains a pattern with the Legacy Template block.
-	 *
-	 */
-	public function test_dont_update_single_product_content_with_legacy_template_inside_a_pattern() {
-		register_block_pattern(
-			'test-pattern',
-			array(
-				'title'       => 'Test Pattern',
-				'description' => 'Test Pattern Description',
-				'content'     => '<!-- wp:woocommerce/legacy-template {"template":"single-product"} /-->',
-			)
-		);
-		$single_product_template                 = new SingleProductTemplate();
-		$default_single_product_template_content = '
+    /**
+     * Test that the Single Product template content isn't updated if it
+     * contains a pattern with the Legacy Template block.
+     *
+     */
+    public function test_dont_update_single_product_content_with_legacy_template_inside_a_pattern()
+    {
+        register_block_pattern(
+            'test-pattern',
+            [
+                'title'       => 'Test Pattern',
+                'description' => 'Test Pattern Description',
+                'content'     => '<!-- wp:woocommerce/legacy-template {"template":"single-product"} /-->',
+            ]
+        );
+        $single_product_template                 = new SingleProductTemplate();
+        $default_single_product_template_content = '
 			<!-- wp:template-part {"slug":"header","theme":"twentytwentythree","tagName":"header"} /-->
 			<!-- wp:pattern {"slug":"test-pattern"} /-->
 			<!-- wp:template-part {"slug":"footer","theme":"twentytwentythree","tagName":"footer"} /-->';
 
-		$template          = new \WP_Block_Template();
-		$template->slug    = 'single-product';
-		$template->title   = 'Single Product';
-		$template->content = $default_single_product_template_content;
-		$template->type    = 'wp_template';
+        $template          = new \WP_Block_Template();
+        $template->slug    = 'single-product';
+        $template->title   = 'Single Product';
+        $template->content = $default_single_product_template_content;
+        $template->type    = 'wp_template';
 
-		$result = $single_product_template->update_single_product_content(
-			array(
-				$template,
-			),
-		);
+        $result = $single_product_template->update_single_product_content(
+            [
+                $template,
+            ],
+        );
 
-		$this->assertEquals(
-			$default_single_product_template_content,
-			$result[0]->content
-		);
-	}
+        $this->assertEquals(
+            $default_single_product_template_content,
+            $result[0]->content
+        );
+    }
 
-	/**
-	 * Test that the Single Product template content is updated if it doesn't
-	 * contain the Legacy Template block.
-	 *
-	 */
-	public function test_update_single_product_content_with_legacy_template_inside_a_pattern() {
-		register_block_pattern(
-			'test-pattern',
-			array(
-				'title'       => 'Test Pattern',
-				'description' => 'Test Pattern Description',
-				'content'     => '<!-- wp:woocommerce/product-image-gallery /-->',
-			)
-		);
-		$single_product_template                  = new SingleProductTemplate();
-		$default_single_product_template_content  = '
+    /**
+     * Test that the Single Product template content is updated if it doesn't
+     * contain the Legacy Template block.
+     *
+     */
+    public function test_update_single_product_content_with_legacy_template_inside_a_pattern()
+    {
+        register_block_pattern(
+            'test-pattern',
+            [
+                'title'       => 'Test Pattern',
+                'description' => 'Test Pattern Description',
+                'content'     => '<!-- wp:woocommerce/product-image-gallery /-->',
+            ]
+        );
+        $single_product_template                  = new SingleProductTemplate();
+        $default_single_product_template_content  = '
 			<!-- wp:template-part {"slug":"header","theme":"twentytwentythree","tagName":"header"} /-->
 			<!-- wp:pattern {"slug":"test-pattern"} /-->
 			<!-- wp:template-part {"slug":"footer","theme":"twentytwentythree","tagName":"footer"} /-->';
-		$expected_single_product_template_content = '
+        $expected_single_product_template_content = '
 			<!-- wp:template-part {"slug":"header","theme":"twentytwentythree","tagName":"header"} /-->
 			<!-- wp:group {"className":"woocommerce product","__wooCommerceIsFirstBlock":true,"__wooCommerceIsLastBlock":true} -->
 			<div class="wp-block-group woocommerce product">
@@ -183,37 +190,38 @@ class SingleProductTemplateTests extends WP_UnitTestCase {
 			<!-- /wp:group -->
 			<!-- wp:template-part {"slug":"footer","theme":"twentytwentythree","tagName":"footer"} /-->';
 
-		$template          = new \WP_Block_Template();
-		$template->slug    = 'single-product';
-		$template->title   = 'Single Product';
-		$template->content = $default_single_product_template_content;
-		$template->type    = 'wp_template';
+        $template          = new \WP_Block_Template();
+        $template->slug    = 'single-product';
+        $template->title   = 'Single Product';
+        $template->content = $default_single_product_template_content;
+        $template->type    = 'wp_template';
 
-		$result = $single_product_template->update_single_product_content(
-			array(
-				$template,
-			),
-		);
+        $result = $single_product_template->update_single_product_content(
+            [
+                $template,
+            ],
+        );
 
-		$expected_single_product_template_without_whitespace = preg_replace(
-			'/\s+/',
-			'',
-			$expected_single_product_template_content
-		);
-		$result_without_whitespace                           = preg_replace( '/\s+/', '', $result[0]->content );
+        $expected_single_product_template_without_whitespace = preg_replace(
+            '/\s+/',
+            '',
+            $expected_single_product_template_content
+        );
+        $result_without_whitespace                           = preg_replace('/\s+/', '', $result[0]->content);
 
-		$this->assertEquals(
-			$expected_single_product_template_without_whitespace,
-			$result_without_whitespace
-		);
-	}
+        $this->assertEquals(
+            $expected_single_product_template_without_whitespace,
+            $result_without_whitespace
+        );
+    }
 
-	/**
-	 * Test that the password form isn't added to the Single Product Template.
-	 *
-	 */
-	public function test_no_remove_block_when_no_single_product_is_in_the_template() {
-		$default_single_product_template = '
+    /**
+     * Test that the password form isn't added to the Single Product Template.
+     *
+     */
+    public function test_no_remove_block_when_no_single_product_is_in_the_template()
+    {
+        $default_single_product_template = '
 	<!-- wp:template-part {"slug":"header","theme":"twentytwentythree","tagName":"header"} /-->
 	<!-- wp:group {"layout":{"inherit":true,"type":"constrained"}} -->
 	<div class="wp-block-group">
@@ -222,7 +230,7 @@ class SingleProductTemplateTests extends WP_UnitTestCase {
 	<!-- /wp:group -->
 	<!-- wp:template-part {"slug":"footer","theme":"twentytwentythree","tagName":"footer"} /-->';
 
-		$expected_single_product_template = '
+        $expected_single_product_template = '
 	<!-- wp:template-part {"slug":"header","theme":"twentytwentythree","tagName":"header"} /-->
 	<!-- wp:group {"layout":{"inherit":true,"type":"constrained"}} -->
 	<div class="wp-block-group">
@@ -231,28 +239,29 @@ class SingleProductTemplateTests extends WP_UnitTestCase {
 	<!-- /wp:group -->
 	<!-- wp:template-part {"slug":"footer","theme":"twentytwentythree","tagName":"footer"} /-->';
 
-		$result = SingleProductTemplate::add_password_form(
-			$default_single_product_template
-		);
+        $result = SingleProductTemplate::add_password_form(
+            $default_single_product_template
+        );
 
-		$result_without_whitespace                           = preg_replace( '/\s+/', '', $result );
-		$expected_single_product_template_without_whitespace = preg_replace(
-			'/\s+/',
-			'',
-			$expected_single_product_template
-		);
+        $result_without_whitespace                           = preg_replace('/\s+/', '', $result);
+        $expected_single_product_template_without_whitespace = preg_replace(
+            '/\s+/',
+            '',
+            $expected_single_product_template
+        );
 
-		$this->assertEquals(
-			$result_without_whitespace,
-			$expected_single_product_template_without_whitespace
-		);
-	}
+        $this->assertEquals(
+            $result_without_whitespace,
+            $expected_single_product_template_without_whitespace
+        );
+    }
 
-	/**
-	 * Test that the password form is added to the Single Product Template.
-	 */
-	public function test_replace_single_product_blocks_with_input_form() {
-		$default_single_product_template = '
+    /**
+     * Test that the password form is added to the Single Product Template.
+     */
+    public function test_replace_single_product_blocks_with_input_form()
+    {
+        $default_single_product_template = '
 	<!-- wp:template-part {"slug":"header","theme":"twentytwentythree","tagName":"header"} /-->
 	<!-- wp:group {"layout":{"inherit":true,"type":"constrained"}} -->
 	<div class="wp-block-group">
@@ -261,8 +270,8 @@ class SingleProductTemplateTests extends WP_UnitTestCase {
 	<!-- /wp:group -->
 	<!-- wp:template-part {"slug":"footer","theme":"twentytwentythree","tagName":"footer"} /-->';
 
-		$expected_single_product_template = sprintf(
-			'
+        $expected_single_product_template = sprintf(
+            '
 	<!-- wp:template-part {"slug":"header","theme":"twentytwentythree","tagName":"header"} /-->
 	<!-- wp:group {"layout":{"inherit":true,"type":"constrained"}} -->
 	<div class="wp-block-group">
@@ -270,43 +279,44 @@ class SingleProductTemplateTests extends WP_UnitTestCase {
 	</div>
 	<!-- /wp:group -->
 	<!-- wp:template-part {"slug":"footer","theme":"twentytwentythree","tagName":"footer"} /-->',
-			get_the_password_form()
-		);
+            get_the_password_form()
+        );
 
-		$result = SingleProductTemplate::add_password_form(
-			$default_single_product_template
-		);
+        $result = SingleProductTemplate::add_password_form(
+            $default_single_product_template
+        );
 
-		$result_without_whitespace                          = preg_replace( '/\s+/', '', $result );
-		$result_without_whitespace_without_custom_pwbox_ids = preg_replace(
-			'/pwbox-\d+/',
-			'',
-			$result_without_whitespace
-		);
+        $result_without_whitespace                          = preg_replace('/\s+/', '', $result);
+        $result_without_whitespace_without_custom_pwbox_ids = preg_replace(
+            '/pwbox-\d+/',
+            '',
+            $result_without_whitespace
+        );
 
-		$expected_single_product_template_without_whitespace = preg_replace(
-			'/\s+/',
-			'',
-			$expected_single_product_template
-		);
+        $expected_single_product_template_without_whitespace = preg_replace(
+            '/\s+/',
+            '',
+            $expected_single_product_template
+        );
 
-		$expected_single_product_template_without_whitespace_without_custom_pwbox_ids = preg_replace(
-			'/pwbox-\d+/',
-			'',
-			$expected_single_product_template_without_whitespace
-		);
+        $expected_single_product_template_without_whitespace_without_custom_pwbox_ids = preg_replace(
+            '/pwbox-\d+/',
+            '',
+            $expected_single_product_template_without_whitespace
+        );
 
-		$this->assertEquals(
-			$result_without_whitespace_without_custom_pwbox_ids,
-			$expected_single_product_template_without_whitespace_without_custom_pwbox_ids
-		);
-	}
+        $this->assertEquals(
+            $result_without_whitespace_without_custom_pwbox_ids,
+            $expected_single_product_template_without_whitespace_without_custom_pwbox_ids
+        );
+    }
 
-	/**
-	 * Test that the password form is added to the Single Product Template with the default template.
-	 */
-	public function test_replace_default_template_single_product_blocks_with_input_form() {
-		$default_single_product_template = '
+    /**
+     * Test that the password form is added to the Single Product Template with the default template.
+     */
+    public function test_replace_default_template_single_product_blocks_with_input_form()
+    {
+        $default_single_product_template = '
 		<!-- wp:template-part {"slug":"header"} /-->
 
 		<!-- wp:group {"layout":{"inherit":true,"type":"constrained"}} -->
@@ -382,8 +392,8 @@ class SingleProductTemplateTests extends WP_UnitTestCase {
 
 		';
 
-		$expected_single_product_template = sprintf(
-			'
+        $expected_single_product_template = sprintf(
+            '
 			<!-- wp:template-part {"slug":"header"} /-->
 			<!-- wp:group {"layout":{"inherit":true,"type":"constrained"}} -->
 			<div class="wp-block-group">
@@ -401,35 +411,35 @@ class SingleProductTemplateTests extends WP_UnitTestCase {
 			</div>
 			<!-- /wp:group -->
 			<!-- wp:template-part {"slug":"footer"} /-->',
-			get_the_password_form()
-		);
+            get_the_password_form()
+        );
 
-		$result = SingleProductTemplate::add_password_form(
-			$default_single_product_template
-		);
+        $result = SingleProductTemplate::add_password_form(
+            $default_single_product_template
+        );
 
-		$result_without_whitespace                          = preg_replace( '/\s+/', '', $result );
-		$result_without_whitespace_without_custom_pwbox_ids = preg_replace(
-			'/pwbox-\d+/',
-			'',
-			$result_without_whitespace
-		);
+        $result_without_whitespace                          = preg_replace('/\s+/', '', $result);
+        $result_without_whitespace_without_custom_pwbox_ids = preg_replace(
+            '/pwbox-\d+/',
+            '',
+            $result_without_whitespace
+        );
 
-		$expected_single_product_template_without_whitespace = preg_replace(
-			'/\s+/',
-			'',
-			$expected_single_product_template
-		);
+        $expected_single_product_template_without_whitespace = preg_replace(
+            '/\s+/',
+            '',
+            $expected_single_product_template
+        );
 
-		$expected_single_product_template_without_whitespace_without_custom_pwbox_ids = preg_replace(
-			'/pwbox-\d+/',
-			'',
-			$expected_single_product_template_without_whitespace
-		);
+        $expected_single_product_template_without_whitespace_without_custom_pwbox_ids = preg_replace(
+            '/pwbox-\d+/',
+            '',
+            $expected_single_product_template_without_whitespace
+        );
 
-		$this->assertEquals(
-			$result_without_whitespace_without_custom_pwbox_ids,
-			$expected_single_product_template_without_whitespace_without_custom_pwbox_ids
-		);
-	}
+        $this->assertEquals(
+            $result_without_whitespace_without_custom_pwbox_ids,
+            $expected_single_product_template_without_whitespace_without_custom_pwbox_ids
+        );
+    }
 }

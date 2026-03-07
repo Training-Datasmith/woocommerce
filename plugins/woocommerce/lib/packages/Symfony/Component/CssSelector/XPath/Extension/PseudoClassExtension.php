@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -32,14 +34,14 @@ class PseudoClassExtension extends AbstractExtension
     public function getPseudoClassTranslators(): array
     {
         return [
-            'root' => [$this, 'translateRoot'],
-            'first-child' => [$this, 'translateFirstChild'],
-            'last-child' => [$this, 'translateLastChild'],
-            'first-of-type' => [$this, 'translateFirstOfType'],
-            'last-of-type' => [$this, 'translateLastOfType'],
-            'only-child' => [$this, 'translateOnlyChild'],
-            'only-of-type' => [$this, 'translateOnlyOfType'],
-            'empty' => [$this, 'translateEmpty'],
+            'root' => $this->translateRoot(...),
+            'first-child' => $this->translateFirstChild(...),
+            'last-child' => $this->translateLastChild(...),
+            'first-of-type' => $this->translateFirstOfType(...),
+            'last-of-type' => $this->translateLastOfType(...),
+            'only-child' => $this->translateOnlyChild(...),
+            'only-of-type' => $this->translateOnlyOfType(...),
+            'empty' => $this->translateEmpty(...),
         ];
     }
 

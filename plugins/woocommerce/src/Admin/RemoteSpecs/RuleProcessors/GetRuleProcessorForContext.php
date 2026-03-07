@@ -1,6 +1,6 @@
 <?php
 
-declare( strict_types = 1 );
+declare(strict_types=1);
 
 namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
 
@@ -9,35 +9,32 @@ namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
  *
  * GetRuleProcessor class.
  */
-class GetRuleProcessorForContext {
-	/**
-	 * Contains the context variables.
-	 *
-	 * @var array $context The context variables.
-	 */
-	protected array $context;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param array $context The context variables.
-	 */
-	public function __construct( array $context = array() ) {
-		$this->context = $context;
-	}
-	/**
-	 * Get the processor for the specified rule type.
-	 *
-	 * @param string $rule_type The rule type.
-	 *
-	 * @return RuleProcessorInterface The matching processor for the specified rule type, or a FailRuleProcessor if no matching processor is found.
-	 */
-	public function get_processor( $rule_type ) {
-		switch ( $rule_type ) {
-			case 'context_plugins':
-				return new ContextPluginsRuleProcessor( $this->context['plugins'] ?? array() );
-		}
-
-		return GetRuleProcessor::get_processor( $rule_type );
-	}
+class GetRuleProcessorForContext
+{
+    /**
+     * Constructor.
+     *
+     * @param array $context The context variables.
+     */
+    public function __construct(
+        /**
+         * Contains the context variables.
+         */
+        protected array $context = []
+    ) {
+    }
+    /**
+     * Get the processor for the specified rule type.
+     *
+     * @param string $rule_type The rule type.
+     *
+     * @return RuleProcessorInterface The matching processor for the specified rule type, or a FailRuleProcessor if no matching processor is found.
+     */
+    public function get_processor($rule_type)
+    {
+        return match ($rule_type) {
+            'context_plugins' => new ContextPluginsRuleProcessor($this->context['plugins'] ?? []),
+            default => GetRuleProcessor::get_processor($rule_type),
+        };
+    }
 }

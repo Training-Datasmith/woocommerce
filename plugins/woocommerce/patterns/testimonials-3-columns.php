@@ -5,13 +5,13 @@
  * Categories: WooCommerce, Reviews
  */
 
-$main_header        = __( 'What our customers say', 'woocommerce' );
-$first_review       = __( 'Eclectic finds, ethical delights', 'woocommerce' );
-$second_review      = __( 'Sip, Shop, Savor', 'woocommerce' );
-$third_review       = __( 'LOCAL LOVE', 'woocommerce' );
-$first_description  = __( 'Transformed my daily routine with unique, eco-friendly treasures. Exceptional quality and service. Proud to support a store that aligns with my values.', 'woocommerce' );
-$second_description = __( 'The organic coffee beans are a revelation. Each sip feels like a journey. Beautifully crafted accessories add a touch of elegance to my home.', 'woocommerce' );
-$third_description  = __( 'From sustainably sourced teas to chic vases, this store is a treasure trove. Love knowing my purchases contribute to a greener planet.', 'woocommerce' );
+$main_header        = __('What our customers say', 'woocommerce');
+$first_review       = __('Eclectic finds, ethical delights', 'woocommerce');
+$second_review      = __('Sip, Shop, Savor', 'woocommerce');
+$third_review       = __('LOCAL LOVE', 'woocommerce');
+$first_description  = __('Transformed my daily routine with unique, eco-friendly treasures. Exceptional quality and service. Proud to support a store that aligns with my values.', 'woocommerce');
+$second_description = __('The organic coffee beans are a revelation. Each sip feels like a journey. Beautifully crafted accessories add a touch of elegance to my home.', 'woocommerce');
+$third_description  = __('From sustainably sourced teas to chic vases, this store is a treasure trove. Love knowing my purchases contribute to a greener planet.', 'woocommerce');
 ?>
 
 <!-- wp:group {"metadata":{"name":"Testimonials 3 Columns"},"align":"full","style":{"spacing":{"padding":{"top":"calc( 0.5 * var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal)))","bottom":"calc( 0.5 * var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal)))","left":"var(--wp--style--root--padding-left, var(--wp--custom--gap--horizontal))","right":"var(--wp--style--root--padding-right, var(--wp--custom--gap--horizontal))"},"margin":{"top":"0","bottom":"0"}}},"layout":{"type":"constrained","justifyContent":"center"}} -->
@@ -21,7 +21,7 @@ $third_description  = __( 'From sustainably sourced teas to chic vases, this sto
 	<!-- /wp:spacer -->
 
 	<!-- wp:heading {"level":3,"align":"wide"} -->
-	<h3 class="wp-block-heading alignwide"><?php echo esc_html( $main_header ); ?></h3>
+	<h3 class="wp-block-heading alignwide"><?php echo esc_html($main_header); ?></h3>
 	<!-- /wp:heading -->
 
 	<!-- wp:spacer {"height":"var:preset|spacing|20"} -->
@@ -33,11 +33,11 @@ $third_description  = __( 'From sustainably sourced teas to chic vases, this sto
 		<!-- wp:column -->
 		<div class="wp-block-column">
 			<!-- wp:paragraph -->
-			<p><strong><?php echo esc_html( $first_review ); ?></strong></p>
+			<p><strong><?php echo esc_html($first_review); ?></strong></p>
 			<!-- /wp:paragraph -->
 
 			<!-- wp:paragraph -->
-			<p><?php echo esc_html( $first_description ); ?></p>
+			<p><?php echo esc_html($first_description); ?></p>
 			<!-- /wp:paragraph -->
 
 			<!-- wp:paragraph -->
@@ -50,11 +50,11 @@ $third_description  = __( 'From sustainably sourced teas to chic vases, this sto
 		<div class="wp-block-column">
 			<!-- wp:paragraph -->
 
-			<p><strong><?php echo esc_html( $second_review ); ?></strong></p>
+			<p><strong><?php echo esc_html($second_review); ?></strong></p>
 			<!-- /wp:paragraph -->
 
 			<!-- wp:paragraph -->
-			<p><?php echo esc_html( $second_description ); ?></p>
+			<p><?php echo esc_html($second_description); ?></p>
 			<!-- /wp:paragraph -->
 
 			<!-- wp:paragraph -->
@@ -66,11 +66,11 @@ $third_description  = __( 'From sustainably sourced teas to chic vases, this sto
 		<!-- wp:column -->
 		<div class="wp-block-column">
 			<!-- wp:paragraph -->
-			<p><strong><?php echo esc_html( $third_review ); ?></strong></p>
+			<p><strong><?php echo esc_html($third_review); ?></strong></p>
 			<!-- /wp:paragraph -->
 
 			<!-- wp:paragraph -->
-			<p><?php echo esc_html( $third_description ); ?></p>
+			<p><?php echo esc_html($third_description); ?></p>
 			<!-- /wp:paragraph -->
 
 			<!-- wp:paragraph -->

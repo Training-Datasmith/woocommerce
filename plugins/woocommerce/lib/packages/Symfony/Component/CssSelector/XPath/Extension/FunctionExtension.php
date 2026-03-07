@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Symfony package.
  *
@@ -36,12 +38,12 @@ class FunctionExtension extends AbstractExtension
     public function getFunctionTranslators(): array
     {
         return [
-            'nth-child' => [$this, 'translateNthChild'],
-            'nth-last-child' => [$this, 'translateNthLastChild'],
-            'nth-of-type' => [$this, 'translateNthOfType'],
-            'nth-last-of-type' => [$this, 'translateNthLastOfType'],
-            'contains' => [$this, 'translateContains'],
-            'lang' => [$this, 'translateLang'],
+            'nth-child' => $this->translateNthChild(...),
+            'nth-last-child' => $this->translateNthLastChild(...),
+            'nth-of-type' => $this->translateNthOfType(...),
+            'nth-last-of-type' => $this->translateNthLastOfType(...),
+            'contains' => $this->translateContains(...),
+            'lang' => $this->translateLang(...),
         ];
     }
 

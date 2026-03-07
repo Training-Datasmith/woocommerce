@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Plugin name: Process Waiting Actions
  * Description: Utility intended to be used during E2E testing, to make it easy to process any pending scheduled actions.
@@ -11,17 +13,17 @@
  */
 
 add_action(
-	'init',
-	function () {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! isset( $_GET['process-waiting-actions'] ) ) {
-			return;
-		}
+    'init',
+    function () {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if (! isset($_GET['process-waiting-actions'])) {
+            return;
+        }
 
-		if ( ! class_exists( ActionScheduler_QueueRunner::class ) ) {
-			return;
-		}
+        if (! class_exists(ActionScheduler_QueueRunner::class)) {
+            return;
+        }
 
-		exit( ActionScheduler_QueueRunner::instance()->run( 'E2E Tests' ) ? 1 : 0 );
-	}
+        exit(ActionScheduler_QueueRunner::instance()->run('E2E Tests') ? 1 : 0);
+    }
 );

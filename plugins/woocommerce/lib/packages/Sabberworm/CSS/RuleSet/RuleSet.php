@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Automattic\WooCommerce\Vendor\Sabberworm\CSS\RuleSet;
 
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Comment\Comment;
@@ -11,7 +13,6 @@ use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing\UnexpectedEOFException;
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Parsing\UnexpectedTokenException;
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Position\Position;
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Position\Positionable;
-use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Renderable;
 use Automattic\WooCommerce\Vendor\Sabberworm\CSS\Rule\Rule;
 
 /**
@@ -33,7 +34,7 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
      *
      * @var array<string, array<int<0, max>, Rule>>
      */
-    private $aRules;
+    private array $aRules;
 
     /**
      * @var array<array-key, Comment>
@@ -53,14 +54,12 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
     }
 
     /**
-     * @return void
      *
      * @throws UnexpectedTokenException
      * @throws UnexpectedEOFException
-     *
      * @internal since V8.8.0
      */
-    public static function parseRuleSet(ParserState $oParserState, RuleSet $oRuleSet)
+    public static function parseRuleSet(ParserState $oParserState, RuleSet $oRuleSet): void
     {
         while ($oParserState->comes(';')) {
             $oParserState->consume(';');
@@ -74,9 +73,9 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
             if ($oParserState->getSettings()->bLenientParsing) {
                 try {
                     $oRule = Rule::parse($oParserState, $commentsBeforeRule);
-                } catch (UnexpectedTokenException $e) {
+                } catch (UnexpectedTokenException) {
                     try {
-                        $sConsume = $oParserState->consumeUntil(["\n", ";", '}'], true);
+                        $sConsume = $oParserState->consumeUntil(["\n", ';', '}'], true);
                         // We need to “unfind” the matches to the end of the ruleSet as this will be matched later
                         if ($oParserState->streql(substr($sConsume, -1), '}')) {
                             $oParserState->backtrack(1);
@@ -85,7 +84,7 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
                                 $oParserState->consume(';');
                             }
                         }
-                    } catch (UnexpectedTokenException $e) {
+                    } catch (UnexpectedTokenException) {
                         // We’ve reached the end of the document. Just close the RuleSet.
                         return;
                     }
@@ -102,10 +101,8 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
 
     /**
      * @param Rule|null $oSibling
-     *
-     * @return void
      */
-    public function addRule(Rule $oRule, $oSibling = null)
+    public function addRule(Rule $oRule, $oSibling = null): void
     {
         $sRule = $oRule->getRule();
         if (!isset($this->aRules[$sRule])) {
@@ -170,13 +167,13 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
                 !$mRule || $sName === $mRule
                 || (
                     strrpos($mRule, '-') === strlen($mRule) - strlen('-')
-                    && (strpos($sName, $mRule) === 0 || $sName === substr($mRule, 0, -1))
+                    && (str_starts_with($sName, $mRule) || $sName === substr($mRule, 0, -1))
                 )
             ) {
                 $aResult = array_merge($aResult, $aRules);
             }
         }
-        usort($aResult, function (Rule $first, Rule $second) {
+        usort($aResult, function (Rule $first, Rule $second): int|float {
             if ($first->getLineNo() === $second->getLineNo()) {
                 return $first->getColNo() - $second->getColNo();
             }
@@ -189,10 +186,8 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
      * Overrides all the rules of this set.
      *
      * @param array<array-key, Rule> $aRules The rules to override with.
-     *
-     * @return void
      */
-    public function setRules(array $aRules)
+    public function setRules(array $aRules): void
     {
         $this->aRules = [];
         foreach ($aRules as $rule) {
@@ -235,7 +230,7 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
      *        Passing a `string` or `null` is deprecated in version 8.9.0, and will no longer work from v9.0.
      *        Use `removeMatchingRules()` or `removeAllRules()` instead.
      */
-    public function removeRule($mRule)
+    public function removeRule($mRule): void
     {
         if ($mRule instanceof Rule) {
             $sRule = $mRule->getRule();
@@ -263,7 +258,7 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
      *        all rules starting with the pattern are removed as well as one matching the pattern with the dash
      *        excluded.
      */
-    public function removeMatchingRules($searchPattern)
+    public function removeMatchingRules($searchPattern): void
     {
         foreach ($this->aRules as $propertyName => $rules) {
             // Either the search rule matches the found rule exactly
@@ -272,7 +267,7 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
             if (
                 $propertyName === $searchPattern
                 || (\strrpos($searchPattern, '-') === \strlen($searchPattern) - \strlen('-')
-                    && (\strpos($propertyName, $searchPattern) === 0
+                    && (str_starts_with($propertyName, $searchPattern)
                         || $propertyName === \substr($searchPattern, 0, -1)))
             ) {
                 unset($this->aRules[$propertyName]);
@@ -280,17 +275,15 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
         }
     }
 
-    public function removeAllRules()
+    public function removeAllRules(): void
     {
         $this->aRules = [];
     }
 
     /**
-     * @return string
-     *
      * @deprecated in V8.8.0, will be removed in V9.0.0. Use `render` instead.
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->render(new OutputFormat());
     }
@@ -304,9 +297,7 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
         $bIsFirst = true;
         $oNextLevel = $oOutputFormat->nextLevel();
         foreach ($this->getRules() as $oRule) {
-            $sRendered = $oNextLevel->safely(function () use ($oRule, $oNextLevel) {
-                return $oRule->render($oNextLevel);
-            });
+            $sRendered = $oNextLevel->safely(fn () => $oRule->render($oNextLevel));
             if ($sRendered === null) {
                 continue;
             }
@@ -329,10 +320,8 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
 
     /**
      * @param array<string, Comment> $aComments
-     *
-     * @return void
      */
-    public function addComments(array $aComments)
+    public function addComments(array $aComments): void
     {
         $this->aComments = array_merge($this->aComments, $aComments);
     }
@@ -347,10 +336,8 @@ abstract class RuleSet implements CSSElement, Commentable, Positionable
 
     /**
      * @param array<string, Comment> $aComments
-     *
-     * @return void
      */
-    public function setComments(array $aComments)
+    public function setComments(array $aComments): void
     {
         $this->aComments = $aComments;
     }

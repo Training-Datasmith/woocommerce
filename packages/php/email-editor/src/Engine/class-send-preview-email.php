@@ -1,11 +1,12 @@
 <?php
+
 /**
  * This file is part of the WooCommerce Email Editor package.
  *
  * @package Automattic\WooCommerce\EmailEditor
  */
 
-declare( strict_types = 1 );
+declare(strict_types=1);
 
 namespace Automattic\WooCommerce\EmailEditor\Engine;
 
@@ -19,209 +20,201 @@ use Automattic\WooCommerce\EmailEditor\Engine\Renderer\Renderer;
  *
  * @package Automattic\WooCommerce\EmailEditor\Integrations\Utils
  */
-class Send_Preview_Email {
+class Send_Preview_Email
+{
+    /**
+     * Send_Preview_Email constructor.
+     *
+     * @param Renderer     $renderer renderer instance.
+     * @param Personalizer $personalizer personalizer instance.
+     */
+    public function __construct(
+        /**
+         * Instance of the Renderer class used for rendering the editor emails.
+         */
+        private readonly Renderer $renderer,
+        /**
+         * Instance of the Personalizer class used for rendering personalization tags.
+         */
+        private readonly Personalizer $personalizer
+    ) {
+    }
 
-	/**
-	 * Instance of the Renderer class used for rendering the editor emails.
-	 *
-	 * @var Renderer $renderer
-	 */
-	private Renderer $renderer;
+    /**
+     * Sends a preview email.
+     *
+     * @param array $data The data required to send the preview email.
+     * @return bool Returns true if the preview email was sent successfully, false otherwise.
+     * @throws \Exception If the data is invalid.
+     */
+    public function send_preview_email($data): bool
+    {
 
-	/**
-	 * Instance of the Personalizer class used for rendering personalization tags.
-	 *
-	 * @var Personalizer $personalizer
-	 */
-	private Personalizer $personalizer;
+        if (is_bool($data)) {
+            // preview mail already sent. Do not process again.
+            return $data;
+        }
 
-	/**
-	 * Send_Preview_Email constructor.
-	 *
-	 * @param Renderer     $renderer renderer instance.
-	 * @param Personalizer $personalizer personalizer instance.
-	 */
-	public function __construct(
-		Renderer $renderer,
-		Personalizer $personalizer
-	) {
-		$this->renderer     = $renderer;
-		$this->personalizer = $personalizer;
-	}
+        $this->validate_data($data);
 
-	/**
-	 * Sends a preview email.
-	 *
-	 * @param array $data The data required to send the preview email.
-	 * @return bool Returns true if the preview email was sent successfully, false otherwise.
-	 * @throws \Exception If the data is invalid.
-	 */
-	public function send_preview_email( $data ): bool {
+        $email   = $data['email'];
+        $post_id = $data['postId'];
 
-		if ( is_bool( $data ) ) {
-			// preview mail already sent. Do not process again.
-			return $data;
-		}
+        $post    = $this->fetch_post($post_id);
+        $subject = $this->get_preview_email_subject($post);
 
-		$this->validate_data( $data );
+        $email_html_content = $this->render_html($post);
 
-		$email   = $data['email'];
-		$post_id = $data['postId'];
+        return $this->send_email($email, $subject, $email_html_content);
+    }
 
-		$post    = $this->fetch_post( $post_id );
-		$subject = $this->get_preview_email_subject( $post );
+    /**
+     * Renders the HTML content of the post
+     *
+     * @param \WP_Post $post The WordPress post object.
+     */
+    public function render_html($post): string
+    {
+        $subject  = $this->get_preview_email_subject($post);
+        $language = get_bloginfo('language');
 
-		$email_html_content = $this->render_html( $post );
+        // Add filter to set preview context for block renderers.
+        add_filter('woocommerce_email_editor_rendering_email_context', $this->add_preview_context(...));
 
-		return $this->send_email( $email, $subject, $email_html_content );
-	}
+        $rendered_data = $this->renderer->render(
+            $post,
+            $subject,
+            __('Preview', 'woocommerce'),
+            $language
+        );
 
-	/**
-	 * Renders the HTML content of the post
-	 *
-	 * @param \WP_Post $post The WordPress post object.
-	 * @return string
-	 */
-	public function render_html( $post ): string {
-		$subject  = $this->get_preview_email_subject( $post );
-		$language = get_bloginfo( 'language' );
+        // Remove filter after rendering.
+        remove_filter('woocommerce_email_editor_rendering_email_context', $this->add_preview_context(...));
 
-		// Add filter to set preview context for block renderers.
-		add_filter( 'woocommerce_email_editor_rendering_email_context', array( $this, 'add_preview_context' ) );
+        $rendered_data = apply_filters('woocommerce_email_editor_send_preview_email_rendered_data', $rendered_data, $post);
 
-		$rendered_data = $this->renderer->render(
-			$post,
-			$subject,
-			__( 'Preview', 'woocommerce' ),
-			$language
-		);
+        return $this->set_personalize_content($rendered_data['html']);
+    }
 
-		// Remove filter after rendering.
-		remove_filter( 'woocommerce_email_editor_rendering_email_context', array( $this, 'add_preview_context' ) );
+    /**
+     * Get the subject of the preview email.
+     *
+     * @param \WP_Post $post The WordPress post object.
+     */
+    public function get_preview_email_subject($post): string
+    {
+        /**
+         * Filters the subject of the preview email before it is sent or rendered.
+         *
+         * @param string   $subject The email subject, defaults to the post title.
+         * @param \WP_Post $post    The email post object.
+         *
+         * @since 2.9.0
+         */
+        $subject = (string) apply_filters('woocommerce_email_editor_send_preview_email_subject', $post->post_title, $post);
+        return $subject;
+    }
 
-		$rendered_data = apply_filters( 'woocommerce_email_editor_send_preview_email_rendered_data', $rendered_data, $post );
+    /**
+     * Add preview context to email rendering.
+     *
+     * This filter callback adds the is_user_preview flag and current user information
+     * to the rendering context, allowing block renderers to show appropriate preview content.
+     *
+     * @param array $email_context Email context data.
+     * @return array Modified email context with preview flag.
+     */
+    public function add_preview_context(array $email_context): array
+    {
+        $email_context['is_user_preview'] = true;
+        return $email_context;
+    }
 
-		return $this->set_personalize_content( $rendered_data['html'] );
-	}
+    /**
+     * Personalize the content.
+     *
+     * @param string $content HTML content.
+     */
+    public function set_personalize_content(string $content): string
+    {
+        $current_user = wp_get_current_user();
+        $subscriber   = ! empty($current_user->ID) ? $current_user : null;
 
-	/**
-	 * Get the subject of the preview email.
-	 *
-	 * @param \WP_Post $post The WordPress post object.
-	 * @return string
-	 */
-	public function get_preview_email_subject( $post ): string {
-		/**
-		 * Filters the subject of the preview email before it is sent or rendered.
-		 *
-		 * @param string   $subject The email subject, defaults to the post title.
-		 * @param \WP_Post $post    The email post object.
-		 *
-		 * @since 2.9.0
-		 */
-		$subject = (string) apply_filters( 'woocommerce_email_editor_send_preview_email_subject', $post->post_title, $post );
-		return $subject;
-	}
+        $personalizer_context = [
+            'recipient_email' => $subscriber ? $subscriber->user_email : null,
+            'is_user_preview' => true,
+        ];
+        $personalizer_context = apply_filters('woocommerce_email_editor_send_preview_email_personalizer_context', $personalizer_context);
 
-	/**
-	 * Add preview context to email rendering.
-	 *
-	 * This filter callback adds the is_user_preview flag and current user information
-	 * to the rendering context, allowing block renderers to show appropriate preview content.
-	 *
-	 * @param array $email_context Email context data.
-	 * @return array Modified email context with preview flag.
-	 */
-	public function add_preview_context( $email_context ): array {
-		$email_context['is_user_preview'] = true;
-		return $email_context;
-	}
+        $this->personalizer->set_context($personalizer_context);
+        return $this->personalizer->personalize_content($content);
+    }
 
-	/**
-	 * Personalize the content.
-	 *
-	 * @param string $content HTML content.
-	 * @return string
-	 */
-	public function set_personalize_content( string $content ): string {
-		$current_user = wp_get_current_user();
-		$subscriber   = ! empty( $current_user->ID ) ? $current_user : null;
+    /**
+     * Sends an email preview.
+     *
+     * @param string $to The recipient email address.
+     * @param string $subject The subject of the email.
+     * @param string $body The body content of the email.
+     * @return bool Returns true if the email was sent successfully, false otherwise.
+     */
+    public function send_email(string $to, string $subject, string $body): bool
+    {
+        do_action('woocommerce_email_editor_send_preview_email_before_wp_mail', $to, $subject, $body);
 
-		$personalizer_context = array(
-			'recipient_email' => $subscriber ? $subscriber->user_email : null,
-			'is_user_preview' => true,
-		);
-		$personalizer_context = apply_filters( 'woocommerce_email_editor_send_preview_email_personalizer_context', $personalizer_context );
+        add_filter('wp_mail_content_type', $this->set_mail_content_type(...));
 
-		$this->personalizer->set_context( $personalizer_context );
-		return $this->personalizer->personalize_content( $content );
-	}
+        $result = wp_mail();
 
-	/**
-	 * Sends an email preview.
-	 *
-	 * @param string $to The recipient email address.
-	 * @param string $subject The subject of the email.
-	 * @param string $body The body content of the email.
-	 * @return bool Returns true if the email was sent successfully, false otherwise.
-	 */
-	public function send_email( string $to, string $subject, string $body ): bool {
-		do_action( 'woocommerce_email_editor_send_preview_email_before_wp_mail', $to, $subject, $body );
+        // Reset content-type to avoid conflicts.
+        remove_filter('wp_mail_content_type', $this->set_mail_content_type(...));
 
-		add_filter( 'wp_mail_content_type', array( $this, 'set_mail_content_type' ) );
+        do_action('woocommerce_email_editor_send_preview_email_after_wp_mail', $to, $subject, $body, $result);
 
-		$result = wp_mail( $to, $subject, $body );
+        return $result;
+    }
 
-		// Reset content-type to avoid conflicts.
-		remove_filter( 'wp_mail_content_type', array( $this, 'set_mail_content_type' ) );
+    /**
+     * Sets the mail content type. Used by $this->send_email.
+     *
+     * @param string $content_type The content type to be set for the mail.
+     * @return string The content type that was set.
+     */
+    public function set_mail_content_type(string $content_type): string  // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+    {return 'text/html';
+    }
 
-		do_action( 'woocommerce_email_editor_send_preview_email_after_wp_mail', $to, $subject, $body, $result );
+    /**
+     * Validates the provided data array.
+     *
+     * @param array $data The data array to be validated.
+     *
+     * @throws \InvalidArgumentException If the data is invalid.
+     */
+    private function validate_data(array $data): void
+    {
+        if (empty($data['email']) || empty($data['postId'])) {
+            throw new \InvalidArgumentException(esc_html__('Missing required data', 'woocommerce'));
+        }
 
-		return $result;
-	}
+        if (! is_email($data['email'])) {
+            throw new \InvalidArgumentException(esc_html__('Invalid email', 'woocommerce'));
+        }
+    }
 
-
-	/**
-	 * Sets the mail content type. Used by $this->send_email.
-	 *
-	 * @param string $content_type The content type to be set for the mail.
-	 * @return string The content type that was set.
-	 */
-	public function set_mail_content_type( string $content_type ): string {  // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
-		return 'text/html';
-	}
-
-	/**
-	 * Validates the provided data array.
-	 *
-	 * @param array $data The data array to be validated.
-	 *
-	 * @return void
-	 * @throws \InvalidArgumentException If the data is invalid.
-	 */
-	private function validate_data( array $data ) {
-		if ( empty( $data['email'] ) || empty( $data['postId'] ) ) {
-			throw new \InvalidArgumentException( esc_html__( 'Missing required data', 'woocommerce' ) );
-		}
-
-		if ( ! is_email( $data['email'] ) ) {
-			throw new \InvalidArgumentException( esc_html__( 'Invalid email', 'woocommerce' ) );
-		}
-	}
-
-
-	/**
-	 * Fetches a post_id post object based on the provided post ID.
-	 *
-	 * @param int $post_id The ID of the post to fetch.
-	 * @return \WP_Post The WordPress post object.
-	 * @throws \Exception If the post is invalid.
-	 */
-	private function fetch_post( $post_id ): \WP_Post {
-		$post = get_post( intval( $post_id ) );
-		if ( ! $post instanceof \WP_Post ) {
-			throw new \Exception( esc_html__( 'Invalid post', 'woocommerce' ) );
-		}
-		return $post;
-	}
+    /**
+     * Fetches a post_id post object based on the provided post ID.
+     *
+     * @param int $post_id The ID of the post to fetch.
+     * @return \WP_Post The WordPress post object.
+     * @throws \Exception If the post is invalid.
+     */
+    private function fetch_post($post_id): \WP_Post
+    {
+        $post = get_post(intval($post_id));
+        if (! $post instanceof \WP_Post) {
+            throw new \Exception(esc_html__('Invalid post', 'woocommerce'));
+        }
+        return $post;
+    }
 }
