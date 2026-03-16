@@ -96,16 +96,20 @@ class WebhookUtil
         $webhooks_settings_url = esc_url_raw(admin_url('admin.php?page=wc-settings&tab=advanced&section=webhooks'));
 
         // This block of code is copied from WordPress' users.php.
-        // phpcs:disable WooCommerce.Commenting.CommentHooks, WordPress.DB.PreparedSQL.NotPrepared
+        $userids = array_map('absint', $userids);
+        // phpcs:disable WooCommerce.Commenting.CommentHooks
         $users_have_content = (bool) apply_filters('users_have_additional_content', false, $userids);
         if (! $users_have_content) {
-            if ($wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE post_author IN( " . implode(',', $userids) . ' ) LIMIT 1')) {
+            $placeholders = implode(',', array_fill(0, count($userids), '%d'));
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+            if ($wpdb->get_var($wpdb->prepare("SELECT ID FROM {$wpdb->posts} WHERE post_author IN( $placeholders ) LIMIT 1", $userids))) {
                 $users_have_content = true;
-            } elseif ($wpdb->get_var("SELECT link_id FROM {$wpdb->links} WHERE link_owner IN( " . implode(',', $userids) . ' ) LIMIT 1')) {
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+            } elseif ($wpdb->get_var($wpdb->prepare("SELECT link_id FROM {$wpdb->links} WHERE link_owner IN( $placeholders ) LIMIT 1", $userids))) {
                 $users_have_content = true;
             }
         }
-        // phpcs:enable WooCommerce.Commenting.CommentHooks, WordPress.DB.PreparedSQL.NotPrepared
+        // phpcs:enable WooCommerce.Commenting.CommentHooks
 
         if ($users_have_content) {
             $text = __('If the "Delete all content" option is selected, the affected WooCommerce webhooks will <b>not</b> be deleted and will be attributed to user id 0.<br/>', 'woocommerce');

@@ -984,7 +984,7 @@ class WC_Admin_Post_Types
 
         return $price_changed;
 
-        // phpcs:disable WordPress.Security.NonceVerification.Recommended
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
     }
 
     /**

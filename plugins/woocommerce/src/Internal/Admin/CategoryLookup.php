@@ -169,10 +169,11 @@ class CategoryLookup
         $ancestors[] = $category_tree_id;
         $children    = get_term_children($category_id, 'product_cat');
         $children[]  = $category_id;
-        $id_list     = implode(',', array_map(intval(...), array_unique(array_filter($children))));
+        $children    = array_map('absint', array_unique(array_filter($children)));
+        $placeholders = implode(',', array_fill(0, count($children), '%d'));
 
         foreach ($ancestors as $ancestor) {
-            $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->wc_category_lookup WHERE category_tree_id = %d AND category_id IN ({$id_list})", $ancestor)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->wc_category_lookup WHERE category_tree_id = %d AND category_id IN ({$placeholders})", array_merge([$ancestor], $children))); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
         }
     }
 

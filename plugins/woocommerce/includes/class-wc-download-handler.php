@@ -273,7 +273,7 @@ class WC_Download_Handler
      */
     public static function download_file_redirect($file_path, $filename = '')
     {
-        header('Location: ' . $file_path);
+        header('Location: ' . esc_url_raw($file_path));
         exit;
     }
 
@@ -330,7 +330,12 @@ class WC_Download_Handler
 
         } elseif ('/wp-content' === substr($file_path, 0, 11)) {
             $remote_file = false;
-            $file_path   = realpath(WP_CONTENT_DIR . substr($file_path, 11));
+            $resolved    = realpath(WP_CONTENT_DIR . substr($file_path, 11));
+            $allowed     = realpath(WP_CONTENT_DIR);
+            if (false === $resolved || false === $allowed || 0 !== strpos($resolved, $allowed . DIRECTORY_SEPARATOR)) {
+                self::download_error(__('Invalid download link.', 'woocommerce'));
+            }
+            $file_path = $resolved;
 
             // Check if we have an absolute path.
         } elseif ((! isset($parsed_file_path['scheme']) || ! in_array($parsed_file_path['scheme'], [ 'http', 'https', 'ftp' ], true)) && isset($parsed_file_path['path'])) {

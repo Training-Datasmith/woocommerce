@@ -132,7 +132,7 @@ class OrderCouponDataMigrator implements BatchProcessorInterface, RegisterHooksI
         global $wpdb;
 
         //phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize
-        $coupon_data = unserialize($meta_value);
+        $coupon_data = unserialize($meta_value, ['allowed_classes' => false]);
 
         $temp_coupon = new \WC_Coupon();
         $temp_coupon->set_props($coupon_data);

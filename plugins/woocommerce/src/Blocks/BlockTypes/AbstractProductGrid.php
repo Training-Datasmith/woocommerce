@@ -428,8 +428,9 @@ abstract class AbstractProductGrid extends AbstractDynamicBlock
 
         global $wpdb;
 
-        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
-        $product_variations      = $wpdb->get_results("SELECT ID as variation_id, post_parent as product_id from {$wpdb->posts} WHERE post_parent IN ( " . implode(',', $prime_product_ids) . ' )', ARRAY_A);
+        $placeholders            = implode(',', array_fill(0, count($prime_product_ids), '%d'));
+        // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+        $product_variations      = $wpdb->get_results($wpdb->prepare("SELECT ID as variation_id, post_parent as product_id FROM {$wpdb->posts} WHERE post_parent IN ( $placeholders )", $prime_product_ids), ARRAY_A);
         $prime_variation_ids     = array_column($product_variations, 'variation_id');
         $variation_ids_by_parent = array_column($product_variations, 'product_id', 'variation_id');
 
