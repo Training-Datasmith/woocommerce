@@ -1,31 +1,29 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Product Block class.
  */
+namespace Automattic\Woo_Commerce\Internal\Features\Product_Block_Editor\Product_Templates;
 
-namespace Automattic\WooCommerce\Internal\Features\ProductBlockEditor\ProductTemplates;
-
-use Automattic\WooCommerce\Admin\BlockTemplates\BlockInterface;
-use Automattic\WooCommerce\Admin\BlockTemplates\ContainerInterface;
-use Automattic\WooCommerce\Internal\Admin\BlockTemplates\AbstractBlock;
-use Automattic\WooCommerce\Internal\Admin\BlockTemplates\BlockContainerTrait;
-
+use Automattic\Woo_Commerce\Admin\Block_Templates\Block_Interface;
+use Automattic\Woo_Commerce\Admin\Block_Templates\Container_Interface;
+use Automattic\Woo_Commerce\Internal\Admin\Block_Templates\Abstract_Block;
+use Automattic\Woo_Commerce\Internal\Admin\Block_Templates\Block_Container_Trait;
 /**
  * Class for Product block.
  */
-class ProductBlock extends AbstractBlock implements ContainerInterface
+class Product_Block extends Abstract_Block implements Container_Interface
 {
-    use BlockContainerTrait;
+    use Block_Container_Trait;
     /**
      * Adds block to the section block.
      *
      * @param array $block_config The block data.
      */
-    public function &add_block(array $block_config): BlockInterface
+    public function &add_block(array $block_config): Block_Interface
     {
-        $block = new ProductBlock($block_config, $this->get_root_template(), $this);
+        $block = new Product_Block($block_config, $this->get_root_template(), $this);
         return $this->add_inner_block($block);
     }
 }

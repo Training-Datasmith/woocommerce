@@ -1,22 +1,20 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * AttributeFilter class.
  */
-class StockFilter extends AbstractBlock
+class Stock_Filter extends Abstract_Block
 {
     /**
      * Block name.
      *
      * @var string
      */
-    protected $block_name        = 'stock-filter';
+    protected $block_name = 'stock-filter';
     public const STOCK_STATUS_QUERY_VAR = 'filter_stock_status';
-
     /**
      * Extra data passed through from server to client for block.
      *
@@ -29,9 +27,7 @@ class StockFilter extends AbstractBlock
         parent::enqueue_data($stock_statuses);
         $this->asset_data_registry->add('stockStatusOptions', wc_get_product_stock_status_options());
         $this->asset_data_registry->add('hideOutOfStockItems', 'yes' === get_option('woocommerce_hide_out_of_stock_items'));
-
     }
-
     /**
      * Get Stock status query variables values.
      */
@@ -39,7 +35,6 @@ class StockFilter extends AbstractBlock
     {
         return array_keys(wc_get_product_stock_status_options());
     }
-
     /**
      * Get the frontend style handle for this block type.
      *
@@ -47,6 +42,6 @@ class StockFilter extends AbstractBlock
      */
     protected function get_block_type_style(): array
     {
-        return array_merge(parent::get_block_type_style(), [ 'wc-blocks-packages-style' ]);
+        return array_merge(parent::get_block_type_style(), ['wc-blocks-packages-style']);
     }
 }

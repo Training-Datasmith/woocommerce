@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Templates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Templates;
 
 /**
  * ComingSoonTemplate class.
  *
  * @internal
  */
-class ComingSoonTemplate extends AbstractPageTemplate
+class Coming_Soon_Template extends Abstract_Page_Template
 {
     /**
      * The slug of the template.
@@ -17,7 +16,6 @@ class ComingSoonTemplate extends AbstractPageTemplate
      * @var string
      */
     public const SLUG = 'coming-soon';
-
     /**
      * Returns the title of the template.
      *
@@ -27,7 +25,6 @@ class ComingSoonTemplate extends AbstractPageTemplate
     {
         return _x('Page: Coming soon', 'Template name', 'woocommerce');
     }
-
     /**
      * Returns the description of the template.
      *
@@ -37,7 +34,6 @@ class ComingSoonTemplate extends AbstractPageTemplate
     {
         return __('Let your shoppers know your site or part of your site is under construction.', 'woocommerce');
     }
-
     /**
      * Returns the page object assigned to this template/page.
      *
@@ -47,7 +43,6 @@ class ComingSoonTemplate extends AbstractPageTemplate
     {
         return null;
     }
-
     /**
      * True when viewing the coming soon page.
      */
@@ -55,7 +50,6 @@ class ComingSoonTemplate extends AbstractPageTemplate
     {
         return false;
     }
-
     /**
      * Returns the font family for the body and heading.
      *
@@ -64,48 +58,31 @@ class ComingSoonTemplate extends AbstractPageTemplate
      */
     public static function get_font_families(): array
     {
-        $default_fonts = [
-            'heading' => 'cardo',
-            'body'    => 'inter',
-        ];
-
-        if (! wp_is_block_theme()) {
+        $default_fonts = ['heading' => 'cardo', 'body' => 'inter'];
+        if (!wp_is_block_theme()) {
             return $default_fonts;
         }
-
         $current_theme = wp_get_theme()->get_stylesheet();
-
         if ('twentytwentyfour' === $current_theme) {
-            return [
-                'heading' => 'heading',
-                'body'    => 'body',
-            ];
+            return ['heading' => 'heading', 'body' => 'body'];
         }
-
-        if (! function_exists('wp_get_global_settings')) {
+        if (!function_exists('wp_get_global_settings')) {
             return $default_fonts;
         }
-
         $settings = wp_get_global_settings();
-        if (
-            ! isset($settings['typography']['fontFamilies']['theme'])
-            || ! is_array($settings['typography']['fontFamilies']['theme'])
-        ) {
+        if (!isset($settings['typography']['fontFamilies']['theme']) || !is_array($settings['typography']['fontFamilies']['theme'])) {
             return $default_fonts;
         }
-
         $theme_fonts = $settings['typography']['fontFamilies']['theme'];
-
         // Override default fonts if available in theme.json.
-        if (isset($theme_fonts[0]['slug']) && ! empty($theme_fonts[0]['slug'])) {
+        if (isset($theme_fonts[0]['slug']) && !empty($theme_fonts[0]['slug'])) {
             // Convert the font family to lowercase and replace spaces with hyphens.
             $default_fonts['heading'] = strtolower(str_replace(' ', '-', $theme_fonts[0]['slug']));
         }
-        if (isset($theme_fonts[1]['slug']) && ! empty($theme_fonts[1]['slug'])) {
-            $default_fonts['body']      = strtolower(str_replace(' ', '-', $theme_fonts[1]['slug']));
+        if (isset($theme_fonts[1]['slug']) && !empty($theme_fonts[1]['slug'])) {
+            $default_fonts['body'] = strtolower(str_replace(' ', '-', $theme_fonts[1]['slug']));
             $default_fonts['paragraph'] = $default_fonts['body'];
         }
-
         return $default_fonts;
     }
 }

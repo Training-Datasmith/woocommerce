@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Admin\API\Reports\DataStore class file.
  */
+namespace Automattic\Woo_Commerce\Admin\API\Reports;
 
-namespace Automattic\WooCommerce\Admin\API\Reports;
-
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit;
 }
-
 /**
  * Common parent for custom report data stores.
  *
@@ -60,7 +58,7 @@ if (! defined('ABSPATH')) {
  * Note that this class is NOT {@link https://developer.woocommerce.com/docs/how-to-manage-woocommerce-data-stores/ a CRUD data store}.
  * It does not implement the {@see WC_Object_Data_Store_Interface WC_Object_Data_Store_Interface} nor extend WC_Data & WC_Data_Store_WP classes.
  */
-class DataStore extends SqlQuery implements DataStoreInterface
+class Data_Store extends Sql_Query implements Data_Store_Interface
 {
     /**
      * Cache group for the reports.
@@ -68,49 +66,42 @@ class DataStore extends SqlQuery implements DataStoreInterface
      * @var string
      */
     protected $cache_group = 'reports';
-
     /**
      * Time out for the cache.
      *
      * @var int
      */
     protected $cache_timeout = 3600;
-
     /**
      * Cache identifier.
      *
      * @var string
      */
     protected $cache_key = '';
-
     /**
      * Table used as a data store for this report.
      *
      * @var string
      */
     protected static $table_name = '';
-
     /**
      * Date field name.
      *
      * @var string
      */
     protected $date_column_name = 'date_created';
-
     /**
      * Mapping columns to data type to return correct response types.
      *
      * @var array
      */
     protected $column_types = [];
-
     /**
      * SQL columns to select in the db query.
      *
      * @var array
      */
     protected $report_columns = [];
-
     // @todo This does not really belong here, maybe factor out the comparison as separate class?
     /**
      * Order by property, used in the cmp function.
@@ -118,19 +109,16 @@ class DataStore extends SqlQuery implements DataStoreInterface
      * @var string
      */
     private $order_by = '';
-
     /**
      * Order property, used in the cmp function.
      *
      * @var string
      */
     private $order = '';
-
     /**
      * Query limit parameters.
      */
     private array $limit_parameters = [];
-
     /**
      * Data store context used to pass to filters.
      *
@@ -139,47 +127,40 @@ class DataStore extends SqlQuery implements DataStoreInterface
      * @var string
      */
     protected $context = 'reports';
-
     /**
      * Subquery object for query nesting.
      *
      * @var SqlQuery
      */
     protected $subquery;
-
     /**
      * Totals query object.
      *
      * @var SqlQuery
      */
     protected $total_query;
-
     /**
      * Intervals query object.
      *
      * @var SqlQuery
      */
     protected $interval_query;
-
     /**
      * Refresh the cache for the current query when true.
      *
      * @var bool
      */
     protected $force_cache_refresh = false;
-
     /**
      * Include debugging information in the returned data when true.
      */
     protected bool $debug_cache = true;
-
     /**
      * Debugging information to include in the returned data.
      *
      * @var array
      */
     protected $debug_cache_data = [];
-
     /**
      * Class constructor.
      *
@@ -189,16 +170,9 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         self::set_db_table_name();
         $this->assign_report_columns();
-
         if ($this->report_columns) {
-            $this->report_columns = apply_filters(
-                'woocommerce_admin_report_columns',
-                $this->report_columns,
-                $this->context,
-                self::get_db_table_name()
-            );
+            $this->report_columns = apply_filters('woocommerce_admin_report_columns', $this->report_columns, $this->context, self::get_db_table_name());
         }
-
         // Utilize enveloped responses to include debugging info.
         // See https://querymonitor.com/blog/2021/05/debugging-wordpress-rest-api-requests/
         if (isset($_GET['_envelope'])) {
@@ -206,7 +180,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
             add_filter('rest_envelope_response', $this->add_debug_cache_to_envelope(...), 999, 2);
         }
     }
-
     /**
      * Get the data based on args.
      *
@@ -218,25 +191,21 @@ class DataStore extends SqlQuery implements DataStoreInterface
      */
     public function get_data($query_args)
     {
-        $defaults   = $this->get_default_query_vars();
+        $defaults = $this->get_default_query_vars();
         $query_args = wp_parse_args($query_args, $defaults);
         $this->normalize_timezones($query_args, $defaults);
-
         /*
          * We need to get the cache key here because
          * parent::update_intervals_sql_params() modifies $query_args.
          */
         $cache_key = $this->get_cache_key($query_args);
-        $data      = $this->get_cached_data($cache_key);
-
+        $data = $this->get_cached_data($cache_key);
         if (false === $data) {
             $data = $this->get_noncached_data($query_args);
             $this->set_cached_data($cache_key, $data);
         }
-
         return $data;
     }
-
     /**
      * Get the default query arguments to be used by get_data().
      * These defaults are only partially applied when used via REST API, as that has its own defaults.
@@ -245,17 +214,8 @@ class DataStore extends SqlQuery implements DataStoreInterface
      */
     public function get_default_query_vars(): array
     {
-        return [
-            'per_page' => get_option('posts_per_page'),
-            'page'     => 1,
-            'order'    => 'DESC',
-            'orderby'  => 'date',
-            'before'   => TimeInterval::default_before(),
-            'after'    => TimeInterval::default_after(),
-            'fields'   => '*',
-        ];
+        return ['per_page' => get_option('posts_per_page'), 'page' => 1, 'order' => 'DESC', 'orderby' => 'date', 'before' => Time_Interval::default_before(), 'after' => Time_Interval::default_after(), 'fields' => '*'];
     }
-
     /**
      * Get table name from database class.
      */
@@ -264,7 +224,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
         global $wpdb;
         return $wpdb->{static::$table_name} ?? $wpdb->prefix . static::$table_name;
     }
-
     /**
      * Returns the report data based on normalized parameters.
      * Will be called by `get_data` if there is no data in cache.
@@ -276,20 +235,18 @@ class DataStore extends SqlQuery implements DataStoreInterface
     public function get_noncached_data($query_args)
     {
         /* translators: %s: Method name */
-        return new \WP_Error('invalid-method', sprintf(__("Method '%s' not implemented. Must be overridden in subclass.", 'woocommerce'), __METHOD__), [ 'status' => 405 ]);
+        return new \WP_Error('invalid-method', sprintf(__("Method '%s' not implemented. Must be overridden in subclass.", 'woocommerce'), __METHOD__), ['status' => 405]);
     }
-
     /**
      * Set table name from database class.
      */
     protected static function set_db_table_name()
     {
         global $wpdb;
-        if (static::$table_name && ! isset($wpdb->{static::$table_name})) {
+        if (static::$table_name && !isset($wpdb->{static::$table_name})) {
             $wpdb->{static::$table_name} = $wpdb->prefix . static::$table_name;
         }
     }
-
     /**
      * Whether or not the report should use the caching layer.
      *
@@ -307,7 +264,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
          */
         return (bool) apply_filters('woocommerce_analytics_report_should_use_cache', true, $this->cache_key);
     }
-
     /**
      * Returns string to be used as cache key for the data.
      *
@@ -319,31 +275,17 @@ class DataStore extends SqlQuery implements DataStoreInterface
             if (true === $params['force_cache_refresh']) {
                 $this->force_cache_refresh = true;
             }
-
             // We don't want this param in the key.
             unset($params['force_cache_refresh']);
         }
-
         if (true === $this->debug_cache) {
             $this->debug_cache_data['query_args'] = $params;
         }
-
         // Normalize the $params to reduce cache misses.
-        $params = array_filter(
-            $params,
-            fn ($param) => ! empty($param)
-        );
+        $params = array_filter($params, fn($param) => !empty($param));
         ksort($params);
-        return implode(
-            '_',
-            [
-                'wc_report',
-                $this->cache_key,
-                md5(wp_json_encode($params)),
-            ]
-        );
+        return implode('_', ['wc_report', $this->cache_key, md5(wp_json_encode($params))]);
     }
-
     /**
      * Wrapper around Cache::get().
      *
@@ -353,28 +295,22 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function get_cached_data($cache_key)
     {
         if (true === $this->debug_cache) {
-            $this->debug_cache_data['should_use_cache']    = $this->should_use_cache();
+            $this->debug_cache_data['should_use_cache'] = $this->should_use_cache();
             $this->debug_cache_data['force_cache_refresh'] = $this->force_cache_refresh;
-            $this->debug_cache_data['cache_hit']           = false;
+            $this->debug_cache_data['cache_hit'] = false;
         }
-
         if ($this->should_use_cache() && false === $this->force_cache_refresh) {
             $cached_data = Cache::get($cache_key);
-
             $cache_hit = false !== $cached_data;
             if (true === $this->debug_cache) {
                 $this->debug_cache_data['cache_hit'] = $cache_hit;
             }
-
             return $cached_data;
         }
-
         // Cached item has now functionally been refreshed. Reset the option.
         $this->force_cache_refresh = false;
-
         return false;
     }
-
     /**
      * Wrapper around Cache::set().
      *
@@ -387,10 +323,8 @@ class DataStore extends SqlQuery implements DataStoreInterface
         if ($this->should_use_cache()) {
             return Cache::set($cache_key, $value);
         }
-
         return true;
     }
-
     /**
      * Add cache debugging information to an enveloped API response.
      *
@@ -402,14 +336,11 @@ class DataStore extends SqlQuery implements DataStoreInterface
         if (0 !== strncmp('/wc-analytics', (string) $response->get_matched_route(), 13)) {
             return $envelope;
         }
-
-        if (! empty($this->debug_cache_data)) {
+        if (!empty($this->debug_cache_data)) {
             $envelope['debug_cache'] = $this->debug_cache_data;
         }
-
         return $envelope;
     }
-
     /**
      * Compares two report data objects by pre-defined object property and ASC/DESC ordering.
      *
@@ -423,23 +354,23 @@ class DataStore extends SqlQuery implements DataStoreInterface
             return 0;
             // @todo Should return WP_Error here perhaps?
         }
-        if ($a[ $this->order_by ] === $b[ $this->order_by ]) {
+        if ($a[$this->order_by] === $b[$this->order_by]) {
             // As relative order is undefined in case of equality in usort, second-level sorting by date needs to be enforced
             // so that paging is stable.
             if ($a['time_interval'] === $b['time_interval']) {
-                return 0; // This should never happen.
+                return 0;
+                // This should never happen.
             } elseif ($a['time_interval'] > $b['time_interval']) {
                 return 1;
             } elseif ($a['time_interval'] < $b['time_interval']) {
                 return -1;
             }
-        } elseif ($a[ $this->order_by ] > $b[ $this->order_by ]) {
+        } elseif ($a[$this->order_by] > $b[$this->order_by]) {
             return strtolower($this->order) === 'desc' ? -1 : 1;
-        } elseif ($a[ $this->order_by ] < $b[ $this->order_by ]) {
+        } elseif ($a[$this->order_by] < $b[$this->order_by]) {
             return strtolower($this->order) === 'desc' ? 1 : -1;
         }
     }
-
     /**
      * Sorts intervals according to user's request.
      *
@@ -453,7 +384,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         $this->sort_array($data->intervals, $sort_by, $direction);
     }
-
     /**
      * Sorts array of arrays based on subarray key $sort_by.
      *
@@ -464,10 +394,9 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function sort_array(&$arr, $sort_by, $direction)
     {
         $this->order_by = $this->normalize_order_by($sort_by);
-        $this->order    = $direction;
+        $this->order = $direction;
         usort($arr, $this->interval_cmp(...));
     }
-
     /**
      * Fills in interval gaps from DB with 0-filled objects.
      *
@@ -483,47 +412,46 @@ class DataStore extends SqlQuery implements DataStoreInterface
         // @todo This is ugly and messy.
         $local_tz = new \DateTimeZone(wc_timezone_string());
         // At this point, we don't know when we can stop iterating, as the ordering can be based on any value.
-        $time_ids     = array_flip(wp_list_pluck($data->intervals, 'time_interval'));
+        $time_ids = array_flip(wp_list_pluck($data->intervals, 'time_interval'));
         $db_intervals = array_flip($db_intervals);
         // Totals object used to get all needed properties.
         $totals_arr = get_object_vars($data->totals);
         foreach ($totals_arr as $key => $val) {
-            $totals_arr[ $key ] = 0;
+            $totals_arr[$key] = 0;
         }
         // @todo Should 'products' be in intervals?
         unset($totals_arr['products']);
         while ($start_datetime <= $end_datetime) {
-            $next_start = TimeInterval::iterate($start_datetime, $time_interval);
-            $time_id    = TimeInterval::time_interval_id($time_interval, $start_datetime);
+            $next_start = Time_Interval::iterate($start_datetime, $time_interval);
+            $time_id = Time_Interval::time_interval_id($time_interval, $start_datetime);
             // Either create fill-zero interval or use data from db.
             if ($next_start > $end_datetime) {
                 $interval_end = $end_datetime->format('Y-m-d H:i:s');
             } else {
                 $prev_end_timestamp = (int) $next_start->format('U') - 1;
-                $prev_end           = new \DateTime();
-                $prev_end->setTimestamp($prev_end_timestamp);
-                $prev_end->setTimezone($local_tz);
+                $prev_end = new \DateTime();
+                $prev_end->set_timestamp($prev_end_timestamp);
+                $prev_end->set_timezone($local_tz);
                 $interval_end = $prev_end->format('Y-m-d H:i:s');
             }
             if (array_key_exists($time_id, $time_ids)) {
                 // For interval present in the db for this time frame, just fill in dates.
-                $record               = &$data->intervals[ $time_ids[ $time_id ] ];
+                $record =& $data->intervals[$time_ids[$time_id]];
                 $record['date_start'] = $start_datetime->format('Y-m-d H:i:s');
-                $record['date_end']   = $interval_end;
-            } elseif (! array_key_exists($time_id, $db_intervals)) {
+                $record['date_end'] = $interval_end;
+            } elseif (!array_key_exists($time_id, $db_intervals)) {
                 // For intervals present in the db outside of this time frame, do nothing.
                 // For intervals not present in the db, fabricate it.
-                $record_arr                  = [];
+                $record_arr = [];
                 $record_arr['time_interval'] = $time_id;
-                $record_arr['date_start']    = $start_datetime->format('Y-m-d H:i:s');
-                $record_arr['date_end']      = $interval_end;
-                $data->intervals[]           = array_merge($record_arr, $totals_arr);
+                $record_arr['date_start'] = $start_datetime->format('Y-m-d H:i:s');
+                $record_arr['date_end'] = $interval_end;
+                $data->intervals[] = array_merge($record_arr, $totals_arr);
             }
             $start_datetime = $next_start;
         }
         return $data;
     }
-
     /**
      * Converts input datetime parameters to local timezone. If there are no inputs from the user in query_args,
      * uses default from $defaults.
@@ -534,22 +462,21 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function normalize_timezones(array &$query_args, array $defaults)
     {
         $local_tz = new \DateTimeZone(wc_timezone_string());
-        foreach ([ 'before', 'after' ] as $query_arg_key) {
-            if (isset($query_args[ $query_arg_key ]) && is_string($query_args[ $query_arg_key ])) {
+        foreach (['before', 'after'] as $query_arg_key) {
+            if (isset($query_args[$query_arg_key]) && is_string($query_args[$query_arg_key])) {
                 // Assume that unspecified timezone is a local timezone.
-                $datetime = new \DateTime($query_args[ $query_arg_key ], $local_tz);
+                $datetime = new \DateTime($query_args[$query_arg_key], $local_tz);
                 // In case timezone was forced by using +HH:MM, convert to local timezone.
-                $datetime->setTimezone($local_tz);
-                $query_args[ $query_arg_key ] = $datetime;
-            } elseif (isset($query_args[ $query_arg_key ]) && is_a($query_args[ $query_arg_key ], 'DateTime')) {
+                $datetime->set_timezone($local_tz);
+                $query_args[$query_arg_key] = $datetime;
+            } elseif (isset($query_args[$query_arg_key]) && is_a($query_args[$query_arg_key], 'DateTime')) {
                 // In case timezone is in other timezone, convert to local timezone.
-                $query_args[ $query_arg_key ]->setTimezone($local_tz);
+                $query_args[$query_arg_key]->set_timezone($local_tz);
             } else {
-                $query_args[ $query_arg_key ] = $defaults[ $query_arg_key ] ?? null;
+                $query_args[$query_arg_key] = $defaults[$query_arg_key] ?? null;
             }
         }
     }
-
     /**
      * Removes extra records from intervals so that only requested number of records get returned.
      *
@@ -581,7 +508,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
         }
         $data->intervals = array_slice($data->intervals, $offset, $count);
     }
-
     /**
      * Returns expected number of items on the page in case of date ordering.
      *
@@ -602,7 +528,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
         }
         return 0;
     }
-
     /**
      * Returns true if there are any intervals that need to be filled in the response.
      *
@@ -634,7 +559,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
         // Invalid ordering.
         return false;
     }
-
     /**
      * Updates the LIMIT query part for Intervals query of the report.
      *
@@ -651,109 +575,104 @@ class DataStore extends SqlQuery implements DataStoreInterface
         if ($db_interval_count === $expected_interval_count) {
             return;
         }
-
-        $params   = $this->get_limit_params($query_args);
+        $params = $this->get_limit_params($query_args);
         new \DateTimeZone(wc_timezone_string());
         if ('date' === strtolower((string) $query_args['orderby'])) {
             // page X in request translates to slightly different dates in the db, in case some
             // records are missing from the db.
             $start_iteration = 0;
-            $end_iteration   = 0;
+            $end_iteration = 0;
             if ('asc' === strtolower((string) $query_args['order'])) {
                 // ORDER BY date ASC.
-                $new_start_date    = $query_args['after'];
+                $new_start_date = $query_args['after'];
                 $intervals_to_skip = ($query_args['page'] - 1) * $params['per_page'];
-                $latest_end_date   = $query_args['before'];
+                $latest_end_date = $query_args['before'];
                 for ($i = 0; $i < $intervals_to_skip; $i++) {
                     if ($new_start_date > $latest_end_date) {
-                        $new_start_date  = $latest_end_date;
+                        $new_start_date = $latest_end_date;
                         $start_iteration = 0;
                         break;
                     }
-                    $new_start_date = TimeInterval::iterate($new_start_date, $query_args['interval']);
+                    $new_start_date = Time_Interval::iterate($new_start_date, $query_args['interval']);
                     $start_iteration++;
                 }
-
                 $new_end_date = clone $new_start_date;
                 for ($i = 0; $i < $params['per_page']; $i++) {
                     if ($new_end_date > $latest_end_date) {
                         break;
                     }
-                    $new_end_date = TimeInterval::iterate($new_end_date, $query_args['interval']);
+                    $new_end_date = Time_Interval::iterate($new_end_date, $query_args['interval']);
                     $end_iteration++;
                 }
                 if ($new_end_date > $latest_end_date) {
-                    $new_end_date  = $latest_end_date;
+                    $new_end_date = $latest_end_date;
                     $end_iteration = 0;
                 }
                 if ($end_iteration) {
                     $new_end_date_timestamp = (int) $new_end_date->format('U') - 1;
-                    $new_end_date->setTimestamp($new_end_date_timestamp);
+                    $new_end_date->set_timestamp($new_end_date_timestamp);
                 }
             } else {
                 // ORDER BY date DESC.
-                $new_end_date        = $query_args['before'];
-                $intervals_to_skip   = ($query_args['page'] - 1) * $params['per_page'];
+                $new_end_date = $query_args['before'];
+                $intervals_to_skip = ($query_args['page'] - 1) * $params['per_page'];
                 $earliest_start_date = $query_args['after'];
                 for ($i = 0; $i < $intervals_to_skip; $i++) {
                     if ($new_end_date < $earliest_start_date) {
-                        $new_end_date  = $earliest_start_date;
+                        $new_end_date = $earliest_start_date;
                         $end_iteration = 0;
                         break;
                     }
-                    $new_end_date = TimeInterval::iterate($new_end_date, $query_args['interval'], true);
+                    $new_end_date = Time_Interval::iterate($new_end_date, $query_args['interval'], true);
                     $end_iteration++;
                 }
-
                 $new_start_date = clone $new_end_date;
                 for ($i = 0; $i < $params['per_page']; $i++) {
                     if ($new_start_date < $earliest_start_date) {
                         break;
                     }
-                    $new_start_date = TimeInterval::iterate($new_start_date, $query_args['interval'], true);
+                    $new_start_date = Time_Interval::iterate($new_start_date, $query_args['interval'], true);
                     $start_iteration++;
                 }
                 if ($new_start_date < $earliest_start_date) {
-                    $new_start_date  = $earliest_start_date;
+                    $new_start_date = $earliest_start_date;
                     $start_iteration = 0;
                 }
                 if ($start_iteration) {
                     // @todo Is this correct? should it only be added if iterate runs? other two iterate instances, too?
                     $new_start_date_timestamp = (int) $new_start_date->format('U') + 1;
-                    $new_start_date->setTimestamp($new_start_date_timestamp);
+                    $new_start_date->set_timestamp($new_start_date_timestamp);
                 }
             }
             // @todo - Do this without modifying $query_args?
-            $query_args['adj_after']  = $new_start_date;
+            $query_args['adj_after'] = $new_start_date;
             $query_args['adj_before'] = $new_end_date;
-            $adj_after                = $new_start_date->format(TimeInterval::$sql_datetime_format);
-            $adj_before               = $new_end_date->format(TimeInterval::$sql_datetime_format);
-            $this->interval_query->clear_sql_clause([ 'where_time', 'limit' ]);
-            $this->interval_query->add_sql_clause('where_time', "AND {$table_name}.`{$this->date_column_name}` <= '$adj_before'");
-            $this->interval_query->add_sql_clause('where_time', "AND {$table_name}.`{$this->date_column_name}` >= '$adj_after'");
+            $adj_after = $new_start_date->format(Time_Interval::$sql_datetime_format);
+            $adj_before = $new_end_date->format(Time_Interval::$sql_datetime_format);
+            $this->interval_query->clear_sql_clause(['where_time', 'limit']);
+            $this->interval_query->add_sql_clause('where_time', "AND {$table_name}.`{$this->date_column_name}` <= '{$adj_before}'");
+            $this->interval_query->add_sql_clause('where_time', "AND {$table_name}.`{$this->date_column_name}` >= '{$adj_after}'");
             $this->clear_sql_clause('limit');
             $this->add_sql_clause('limit', 'LIMIT 0,' . $params['per_page']);
         } else {
             if ('asc' === $query_args['order']) {
-                $offset = (($query_args['page'] - 1) * $params['per_page']) - ($expected_interval_count - $db_interval_count);
+                $offset = ($query_args['page'] - 1) * $params['per_page'] - ($expected_interval_count - $db_interval_count);
                 $offset = $offset < 0 ? 0 : $offset;
-                $count  = $query_args['page'] * $params['per_page'] - ($expected_interval_count - $db_interval_count);
+                $count = $query_args['page'] * $params['per_page'] - ($expected_interval_count - $db_interval_count);
                 if ($count < 0) {
                     $count = 0;
                 } elseif ($count > $params['per_page']) {
                     $count = $params['per_page'];
                 }
-
                 $this->clear_sql_clause('limit');
                 $this->add_sql_clause('limit', 'LIMIT ' . $offset . ',' . $count);
             }
             // Otherwise no change in limit clause.
             // @todo - Do this without modifying $query_args?
-            $query_args['adj_after']  = $query_args['after'];
+            $query_args['adj_after'] = $query_args['after'];
             $query_args['adj_before'] = $query_args['before'];
         }
     }
-
     /**
      * Casts strings returned from the database to appropriate data types for output.
      *
@@ -763,21 +682,19 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function cast_numbers($array): array
     {
         $retyped_array = [];
-        $column_types  = apply_filters('woocommerce_rest_reports_column_types', $this->column_types, $array);
+        $column_types = apply_filters('woocommerce_rest_reports_column_types', $this->column_types, $array);
         foreach ($array as $column_name => $value) {
             if (is_array($value)) {
                 $value = $this->cast_numbers($value);
             }
-
-            if (isset($column_types[ $column_name ])) {
-                $retyped_array[ $column_name ] = $column_types[ $column_name ]($value);
+            if (isset($column_types[$column_name])) {
+                $retyped_array[$column_name] = $column_types[$column_name]($value);
             } else {
-                $retyped_array[ $column_name ] = $value;
+                $retyped_array[$column_name] = $value;
             }
         }
         return $retyped_array;
     }
-
     /**
      * Returns a list of columns selected by the query_args formatted as a comma separated string.
      *
@@ -786,19 +703,17 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function selected_columns(array $query_args): string
     {
         $selections = $this->report_columns;
-
         if (isset($query_args['fields']) && is_array($query_args['fields'])) {
             $keep = [];
             foreach ($query_args['fields'] as $field) {
-                if (isset($selections[ $field ])) {
-                    $keep[ $field ] = $selections[ $field ];
+                if (isset($selections[$field])) {
+                    $keep[$field] = $selections[$field];
                 }
             }
             return implode(', ', $keep);
         }
         return implode(', ', $selections);
     }
-
     /**
      * Get the excluded order statuses used when calculating reports.
      *
@@ -806,11 +721,10 @@ class DataStore extends SqlQuery implements DataStoreInterface
      */
     protected static function get_excluded_report_order_statuses()
     {
-        $excluded_statuses = \WC_Admin_Settings::get_option('woocommerce_excluded_report_order_statuses', [ 'pending', 'failed', 'cancelled' ]);
-        $excluded_statuses = array_merge([ 'auto-draft', 'trash' ], array_map(esc_sql(...), $excluded_statuses));
+        $excluded_statuses = \WC_Admin_Settings::get_option('woocommerce_excluded_report_order_statuses', ['pending', 'failed', 'cancelled']);
+        $excluded_statuses = array_merge(['auto-draft', 'trash'], array_map(esc_sql(...), $excluded_statuses));
         return apply_filters('woocommerce_analytics_excluded_order_statuses', $excluded_statuses);
     }
-
     /**
      * Maps order status provided by the user to the one used in the database.
      *
@@ -821,7 +735,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
         $status = trim($status);
         return 'wc-' . $status;
     }
-
     /**
      * Normalizes order_by clause to match to SQL query.
      *
@@ -833,10 +746,8 @@ class DataStore extends SqlQuery implements DataStoreInterface
         if ('date' === $order_by) {
             return 'time_interval';
         }
-
         return $order_by;
     }
-
     /**
      * Updates start and end dates for intervals so that they represent intervals' borders, not times when data in db were recorded.
      *
@@ -852,32 +763,28 @@ class DataStore extends SqlQuery implements DataStoreInterface
         $local_tz = new \DateTimeZone(wc_timezone_string());
         foreach ($intervals as $key => $interval) {
             $datetime = new \DateTime($interval['datetime_anchor'], $local_tz);
-
-            $prev_start = TimeInterval::iterate($datetime, $time_interval, true);
+            $prev_start = Time_Interval::iterate($datetime, $time_interval, true);
             // @todo Not sure if the +1/-1 here are correct, especially as they are applied before the ?: below.
             $prev_start_timestamp = (int) $prev_start->format('U') + 1;
-            $prev_start->setTimestamp($prev_start_timestamp);
+            $prev_start->set_timestamp($prev_start_timestamp);
             if ($start_datetime) {
-                $date_start                      = $prev_start < $start_datetime ? $start_datetime : $prev_start;
-                $intervals[ $key ]['date_start'] = $date_start->format('Y-m-d H:i:s');
+                $date_start = $prev_start < $start_datetime ? $start_datetime : $prev_start;
+                $intervals[$key]['date_start'] = $date_start->format('Y-m-d H:i:s');
             } else {
-                $intervals[ $key ]['date_start'] = $prev_start->format('Y-m-d H:i:s');
+                $intervals[$key]['date_start'] = $prev_start->format('Y-m-d H:i:s');
             }
-
-            $next_end           = TimeInterval::iterate($datetime, $time_interval);
+            $next_end = Time_Interval::iterate($datetime, $time_interval);
             $next_end_timestamp = (int) $next_end->format('U') - 1;
-            $next_end->setTimestamp($next_end_timestamp);
+            $next_end->set_timestamp($next_end_timestamp);
             if ($end_datetime) {
-                $date_end                      = $next_end > $end_datetime ? $end_datetime : $next_end;
-                $intervals[ $key ]['date_end'] = $date_end->format('Y-m-d H:i:s');
+                $date_end = $next_end > $end_datetime ? $end_datetime : $next_end;
+                $intervals[$key]['date_end'] = $date_end->format('Y-m-d H:i:s');
             } else {
-                $intervals[ $key ]['date_end'] = $next_end->format('Y-m-d H:i:s');
+                $intervals[$key]['date_end'] = $next_end->format('Y-m-d H:i:s');
             }
-
-            $intervals[ $key ]['interval'] = $time_interval;
+            $intervals[$key]['interval'] = $time_interval;
         }
     }
-
     /**
      * Change structure of intervals to form a correct response.
      *
@@ -888,26 +795,18 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function create_interval_subtotals(array &$intervals)
     {
         foreach ($intervals as $key => $interval) {
-            $start_gmt = TimeInterval::convert_local_datetime_to_gmt($interval['date_start']);
-            $end_gmt   = TimeInterval::convert_local_datetime_to_gmt($interval['date_end']);
+            $start_gmt = Time_Interval::convert_local_datetime_to_gmt($interval['date_start']);
+            $end_gmt = Time_Interval::convert_local_datetime_to_gmt($interval['date_end']);
             // Move intervals result to subtotals object.
-            $intervals[ $key ] = [
-                'interval'       => $interval['time_interval'],
-                'date_start'     => $interval['date_start'],
-                'date_start_gmt' => $start_gmt->format(TimeInterval::$sql_datetime_format),
-                'date_end'       => $interval['date_end'],
-                'date_end_gmt'   => $end_gmt->format(TimeInterval::$sql_datetime_format),
-            ];
-
+            $intervals[$key] = ['interval' => $interval['time_interval'], 'date_start' => $interval['date_start'], 'date_start_gmt' => $start_gmt->format(Time_Interval::$sql_datetime_format), 'date_end' => $interval['date_end'], 'date_end_gmt' => $end_gmt->format(Time_Interval::$sql_datetime_format)];
             unset($interval['interval']);
             unset($interval['date_start']);
             unset($interval['date_end']);
             unset($interval['datetime_anchor']);
             unset($interval['time_interval']);
-            $intervals[ $key ]['subtotals'] = (object) $this->cast_numbers($interval);
+            $intervals[$key]['subtotals'] = (object) $this->cast_numbers($interval);
         }
     }
-
     /**
      * Fills WHERE clause of SQL request with date-related constraints.
      *
@@ -916,38 +815,35 @@ class DataStore extends SqlQuery implements DataStoreInterface
      */
     protected function add_time_period_sql_params(array $query_args, $table_name)
     {
-        $this->clear_sql_clause([ 'from', 'where_time', 'where' ]);
+        $this->clear_sql_clause(['from', 'where_time', 'where']);
         if (isset($this->subquery)) {
             $this->subquery->clear_sql_clause('where_time');
         }
-
         if (isset($query_args['before']) && '' !== $query_args['before']) {
             if (is_a($query_args['before'], 'WC_DateTime')) {
-                $datetime_str = $query_args['before']->date(TimeInterval::$sql_datetime_format);
+                $datetime_str = $query_args['before']->date(Time_Interval::$sql_datetime_format);
             } else {
-                $datetime_str = $query_args['before']->format(TimeInterval::$sql_datetime_format);
+                $datetime_str = $query_args['before']->format(Time_Interval::$sql_datetime_format);
             }
             if (isset($this->subquery)) {
-                $this->subquery->add_sql_clause('where_time', "AND {$table_name}.`{$this->date_column_name}` <= '$datetime_str'");
+                $this->subquery->add_sql_clause('where_time', "AND {$table_name}.`{$this->date_column_name}` <= '{$datetime_str}'");
             } else {
-                $this->add_sql_clause('where_time', "AND {$table_name}.`{$this->date_column_name}` <= '$datetime_str'");
+                $this->add_sql_clause('where_time', "AND {$table_name}.`{$this->date_column_name}` <= '{$datetime_str}'");
             }
         }
-
         if (isset($query_args['after']) && '' !== $query_args['after']) {
             if (is_a($query_args['after'], 'WC_DateTime')) {
-                $datetime_str = $query_args['after']->date(TimeInterval::$sql_datetime_format);
+                $datetime_str = $query_args['after']->date(Time_Interval::$sql_datetime_format);
             } else {
-                $datetime_str = $query_args['after']->format(TimeInterval::$sql_datetime_format);
+                $datetime_str = $query_args['after']->format(Time_Interval::$sql_datetime_format);
             }
             if (isset($this->subquery)) {
-                $this->subquery->add_sql_clause('where_time', "AND {$table_name}.`{$this->date_column_name}` >= '$datetime_str'");
+                $this->subquery->add_sql_clause('where_time', "AND {$table_name}.`{$this->date_column_name}` >= '{$datetime_str}'");
             } else {
-                $this->add_sql_clause('where_time', "AND {$table_name}.`{$this->date_column_name}` >= '$datetime_str'");
+                $this->add_sql_clause('where_time', "AND {$table_name}.`{$this->date_column_name}` >= '{$datetime_str}'");
             }
         }
     }
-
     /**
      * Fills LIMIT clause of SQL request based on user supplied parameters.
      *
@@ -958,12 +854,10 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         global $wpdb;
         $params = $this->get_limit_params($query_args);
-
         $this->clear_sql_clause('limit');
         $this->add_sql_clause('limit', $wpdb->prepare('LIMIT %d, %d', $params['offset'], $params['per_page']));
         return $params;
     }
-
     /**
      * Fills LIMIT parameters of SQL request based on user supplied parameters.
      *
@@ -977,15 +871,12 @@ class DataStore extends SqlQuery implements DataStoreInterface
         } else {
             $this->limit_parameters['per_page'] = get_option('posts_per_page');
         }
-
         $this->limit_parameters['offset'] = 0;
         if (isset($query_args['page'])) {
             $this->limit_parameters['offset'] = ((int) $query_args['page'] - 1) * $this->limit_parameters['per_page'];
         }
-
         return $this->limit_parameters;
     }
-
     /**
      * Generates a virtual table given a list of IDs.
      *
@@ -1009,7 +900,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
         }
         return join(' UNION ', $selects);
     }
-
     /**
      * Returns a comma separated list of the fields in the `query_args`, if there aren't, returns `report_columns` keys.
      *
@@ -1022,7 +912,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
         }
         return array_keys($this->report_columns);
     }
-
     /**
      * Returns a comma separated list of the field names prepared to be used for a selection after a join with `default_results`.
      *
@@ -1035,17 +924,16 @@ class DataStore extends SqlQuery implements DataStoreInterface
         foreach ($fields as $i => $field) {
             foreach ($default_results_fields as $default_results_field) {
                 if ($field === $default_results_field) {
-                    $field        = esc_sql($field);
-                    $fields[ $i ] = "default_results.{$field} AS {$field}";
+                    $field = esc_sql($field);
+                    $fields[$i] = "default_results.{$field} AS {$field}";
                 }
             }
             if (in_array($field, $outer_selections, true) && array_key_exists($field, $this->report_columns)) {
-                $fields[ $i ] = $this->report_columns[ $field ];
+                $fields[$i] = $this->report_columns[$field];
             }
         }
         return implode(', ', $fields);
     }
-
     /**
      * Fills ORDER BY clause of SQL request based on user supplied parameters.
      *
@@ -1058,12 +946,10 @@ class DataStore extends SqlQuery implements DataStoreInterface
         } else {
             $order_by_clause = '';
         }
-
         $this->clear_sql_clause('order_by');
         $this->add_sql_clause('order_by', $order_by_clause);
         $this->add_orderby_order_clause($query_args, $this);
     }
-
     /**
      * Fills FROM and WHERE clauses of SQL request for 'Intervals' section of data response based on user supplied parameters.
      *
@@ -1072,17 +958,14 @@ class DataStore extends SqlQuery implements DataStoreInterface
      */
     protected function add_intervals_sql_params(array $query_args, $table_name)
     {
-        $this->clear_sql_clause([ 'from', 'where_time', 'where' ]);
-
+        $this->clear_sql_clause(['from', 'where_time', 'where']);
         $this->add_time_period_sql_params($query_args, $table_name);
-
         if (isset($query_args['interval']) && '' !== $query_args['interval']) {
             $interval = $query_args['interval'];
             $this->clear_sql_clause('select');
-            $this->add_sql_clause('select', TimeInterval::db_datetime_format($interval, $table_name, $this->date_column_name));
+            $this->add_sql_clause('select', Time_Interval::db_datetime_format($interval, $table_name, $this->date_column_name));
         }
     }
-
     /**
      * Get join and where clauses for refunds based on user supplied parameters.
      *
@@ -1092,32 +975,23 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         global $wpdb;
         $table_name = $wpdb->prefix . 'wc_order_stats';
-        $sql_query  = [
-            'where_clause' => '',
-            'from_clause'  => '',
-        ];
-
-        if (! isset($query_args['refunds'])) {
+        $sql_query = ['where_clause' => '', 'from_clause' => ''];
+        if (!isset($query_args['refunds'])) {
             return $sql_query;
         }
-
         if ('all' === $query_args['refunds']) {
             $sql_query['where_clause'] .= 'parent_id != 0';
         }
-
         if ('none' === $query_args['refunds']) {
             $sql_query['where_clause'] .= 'parent_id = 0';
         }
-
         if ('full' === $query_args['refunds'] || 'partial' === $query_args['refunds']) {
-            $operator                   = 'full' === $query_args['refunds'] ? '=' : '!=';
-            $sql_query['from_clause']  .= " JOIN {$table_name} parent_order_stats ON {$table_name}.parent_id = parent_order_stats.order_id";
+            $operator = 'full' === $query_args['refunds'] ? '=' : '!=';
+            $sql_query['from_clause'] .= " JOIN {$table_name} parent_order_stats ON {$table_name}.parent_id = parent_order_stats.order_id";
             $sql_query['where_clause'] .= "parent_order_stats.status {$operator} '{$this->normalize_order_status('refunded')}'";
         }
-
         return $sql_query;
     }
-
     /**
      * Returns an array of products belonging to given categories.
      *
@@ -1126,25 +1000,13 @@ class DataStore extends SqlQuery implements DataStoreInterface
      */
     protected function get_products_by_cat_ids($categories)
     {
-        $terms = get_terms(
-            [
-                'taxonomy' => 'product_cat',
-                'include'  => $categories,
-            ]
-        );
-
+        $terms = get_terms(['taxonomy' => 'product_cat', 'include' => $categories]);
         if (is_wp_error($terms) || empty($terms)) {
             return [];
         }
-
-        $args = [
-            'category' => wc_list_pluck($terms, 'slug'),
-            'limit'    => -1,
-            'return'   => 'ids',
-        ];
+        $args = ['category' => wc_list_pluck($terms, 'slug'), 'limit' => -1, 'return' => 'ids'];
         return wc_get_products($args);
     }
-
     /**
      * Get WHERE filter by object ids subquery.
      *
@@ -1162,17 +1024,9 @@ class DataStore extends SqlQuery implements DataStoreInterface
             return '';
         }
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        return " {$select_table}.{$select_field} {$compare} (
-			SELECT
-				DISTINCT {$filter_table}.{$select_field}
-			FROM
-				{$filter_table}
-			WHERE
-				{$filter_table}.{$filter_field} IN ({$id_list})
-		)";
+        return " {$select_table}.{$select_field} {$compare} (\n\t\t\tSELECT\n\t\t\t\tDISTINCT {$filter_table}.{$select_field}\n\t\t\tFROM\n\t\t\t\t{$filter_table}\n\t\t\tWHERE\n\t\t\t\t{$filter_table}.{$filter_field} IN ({$id_list})\n\t\t)";
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
     }
-
     /**
      * Returns an array of ids of allowed products, based on query arguments from the user.
      *
@@ -1182,18 +1036,15 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function get_included_products_array(array $query_args)
     {
         $included_products = [];
-        $operator          = $this->get_match_operator($query_args);
-
+        $operator = $this->get_match_operator($query_args);
         if (isset($query_args['category_includes']) && is_array($query_args['category_includes']) && count($query_args['category_includes']) > 0) {
             $included_products = $this->get_products_by_cat_ids($query_args['category_includes']);
-
             // If no products were found in the specified categories, we will force an empty set
             // by matching a product ID of -1, unless the filters are OR/any and products are specified.
             if (empty($included_products)) {
-                $included_products = [ '-1' ];
+                $included_products = ['-1'];
             }
         }
-
         if (isset($query_args['product_includes']) && is_array($query_args['product_includes']) && count($query_args['product_includes']) > 0) {
             if (count($included_products) > 0) {
                 if ('AND' === $operator) {
@@ -1207,10 +1058,8 @@ class DataStore extends SqlQuery implements DataStoreInterface
                 $included_products = $query_args['product_includes'];
             }
         }
-
         return $included_products;
     }
-
     /**
      * Returns comma separated ids of allowed products, based on query arguments from the user.
      *
@@ -1221,7 +1070,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
         $included_products = $this->get_included_products_array($query_args);
         return implode(',', $included_products);
     }
-
     /**
      * Returns comma separated ids of allowed variations, based on query arguments from the user.
      *
@@ -1232,7 +1080,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         return $this->get_filtered_ids($query_args, 'variation_includes');
     }
-
     /**
      * Returns comma separated ids of excluded variations, based on query arguments from the user.
      *
@@ -1243,7 +1090,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         return $this->get_filtered_ids($query_args, 'variation_excludes');
     }
-
     /**
      * Returns an array of ids of disallowed products, based on query arguments from the user.
      *
@@ -1254,18 +1100,14 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         $excluded_products = [];
         $this->get_match_operator($query_args);
-
         if (isset($query_args['category_excludes']) && is_array($query_args['category_excludes']) && count($query_args['category_excludes']) > 0) {
             $excluded_products = $this->get_products_by_cat_ids($query_args['category_excludes']);
         }
-
         if (isset($query_args['product_excludes']) && is_array($query_args['product_excludes']) && count($query_args['product_excludes']) > 0) {
             return array_merge($excluded_products, $query_args['product_excludes']);
         }
-
         return $excluded_products;
     }
-
     /**
      * Returns comma separated ids of excluded products, based on query arguments from the user.
      *
@@ -1276,7 +1118,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
         $excluded_products = $this->get_excluded_products_array($query_args);
         return implode(',', $excluded_products);
     }
-
     /**
      * Returns comma separated ids of included categories, based on query arguments from the user.
      *
@@ -1287,7 +1128,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         return $this->get_filtered_ids($query_args, 'category_includes');
     }
-
     /**
      * Returns comma separated ids of included coupons, based on query arguments from the user.
      *
@@ -1299,7 +1139,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         return $this->get_filtered_ids($query_args, $field);
     }
-
     /**
      * Returns comma separated ids of excluded coupons, based on query arguments from the user.
      *
@@ -1310,7 +1149,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         return $this->get_filtered_ids($query_args, 'coupon_excludes');
     }
-
     /**
      * Returns comma separated ids of included orders, based on query arguments from the user.
      *
@@ -1321,7 +1159,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         return $this->get_filtered_ids($query_args, 'order_includes');
     }
-
     /**
      * Returns comma separated ids of excluded orders, based on query arguments from the user.
      *
@@ -1332,7 +1169,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         return $this->get_filtered_ids($query_args, 'order_excludes');
     }
-
     /**
      * Returns comma separated ids of included users, based on query arguments from the user.
      *
@@ -1343,7 +1179,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         return $this->get_filtered_ids($query_args, 'user_includes');
     }
-
     /**
      * Returns comma separated ids of excluded users, based on query arguments from the user.
      *
@@ -1354,7 +1189,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
     {
         return $this->get_filtered_ids($query_args, 'user_excludes');
     }
-
     /**
      * Returns order status subquery to be used in WHERE SQL query, based on query arguments from the user.
      *
@@ -1364,8 +1198,7 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function get_status_subquery(array $query_args, $operator = 'AND'): string
     {
         global $wpdb;
-
-        $subqueries        = [];
+        $subqueries = [];
         $excluded_statuses = [];
         if (isset($query_args['status_is']) && is_array($query_args['status_is']) && count($query_args['status_is']) > 0) {
             $allowed_statuses = array_map($this->normalize_order_status(...), esc_sql($query_args['status_is']));
@@ -1373,24 +1206,17 @@ class DataStore extends SqlQuery implements DataStoreInterface
                 $subqueries[] = "{$wpdb->prefix}wc_order_stats.status IN ( '" . implode("','", $allowed_statuses) . "' )";
             }
         }
-
         if (isset($query_args['status_is_not']) && is_array($query_args['status_is_not']) && count($query_args['status_is_not']) > 0) {
             $excluded_statuses = array_map($this->normalize_order_status(...), $query_args['status_is_not']);
         }
-
-        if ((! isset($query_args['status_is']) || empty($query_args['status_is']))
-            && (! isset($query_args['status_is_not']) || empty($query_args['status_is_not']))
-        ) {
+        if ((!isset($query_args['status_is']) || empty($query_args['status_is'])) && (!isset($query_args['status_is_not']) || empty($query_args['status_is_not']))) {
             $excluded_statuses = array_map($this->normalize_order_status(...), static::get_excluded_report_order_statuses());
         }
-
         if ($excluded_statuses) {
             $subqueries[] = "{$wpdb->prefix}wc_order_stats.status NOT IN ( '" . implode("','", $excluded_statuses) . "' )";
         }
-
-        return implode(" $operator ", $subqueries);
+        return implode(" {$operator} ", $subqueries);
     }
-
     /**
      * Add order status SQL clauses if included in query.
      *
@@ -1407,7 +1233,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
             $sql_query->add_sql_clause('where', "AND ( {$order_status_filter} )");
         }
     }
-
     /**
      * Add order by SQL clause if included in query.
      *
@@ -1418,17 +1243,14 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function add_order_by_clause(array $query_args, &$sql_query)
     {
         $order_by_clause = '';
-
-        $sql_query->clear_sql_clause([ 'order_by' ]);
+        $sql_query->clear_sql_clause(['order_by']);
         if (isset($query_args['orderby'])) {
             $order_by_clause = $this->normalize_order_by(esc_sql($query_args['orderby']));
             $sql_query->add_sql_clause('order_by', $order_by_clause);
         }
-
         // Return ORDER BY clause to allow adding the sort field(s) to query via a JOIN.
         return $order_by_clause;
     }
-
     /**
      * Add order by order SQL clause.
      *
@@ -1443,7 +1265,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
             $sql_query->add_sql_clause('order_by', 'DESC');
         }
     }
-
     /**
      * Returns customer subquery to be used in WHERE SQL query, based on query arguments from the user.
      *
@@ -1452,7 +1273,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function get_customer_subquery(array $query_args): string
     {
         global $wpdb;
-
         $customer_filter = '';
         if (isset($query_args['customer_type'])) {
             if ('new' === strtolower($query_args['customer_type'])) {
@@ -1461,10 +1281,8 @@ class DataStore extends SqlQuery implements DataStoreInterface
                 $customer_filter = " {$wpdb->prefix}wc_order_stats.returning_customer = 1";
             }
         }
-
         return $customer_filter;
     }
-
     /**
      * Returns product attribute subquery elements used in JOIN and WHERE clauses,
      * based on query arguments from the user.
@@ -1474,27 +1292,19 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function get_attribute_subqueries(array $query_args): array
     {
         global $wpdb;
-
-        $sql_clauses           = [
-            'join'  => [],
-            'where' => [],
-        ];
-        $match_operator        = $this->get_match_operator($query_args);
-        $post_meta_comparators = [
-            '='  => 'attribute_is',
-            '!=' => 'attribute_is_not',
-        ];
-
+        $sql_clauses = ['join' => [], 'where' => []];
+        $match_operator = $this->get_match_operator($query_args);
+        $post_meta_comparators = ['=' => 'attribute_is', '!=' => 'attribute_is_not'];
         foreach ($post_meta_comparators as $comparator => $arg) {
-            if (! isset($query_args[ $arg ])) {
+            if (!isset($query_args[$arg])) {
                 continue;
             }
-            if (! is_array($query_args[ $arg ])) {
+            if (!is_array($query_args[$arg])) {
                 continue;
             }
-            foreach ($query_args[ $arg ] as $attribute_term) {
+            foreach ($query_args[$arg] as $attribute_term) {
                 // We expect tuples.
-                if (! is_array($attribute_term)) {
+                if (!is_array($attribute_term)) {
                     continue;
                 }
                 if (2 !== count($attribute_term)) {
@@ -1504,7 +1314,7 @@ class DataStore extends SqlQuery implements DataStoreInterface
                 // If the tuple is numeric, assume these are IDs.
                 if (is_numeric($attribute_term[0]) && is_numeric($attribute_term[1])) {
                     $attribute_id = intval($attribute_term[0]);
-                    $term_id      = intval($attribute_term[1]);
+                    $term_id = intval($attribute_term[1]);
                     // Invalid IDs.
                     if (0 === $attribute_id) {
                         continue;
@@ -1512,79 +1322,59 @@ class DataStore extends SqlQuery implements DataStoreInterface
                     if (0 === $term_id) {
                         continue;
                     }
-
                     // @todo: Use wc_get_attribute () instead ?
                     $attr_taxonomy = wc_attribute_taxonomy_name_by_id($attribute_id);
                     // Invalid attribute ID.
                     if (empty($attr_taxonomy)) {
                         continue;
                     }
-
                     $attr_term = get_term_by('id', $term_id, $attr_taxonomy);
                     // Invalid term ID.
                     if (false === $attr_term) {
                         continue;
                     }
-
-                    $meta_key   = sanitize_title($attr_taxonomy);
+                    $meta_key = sanitize_title($attr_taxonomy);
                     $meta_value = $attr_term->slug;
                 } else {
                     // Assume these are a custom attribute slug/value pair.
-                    $meta_key   = esc_sql($attribute_term[0]);
+                    $meta_key = esc_sql($attribute_term[0]);
                     $meta_value = esc_sql($attribute_term[1]);
-                    $attr_term  = get_term_by('slug', $meta_value, $meta_key);
+                    $attr_term = get_term_by('slug', $meta_value, $meta_key);
                     if (false !== $attr_term) {
                         $term_id = $attr_term->term_id;
                     }
                 }
-
-                $join_alias       = 'orderitemmeta1';
+                $join_alias = 'orderitemmeta1';
                 $table_to_join_on = "{$wpdb->prefix}wc_order_product_lookup";
-
                 if (empty($sql_clauses['join'])) {
                     $sql_clauses['join'][] = "JOIN {$wpdb->prefix}woocommerce_order_items orderitems ON orderitems.order_id = {$table_to_join_on}.order_id";
                 }
-
                 // If we're matching all filters (AND), we'll need multiple JOINs on postmeta.
                 // If not, just one.
                 if ('AND' === $match_operator || 1 === count($sql_clauses['join'])) {
-                    $join_idx              = count($sql_clauses['join']);
-                    $join_alias            = 'orderitemmeta' . $join_idx;
+                    $join_idx = count($sql_clauses['join']);
+                    $join_alias = 'orderitemmeta' . $join_idx;
                     $sql_clauses['join'][] = "JOIN {$wpdb->prefix}woocommerce_order_itemmeta as {$join_alias} ON {$join_alias}.order_item_id = {$table_to_join_on}.order_item_id";
                 }
-
                 $in_comparator = '=' === $comparator ? 'in' : 'not in';
-
                 // Add subquery for products ordered using attributes not used in variations.
                 $term_attribute_subquery = "select product_id from {$wpdb->prefix}wc_product_attributes_lookup where is_variation_attribute=0 and term_id = %s";
                 // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 // phpcs:disable WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-                $sql_clauses['where'][] = $wpdb->prepare(
-                    "
-					( ( {$join_alias}.meta_key = %s AND {$join_alias}.meta_value {$comparator} %s ) or (
-						{$wpdb->prefix}wc_order_product_lookup.variation_id = 0 and {$wpdb->prefix}wc_order_product_lookup.product_id {$in_comparator} ({$term_attribute_subquery})
-					) )",
-                    $meta_key,
-                    $meta_value,
-                    $term_id,
-                );
+                $sql_clauses['where'][] = $wpdb->prepare("\n\t\t\t\t\t( ( {$join_alias}.meta_key = %s AND {$join_alias}.meta_value {$comparator} %s ) or (\n\t\t\t\t\t\t{$wpdb->prefix}wc_order_product_lookup.variation_id = 0 and {$wpdb->prefix}wc_order_product_lookup.product_id {$in_comparator} ({$term_attribute_subquery})\n\t\t\t\t\t) )", $meta_key, $meta_value, $term_id);
                 // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 // phpcs:enable WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
             }
         }
-
         // If we're matching multiple attributes and all filters (AND), make sure
         // we're matching attributes on the same product.
         $num_attribute_filters = count($sql_clauses['join']);
-
         for ($i = 2; $i < $num_attribute_filters; $i++) {
-            $join_alias            = 'orderitemmeta' . $i;
+            $join_alias = 'orderitemmeta' . $i;
             $sql_clauses['join'][] = "AND orderitemmeta1.order_item_id = {$join_alias}.order_item_id";
         }
-
         return $sql_clauses;
     }
-
     /**
      * Returns logic operator for WHERE subclause based on 'match' query argument.
      *
@@ -1593,11 +1383,9 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function get_match_operator(array $query_args): string
     {
         $operator = 'AND';
-
-        if (! isset($query_args['match'])) {
+        if (!isset($query_args['match'])) {
             return $operator;
         }
-
         if ('all' === strtolower($query_args['match'])) {
             $operator = 'AND';
         } elseif ('any' === strtolower($query_args['match'])) {
@@ -1605,7 +1393,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
         }
         return $operator;
     }
-
     /**
      * Returns filtered comma separated ids, based on query arguments from the user.
      *
@@ -1617,10 +1404,8 @@ class DataStore extends SqlQuery implements DataStoreInterface
     protected function get_filtered_ids(array $query_args, string $field, $separator = ',')
     {
         global $wpdb;
-
         $ids_str = '';
-        $ids     = isset($query_args[ $field ]) && is_array($query_args[ $field ]) ? $query_args[ $field ] : [];
-
+        $ids = isset($query_args[$field]) && is_array($query_args[$field]) ? $query_args[$field] : [];
         /**
          * Filter the IDs before retrieving report data.
          *
@@ -1632,8 +1417,7 @@ class DataStore extends SqlQuery implements DataStoreInterface
          * @param string $context    The data store context.
          */
         $ids = apply_filters('woocommerce_analytics_' . $field, $ids, $query_args, $field, $this->context);
-
-        if (! empty($ids)) {
+        if (!empty($ids)) {
             $placeholders = implode($separator, array_fill(0, count($ids), '%d'));
             /* phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared */
             $ids_str = $wpdb->prepare("{$placeholders}", $ids);
@@ -1641,7 +1425,6 @@ class DataStore extends SqlQuery implements DataStoreInterface
         }
         return $ids_str;
     }
-
     /**
      * Assign report columns once full table name has been assigned.
      */

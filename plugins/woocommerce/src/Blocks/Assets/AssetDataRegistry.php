@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Assets;
 
-namespace Automattic\WooCommerce\Blocks\Assets;
-
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Blocks\Domain\Services\Hydration;
-use Automattic\WooCommerce\Blocks\Package;
-use Automattic\WooCommerce\Internal\Logging\RemoteLogger;
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Blocks\Domain\Services\Hydration;
+use Automattic\Woo_Commerce\Blocks\Package;
+use Automattic\Woo_Commerce\Internal\Logging\Remote_Logger;
 use Exception;
 use InvalidArgumentException;
-
 /**
  * Class instance for registering data used on the current view session by
  * assets.
@@ -20,7 +18,7 @@ use InvalidArgumentException;
  *
  * @since 2.5.0
  */
-class AssetDataRegistry
+class Asset_Data_Registry
 {
     /**
      * Contains registered data.
@@ -28,36 +26,33 @@ class AssetDataRegistry
      * @var array
      */
     private $data = [];
-
     /**
      * Contains preloaded API data.
      */
     private array $preloaded_api_requests = [];
-
     /**
      * Lazy data is an array of closures that will be invoked just before
      * asset data is generated for the enqueued script.
      */
     private array $lazy_data = [];
-
     /**
      * Asset handle for registered data.
      */
     private string $handle = 'wc-settings';
-
     /**
      * Constructor
      *
      * @param Api $api Asset API interface for various asset registration.
      */
-    public function __construct(/**
-     * Asset API interface for various asset registration.
-     */
+    public function __construct(
+        /**
+         * Asset API interface for various asset registration.
+         */
         private readonly Api $api
-    ) {
+    )
+    {
         $this->init();
     }
-
     /**
      * Hook into WP asset registration for enqueueing asset data.
      */
@@ -66,7 +61,6 @@ class AssetDataRegistry
         add_action('init', $this->register_data_script(...));
         add_action(is_admin() ? 'admin_print_footer_scripts' : 'wp_print_footer_scripts', $this->enqueue_asset_data(...), 1);
     }
-
     /**
      * Exposes core data via the wcSettings global. This data is shared throughout the client.
      *
@@ -77,86 +71,35 @@ class AssetDataRegistry
      */
     protected function get_core_data(): array
     {
-        return [
-            'adminUrl'               => admin_url(),
-            'countries'              => WC()->countries->get_countries(),
-            'currency'               => $this->get_currency_data(),
-            'currentUserId'          => get_current_user_id(),
-            'currentUserIsAdmin'     => current_user_can('manage_woocommerce'),
-            'currentThemeIsFSETheme' => wp_is_block_theme(),
-            'dateFormat'             => wc_date_format(),
-            'homeUrl'                => esc_url(home_url('/')),
-            'locale'                 => $this->get_locale_data(),
-            'isRemoteLoggingEnabled' => wc_get_container()->get(RemoteLogger::class)->is_remote_logging_allowed(),
-            'dashboardUrl'           => wc_get_account_endpoint_url('dashboard'),
-            'orderStatuses'          => $this->get_order_statuses(),
-            'placeholderImgSrc'      => wc_placeholder_img_src(),
-            'productsSettings'       => $this->get_products_settings(),
-            'siteTitle'              => wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES),
-            'storePages'             => $this->get_store_pages(),
-            'wcAssetUrl'             => plugins_url('assets/', WC_PLUGIN_FILE),
-            'wcVersion'              => defined('WC_VERSION') ? WC_VERSION : '',
-            'wpLoginUrl'             => wp_login_url(),
-            'wpVersion'              => get_bloginfo('version'),
-        ];
+        return ['adminUrl' => admin_url(), 'countries' => WC()->countries->get_countries(), 'currency' => $this->get_currency_data(), 'currentUserId' => get_current_user_id(), 'currentUserIsAdmin' => current_user_can('manage_woocommerce'), 'currentThemeIsFSETheme' => wp_is_block_theme(), 'dateFormat' => wc_date_format(), 'homeUrl' => esc_url(home_url('/')), 'locale' => $this->get_locale_data(), 'isRemoteLoggingEnabled' => wc_get_container()->get(Remote_Logger::class)->is_remote_logging_allowed(), 'dashboardUrl' => wc_get_account_endpoint_url('dashboard'), 'orderStatuses' => $this->get_order_statuses(), 'placeholderImgSrc' => wc_placeholder_img_src(), 'productsSettings' => $this->get_products_settings(), 'siteTitle' => wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES), 'storePages' => $this->get_store_pages(), 'wcAssetUrl' => plugins_url('assets/', WC_PLUGIN_FILE), 'wcVersion' => defined('WC_VERSION') ? WC_VERSION : '', 'wpLoginUrl' => wp_login_url(), 'wpVersion' => get_bloginfo('version')];
     }
-
     /**
      * Get currency data to include in settings.
      */
     protected function get_currency_data(): array
     {
         $currency = get_woocommerce_currency();
-
-        return [
-            'code'              => $currency,
-            'precision'         => wc_get_price_decimals(),
-            'symbol'            => html_entity_decode(get_woocommerce_currency_symbol($currency)),
-            'symbolPosition'    => get_option('woocommerce_currency_pos'),
-            'decimalSeparator'  => wc_get_price_decimal_separator(),
-            'thousandSeparator' => wc_get_price_thousand_separator(),
-            'priceFormat'       => html_entity_decode(get_woocommerce_price_format()),
-        ];
+        return ['code' => $currency, 'precision' => wc_get_price_decimals(), 'symbol' => html_entity_decode(get_woocommerce_currency_symbol($currency)), 'symbolPosition' => get_option('woocommerce_currency_pos'), 'decimalSeparator' => wc_get_price_decimal_separator(), 'thousandSeparator' => wc_get_price_thousand_separator(), 'priceFormat' => html_entity_decode(get_woocommerce_price_format())];
     }
-
     /**
      * Get locale data to include in settings.
      */
     protected function get_locale_data(): array
     {
         global $wp_locale;
-
-        return [
-            'siteLocale'    => get_locale(),
-            'userLocale'    => get_user_locale(),
-            'weekdaysShort' => array_values($wp_locale->weekday_abbrev),
-        ];
+        return ['siteLocale' => get_locale(), 'userLocale' => get_user_locale(), 'weekdaysShort' => array_values($wp_locale->weekday_abbrev)];
     }
-
     /**
      * Get store pages to include in settings.
      */
     protected function get_store_pages(): array
     {
-        $store_pages = [
-            'myaccount' => wc_get_page_id('myaccount'),
-            'shop'      => wc_get_page_id('shop'),
-            'cart'      => wc_get_page_id('cart'),
-            'checkout'  => wc_get_page_id('checkout'),
-            'privacy'   => wc_privacy_policy_page_id(),
-            'terms'     => wc_terms_and_conditions_page_id(),
-        ];
-
+        $store_pages = ['myaccount' => wc_get_page_id('myaccount'), 'shop' => wc_get_page_id('shop'), 'cart' => wc_get_page_id('cart'), 'checkout' => wc_get_page_id('checkout'), 'privacy' => wc_privacy_policy_page_id(), 'terms' => wc_terms_and_conditions_page_id()];
         if (is_callable('_prime_post_caches')) {
             _prime_post_caches(array_values($store_pages), false, false);
         }
-
-        return array_map(
-            $this->format_page_resource(...),
-            $store_pages
-        );
+        return array_map($this->format_page_resource(...), $store_pages);
     }
-
     /**
      * Get product related settings.
      *
@@ -164,11 +107,8 @@ class AssetDataRegistry
      */
     protected function get_products_settings(): array
     {
-        return [
-            'cartRedirectAfterAdd' => get_option('woocommerce_cart_redirect_after_add') === 'yes',
-        ];
+        return ['cartRedirectAfterAdd' => get_option('woocommerce_cart_redirect_after_add') === 'yes'];
     }
-
     /**
      * Format a page object into a standard array of data.
      *
@@ -179,20 +119,11 @@ class AssetDataRegistry
         if (is_numeric($page) && $page > 0) {
             $page = get_post($page);
         }
-        if (! is_a($page, '\WP_Post') || 'publish' !== $page->post_status) {
-            return [
-                'id'        => 0,
-                'title'     => '',
-                'permalink' => false,
-            ];
+        if (!is_a($page, '\WP_Post') || 'publish' !== $page->post_status) {
+            return ['id' => 0, 'title' => '', 'permalink' => false];
         }
-        return [
-            'id'        => $page->ID,
-            'title'     => $page->post_title,
-            'permalink' => get_permalink($page->ID),
-        ];
+        return ['id' => $page->ID, 'title' => $page->post_title, 'permalink' => get_permalink($page->ID)];
     }
-
     /**
      * Returns block-related data for enqueued wc-settings script.
      * Format order statuses by removing a leading 'wc-' if present.
@@ -203,12 +134,11 @@ class AssetDataRegistry
     {
         $formatted_statuses = [];
         foreach (wc_get_order_statuses() as $key => $value) {
-            $formatted_key                        = preg_replace('/^wc-/', '', $key);
-            $formatted_statuses[ $formatted_key ] = $value;
+            $formatted_key = preg_replace('/^wc-/', '', $key);
+            $formatted_statuses[$formatted_key] = $value;
         }
         return $formatted_statuses;
     }
-
     /**
      * Used for on demand initialization of asset data and registering it with
      * the internal data registry.
@@ -234,26 +164,20 @@ class AssetDataRegistry
          * @return array
          */
         $settings = apply_filters('woocommerce_shared_settings', $this->data);
-
         // Surface a deprecation warning in the error console.
         if (has_filter('woocommerce_shared_settings')) {
-            $error_handle  = 'deprecated-shared-settings-error';
+            $error_handle = 'deprecated-shared-settings-error';
             $error_message = '`woocommerce_shared_settings` filter in Blocks is deprecated. See https://github.com/woocommerce/woocommerce-gutenberg-products-block/blob/trunk/docs/contributors/block-assets.md';
             // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.NotInFooter,WordPress.WP.EnqueuedResourceParameters.MissingVersion
             wp_register_script($error_handle, '');
             wp_enqueue_script($error_handle);
-            wp_add_inline_script(
-                $error_handle,
-                sprintf('console.warn( "%s" );', $error_message)
-            );
+            wp_add_inline_script($error_handle, sprintf('console.warn( "%s" );', $error_message));
         }
-
-        $core_data                            = $this->get_core_data();
+        $core_data = $this->get_core_data();
         $core_data['experimentalWcRestApiV4'] = Features::is_enabled('rest-api-v4');
         // note this WILL wipe any data already registered to these keys because they are protected.
         $this->data = array_replace_recursive($settings, $core_data);
     }
-
     /**
      * Loops through each registered lazy data callback and adds the returned
      * value to the data array.
@@ -266,10 +190,9 @@ class AssetDataRegistry
     protected function execute_lazy_data()
     {
         foreach ($this->lazy_data as $key => $callback) {
-            $this->data[ $key ] = $callback();
+            $this->data[$key] = $callback();
         }
     }
-
     /**
      * Exposes private registered data to child classes.
      *
@@ -279,7 +202,6 @@ class AssetDataRegistry
     {
         return $this->data;
     }
-
     /**
      * Allows checking whether a key exists.
      *
@@ -290,7 +212,6 @@ class AssetDataRegistry
     {
         return array_key_exists($key, $this->data);
     }
-
     /**
      * Interface for adding data to the registry.
      *
@@ -308,10 +229,8 @@ class AssetDataRegistry
         if ($check_key_exists) {
             wc_deprecated_argument('Automattic\WooCommerce\Blocks\Assets\AssetDataRegistry::add()', '8.9', 'The $check_key_exists parameter is no longer used: all duplicate data will be ignored if the key exists by default');
         }
-
         $this->add_data($key, $data);
     }
-
     /**
      * Hydrate from the API.
      *
@@ -319,11 +238,10 @@ class AssetDataRegistry
      */
     public function hydrate_api_request($path): void
     {
-        if (! isset($this->preloaded_api_requests[ $path ])) {
-            $this->preloaded_api_requests[ $path ] = Package::container()->get(Hydration::class)->get_rest_api_response_data($path);
+        if (!isset($this->preloaded_api_requests[$path])) {
+            $this->preloaded_api_requests[$path] = Package::container()->get(Hydration::class)->get_rest_api_response_data($path);
         }
     }
-
     /**
      * Hydrate some data from the API.
      *
@@ -336,19 +254,14 @@ class AssetDataRegistry
      */
     public function hydrate_data_from_api_request($key, $path, $check_key_exists = false): void
     {
-        $this->add(
-            $key,
-            function () use ($path) {
-                if (isset($this->preloaded_api_requests[ $path ], $this->preloaded_api_requests[ $path ]['body'])) {
-                    return $this->preloaded_api_requests[ $path ]['body'];
-                }
-                $response = Package::container()->get(Hydration::class)->get_rest_api_response_data($path);
-                return $response['body'] ?? '';
-            },
-            $check_key_exists
-        );
+        $this->add($key, function () use ($path) {
+            if (isset($this->preloaded_api_requests[$path], $this->preloaded_api_requests[$path]['body'])) {
+                return $this->preloaded_api_requests[$path]['body'];
+            }
+            $response = Package::container()->get(Hydration::class)->get_rest_api_response_data($path);
+            return $response['body'] ?? '';
+        }, $check_key_exists);
     }
-
     /**
      * Adds a page permalink to the data registry.
      *
@@ -357,25 +270,17 @@ class AssetDataRegistry
     public function register_page_id($page_id): void
     {
         $permalink = $page_id ? get_permalink($page_id) : false;
-
         if ($permalink) {
-            $this->data[ 'page-' . $page_id ] = $permalink;
+            $this->data['page-' . $page_id] = $permalink;
         }
     }
-
     /**
      * Callback for registering the data script via WordPress API.
      */
     public function register_data_script(): void
     {
-        $this->api->register_script(
-            $this->handle,
-            'assets/client/blocks/wc-settings.js',
-            [ 'wp-api-fetch' ],
-            true
-        );
+        $this->api->register_script($this->handle, 'assets/client/blocks/wc-settings.js', ['wp-api-fetch'], true);
     }
-
     /**
      * Callback for enqueuing asset data via the WP api.
      *
@@ -389,24 +294,16 @@ class AssetDataRegistry
         if (wp_script_is($this->handle, 'enqueued')) {
             $this->initialize_core_data();
             $this->execute_lazy_data();
-
-            $data                          = rawurlencode(wp_json_encode($this->data));
-            $wc_settings_script            = "var wcSettings = JSON.parse( decodeURIComponent( '" . esc_js($data) . "' ) );";
+            $data = rawurlencode(wp_json_encode($this->data));
+            $wc_settings_script = "var wcSettings = JSON.parse( decodeURIComponent( '" . esc_js($data) . "' ) );";
             $preloaded_api_requests_script = '';
-
             if (count($this->preloaded_api_requests) > 0) {
-                $preloaded_api_requests        = rawurlencode(wp_json_encode($this->preloaded_api_requests));
+                $preloaded_api_requests = rawurlencode(wp_json_encode($this->preloaded_api_requests));
                 $preloaded_api_requests_script = "wp.apiFetch.use( wp.apiFetch.createPreloadingMiddleware( JSON.parse( decodeURIComponent( '" . esc_js($preloaded_api_requests) . "' ) ) ) );";
             }
-
-            wp_add_inline_script(
-                $this->handle,
-                $wc_settings_script . $preloaded_api_requests_script,
-                'before'
-            );
+            wp_add_inline_script($this->handle, $wc_settings_script . $preloaded_api_requests_script, 'before');
         }
     }
-
     /**
      * See self::add() for docs.
      *
@@ -415,7 +312,7 @@ class AssetDataRegistry
      */
     protected function add_data($key, $data)
     {
-        if (! is_string($key)) {
+        if (!is_string($key)) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
             trigger_error(esc_html__('Key for the data being registered must be a string', 'woocommerce'), E_USER_WARNING);
             return;
@@ -423,18 +320,17 @@ class AssetDataRegistry
         if ($this->exists($key)) {
             return;
         }
-        if (isset($this->data[ $key ])) {
+        if (isset($this->data[$key])) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
             trigger_error(esc_html__('Overriding existing data with an already registered key is not allowed', 'woocommerce'), E_USER_WARNING);
             return;
         }
         if (\is_callable($data)) {
-            $this->lazy_data[ $key ] = $data;
+            $this->lazy_data[$key] = $data;
             return;
         }
-        $this->data[ $key ] = $data;
+        $this->data[$key] = $data;
     }
-
     /**
      * Exposes whether the current site is in debug mode or not.
      *

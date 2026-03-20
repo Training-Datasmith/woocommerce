@@ -1,78 +1,65 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Block_Templates;
 
-namespace Automattic\WooCommerce\Internal\Admin\BlockTemplates;
-
-use Automattic\WooCommerce\Admin\BlockTemplates\BlockInterface;
-use Automattic\WooCommerce\Admin\BlockTemplates\BlockTemplateInterface;
-use Automattic\WooCommerce\Admin\BlockTemplates\ContainerInterface;
-
+use Automattic\Woo_Commerce\Admin\Block_Templates\Block_Interface;
+use Automattic\Woo_Commerce\Admin\Block_Templates\Block_Template_Interface;
+use Automattic\Woo_Commerce\Admin\Block_Templates\Container_Interface;
 /**
  * Block configuration used to specify blocks in BlockTemplate.
  */
-class AbstractBlock implements BlockInterface
+class Abstract_Block implements Block_Interface
 {
-    use BlockFormattedTemplateTrait;
-
+    use Block_Formatted_Template_Trait;
     /**
      * The block name.
      *
      * @var string
      */
     private $name;
-
     /**
      * The block ID.
      *
      * @var string
      */
     private $id;
-
     /**
      * The block order.
      */
     private int $order = 10000;
-
     /**
      * The block attributes.
      *
      * @var array
      */
     private $attributes = [];
-
     /**
      * The block hide conditions.
      */
     private array $hide_conditions = [];
-
     /**
      * The block hide conditions counter.
      */
     private int $hide_conditions_counter = 0;
-
     /**
      * The block disable conditions.
      */
     private array $disable_conditions = [];
-
     /**
      * The block disable conditions counter.
      */
     private int $disable_conditions_counter = 0;
-
     /**
      * The block template that this block belongs to.
      *
      * @var BlockTemplate
      */
-    private \Automattic\WooCommerce\Admin\BlockTemplates\BlockTemplateInterface $root_template;
-
+    private \Automattic\Woo_Commerce\Admin\Block_Templates\Block_Template_Interface $root_template;
     /**
      * The parent container.
      */
-    private \Automattic\WooCommerce\Admin\BlockTemplates\ContainerInterface $parent;
-
+    private \Automattic\Woo_Commerce\Admin\Block_Templates\Container_Interface $parent;
     /**
      * Block constructor.
      *
@@ -83,41 +70,34 @@ class AbstractBlock implements BlockInterface
      * @throws \ValueError If the block configuration is invalid.
      * @throws \ValueError If the parent block container does not belong to the same template as the block.
      */
-    public function __construct(array $config, BlockTemplateInterface &$root_template, ?ContainerInterface &$parent = null) // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.parentFound
-    {$this->validate($config, $root_template, $parent);
-
+    public function __construct(array $config, Block_Template_Interface &$root_template, ?Container_Interface &$parent = null)
+    {
+        $this->validate($config, $root_template, $parent);
         $this->root_template = $root_template;
-        $this->parent        = is_null($parent) ? $root_template : $parent;
-
-        $this->name = $config[ self::NAME_KEY ];
-
-        if (! isset($config[ self::ID_KEY ])) {
+        $this->parent = is_null($parent) ? $root_template : $parent;
+        $this->name = $config[self::NAME_KEY];
+        if (!isset($config[self::ID_KEY])) {
             $this->id = $this->root_template->generate_block_id($this->get_name());
         } else {
-            $this->id = $config[ self::ID_KEY ];
+            $this->id = $config[self::ID_KEY];
         }
-
-        if (isset($config[ self::ORDER_KEY ])) {
-            $this->order = $config[ self::ORDER_KEY ];
+        if (isset($config[self::ORDER_KEY])) {
+            $this->order = $config[self::ORDER_KEY];
         }
-
-        if (isset($config[ self::ATTRIBUTES_KEY ])) {
-            $this->attributes = $config[ self::ATTRIBUTES_KEY ];
+        if (isset($config[self::ATTRIBUTES_KEY])) {
+            $this->attributes = $config[self::ATTRIBUTES_KEY];
         }
-
-        if (isset($config[ self::HIDE_CONDITIONS_KEY ])) {
-            foreach ($config[ self::HIDE_CONDITIONS_KEY ] as $hide_condition) {
+        if (isset($config[self::HIDE_CONDITIONS_KEY])) {
+            foreach ($config[self::HIDE_CONDITIONS_KEY] as $hide_condition) {
                 $this->add_hide_condition($hide_condition['expression']);
             }
         }
-
-        if (isset($config[ self::DISABLE_CONDITIONS_KEY ])) {
-            foreach ($config[ self::DISABLE_CONDITIONS_KEY ] as $disable_condition) {
+        if (isset($config[self::DISABLE_CONDITIONS_KEY])) {
+            foreach ($config[self::DISABLE_CONDITIONS_KEY] as $disable_condition) {
                 $this->add_disable_condition($disable_condition['expression']);
             }
         }
     }
-
     /**
      * Validate block configuration.
      *
@@ -128,24 +108,21 @@ class AbstractBlock implements BlockInterface
      * @throws \ValueError If the block configuration is invalid.
      * @throws \ValueError If the parent block container does not belong to the same template as the block.
      */
-    protected function validate(array $config, BlockTemplateInterface &$root_template, ?ContainerInterface &$parent = null) // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.parentFound
-    {if (isset($parent) && ($parent->get_root_template() !== $root_template)) {
-        throw new \ValueError('The parent block must belong to the same template as the block.');
-    }
-
-        if (! isset($config[ self::NAME_KEY ]) || ! is_string($config[ self::NAME_KEY ])) {
-            throw new \ValueError('The block name must be specified.');
+    protected function validate(array $config, Block_Template_Interface &$root_template, ?Container_Interface &$parent = null)
+    {
+        if (isset($parent) && $parent->get_root_template() !== $root_template) {
+            throw new \Value_Error('The parent block must belong to the same template as the block.');
         }
-
-        if (isset($config[ self::ORDER_KEY ]) && ! is_int($config[ self::ORDER_KEY ])) {
-            throw new \ValueError('The block order must be an integer.');
+        if (!isset($config[self::NAME_KEY]) || !is_string($config[self::NAME_KEY])) {
+            throw new \Value_Error('The block name must be specified.');
         }
-
-        if (isset($config[ self::ATTRIBUTES_KEY ]) && ! is_array($config[ self::ATTRIBUTES_KEY ])) {
-            throw new \ValueError('The block attributes must be an array.');
+        if (isset($config[self::ORDER_KEY]) && !is_int($config[self::ORDER_KEY])) {
+            throw new \Value_Error('The block order must be an integer.');
+        }
+        if (isset($config[self::ATTRIBUTES_KEY]) && !is_array($config[self::ATTRIBUTES_KEY])) {
+            throw new \Value_Error('The block attributes must be an array.');
         }
     }
-
     /**
      * Get the block name.
      */
@@ -153,7 +130,6 @@ class AbstractBlock implements BlockInterface
     {
         return $this->name;
     }
-
     /**
      * Get the block ID.
      */
@@ -161,7 +137,6 @@ class AbstractBlock implements BlockInterface
     {
         return $this->id;
     }
-
     /**
      * Get the block order.
      */
@@ -169,7 +144,6 @@ class AbstractBlock implements BlockInterface
     {
         return $this->order;
     }
-
     /**
      * Set the block order.
      *
@@ -179,7 +153,6 @@ class AbstractBlock implements BlockInterface
     {
         $this->order = $order;
     }
-
     /**
      * Get the block attributes.
      */
@@ -187,7 +160,6 @@ class AbstractBlock implements BlockInterface
     {
         return $this->attributes;
     }
-
     /**
      * Set the block attributes.
      *
@@ -197,7 +169,6 @@ class AbstractBlock implements BlockInterface
     {
         $this->attributes = $attributes;
     }
-
     /**
      * Set a block attribute value without replacing the entire attributes object.
      *
@@ -206,25 +177,22 @@ class AbstractBlock implements BlockInterface
      */
     public function set_attribute(string $key, $value): void
     {
-        $this->attributes[ $key ] = $value;
+        $this->attributes[$key] = $value;
     }
-
     /**
      * Get the template that this block belongs to.
      */
-    public function &get_root_template(): BlockTemplateInterface
+    public function &get_root_template(): Block_Template_Interface
     {
         return $this->root_template;
     }
-
     /**
      * Get the parent block container.
      */
-    public function &get_parent(): ContainerInterface
+    public function &get_parent(): Container_Interface
     {
         return $this->parent;
     }
-
     /**
      * Remove the block from its parent.
      */
@@ -232,7 +200,6 @@ class AbstractBlock implements BlockInterface
     {
         $this->parent->remove_block($this->id);
     }
-
     /**
      * Check if the block is detached from its parent block container or the template it belongs to.
      *
@@ -240,12 +207,10 @@ class AbstractBlock implements BlockInterface
      */
     public function is_detached(): bool
     {
-        $is_in_parent        = $this->parent->get_block($this->id) === $this;
+        $is_in_parent = $this->parent->get_block($this->id) === $this;
         $is_in_root_template = $this->get_root_template()->get_block($this->id) === $this;
-
-        return ! ($is_in_parent && $is_in_root_template);
+        return !($is_in_parent && $is_in_root_template);
     }
-
     /**
      * Add a hide condition to the block.
      *
@@ -258,13 +223,9 @@ class AbstractBlock implements BlockInterface
     {
         $key = 'k' . $this->hide_conditions_counter;
         $this->hide_conditions_counter++;
-
         // Storing the expression in an array to allow for future expansion
         // (such as adding the plugin that added the condition).
-        $this->hide_conditions[ $key ] = [
-            'expression' => $expression,
-        ];
-
+        $this->hide_conditions[$key] = ['expression' => $expression];
         /**
          * Action called after a hide condition is added to a block.
          *
@@ -273,10 +234,8 @@ class AbstractBlock implements BlockInterface
          * @since 8.4.0
          */
         do_action('woocommerce_block_template_after_add_hide_condition', $this);
-
         return $key;
     }
-
     /**
      * Remove a hide condition from the block.
      *
@@ -284,8 +243,7 @@ class AbstractBlock implements BlockInterface
      */
     public function remove_hide_condition(string $key): void
     {
-        unset($this->hide_conditions[ $key ]);
-
+        unset($this->hide_conditions[$key]);
         /**
          * Action called after a hide condition is removed from a block.
          *
@@ -295,7 +253,6 @@ class AbstractBlock implements BlockInterface
          */
         do_action('woocommerce_block_template_after_remove_hide_condition', $this);
     }
-
     /**
      * Get the hide conditions of the block.
      */
@@ -303,7 +260,6 @@ class AbstractBlock implements BlockInterface
     {
         return $this->hide_conditions;
     }
-
     /**
      * Add a disable condition to the block.
      *
@@ -316,16 +272,11 @@ class AbstractBlock implements BlockInterface
     {
         $key = 'k' . $this->disable_conditions_counter;
         $this->disable_conditions_counter++;
-
         // Storing the expression in an array to allow for future expansion
         // (such as adding the plugin that added the condition).
-        $this->disable_conditions[ $key ] = [
-            'expression' => $expression,
-        ];
-
+        $this->disable_conditions[$key] = ['expression' => $expression];
         return $key;
     }
-
     /**
      * Remove a disable condition from the block.
      *
@@ -333,9 +284,8 @@ class AbstractBlock implements BlockInterface
      */
     public function remove_disable_condition(string $key): void
     {
-        unset($this->disable_conditions[ $key ]);
+        unset($this->disable_conditions[$key]);
     }
-
     /**
      * Get the disable conditions of the block.
      */

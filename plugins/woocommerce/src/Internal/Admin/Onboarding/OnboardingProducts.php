@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Onboarding Products
  */
+namespace Automattic\Woo_Commerce\Internal\Admin\Onboarding;
 
-namespace Automattic\WooCommerce\Internal\Admin\Onboarding;
-
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Admin\PluginsHelper;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Admin\Plugins_Helper;
 /**
  * Class for handling product types and data around product types.
  */
-class OnboardingProducts
+class Onboarding_Products
 {
     /**
      * Name of product data transient.
@@ -21,7 +19,6 @@ class OnboardingProducts
      * @var string
      */
     public const PRODUCT_DATA_TRANSIENT = 'wc_onboarding_product_data';
-
     /**
      * Get a list of allowed product types for the onboarding wizard.
      *
@@ -29,49 +26,20 @@ class OnboardingProducts
      */
     public static function get_allowed_product_types()
     {
-        $products         = [
-            'physical'        => [
-                'label'   => __('Physical products', 'woocommerce'),
-                'default' => true,
-            ],
-            'downloads'       => [
-                'label' => __('Downloads', 'woocommerce'),
-            ],
-            'subscriptions'   => [
-                'label' => __('Subscriptions', 'woocommerce'),
-            ],
-            'memberships'     => [
-                'label'   => __('Memberships', 'woocommerce'),
-                'product' => 958589,
-            ],
-            'bookings'        => [
-                'label'   => __('Bookings', 'woocommerce'),
-                'product' => 390890,
-            ],
-            'product-bundles' => [
-                'label'   => __('Bundles', 'woocommerce'),
-                'product' => 18716,
-            ],
-            'product-add-ons' => [
-                'label'   => __('Customizable products', 'woocommerce'),
-                'product' => 18618,
-            ],
-        ];
-        $base_location    = wc_get_base_location();
+        $products = ['physical' => ['label' => __('Physical products', 'woocommerce'), 'default' => true], 'downloads' => ['label' => __('Downloads', 'woocommerce')], 'subscriptions' => ['label' => __('Subscriptions', 'woocommerce')], 'memberships' => ['label' => __('Memberships', 'woocommerce'), 'product' => 958589], 'bookings' => ['label' => __('Bookings', 'woocommerce'), 'product' => 390890], 'product-bundles' => ['label' => __('Bundles', 'woocommerce'), 'product' => 18716], 'product-add-ons' => ['label' => __('Customizable products', 'woocommerce'), 'product' => 18618]];
+        $base_location = wc_get_base_location();
         $has_cbd_industry = false;
         if ('US' === $base_location['country']) {
-            $profile = get_option(OnboardingProfile::DATA_OPTION, []);
-            if (! empty($profile['industry'])) {
+            $profile = get_option(Onboarding_Profile::DATA_OPTION, []);
+            if (!empty($profile['industry'])) {
                 $has_cbd_industry = in_array('cbd-other-hemp-derived-products', array_column($profile['industry'], 'slug'), true);
             }
         }
-        if (! Features::is_enabled('subscriptions') || 'US' !== $base_location['country'] || $has_cbd_industry) {
+        if (!Features::is_enabled('subscriptions') || 'US' !== $base_location['country'] || $has_cbd_industry) {
             $products['subscriptions']['product'] = 27147;
         }
-
         return apply_filters('woocommerce_admin_onboarding_product_types', $products);
     }
-
     /**
      * Get dynamic product data from API.
      *
@@ -81,60 +49,42 @@ class OnboardingProducts
     {
         $locale = get_user_locale();
         // Transient value is an array of product data keyed by locale.
-        $transient_value      = get_transient(self::PRODUCT_DATA_TRANSIENT);
-        $transient_value      = is_array($transient_value) ? $transient_value : [];
-        $woocommerce_products = $transient_value[ $locale ] ?? false;
-
+        $transient_value = get_transient(self::PRODUCT_DATA_TRANSIENT);
+        $transient_value = is_array($transient_value) ? $transient_value : [];
+        $woocommerce_products = $transient_value[$locale] ?? false;
         if (false === $woocommerce_products) {
-            $woocommerce_products = wp_remote_get(
-                add_query_arg(
-                    [
-                        'locale' => $locale,
-                    ],
-                    'https://woocommerce.com/wp-json/wccom-extensions/1.0/search'
-                ),
-                [
-                    'user-agent' => 'WooCommerce/' . WC()->version . '; ' . get_bloginfo('url'),
-                ]
-            );
+            $woocommerce_products = wp_remote_get(add_query_arg(['locale' => $locale], 'https://woocommerce.com/wp-json/wccom-extensions/1.0/search'), ['user-agent' => 'WooCommerce/' . WC()->version . '; ' . get_bloginfo('url')]);
             if (is_wp_error($woocommerce_products)) {
                 return $product_types;
             }
-            $transient_value[ $locale ] = $woocommerce_products;
+            $transient_value[$locale] = $woocommerce_products;
             set_transient(self::PRODUCT_DATA_TRANSIENT, $transient_value, DAY_IN_SECONDS);
         }
-
-        $data         = json_decode((string) $woocommerce_products['body']);
-        $products     = [];
+        $data = json_decode((string) $woocommerce_products['body']);
+        $products = [];
         $product_data = [];
-
         // Map product data by ID.
         if (isset($data) && isset($data->products)) {
             foreach ($data->products as $product_datum) {
                 if (isset($product_datum->id)) {
-                    $products[ $product_datum->id ] = $product_datum;
+                    $products[$product_datum->id] = $product_datum;
                 }
             }
         }
-
         // Loop over product types and append data.
         foreach ($product_types as $key => $product_type) {
-            $product_data[ $key ] = $product_types[ $key ];
-
-            if (isset($product_type['product']) && isset($products[ $product_type['product'] ])) {
-                $price        = html_entity_decode($products[ $product_type['product'] ]->price);
+            $product_data[$key] = $product_types[$key];
+            if (isset($product_type['product']) && isset($products[$product_type['product']])) {
+                $price = html_entity_decode($products[$product_type['product']]->price);
                 $yearly_price = (float) str_replace('$', '', $price);
-
-                $product_data[ $key ]['yearly_price'] = $yearly_price;
-                $product_data[ $key ]['description']  = $products[ $product_type['product'] ]->excerpt;
-                $product_data[ $key ]['more_url']     = $products[ $product_type['product'] ]->link;
-                $product_data[ $key ]['slug']         = strtolower(preg_replace('~[^\pL\d]+~u', '-', $products[ $product_type['product'] ]->slug));
+                $product_data[$key]['yearly_price'] = $yearly_price;
+                $product_data[$key]['description'] = $products[$product_type['product']]->excerpt;
+                $product_data[$key]['more_url'] = $products[$product_type['product']]->link;
+                $product_data[$key]['slug'] = strtolower(preg_replace('~[^\pL\d]+~u', '-', $products[$product_type['product']]->slug));
             }
         }
-
         return $product_data;
     }
-
     /**
      * Get the allowed product types with the polled data.
      *
@@ -144,33 +94,26 @@ class OnboardingProducts
     {
         return self::get_product_data(self::get_allowed_product_types());
     }
-
     /**
      * Get relevant purchaseable products for the site.
      */
     public static function get_relevant_products(): array
     {
-        $profiler_data = get_option(OnboardingProfile::DATA_OPTION, []);
-        $installed     = PluginsHelper::get_installed_plugin_slugs();
+        $profiler_data = get_option(Onboarding_Profile::DATA_OPTION, []);
+        $installed = Plugins_Helper::get_installed_plugin_slugs();
         $product_types = $profiler_data['product_types'] ?? [];
-        $product_data  = self::get_product_types_with_data();
-        $purchaseable  = [];
-        $remaining     = [];
+        $product_data = self::get_product_types_with_data();
+        $purchaseable = [];
+        $remaining = [];
         foreach ($product_types as $type) {
-            if (! isset($product_data[ $type ]['slug'])) {
+            if (!isset($product_data[$type]['slug'])) {
                 continue;
             }
-
-            $purchaseable[] = $product_data[ $type ];
-
-            if (! in_array($product_data[ $type ]['slug'], $installed, true)) {
-                $remaining[] = $product_data[ $type ]['label'];
+            $purchaseable[] = $product_data[$type];
+            if (!in_array($product_data[$type]['slug'], $installed, true)) {
+                $remaining[] = $product_data[$type]['label'];
             }
         }
-
-        return [
-            'purchaseable' => $purchaseable,
-            'remaining'    => $remaining,
-        ];
+        return ['purchaseable' => $purchaseable, 'remaining' => $remaining];
     }
 }

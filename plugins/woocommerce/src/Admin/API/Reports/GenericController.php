@@ -1,14 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\API\Reports;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\API\Reports;
 
 defined('ABSPATH') || exit;
-
 use WP_REST_Request;
 use WP_REST_Response;
-
 /**
  * {@see WC_REST_Reports_Controller WC REST API Reports Controller} extended to be shared as a generic base for all Analytics reports controllers.
  *
@@ -51,7 +48,7 @@ use WP_REST_Response;
  *
  * @extends WC_REST_Reports_Controller
  */
-abstract class GenericController extends \WC_REST_Reports_Controller
+abstract class Generic_Controller extends \WC_REST_Reports_Controller
 {
     /**
      * Endpoint namespace.
@@ -59,7 +56,6 @@ abstract class GenericController extends \WC_REST_Reports_Controller
      * @var string
      */
     protected $namespace = 'wc-analytics';
-
     /**
      * Add pagination headers and links.
      *
@@ -75,12 +71,7 @@ abstract class GenericController extends \WC_REST_Reports_Controller
         $response = rest_ensure_response($response);
         $response->header('X-WP-Total', $total);
         $response->header('X-WP-TotalPages', $max_pages);
-
-        $base = add_query_arg(
-            $request->get_query_params(),
-            rest_url(sprintf('/%s/%s', $this->namespace, $this->rest_base))
-        );
-
+        $base = add_query_arg($request->get_query_params(), rest_url(sprintf('/%s/%s', $this->namespace, $this->rest_base)));
         if ($page > 1) {
             $prev_page = $page - 1;
             if ($prev_page > $max_pages) {
@@ -89,16 +80,13 @@ abstract class GenericController extends \WC_REST_Reports_Controller
             $prev_link = add_query_arg('page', $prev_page, $base);
             $response->link_header('prev', $prev_link);
         }
-
         if ($max_pages > $page) {
             $next_page = $page + 1;
             $next_link = add_query_arg('page', $next_page, $base);
             $response->link_header('next', $next_link);
         }
-
         return $response;
     }
-
     /**
      * Get data from `{$this->rest_base}` store, based on the given query vars.
      *
@@ -111,7 +99,6 @@ abstract class GenericController extends \WC_REST_Reports_Controller
         $data_store = \WC_Data_Store::load($this->rest_base);
         return $data_store->get_data($query_args);
     }
-
     /**
      * Get the query params definition for collections.
      *
@@ -119,63 +106,17 @@ abstract class GenericController extends \WC_REST_Reports_Controller
      */
     public function get_collection_params()
     {
-        $params                        = [];
-        $params['context']             = $this->get_context_param([ 'default' => 'view' ]);
-        $params['page']                = [
-            'description'       => __('Current page of the collection.', 'woocommerce'),
-            'type'              => 'integer',
-            'default'           => 1,
-            'sanitize_callback' => 'absint',
-            'validate_callback' => 'rest_validate_request_arg',
-            'minimum'           => 1,
-        ];
-        $params['per_page']            = [
-            'description'       => __('Maximum number of items to be returned in result set.', 'woocommerce'),
-            'type'              => 'integer',
-            'default'           => 10,
-            'minimum'           => 1,
-            'maximum'           => 100,
-            'sanitize_callback' => 'absint',
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-        $params['after']               = [
-            'description'       => __('Limit response to resources published after a given ISO8601 compliant date.', 'woocommerce'),
-            'type'              => 'string',
-            'format'            => 'date-time',
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-        $params['before']              = [
-            'description'       => __('Limit response to resources published before a given ISO8601 compliant date.', 'woocommerce'),
-            'type'              => 'string',
-            'format'            => 'date-time',
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-        $params['order']               = [
-            'description'       => __('Order sort attribute ascending or descending.', 'woocommerce'),
-            'type'              => 'string',
-            'default'           => 'desc',
-            'enum'              => [ 'asc', 'desc' ],
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-        $params['orderby']             = [
-            'description'       => __('Sort collection by object attribute.', 'woocommerce'),
-            'type'              => 'string',
-            'default'           => 'date',
-            'enum'              => [
-                'date',
-            ],
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-        $params['force_cache_refresh'] = [
-            'description'       => __('Force retrieval of fresh data instead of from the cache.', 'woocommerce'),
-            'type'              => 'boolean',
-            'sanitize_callback' => 'wp_validate_boolean',
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-
+        $params = [];
+        $params['context'] = $this->get_context_param(['default' => 'view']);
+        $params['page'] = ['description' => __('Current page of the collection.', 'woocommerce'), 'type' => 'integer', 'default' => 1, 'sanitize_callback' => 'absint', 'validate_callback' => 'rest_validate_request_arg', 'minimum' => 1];
+        $params['per_page'] = ['description' => __('Maximum number of items to be returned in result set.', 'woocommerce'), 'type' => 'integer', 'default' => 10, 'minimum' => 1, 'maximum' => 100, 'sanitize_callback' => 'absint', 'validate_callback' => 'rest_validate_request_arg'];
+        $params['after'] = ['description' => __('Limit response to resources published after a given ISO8601 compliant date.', 'woocommerce'), 'type' => 'string', 'format' => 'date-time', 'validate_callback' => 'rest_validate_request_arg'];
+        $params['before'] = ['description' => __('Limit response to resources published before a given ISO8601 compliant date.', 'woocommerce'), 'type' => 'string', 'format' => 'date-time', 'validate_callback' => 'rest_validate_request_arg'];
+        $params['order'] = ['description' => __('Order sort attribute ascending or descending.', 'woocommerce'), 'type' => 'string', 'default' => 'desc', 'enum' => ['asc', 'desc'], 'validate_callback' => 'rest_validate_request_arg'];
+        $params['orderby'] = ['description' => __('Sort collection by object attribute.', 'woocommerce'), 'type' => 'string', 'default' => 'date', 'enum' => ['date'], 'validate_callback' => 'rest_validate_request_arg'];
+        $params['force_cache_refresh'] = ['description' => __('Force retrieval of fresh data instead of from the cache.', 'woocommerce'), 'type' => 'boolean', 'sanitize_callback' => 'wp_validate_boolean', 'validate_callback' => 'rest_validate_request_arg'];
         return $params;
     }
-
     /**
      * Get the report data.
      *
@@ -188,33 +129,21 @@ abstract class GenericController extends \WC_REST_Reports_Controller
      */
     public function get_items($request)
     {
-        $query_args  = $this->prepare_reports_query($request);
+        $query_args = $this->prepare_reports_query($request);
         $report_data = $this->get_datastore_data($query_args);
-
         if (is_wp_error($report_data)) {
             return $report_data;
         }
-
-        if (! isset($report_data->data) || ! isset($report_data->page_no) || ! isset($report_data->pages)) {
-            return new \WP_Error('woocommerce_rest_reports_invalid_response', __('Invalid response from data store.', 'woocommerce'), [ 'status' => 500 ]);
+        if (!isset($report_data->data) || !isset($report_data->page_no) || !isset($report_data->pages)) {
+            return new \WP_Error('woocommerce_rest_reports_invalid_response', __('Invalid response from data store.', 'woocommerce'), ['status' => 500]);
         }
-
         $out_data = [];
-
         foreach ($report_data->data as $datum) {
-            $item       = $this->prepare_item_for_response($datum, $request);
+            $item = $this->prepare_item_for_response($datum, $request);
             $out_data[] = $this->prepare_response_for_collection($item);
         }
-
-        return $this->add_pagination_headers(
-            $request,
-            $out_data,
-            (int) $report_data->total,
-            (int) $report_data->page_no,
-            (int) $report_data->pages
-        );
+        return $this->add_pagination_headers($request, $out_data, (int) $report_data->total, (int) $report_data->page_no, (int) $report_data->pages);
     }
-
     /**
      * Prepare a report data item for serialization.
      *
@@ -233,15 +162,12 @@ abstract class GenericController extends \WC_REST_Reports_Controller
     public function prepare_item_for_response($report_item, $request)
     {
         $data = $report_item;
-
-        $context = ! empty($request['context']) ? $request['context'] : 'view';
-        $data    = $this->add_additional_fields_to_object($data, $request);
-        $data    = $this->filter_response_by_context($data, $context);
-
+        $context = !empty($request['context']) ? $request['context'] : 'view';
+        $data = $this->add_additional_fields_to_object($data, $request);
+        $data = $this->filter_response_by_context($data, $context);
         // Wrap the data in a response object.
         return rest_ensure_response($data);
     }
-
     /**
      * Maps query arguments from the REST request, to be used to query the datastore.
      *
@@ -254,15 +180,8 @@ abstract class GenericController extends \WC_REST_Reports_Controller
      */
     protected function prepare_reports_query($request)
     {
-        return wp_parse_args(
-            array_intersect_key(
-                $request->get_query_params(),
-                $this->get_collection_params()
-            ),
-            $request->get_default_params()
-        );
+        return wp_parse_args(array_intersect_key($request->get_query_params(), $this->get_collection_params()), $request->get_default_params());
     }
-
     /**
      * Apply a filter for custom orderby enum.
      *

@@ -1,21 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Caches;
 
-namespace Automattic\WooCommerce\Caches;
-
-use Automattic\WooCommerce\Enums\OrderStatus;
-
+use Automattic\Woo_Commerce\Enums\Order_Status;
 /**
  * A class to cache counts for various order statuses.
  */
-class OrderCountCache
+class Order_Count_Cache
 {
     /**
      * Cache prefix.
      */
     private string $cache_prefix = 'order-count';
-
     /**
      * Default value for the duration of the objects in the cache, in seconds
      * (may not be used depending on the cache engine used WordPress cache implementation).
@@ -23,7 +20,6 @@ class OrderCountCache
      * @var int
      */
     protected $expiration = DAY_IN_SECONDS;
-
     /**
      * Retrieves the list of known statuses by order type. A cached array of statuses is saved per order type for
      * improved backward compatibility with some of the extensions that don't register all statuses they use with
@@ -36,13 +32,11 @@ class OrderCountCache
     private function get_saved_statuses_for_type(string $order_type): array
     {
         $statuses = wp_cache_get($this->get_saved_statuses_cache_key($order_type));
-        if (! is_array($statuses)) {
+        if (!is_array($statuses)) {
             return [];
         }
-
         return $statuses;
     }
-
     /**
      * Adds the given statuses to the cached statuses array for the order type if they are not already stored.
      *
@@ -54,17 +48,14 @@ class OrderCountCache
         if (empty($order_statuses)) {
             return;
         }
-
-        $existing     = $this->get_saved_statuses_for_type($order_type);
+        $existing = $this->get_saved_statuses_for_type($order_type);
         $new_statuses = array_diff($order_statuses, $existing);
         if (empty($new_statuses)) {
             return;
         }
         $merged = array_unique(array_merge($existing, $new_statuses));
-
         wp_cache_set($this->get_saved_statuses_cache_key($order_type), $merged, '', $this->expiration);
     }
-
     /**
      * Get the default statuses.
      *
@@ -74,12 +65,8 @@ class OrderCountCache
      */
     public function get_default_statuses(): array
     {
-        return array_merge(
-            array_keys(wc_get_order_statuses()),
-            [ OrderStatus::TRASH ]
-        );
+        return array_merge(array_keys(wc_get_order_statuses()), [Order_Status::TRASH]);
     }
-
     /**
      * Get the cache key for a given order type and status.
      *
@@ -91,7 +78,6 @@ class OrderCountCache
     {
         return $this->cache_prefix . '_' . $order_type . '_' . $order_status;
     }
-
     /**
      * Get the cache key saved statuses of the given order type.
      *
@@ -103,7 +89,6 @@ class OrderCountCache
     {
         return $this->cache_prefix . '_' . $order_type . '_statuses';
     }
-
     /**
      * Check if the cache has a value for a given order type and status.
      *
@@ -116,7 +101,6 @@ class OrderCountCache
         $cache_key = $this->get_cache_key($order_type, $order_status);
         return wp_cache_get($cache_key) !== false;
     }
-
     /**
      * Set the cache value for a given order type and status.
      *
@@ -127,11 +111,10 @@ class OrderCountCache
      */
     public function set($order_type, $order_status, int $value): bool
     {
-        $this->ensure_statuses_for_type((string) $order_type, [ (string) $order_status ]);
+        $this->ensure_statuses_for_type((string) $order_type, [(string) $order_status]);
         $cache_key = $this->get_cache_key($order_type, $order_status);
         return wp_cache_set($cache_key, $value, '', $this->expiration);
     }
-
     /**
      * Set the cache count value for multiple statuses at once.
      *
@@ -146,17 +129,13 @@ class OrderCountCache
         if (empty($counts)) {
             return [];
         }
-
         $this->ensure_statuses_for_type($order_type, array_keys($counts));
-
         $mapped_counts = [];
         foreach ($counts as $status => $count) {
-            $mapped_counts[ $this->get_cache_key($order_type, $status) ] = (int) $count;
+            $mapped_counts[$this->get_cache_key($order_type, $status)] = (int) $count;
         }
-
         return wp_cache_set_multiple($mapped_counts, '', $this->expiration);
     }
-
     /**
      * Get the cache value for a given order type and set of statuses.
      *
@@ -173,25 +152,19 @@ class OrderCountCache
                 return null;
             }
         }
-
-        $cache_keys = array_map(fn ($order_statuses) => $this->get_cache_key($order_type, $order_statuses), $order_statuses);
-
-        $cache_values  = wp_cache_get_multiple($cache_keys);
+        $cache_keys = array_map(fn($order_statuses) => $this->get_cache_key($order_type, $order_statuses), $order_statuses);
+        $cache_values = wp_cache_get_multiple($cache_keys);
         $status_values = [];
-
         foreach ($cache_values as $key => $value) {
             // Return null for the entire cache if any of the requested statuses are not found because they fell out of cache.
             if ($value === false) {
                 return null;
             }
-
-            $order_status                   = str_replace($this->get_cache_key($order_type, ''), '', $key);
-            $status_values[ $order_status ] = $value;
+            $order_status = str_replace($this->get_cache_key($order_type, ''), '', $key);
+            $status_values[$order_status] = $value;
         }
-
         return $status_values;
     }
-
     /**
      * Increment the cache value for a given order status.
      *
@@ -205,7 +178,6 @@ class OrderCountCache
         $cache_key = $this->get_cache_key($order_type, $order_status);
         return wp_cache_incr($cache_key, $offset);
     }
-
     /**
      * Decrement the cache value for a given order status.
      *
@@ -219,7 +191,6 @@ class OrderCountCache
         $cache_key = $this->get_cache_key($order_type, $order_status);
         return wp_cache_decr($cache_key, $offset);
     }
-
     /**
      * Flush the cache for a given order type and statuses.
      *
@@ -228,20 +199,17 @@ class OrderCountCache
      */
     public function flush($order_type = 'shop_order', $order_statuses = []): void
     {
-        $order_type           = (string) $order_type;
+        $order_type = (string) $order_type;
         $flush_saved_statuses = false;
         if (empty($order_statuses)) {
-            $order_statuses       = $this->get_saved_statuses_for_type($order_type);
+            $order_statuses = $this->get_saved_statuses_for_type($order_type);
             $flush_saved_statuses = true;
         }
-
-        $cache_keys = array_map(fn (string $order_statuses) => $this->get_cache_key($order_type, $order_statuses), $order_statuses);
-
+        $cache_keys = array_map(fn(string $order_statuses) => $this->get_cache_key($order_type, $order_statuses), $order_statuses);
         if ($flush_saved_statuses) {
             // If all statuses are being flushed, go ahead and flush the status list so any permanently removed statuses are cleared out.
             $cache_keys[] = $this->get_saved_statuses_cache_key($order_type);
         }
-
         wp_cache_delete_multiple($cache_keys);
     }
 }

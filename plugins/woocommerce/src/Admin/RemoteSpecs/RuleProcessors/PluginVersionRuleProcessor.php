@@ -1,22 +1,19 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor for sending when the provided plugin is activated and
  * matches the specified version.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\PluginsProvider\PluginsProvider;
-
+use Automattic\Woo_Commerce\Admin\Plugins_Provider\Plugins_Provider;
 /**
  * Rule processor for sending when the provided plugin is activated and
  * matches the specified version.
  */
-class PluginVersionRuleProcessor implements RuleProcessorInterface
+class Plugin_Version_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * Plugins provider instance.
@@ -24,7 +21,6 @@ class PluginVersionRuleProcessor implements RuleProcessorInterface
      * @var PluginsProviderInterface
      */
     private $plugins_provider;
-
     /**
      * Constructor.
      *
@@ -32,9 +28,8 @@ class PluginVersionRuleProcessor implements RuleProcessorInterface
      */
     public function __construct($plugins_provider = null)
     {
-        $this->plugins_provider = $plugins_provider ?? new PluginsProvider();
+        $this->plugins_provider = $plugins_provider ?? new Plugins_Provider();
     }
-
     /**
      * Process the rule.
      *
@@ -54,22 +49,16 @@ class PluginVersionRuleProcessor implements RuleProcessorInterface
          * @param string $plugin_name requested plugin name
          */
         $plugin_name = apply_filters('wp_plugin_dependencies_slug', $rule->plugin);
-
-        if (! in_array($plugin_name, $active_plugin_slugs, true)) {
+        if (!in_array($plugin_name, $active_plugin_slugs, true)) {
             return false;
         }
-
         $plugin_data = $this->plugins_provider->get_plugin_data($plugin_name);
-
-        if (! is_array($plugin_data) || ! array_key_exists('Version', $plugin_data)) {
+        if (!is_array($plugin_data) || !array_key_exists('Version', $plugin_data)) {
             return false;
         }
-
         $plugin_version = $plugin_data['Version'];
-
         return version_compare($plugin_version, $rule->version, $rule->operator);
     }
-
     /**
      * Validates the rule.
      *
@@ -79,18 +68,15 @@ class PluginVersionRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->plugin)) {
+        if (!isset($rule->plugin)) {
             return false;
         }
-
-        if (! isset($rule->version)) {
+        if (!isset($rule->version)) {
             return false;
         }
-
-        if (! isset($rule->operator)) {
+        if (!isset($rule->operator)) {
             return false;
         }
-
         return true;
     }
 }

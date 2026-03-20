@@ -1,19 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Accordion;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\Accordion;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AbstractBlock;
-use Automattic\WooCommerce\Blocks\BlockTypes\EnableBlockJsonAssetsTrait;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Abstract_Block;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Enable_Block_Json_Assets_Trait;
 /**
  * AccordionPanel class.
  */
-class AccordionPanel extends AbstractBlock
+class Accordion_Panel extends Abstract_Block
 {
-    use EnableBlockJsonAssetsTrait;
-
+    use Enable_Block_Json_Assets_Trait;
     /**
      * Block name.
      *

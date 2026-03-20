@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Domain\Services;
 
-namespace Automattic\WooCommerce\Blocks\Domain\Services;
-
-use Automattic\WooCommerce\Blocks\Assets\AssetDataRegistry;
-use Automattic\WooCommerce\StoreApi\RoutesController;
-use Automattic\WooCommerce\StoreApi\SchemaController;
-use Automattic\WooCommerce\StoreApi\StoreApi;
-
+use Automattic\Woo_Commerce\Blocks\Assets\Asset_Data_Registry;
+use Automattic\Woo_Commerce\Store_Api\Routes_Controller;
+use Automattic\Woo_Commerce\Store_Api\Schema_Controller;
+use Automattic\Woo_Commerce\Store_Api\Store_Api;
 /**
  * Service class that handles hydration of API data for blocks.
  */
@@ -20,16 +18,14 @@ class Hydration
      * @var array
      */
     protected $cached_store_notices = [];
-
     /**
      * Constructor.
      *
      * @param AssetDataRegistry $asset_data_registry Instance of the asset data registry.
      */
-    public function __construct(protected \Automattic\WooCommerce\Blocks\Assets\AssetDataRegistry $asset_data_registry)
+    public function __construct(protected \Automattic\Woo_Commerce\Blocks\Assets\Asset_Data_Registry $asset_data_registry)
     {
     }
-
     /**
      * Hydrates the asset data registry with data from the API. Disables notices and nonces so requests contain valid
      * data that is not polluted by the current session.
@@ -39,66 +35,40 @@ class Hydration
      */
     public function get_rest_api_response_data($path = '')
     {
-        if (! str_starts_with($path, '/wc/store')) {
+        if (!str_starts_with($path, '/wc/store')) {
             return [];
         }
-
         // Allow-list only store API routes. No other request can be hydrated for safety.
-        $available_routes = StoreApi::container()->get(RoutesController::class)->get_all_routes('v1', true);
-        $route_match      = $this->match_route_to_handler($path, $available_routes);
-
+        $available_routes = Store_Api::container()->get(Routes_Controller::class)->get_all_routes('v1', true);
+        $route_match = $this->match_route_to_handler($path, $available_routes);
         /**
          * We disable nonce check to support endpoints such as checkout. The caveat here is that we need to be careful to only support GET requests. No other request type should be processed without nonce check. Additionally, no GET request can modify data as part of hydration request, for example adding items to cart.
          *
          * Long term, we should consider validating nonce here, instead of disabling it temporarily.
          */
         $this->disable_nonce_check();
-
         $this->cache_store_notices();
-
         $preloaded_data = [];
-
         if (null !== $route_match) {
             try {
-                $response = $this->get_response_from_controller(
-                    $route_match['controller'],
-                    $path,
-                    $route_match['url_params'],
-                    $route_match['query_params']
-                );
+                $response = $this->get_response_from_controller($route_match['controller'], $path, $route_match['url_params'], $route_match['query_params']);
                 if ($response) {
-                    $preloaded_data = [
-                        'body'    => $response->get_data(),
-                        'headers' => $response->get_headers(),
-                    ];
+                    $preloaded_data = ['body' => $response->get_data(), 'headers' => $response->get_headers()];
                 }
             } catch (\Exception $e) {
                 // This is executing in frontend of the site, a failure in hydration should not stop the site from working.
-                wc_get_logger()->warning(
-                    'Error in hydrating REST API request: ' . $e->getMessage(),
-                    [
-                        'source'    => 'blocks-hydration',
-                        'data'      => [
-                            'path'       => $path,
-                            'controller' => $route_match['controller'] ?? null,
-                        ],
-                        'backtrace' => true,
-                    ]
-                );
+                wc_get_logger()->warning('Error in hydrating REST API request: ' . $e->get_message(), ['source' => 'blocks-hydration', 'data' => ['path' => $path, 'controller' => $route_match['controller'] ?? null], 'backtrace' => true]);
             }
         } else {
             // Preload the request and add it to the array. It will be $preloaded_requests['path']  and contain 'body' and 'headers'.
             $preloaded_requests = rest_preload_api_request([], $path);
-            $preloaded_data     = $preloaded_requests[ $path ] ?? [];
+            $preloaded_data = $preloaded_requests[$path] ?? [];
         }
-
         $this->restore_cached_store_notices();
         $this->restore_nonce_check();
-
         // Returns just the single preloaded request, or an empty array if it doesn't exist.
         return $preloaded_data;
     }
-
     /**
      * Helper method to generate GET response from a controller. Also fires the `rest_request_after_callbacks` for backward compatibility.
      *
@@ -114,43 +84,26 @@ class Hydration
         if (null === $controller_class) {
             return false;
         }
-
         $request = new \WP_REST_Request('GET', $path);
-
         // Set URL parameters (from route segments like /products/123).
-        if (! empty($url_params)) {
+        if (!empty($url_params)) {
             $request->set_url_params($url_params);
         }
-
         // Set query parameters (from query string like ?key=value).
-        if (! empty($query_params)) {
+        if (!empty($query_params)) {
             $request->set_query_params($query_params);
         }
-
-        $schema_controller = StoreApi::container()->get(SchemaController::class);
-        $controller        = new $controller_class(
-            $schema_controller,
-            $schema_controller->get($controller_class::SCHEMA_TYPE, $controller_class::SCHEMA_VERSION)
-        );
-
-        $controller_args = is_callable([ $controller, 'get_args' ]) ? $controller->get_args() : [];
-
+        $schema_controller = Store_Api::container()->get(Schema_Controller::class);
+        $controller = new $controller_class($schema_controller, $schema_controller->get($controller_class::SCHEMA_TYPE, $controller_class::SCHEMA_VERSION));
+        $controller_args = is_callable([$controller, 'get_args']) ? $controller->get_args() : [];
         if (empty($controller_args)) {
             return false;
         }
-
         // Get the handler that responds to read request.
-        $handler = current(
-            array_filter(
-                $controller_args,
-                fn ($method_handler) => is_array($method_handler) && isset($method_handler['methods']) && \WP_REST_Server::READABLE === $method_handler['methods']
-            )
-        );
-
-        if (! $handler) {
+        $handler = current(array_filter($controller_args, fn($method_handler) => is_array($method_handler) && isset($method_handler['methods']) && \WP_REST_Server::READABLE === $method_handler['methods']));
+        if (!$handler) {
             return false;
         }
-
         /**
          * Similar to WP core's `rest_dispatch_request` filter, this allows plugin to override hydrating the request.
          * Allows backward compatibility with the `rest_dispatch_request` filter by providing the same arguments.
@@ -163,13 +116,11 @@ class Hydration
          * @param array            $handler          Route handler used for the request.
          */
         $hydration_result = apply_filters('woocommerce_hydration_dispatch_request', null, $request, $path, $handler);
-
         if (null !== $hydration_result) {
             $response = $hydration_result;
         } else {
-            $response = call_user_func_array($handler['callback'], [ $request ]);
+            $response = call_user_func_array($handler['callback'], [$request]);
         }
-
         /**
          * Similar to WP core's `rest_request_after_callbacks` filter, this allows to modify the response after it has been generated.
          * Allows backward compatibility with the `rest_request_after_callbacks` filter by providing the same arguments.
@@ -182,10 +133,8 @@ class Hydration
          * @param WP_REST_Request                                  $request  Request used to generate the response.
          */
         $response = apply_filters('woocommerce_hydration_request_after_callbacks', $response, $handler, $request);
-
         return $response;
     }
-
     /**
      * Inspired from WP core's `match_request_to_handler`, this matches a given path from available route regexes.
      * Extracts URL parameters from regex named groups and query string parameters.
@@ -199,33 +148,21 @@ class Hydration
     {
         // Parse query string if present.
         $query_params = [];
-        $parsed_url   = wp_parse_url($path);
-        $clean_path   = $parsed_url['path'] ?? $path;
-
+        $parsed_url = wp_parse_url($path);
+        $clean_path = $parsed_url['path'] ?? $path;
         if (isset($parsed_url['query'])) {
             parse_str($parsed_url['query'], $query_params);
         }
-
         // Match route and extract URL parameters.
         foreach ($available_routes as $route_path => $controller) {
             if (preg_match('@^' . $route_path . '$@i', (string) $clean_path, $matches)) {
                 // Extract named groups (URL parameters like 'id').
-                $url_params = array_intersect_key(
-                    $matches,
-                    array_flip(array_filter(array_keys($matches), is_string(...)))
-                );
-
-                return [
-                    'controller'   => $controller,
-                    'url_params'   => $url_params,
-                    'query_params' => $query_params,
-                ];
+                $url_params = array_intersect_key($matches, array_flip(array_filter(array_keys($matches), is_string(...))));
+                return ['controller' => $controller, 'url_params' => $url_params, 'query_params' => $query_params];
             }
         }
-
         return null;
     }
-
     /**
      * Disable the nonce check temporarily.
      */
@@ -233,7 +170,6 @@ class Hydration
     {
         add_filter('woocommerce_store_api_disable_nonce_check', $this->disable_nonce_check_callback(...));
     }
-
     /**
      * Callback to disable the nonce check. While we could use `__return_true`, we use a custom named callback so that
      * we can remove it later without affecting other filters.
@@ -242,7 +178,6 @@ class Hydration
     {
         return true;
     }
-
     /**
      * Restore the nonce check.
      */
@@ -250,28 +185,25 @@ class Hydration
     {
         remove_filter('woocommerce_store_api_disable_nonce_check', $this->disable_nonce_check_callback(...));
     }
-
     /**
      * Cache notices before hydrating the API if the customer has a session.
      */
     protected function cache_store_notices()
     {
-        if (! did_action('woocommerce_init') || null === WC()->session) {
+        if (!did_action('woocommerce_init') || null === WC()->session) {
             return;
         }
         $this->cached_store_notices = wc_get_notices();
         wc_clear_notices();
     }
-
     /**
      * Restore notices into current session from cache.
      */
     protected function restore_cached_store_notices()
     {
-        if (! did_action('woocommerce_init') || null === WC()->session) {
+        if (!did_action('woocommerce_init') || null === WC()->session) {
             return;
         }
-
         wc_set_notices($this->cached_store_notices);
         $this->cached_store_notices = [];
     }

@@ -1,22 +1,19 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * API\Reports\Categories\DataStore class file.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports\Categories;
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Categories;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\DataStore as ReportsDataStore;
-use Automattic\WooCommerce\Admin\API\Reports\DataStoreInterface;
-use Automattic\WooCommerce\Admin\API\Reports\SqlQuery;
-
+use Automattic\Woo_Commerce\Admin\API\Reports\Data_Store as ReportsDataStore;
+use Automattic\Woo_Commerce\Admin\API\Reports\Data_Store_Interface;
+use Automattic\Woo_Commerce\Admin\API\Reports\Sql_Query;
 /**
  * API\Reports\Categories\DataStore.
  */
-class DataStore extends ReportsDataStore implements DataStoreInterface
+class Data_Store extends Reports_Data_Store implements Data_Store_Interface
 {
     /**
      * Table used to get the data.
@@ -26,7 +23,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      * @var string
      */
     protected static $table_name = 'wc_order_product_lookup';
-
     /**
      * Cache identifier.
      *
@@ -35,7 +31,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      * @var string
      */
     protected $cache_key = 'categories';
-
     /**
      * Mapping columns to data type to return correct response types.
      *
@@ -43,14 +38,7 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      *
      * @var array
      */
-    protected $column_types = [
-        'category_id'    => 'intval',
-        'items_sold'     => 'intval',
-        'net_revenue'    => 'floatval',
-        'orders_count'   => 'intval',
-        'products_count' => 'intval',
-    ];
-
+    protected $column_types = ['category_id' => 'intval', 'items_sold' => 'intval', 'net_revenue' => 'floatval', 'orders_count' => 'intval', 'products_count' => 'intval'];
     /**
      * Data store context used to pass to filters.
      *
@@ -59,7 +47,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      * @var string
      */
     protected $context = 'categories';
-
     /**
      * Assign report columns once full table name has been assigned.
      *
@@ -67,15 +54,9 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      */
     protected function assign_report_columns()
     {
-        $table_name           = self::get_db_table_name();
-        $this->report_columns = [
-            'items_sold'     => 'SUM(product_qty) as items_sold',
-            'net_revenue'    => 'SUM(product_net_revenue) AS net_revenue',
-            'orders_count'   => "COUNT(DISTINCT {$table_name}.order_id) as orders_count",
-            'products_count' => "COUNT(DISTINCT {$table_name}.product_id) as products_count",
-        ];
+        $table_name = self::get_db_table_name();
+        $this->report_columns = ['items_sold' => 'SUM(product_qty) as items_sold', 'net_revenue' => 'SUM(product_net_revenue) AS net_revenue', 'orders_count' => "COUNT(DISTINCT {$table_name}.order_id) as orders_count", 'products_count' => "COUNT(DISTINCT {$table_name}.product_id) as products_count"];
     }
-
     /**
      * Return the database query with parameters used for Categories report: time span and order status.
      *
@@ -85,30 +66,24 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
     {
         global $wpdb;
         $order_product_lookup_table = self::get_db_table_name();
-
         $this->add_time_period_sql_params($query_args, $order_product_lookup_table);
-
         // join wp_order_product_lookup_table with relationships and taxonomies
         // @todo How to handle custom product tables?
         $this->subquery->add_sql_clause('left_join', "LEFT JOIN {$wpdb->term_relationships} ON {$order_product_lookup_table}.product_id = {$wpdb->term_relationships}.object_id");
         // Adding this (inner) JOIN as a LEFT JOIN for ordering purposes. See comment in add_order_by_params().
         $this->subquery->add_sql_clause('left_join', "JOIN {$wpdb->term_taxonomy} ON {$wpdb->term_taxonomy}.term_taxonomy_id = {$wpdb->term_relationships}.term_taxonomy_id");
-
         $included_categories = $this->get_included_categories($query_args);
         if ($included_categories) {
             $this->subquery->add_sql_clause('where', "AND {$wpdb->term_relationships}.term_taxonomy_id IN ({$included_categories})");
-
             // Limit is left out here so that the grouping in code by PHP can be applied correctly.
             // This also needs to be put after the term_taxonomy JOIN so that we can match the correct term name.
             $this->add_order_by_params($query_args, 'outer', 'default_results.category_id');
         } else {
             $this->add_order_by_params($query_args, 'inner', "{$wpdb->term_relationships}.term_taxonomy_id");
         }
-
         $this->add_order_status_clause($query_args, $order_product_lookup_table, $this->subquery);
         $this->subquery->add_sql_clause('where', "AND {$wpdb->term_taxonomy}.taxonomy = 'product_cat'");
     }
-
     /**
      * Fills ORDER BY clause of SQL request based on user supplied parameters.
      *
@@ -119,15 +94,12 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
     protected function add_order_by_params($query_args, $from_arg, $id_cell)
     {
         global $wpdb;
-
         // Sanitize input: guarantee that the id cell in the join is quoted with backticks.
-        $id_cell_segments   = explode('.', str_replace('`', '', $id_cell));
+        $id_cell_segments = explode('.', str_replace('`', '', $id_cell));
         $id_cell_identifier = '`' . implode('`.`', $id_cell_segments) . '`';
-
         self::get_db_table_name();
         $order_by_clause = $this->add_order_by_clause($query_args, $this);
         $this->add_orderby_order_clause($query_args, $this);
-
         if (str_contains($order_by_clause, '_terms')) {
             $join = "JOIN {$wpdb->terms} AS _terms ON {$id_cell_identifier} = _terms.term_id";
             if ('inner' === $from_arg) {
@@ -141,7 +113,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
             }
         }
     }
-
     /**
      * Maps ordering specified by the user to columns in the database/fields in the data.
      *
@@ -160,7 +131,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
         }
         return $order_by;
     }
-
     /**
      * Returns an array of ids of included categories, based on query arguments from the user.
      *
@@ -173,7 +143,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
         }
         return [];
     }
-
     /**
      * Returns the page of data according to page number and items per page.
      *
@@ -186,7 +155,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
         $offset = ($page_no - 1) * $items_per_page;
         return array_slice($data, $offset, $items_per_page);
     }
-
     /**
      * Enriches the category data.
      *
@@ -200,10 +168,9 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
             if ($query_args['extended_info']) {
                 $extended_info['name'] = get_the_category_by_ID($category_data['category_id']);
             }
-            $categories_data[ $key ]['extended_info'] = $extended_info;
+            $categories_data[$key]['extended_info'] = $extended_info;
         }
     }
-
     /**
      * Get the default query arguments to be used by get_data().
      * These defaults are only partially applied when used via REST API, as that has its own defaults.
@@ -214,13 +181,11 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      */
     public function get_default_query_vars()
     {
-        $defaults                      = parent::get_default_query_vars();
+        $defaults = parent::get_default_query_vars();
         $defaults['category_includes'] = [];
-        $defaults['extended_info']     = false;
-
+        $defaults['extended_info'] = false;
         return $defaults;
     }
-
     /**
      * Returns the report data based on normalized parameters.
      * Will be called by `get_data` if there is no data in cache.
@@ -234,67 +199,43 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
     public function get_noncached_data($query_args)
     {
         global $wpdb;
-
         $table_name = self::get_db_table_name();
         $this->initialize_queries();
-
-        $data = (object) [
-            'data'    => [],
-            'total'   => 0,
-            'pages'   => 0,
-            'page_no' => 0,
-        ];
-
+        $data = (object) ['data' => [], 'total' => 0, 'pages' => 0, 'page_no' => 0];
         $this->subquery->add_sql_clause('select', $this->selected_columns($query_args));
         $included_categories = $this->get_included_categories_array($query_args);
         $this->add_sql_query_params($query_args);
-
         if (count($included_categories) > 0) {
-            $fields    = $this->get_fields($query_args);
+            $fields = $this->get_fields($query_args);
             $ids_table = $this->get_ids_table($included_categories, 'category_id');
-
-            $this->add_sql_clause('select', $this->format_join_selections(array_merge([ 'category_id' ], $fields), [ 'category_id' ]));
+            $this->add_sql_clause('select', $this->format_join_selections(array_merge(['category_id'], $fields), ['category_id']));
             $this->add_sql_clause('from', '(');
             $this->add_sql_clause('from', $this->subquery->get_query_statement());
             $this->add_sql_clause('from', ") AS {$table_name}");
-            $this->add_sql_clause(
-                'right_join',
-                "RIGHT JOIN ( {$ids_table} ) AS default_results
-				ON default_results.category_id = {$table_name}.category_id"
-            );
-
+            $this->add_sql_clause('right_join', "RIGHT JOIN ( {$ids_table} ) AS default_results\n\t\t\t\tON default_results.category_id = {$table_name}.category_id");
             $categories_query = $this->get_query_statement();
         } else {
             $this->subquery->add_sql_clause('order_by', $this->get_sql_clause('order_by'));
             $categories_query = $this->subquery->get_query_statement();
         }
         $categories_data = $wpdb->get_results(
-            $categories_query, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $categories_query,
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             ARRAY_A
         );
-
         if (null === $categories_data) {
-            return new \WP_Error('woocommerce_analytics_categories_result_failed', __('Sorry, fetching revenue data failed.', 'woocommerce'), [ 'status' => 500 ]);
+            return new \WP_Error('woocommerce_analytics_categories_result_failed', __('Sorry, fetching revenue data failed.', 'woocommerce'), ['status' => 500]);
         }
-
         $record_count = count($categories_data);
-        $total_pages  = (int) ceil($record_count / $query_args['per_page']);
+        $total_pages = (int) ceil($record_count / $query_args['per_page']);
         if ($query_args['page'] < 1 || $query_args['page'] > $total_pages) {
             return $data;
         }
-
         $categories_data = $this->page_records($categories_data, $query_args['page'], $query_args['per_page']);
         $this->include_extended_info($categories_data, $query_args);
         $categories_data = array_map($this->cast_numbers(...), $categories_data);
-
-        return (object) [
-            'data'    => $categories_data,
-            'total'   => $record_count,
-            'pages'   => $total_pages,
-            'page_no' => (int) $query_args['page'],
-        ];
+        return (object) ['data' => $categories_data, 'total' => $record_count, 'pages' => $total_pages, 'page_no' => (int) $query_args['page']];
     }
-
     /**
      * Initialize query objects.
      *
@@ -303,7 +244,7 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
     protected function initialize_queries()
     {
         global $wpdb;
-        $this->subquery = new SqlQuery($this->context . '_subquery');
+        $this->subquery = new Sql_Query($this->context . '_subquery');
         $this->subquery->add_sql_clause('select', "{$wpdb->term_taxonomy}.term_id as category_id,");
         $this->subquery->add_sql_clause('from', self::get_db_table_name());
         $this->subquery->add_sql_clause('group_by', "{$wpdb->term_taxonomy}.term_id");

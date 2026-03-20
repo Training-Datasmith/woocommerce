@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * OrdersTableDataStoreMeta class file.
  */
+namespace Automattic\Woo_Commerce\Internal\Data_Stores\Orders;
 
-namespace Automattic\WooCommerce\Internal\DataStores\Orders;
-
-use Automattic\WooCommerce\Caching\WPCacheEngine;
-use Automattic\WooCommerce\Internal\DataStores\CustomMetaDataStore;
-use Automattic\WooCommerce\Utilities\OrderUtil;
-
+use Automattic\Woo_Commerce\Caching\Wp_Cache_Engine;
+use Automattic\Woo_Commerce\Internal\Data_Stores\Custom_Meta_Data_Store;
+use Automattic\Woo_Commerce\Utilities\Order_Util;
 /**
  * Mimics a WP metadata (i.e. add_metadata(), get_metadata() and friends) implementation using a custom table.
  */
-class OrdersTableDataStoreMeta extends CustomMetaDataStore
+class Orders_Table_Data_Store_Meta extends Custom_Meta_Data_Store
 {
     /**
      * Returns the cache group to store cached data in.
@@ -23,7 +21,6 @@ class OrdersTableDataStoreMeta extends CustomMetaDataStore
     {
         return 'orders_meta';
     }
-
     /**
      * Returns the name of the table used for storage.
      *
@@ -31,9 +28,8 @@ class OrdersTableDataStoreMeta extends CustomMetaDataStore
      */
     protected function get_table_name()
     {
-        return OrdersTableDataStore::get_meta_table_name();
+        return Orders_Table_Data_Store::get_meta_table_name();
     }
-
     /**
      * Returns the name of the field/column used for associating meta with objects.
      */
@@ -41,7 +37,6 @@ class OrdersTableDataStoreMeta extends CustomMetaDataStore
     {
         return 'order_id';
     }
-
     // @phpcs:disable Universal.NamingConventions.NoReservedKeywordParameterNames.objectFound
     /**
      * Deletes meta based on meta ID.
@@ -53,12 +48,10 @@ class OrdersTableDataStoreMeta extends CustomMetaDataStore
     {
         $successful = parent::delete_meta($object, $meta);
         if ($successful) {
-            $this->clear_cached_data([ $object->get_id() ]);
+            $this->clear_cached_data([$object->get_id()]);
         }
-
         return $successful;
     }
-
     /**
      * Add new piece of meta.
      *
@@ -71,12 +64,10 @@ class OrdersTableDataStoreMeta extends CustomMetaDataStore
     {
         $insert_id = parent::add_meta($object, $meta);
         if (false !== $insert_id) {
-            $this->clear_cached_data([ $object->get_id() ]);
+            $this->clear_cached_data([$object->get_id()]);
         }
-
         return $insert_id;
     }
-
     /**
      * Update meta.
      *
@@ -87,14 +78,11 @@ class OrdersTableDataStoreMeta extends CustomMetaDataStore
     {
         $is_successful = parent::update_meta($object, $meta);
         if ($is_successful) {
-            $this->clear_cached_data([ $object->get_id() ]);
+            $this->clear_cached_data([$object->get_id()]);
         }
-
         return $is_successful;
     }
-
     // @phpcs:enable Universal.NamingConventions.NoReservedKeywordParameterNames.objectFound
-
     /**
      * Return order meta data for multiple IDs. Results are cached.
      *
@@ -104,23 +92,18 @@ class OrdersTableDataStoreMeta extends CustomMetaDataStore
      */
     public function get_meta_data_for_object_ids(array $object_ids): array
     {
-        if (! OrderUtil::custom_orders_table_datastore_cache_enabled()) {
+        if (!Order_Util::custom_orders_table_datastore_cache_enabled()) {
             return parent::get_meta_data_for_object_ids($object_ids);
         }
-
-        $meta_data  = $this->get_meta_data_for_object_ids_from_cache($object_ids);
+        $meta_data = $this->get_meta_data_for_object_ids_from_cache($object_ids);
         $object_ids = array_diff($object_ids, array_keys($meta_data));
-
         if (empty($object_ids)) {
             return $meta_data;
         }
-
         $db_meta_data = parent::get_meta_data_for_object_ids($object_ids);
         $this->set_meta_data_for_objects_in_cache($db_meta_data);
-
         return $db_meta_data + $meta_data;
     }
-
     /**
      * Retrieve raw object meta from cache for the given a set of IDs.
      *
@@ -130,12 +113,10 @@ class OrdersTableDataStoreMeta extends CustomMetaDataStore
      */
     private function get_meta_data_for_object_ids_from_cache(array $object_ids): array
     {
-        $cache_engine = wc_get_container()->get(WPCacheEngine::class);
-        $meta_data    = $cache_engine->get_cached_objects($object_ids, $this->get_cache_group());
-
+        $cache_engine = wc_get_container()->get(Wp_Cache_Engine::class);
+        $meta_data = $cache_engine->get_cached_objects($object_ids, $this->get_cache_group());
         return array_filter($meta_data);
     }
-
     /**
      * Store the raw meta data for a set of objects in cache.
      *
@@ -143,10 +124,9 @@ class OrdersTableDataStoreMeta extends CustomMetaDataStore
      */
     private function set_meta_data_for_objects_in_cache(array $meta_data): void
     {
-        $cache_engine = wc_get_container()->get(WPCacheEngine::class);
+        $cache_engine = wc_get_container()->get(Wp_Cache_Engine::class);
         $cache_engine->cache_objects($meta_data, 0, $this->get_cache_group());
     }
-
     /**
      * Delete cached meta data for the given object_ids.
      *
@@ -160,18 +140,16 @@ class OrdersTableDataStoreMeta extends CustomMetaDataStore
      */
     public function clear_cached_data(array $object_ids): array
     {
-        if (! OrderUtil::custom_orders_table_datastore_cache_enabled()) {
+        if (!Order_Util::custom_orders_table_datastore_cache_enabled()) {
             return array_fill_keys($object_ids, true);
         }
-
-        $cache_engine  = wc_get_container()->get(WPCacheEngine::class);
+        $cache_engine = wc_get_container()->get(Wp_Cache_Engine::class);
         $return_values = [];
         foreach ($object_ids as $object_id) {
-            $return_values[ $object_id ] = $cache_engine->delete_cached_object($object_id, $this->get_cache_group());
+            $return_values[$object_id] = $cache_engine->delete_cached_object($object_id, $this->get_cache_group());
         }
         return $return_values;
     }
-
     /**
      * Invalidate all the cache used by this data store.
      *
@@ -182,12 +160,10 @@ class OrdersTableDataStoreMeta extends CustomMetaDataStore
      */
     public function clear_all_cached_data(): bool
     {
-        if (! OrderUtil::custom_orders_table_datastore_cache_enabled()) {
+        if (!Order_Util::custom_orders_table_datastore_cache_enabled()) {
             return true;
         }
-
-        $cache_engine = wc_get_container()->get(WPCacheEngine::class);
-
+        $cache_engine = wc_get_container()->get(Wp_Cache_Engine::class);
         return $cache_engine->delete_cache_group($this->get_cache_group());
     }
 }

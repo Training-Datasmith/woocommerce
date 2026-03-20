@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Enums;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Enums;
 
 /**
  * Enum class for all the catalog visibility values.
  */
-final class CatalogVisibility
+final class Catalog_Visibility
 {
     /**
      * Product is visible on both shop and search results.
@@ -15,17 +14,14 @@ final class CatalogVisibility
      * @var string
      */
     public const VISIBLE = 'visible';
-
     /**
      * Product is visible on the shop page only.
      */
     public const CATALOG = 'catalog';
-
     /**
      * Product visible in the search results only.
      */
     public const SEARCH = 'search';
-
     /**
      * Product is invisible on both shop and search results, but can still be accessed directly.
      */

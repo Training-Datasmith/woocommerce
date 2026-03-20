@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Traits for scheduling actions and dependencies.
  */
-
-namespace Automattic\WooCommerce\Admin\Schedulers;
+namespace Automattic\Woo_Commerce\Admin\Schedulers;
 
 defined('ABSPATH') || exit;
-
 /**
  * SchedulerTraits class.
  */
-trait SchedulerTraits
+trait Scheduler_Traits
 {
     /**
      * Action scheduler group.
@@ -20,14 +18,12 @@ trait SchedulerTraits
      * @var string|null
      */
     public static $group = 'wc-admin-data';
-
     /**
      * Queue instance.
      *
      * @var WC_Queue_Interface
      */
     protected static $queue;
-
     /**
      * Add all actions as hooks.
      */
@@ -35,10 +31,9 @@ trait SchedulerTraits
     {
         foreach (self::get_actions() as $action_name => $action_hook) {
             $method = new \ReflectionMethod(static::class, $action_name);
-            add_action($action_hook, static::do_action_or_reschedule(...), 10, $method->getNumberOfParameters());
+            add_action($action_hook, static::do_action_or_reschedule(...), 10, $method->get_number_of_parameters());
         }
     }
-
     /**
      * Get queue instance.
      *
@@ -49,10 +44,8 @@ trait SchedulerTraits
         if (is_null(self::$queue)) {
             self::$queue = WC()->queue();
         }
-
         return self::$queue;
     }
-
     /**
      * Set queue instance.
      *
@@ -62,18 +55,13 @@ trait SchedulerTraits
     {
         self::$queue = $queue;
     }
-
     /**
      * Gets the default scheduler actions for batching and scheduling actions.
      */
     public static function get_default_scheduler_actions(): array
     {
-        return [
-            'schedule_action' => 'wc-admin_schedule_action_' . static::$name,
-            'queue_batches'   => 'wc-admin_queue_batches_' . static::$name,
-        ];
+        return ['schedule_action' => 'wc-admin_schedule_action_' . static::$name, 'queue_batches' => 'wc-admin_queue_batches_' . static::$name];
     }
-
     /**
      * Gets the actions for this specific scheduler.
      */
@@ -81,19 +69,14 @@ trait SchedulerTraits
     {
         return [];
     }
-
     /**
      * Get all available scheduling actions.
      * Used to determine action hook names and clear events.
      */
     public static function get_actions(): array
     {
-        return array_merge(
-            static::get_default_scheduler_actions(),
-            static::get_scheduler_actions()
-        );
+        return array_merge(static::get_default_scheduler_actions(), static::get_scheduler_actions());
     }
-
     /**
      * Get an action tag name from the action name.
      *
@@ -103,9 +86,8 @@ trait SchedulerTraits
     public static function get_action($action_name)
     {
         $actions = static::get_actions();
-        return $actions[ $action_name ] ?? null;
+        return $actions[$action_name] ?? null;
     }
-
     /**
      * Returns an array of actions and dependencies as key => value pairs.
      */
@@ -113,7 +95,6 @@ trait SchedulerTraits
     {
         return [];
     }
-
     /**
      * Get dependencies associated with an action.
      *
@@ -123,19 +104,15 @@ trait SchedulerTraits
     public static function get_dependency($action_name)
     {
         $dependencies = static::get_dependencies();
-        return $dependencies[ $action_name ] ?? null;
+        return $dependencies[$action_name] ?? null;
     }
-
     /**
      * Batch action size.
      */
     public static function get_batch_sizes(): array
     {
-        return [
-            'queue_batches' => 100,
-        ];
+        return ['queue_batches' => 100];
     }
-
     /**
      * Returns the batch size for an action.
      *
@@ -145,8 +122,7 @@ trait SchedulerTraits
     public static function get_batch_size($action)
     {
         $batch_sizes = static::get_batch_sizes();
-        $batch_size  = $batch_sizes[ $action ] ?? 25;
-
+        $batch_size = $batch_sizes[$action] ?? 25;
         /**
          * Filter the batch size for regenerating a report table.
          *
@@ -155,7 +131,6 @@ trait SchedulerTraits
          */
         return apply_filters('woocommerce_analytics_regenerate_batch_size', $batch_size, static::$name, $action);
     }
-
     /**
      * Flatten multidimensional arrays to store for scheduling.
      *
@@ -164,7 +139,6 @@ trait SchedulerTraits
     public static function flatten_args($args): string
     {
         $flattened = [];
-
         foreach ($args as $arg) {
             if (is_array($arg)) {
                 $flattened[] = self::flatten_args($arg);
@@ -174,7 +148,6 @@ trait SchedulerTraits
         }
         return '[' . implode(',', $flattened) . ']';
     }
-
     /**
      * Check if existing jobs exist for an action and arguments.
      *
@@ -183,35 +156,16 @@ trait SchedulerTraits
      */
     public static function has_existing_jobs($action_name, $args): bool
     {
-        $existing_jobs = self::queue()->search(
-            [
-                'status'   => 'pending',
-                'per_page' => 1,
-                'claimed'  => false,
-                'hook'     => static::get_action($action_name),
-                'search'   => self::flatten_args($args),
-                'group'    => self::$group,
-            ]
-        );
-
+        $existing_jobs = self::queue()->search(['status' => 'pending', 'per_page' => 1, 'claimed' => false, 'hook' => static::get_action($action_name), 'search' => self::flatten_args($args), 'group' => self::$group]);
         if ($existing_jobs) {
             $existing_job = current($existing_jobs);
-
             // Bail out if there's a pending single action, or a pending scheduled actions.
-            if (
-                (static::get_action($action_name) === $existing_job->get_hook()) ||
-                (
-                    static::get_action('schedule_action') === $existing_job->get_hook() &&
-                    in_array(self::get_action($action_name), $existing_job->get_args(), true)
-                )
-            ) {
+            if (static::get_action($action_name) === $existing_job->get_hook() || static::get_action('schedule_action') === $existing_job->get_hook() && in_array(self::get_action($action_name), $existing_job->get_args(), true)) {
                 return true;
             }
         }
-
         return false;
     }
-
     /**
      * Get the next blocking job for an action.
      *
@@ -221,25 +175,20 @@ trait SchedulerTraits
     public static function get_next_blocking_job($action_name)
     {
         $dependency = self::get_dependency($action_name);
-
-        if (! $dependency) {
+        if (!$dependency) {
             return false;
         }
-
-        $blocking_jobs = self::queue()->search(
-            [
-                'status'   => 'pending',
-                'orderby'  => 'date',
-                'order'    => 'DESC',
-                'per_page' => 1,
-                'search'   => $dependency, // search is used instead of hook to find queued batch creation.
-                'group'    => static::$group,
-            ]
-        );
-
+        $blocking_jobs = self::queue()->search([
+            'status' => 'pending',
+            'orderby' => 'date',
+            'order' => 'DESC',
+            'per_page' => 1,
+            'search' => $dependency,
+            // search is used instead of hook to find queued batch creation.
+            'group' => static::$group,
+        ]);
         return reset($blocking_jobs);
     }
-
     /**
      * Check for blocking jobs and reschedule if any exist.
      */
@@ -247,30 +196,21 @@ trait SchedulerTraits
     {
         $action_hook = current_action();
         $action_name = array_search($action_hook, static::get_actions(), true);
-        $args        = func_get_args();
-
+        $args = func_get_args();
         // Check if any blocking jobs exist and schedule after they've completed
         // or schedule to run now if no blocking jobs exist.
         $blocking_job = static::get_next_blocking_job($action_name);
         if ($blocking_job) {
             $next_action_time = self::get_next_action_time($blocking_job);
-
             // Some actions, like single actions, don't have a next action time.
-            if (! is_a($next_action_time, 'DateTime')) {
+            if (!is_a($next_action_time, 'DateTime')) {
                 $next_action_time = new \DateTime();
             }
-
-            self::queue()->schedule_single(
-                $next_action_time->getTimestamp() + 5,
-                $action_hook,
-                $args,
-                static::$group
-            );
+            self::queue()->schedule_single($next_action_time->get_timestamp() + 5, $action_hook, $args, static::$group);
         } else {
-            call_user_func_array([ static::class, $action_name ], $args);
+            call_user_func_array([static::class, $action_name], $args);
         }
     }
-
     /**
      * Get the DateTime for the next scheduled time an action should run.
      * This function allows backwards compatibility with Action Scheduler < v3.0.
@@ -281,13 +221,11 @@ trait SchedulerTraits
     public static function get_next_action_time($action)
     {
         if (method_exists($action->get_schedule(), 'get_next')) {
-            $after             = new \DateTime();
+            $after = new \DateTime();
             return $action->get_schedule()->get_next($after);
         }
-
         return $action->get_schedule()->next();
     }
-
     /**
      * Schedule an action to run and check for dependencies.
      *
@@ -300,24 +238,16 @@ trait SchedulerTraits
         if (static::has_existing_jobs($action_name, $args)) {
             return;
         }
-
         $action_hook = static::get_action($action_name);
-        if (! $action_hook) {
+        if (!$action_hook) {
             return;
         }
-
-        if (
-            // Skip scheduling if Action Scheduler tables have not been initialized.
-            ! get_option('schema-ActionScheduler_StoreSchema') ||
-            apply_filters('woocommerce_analytics_disable_action_scheduling', false)
-        ) {
-            call_user_func_array([ static::class, $action_name ], $args);
+        if (!get_option('schema-ActionScheduler_StoreSchema') || apply_filters('woocommerce_analytics_disable_action_scheduling', false)) {
+            call_user_func_array([static::class, $action_name], $args);
             return;
         }
-
         self::queue()->schedule_single(time() + 5, $action_hook, $args, static::$group);
     }
-
     /**
      * Queue a large number of batch jobs, respecting the batch size limit.
      * Reduces a range of batches down to "single batch" jobs.
@@ -329,44 +259,36 @@ trait SchedulerTraits
      */
     public static function queue_batches($range_start, $range_end, $single_batch_action, $action_args = []): void
     {
-        $batch_size       = static::get_batch_size('queue_batches');
-        $range_size       = 1 + ($range_end - $range_start);
+        $batch_size = static::get_batch_size('queue_batches');
+        $range_size = 1 + ($range_end - $range_start);
         time();
-
         if ($range_size > $batch_size) {
             // If the current batch range is larger than a single batch,
             // split the range into $queue_batch_size chunks.
             $chunk_size = (int) ceil($range_size / $batch_size);
-
             for ($i = 0; $i < $batch_size; $i++) {
-                $batch_start = (int) ($range_start + ($i * $chunk_size));
-                $batch_end   = min($range_end, $range_start + ($chunk_size * ($i + 1)) - 1);
-
+                $batch_start = (int) ($range_start + $i * $chunk_size);
+                $batch_end = min($range_end, $range_start + $chunk_size * ($i + 1) - 1);
                 if ($batch_start > $range_end) {
                     return;
                 }
-
-                self::schedule_action(
-                    'queue_batches',
-                    [ $batch_start, $batch_end, $single_batch_action, $action_args ]
-                );
+                self::schedule_action('queue_batches', [$batch_start, $batch_end, $single_batch_action, $action_args]);
             }
         } else {
             // Otherwise, queue the single batches.
             for ($i = $range_start; $i <= $range_end; $i++) {
-                $batch_action_args = array_merge([ $i ], $action_args);
+                $batch_action_args = array_merge([$i], $action_args);
                 self::schedule_action($single_batch_action, $batch_action_args);
             }
         }
     }
-
     /**
      * Clears all queued actions.
      */
     public static function clear_queued_actions(): void
     {
-        if (version_compare(\ActionScheduler_Versions::instance()->latest_version(), '3.0', '>=')) {
-            \ActionScheduler::store()->cancel_actions_by_group(static::$group);
+        if (version_compare(\Action_Scheduler_versions::instance()->latest_version(), '3.0', '>=')) {
+            \Action_Scheduler::store()->cancel_actions_by_group(static::$group);
         } else {
             $actions = static::get_actions();
             foreach ($actions as $action) {

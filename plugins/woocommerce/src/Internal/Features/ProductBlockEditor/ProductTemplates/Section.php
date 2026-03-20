@@ -1,21 +1,19 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Section Block class.
  */
+namespace Automattic\Woo_Commerce\Internal\Features\Product_Block_Editor\Product_Templates;
 
-namespace Automattic\WooCommerce\Internal\Features\ProductBlockEditor\ProductTemplates;
-
-use Automattic\WooCommerce\Admin\BlockTemplates\BlockTemplateInterface;
-use Automattic\WooCommerce\Admin\BlockTemplates\ContainerInterface;
-use Automattic\WooCommerce\Admin\Features\ProductBlockEditor\ProductTemplates\SectionInterface;
-use Automattic\WooCommerce\Admin\Features\ProductBlockEditor\ProductTemplates\SubsectionInterface;
-
+use Automattic\Woo_Commerce\Admin\Block_Templates\Block_Template_Interface;
+use Automattic\Woo_Commerce\Admin\Block_Templates\Container_Interface;
+use Automattic\Woo_Commerce\Admin\Features\Product_Block_Editor\Product_Templates\Section_Interface;
+use Automattic\Woo_Commerce\Admin\Features\Product_Block_Editor\Product_Templates\Subsection_Interface;
 /**
  * Class for Section block.
  */
-class Section extends ProductBlock implements SectionInterface
+class Section extends Product_Block implements Section_Interface
 {
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
     /**
@@ -29,25 +27,24 @@ class Section extends ProductBlock implements SectionInterface
      * @throws \ValueError If the parent block container does not belong to the same template as the block.
      * @throws \InvalidArgumentException If blockName key and value are passed into block configuration.
      */
-    public function __construct(array $config, BlockTemplateInterface &$root_template, ?ContainerInterface &$parent = null) // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.parentFound
-    {if (! empty($config['blockName'])) {
-        throw new \InvalidArgumentException('Unexpected key "blockName", this defaults to "woocommerce/product-section".');
-    }
-        parent::__construct(array_merge([ 'blockName' => 'woocommerce/product-section' ], $config), $root_template, $parent);
+    public function __construct(array $config, Block_Template_Interface &$root_template, ?Container_Interface &$parent = null)
+    {
+        if (!empty($config['blockName'])) {
+            throw new \InvalidArgumentException('Unexpected key "blockName", this defaults to "woocommerce/product-section".');
+        }
+        parent::__construct(array_merge(['blockName' => 'woocommerce/product-section'], $config), $root_template, $parent);
     }
     // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
-
     /**
      * Add a sub-section block type to this template.
      *
      * @param array $block_config The block data.
      */
-    public function add_subsection(array $block_config): SubsectionInterface
+    public function add_subsection(array $block_config): Subsection_Interface
     {
         $block = new Subsection($block_config, $this->get_root_template(), $this);
         return $this->add_inner_block($block);
     }
-
     /**
      * Add a sub-section block type to this template.
      *
@@ -55,7 +52,7 @@ class Section extends ProductBlock implements SectionInterface
      *
      * @param array $block_config The block data.
      */
-    public function add_section(array $block_config): SubsectionInterface
+    public function add_section(array $block_config): Subsection_Interface
     {
         wc_deprecated_function('add_section', '8.6.0', 'add_subsection');
         return $this->add_subsection($block_config);

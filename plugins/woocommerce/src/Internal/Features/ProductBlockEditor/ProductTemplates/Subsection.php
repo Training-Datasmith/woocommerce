@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Subsection Block class.
  */
+namespace Automattic\Woo_Commerce\Internal\Features\Product_Block_Editor\Product_Templates;
 
-namespace Automattic\WooCommerce\Internal\Features\ProductBlockEditor\ProductTemplates;
-
-use Automattic\WooCommerce\Admin\BlockTemplates\BlockTemplateInterface;
-use Automattic\WooCommerce\Admin\BlockTemplates\ContainerInterface;
-use Automattic\WooCommerce\Admin\Features\ProductBlockEditor\ProductTemplates\SubsectionInterface;
-
+use Automattic\Woo_Commerce\Admin\Block_Templates\Block_Template_Interface;
+use Automattic\Woo_Commerce\Admin\Block_Templates\Container_Interface;
+use Automattic\Woo_Commerce\Admin\Features\Product_Block_Editor\Product_Templates\Subsection_Interface;
 /**
  * Class for Subsection block.
  */
-class Subsection extends ProductBlock implements SubsectionInterface
+class Subsection extends Product_Block implements Subsection_Interface
 {
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
     /**
@@ -28,11 +26,12 @@ class Subsection extends ProductBlock implements SubsectionInterface
      * @throws \ValueError If the parent block container does not belong to the same template as the block.
      * @throws \InvalidArgumentException If blockName key and value are passed into block configuration.
      */
-    public function __construct(array $config, BlockTemplateInterface &$root_template, ?ContainerInterface &$parent = null) // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.parentFound
-    {if (! empty($config['blockName'])) {
-        throw new \InvalidArgumentException('Unexpected key "blockName", this defaults to "woocommerce/product-subsection".');
-    }
-        parent::__construct(array_merge([ 'blockName' => 'woocommerce/product-subsection' ], $config), $root_template, $parent);
+    public function __construct(array $config, Block_Template_Interface &$root_template, ?Container_Interface &$parent = null)
+    {
+        if (!empty($config['blockName'])) {
+            throw new \InvalidArgumentException('Unexpected key "blockName", this defaults to "woocommerce/product-subsection".');
+        }
+        parent::__construct(array_merge(['blockName' => 'woocommerce/product-subsection'], $config), $root_template, $parent);
     }
     // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
 }

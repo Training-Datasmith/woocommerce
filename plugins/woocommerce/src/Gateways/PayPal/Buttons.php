@@ -5,18 +5,14 @@
  *
  * @package WooCommerce\Gateways
  */
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Gateways\Pay_Pal;
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Gateways\PayPal;
-
-use Automattic\WooCommerce\Gateways\PayPal\Request as PayPalRequest;
-use Automattic\WooCommerce\Proxies\LegacyProxy;
-
-if (! defined('ABSPATH')) {
+use Automattic\Woo_Commerce\Gateways\Pay_Pal\Request as PayPalRequest;
+use Automattic\Woo_Commerce\Proxies\Legacy_Proxy;
+if (!defined('ABSPATH')) {
     exit;
 }
-
 /**
  * Handles PayPal Buttons.
  *
@@ -30,32 +26,29 @@ class Buttons
      * @var string
      */
     private const CLIENT_ID_OPTION = 'woocommerce_paypal_client_id';
-
     /**
      * Whether the gateway should use Orders v2 API.
      */
     private readonly bool $enabled;
-
     /**
      * The request instance.
      */
-    private readonly PayPalRequest $request;
-
+    private readonly Pay_Pal_Request $request;
     /**
      * Constructor.
      *
      * @param \WC_Gateway_Paypal $gateway The gateway instance.
      */
-    public function __construct(/**
-     * The gateway instance.
-     */
+    public function __construct(
+        /**
+         * The gateway instance.
+         */
         private readonly \WC_Gateway_Paypal $gateway
-    ) {
-        $this->request = new PayPalRequest($this->gateway);
-
+    )
+    {
+        $this->request = new Pay_Pal_Request($this->gateway);
         $this->enabled = $this->gateway->should_use_orders_v2() && 'yes' === $this->gateway->get_option('paypal_buttons', 'yes');
     }
-
     /**
      * Get the options for the PayPal buttons.
      *
@@ -64,14 +57,9 @@ class Buttons
     public function get_options(): array
     {
         $common_options = $this->get_common_options();
-        $options        = [
-            'partner-attribution-id' => 'Woo_Cart_CoreUpgrade',
-            'page-type'              => $this->get_page_type(),
-        ];
-
+        $options = ['partner-attribution-id' => 'Woo_Cart_CoreUpgrade', 'page-type' => $this->get_page_type()];
         return array_merge($common_options, $options);
     }
-
     /**
      * Get the common attributes for the PayPal JS SDK script and modules.
      *
@@ -80,18 +68,8 @@ class Buttons
     public function get_common_options(): array
     {
         $intent = $this->gateway->get_option('paymentaction') === 'authorization' ? 'authorize' : 'capture';
-
-        return [
-            'client-id'       => $this->get_client_id(),
-            'components'      => 'buttons,funding-eligibility,messages',
-            'disable-funding' => 'card,applepay',
-            'enable-funding'  => 'venmo,paylater',
-            'currency'        => get_woocommerce_currency(),
-            'intent'          => $intent,
-            'merchant-id'     => $this->gateway->email,
-        ];
+        return ['client-id' => $this->get_client_id(), 'components' => 'buttons,funding-eligibility,messages', 'disable-funding' => 'card,applepay', 'enable-funding' => 'venmo,paylater', 'currency' => get_woocommerce_currency(), 'intent' => $intent, 'merchant-id' => $this->gateway->email];
     }
-
     /**
      * Get the client-id for the PayPal buttons.
      *
@@ -101,13 +79,11 @@ class Buttons
      */
     public function get_client_id(): ?string
     {
-        if (! $this->gateway->should_use_orders_v2()) {
+        if (!$this->gateway->should_use_orders_v2()) {
             return null;
         }
-
         $option_key = self::CLIENT_ID_OPTION . ($this->gateway->testmode ? '_sandbox' : '_live');
-        $client_id  = get_option($option_key, null);
-
+        $client_id = get_option($option_key, null);
         if (empty($client_id)) {
             $client_id = $this->request->fetch_paypal_client_id();
             if (empty($client_id)) {
@@ -115,10 +91,8 @@ class Buttons
             }
             update_option($option_key, $client_id);
         }
-
         return $client_id;
     }
-
     /**
      * Get the page type for the PayPal buttons.
      *
@@ -132,10 +106,8 @@ class Buttons
         } elseif (is_product()) {
             $page_type = 'product-details';
         }
-
         return $page_type;
     }
-
     /**
      * Whether PayPal Buttons is enabled.
      *
@@ -145,7 +117,6 @@ class Buttons
     {
         return $this->enabled;
     }
-
     /**
      * Get the current page URL, to be used for App Switch.
      * Limited to checkout, cart, and product pages for security.
@@ -155,10 +126,9 @@ class Buttons
     public function get_current_page_for_app_switch(): string
     {
         // If checkout, cart or product page, return the current page URL.
-        if (wc_get_container()->get(LegacyProxy::class)->call_function('is_checkout') || is_cart() || is_product()) {
+        if (wc_get_container()->get(Legacy_Proxy::class)->call_function('is_checkout') || is_cart() || is_product()) {
             return get_permalink(get_the_ID());
         }
-
         return '';
     }
 }

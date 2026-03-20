@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin;
 
-namespace Automattic\WooCommerce\Admin;
-
-use Automattic\WooCommerce\Admin\RemoteSpecs\DataSourcePoller as RemoteSpecsDataSourcePoller;
-
+use Automattic\Woo_Commerce\Admin\Remote_Specs\Data_Source_Poller as RemoteSpecsDataSourcePoller;
 /**
  * Specs data source poller class.
  * This handles polling specs from JSON endpoints, and
@@ -13,7 +11,7 @@ use Automattic\WooCommerce\Admin\RemoteSpecs\DataSourcePoller as RemoteSpecsData
  *
  * @deprecated since 8.8.0
  */
-abstract class DataSourcePoller extends RemoteSpecsDataSourcePoller
+abstract class Data_Source_Poller extends Remote_Specs_Data_Source_Poller
 {
     /**
      * Log a deprecation to the error log.
@@ -26,7 +24,6 @@ abstract class DataSourcePoller extends RemoteSpecsDataSourcePoller
          * https://github.com/woocommerce/woocommerce/pull/45892.
          */
     }
-
     /**
      * Constructor.
      *
@@ -39,7 +36,6 @@ abstract class DataSourcePoller extends RemoteSpecsDataSourcePoller
         self::log_deprecation();
         parent::__construct($id, $data_sources, $args);
     }
-
     /**
      * Reads the data sources for specs and persists those specs.
      *
@@ -51,7 +47,6 @@ abstract class DataSourcePoller extends RemoteSpecsDataSourcePoller
         self::log_deprecation();
         return parent::get_specs_from_data_sources();
     }
-
     /**
      * Reads the data sources for specs and persists those specs.
      *
@@ -63,7 +58,6 @@ abstract class DataSourcePoller extends RemoteSpecsDataSourcePoller
         self::log_deprecation();
         return parent::read_specs_from_data_sources();
     }
-
     /**
      * Delete the specs transient.
      *
@@ -75,7 +69,6 @@ abstract class DataSourcePoller extends RemoteSpecsDataSourcePoller
         self::log_deprecation();
         return parent::delete_specs_transient();
     }
-
     /**
      * Set the specs transient.
      *

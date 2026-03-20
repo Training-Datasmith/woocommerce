@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Email_Editor\Personalization_Tags;
 
-namespace Automattic\WooCommerce\Internal\EmailEditor\PersonalizationTags;
-
-use Automattic\WooCommerce\EmailEditor\Engine\PersonalizationTags\Personalization_Tag;
-use Automattic\WooCommerce\EmailEditor\Engine\PersonalizationTags\Personalization_Tags_Registry;
-use Automattic\WooCommerce\Internal\EmailEditor\Integration;
-
+use Automattic\Woo_Commerce\Email_Editor\Engine\Personalization_Tags\Personalization_Tag;
+use Automattic\Woo_Commerce\Email_Editor\Engine\Personalization_Tags\Personalization_Tags_Registry;
+use Automattic\Woo_Commerce\Internal\Email_Editor\Integration;
 /**
  * Provider for store-related personalization tags.
  *
  * @internal
  */
-class StoreTagsProvider extends AbstractTagProvider
+class Store_Tags_Provider extends Abstract_Tag_Provider
 {
     /**
      * Register store tags with the registry.
@@ -22,92 +20,26 @@ class StoreTagsProvider extends AbstractTagProvider
      */
     public function register_tags(Personalization_Tags_Registry $registry): void
     {
-        $registry->register(
-            new Personalization_Tag(
-                __('Store Email', 'woocommerce'),
-                'woocommerce/store-email',
-                __('Store', 'woocommerce'),
-                function (array $context): string {
-                    if (isset($context['wc_email'], $context['wc_email']->get_from_address)) {
-                        return $context['wc_email']->get_from_address();
-                    }
-                    return get_option('admin_email');
-                },
-                [],
-                null,
-                [ Integration::EMAIL_POST_TYPE ],
-            )
-        );
-
-        $registry->register(
-            new Personalization_Tag(
-                __('Store URL', 'woocommerce'),
-                'woocommerce/store-url',
-                __('Store', 'woocommerce'),
-                fn (): string => esc_attr(wc_get_page_permalink('shop')),
-                [],
-                null,
-                [ Integration::EMAIL_POST_TYPE ],
-            )
-        );
-
-        $registry->register(
-            new Personalization_Tag(
-                __('Store Name', 'woocommerce'),
-                'woocommerce/store-name',
-                __('Store', 'woocommerce'),
-                function (array $context): string {
-                    if (isset($context['wc_email']) && ! empty($context['wc_email']->get_from_name())) {
-                        return $context['wc_email']->get_from_name();
-                    }
-
-                    return wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
-                },
-                [],
-                null,
-                [ Integration::EMAIL_POST_TYPE ],
-            )
-        );
-
-        $registry->register(
-            new Personalization_Tag(
-                __('Store Address', 'woocommerce'),
-                'woocommerce/store-address',
-                __('Store', 'woocommerce'),
-                fn (): string => WC()->mailer->get_store_address() ?? '',
-                [],
-                null,
-                [ Integration::EMAIL_POST_TYPE ],
-            )
-        );
-
-        $registry->register(
-            new Personalization_Tag(
-                __('My Account URL', 'woocommerce'),
-                'woocommerce/my-account-url',
-                __('Store', 'woocommerce'),
-                fn (): string => esc_attr(wc_get_page_permalink('myaccount')),
-                [],
-                null,
-                [ Integration::EMAIL_POST_TYPE ],
-            )
-        );
-
-        $registry->register(
-            new Personalization_Tag(
-                __('Admin Order Note', 'woocommerce'),
-                'woocommerce/admin-order-note',
-                __('Store', 'woocommerce'),
-                function (array $context): string {
-                    if (isset($context['wc_email'], $context['wc_email']->customer_note)) {
-                        return nl2br(wptexturize($context['wc_email']->customer_note));
-                    }
-                    return '';
-                },
-                [],
-                null,
-                [ Integration::EMAIL_POST_TYPE ],
-            )
-        );
+        $registry->register(new Personalization_Tag(__('Store Email', 'woocommerce'), 'woocommerce/store-email', __('Store', 'woocommerce'), function (array $context): string {
+            if (isset($context['wc_email'], $context['wc_email']->get_from_address)) {
+                return $context['wc_email']->get_from_address();
+            }
+            return get_option('admin_email');
+        }, [], null, [Integration::EMAIL_POST_TYPE]));
+        $registry->register(new Personalization_Tag(__('Store URL', 'woocommerce'), 'woocommerce/store-url', __('Store', 'woocommerce'), fn(): string => esc_attr(wc_get_page_permalink('shop')), [], null, [Integration::EMAIL_POST_TYPE]));
+        $registry->register(new Personalization_Tag(__('Store Name', 'woocommerce'), 'woocommerce/store-name', __('Store', 'woocommerce'), function (array $context): string {
+            if (isset($context['wc_email']) && !empty($context['wc_email']->get_from_name())) {
+                return $context['wc_email']->get_from_name();
+            }
+            return wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
+        }, [], null, [Integration::EMAIL_POST_TYPE]));
+        $registry->register(new Personalization_Tag(__('Store Address', 'woocommerce'), 'woocommerce/store-address', __('Store', 'woocommerce'), fn(): string => WC()->mailer->get_store_address() ?? '', [], null, [Integration::EMAIL_POST_TYPE]));
+        $registry->register(new Personalization_Tag(__('My Account URL', 'woocommerce'), 'woocommerce/my-account-url', __('Store', 'woocommerce'), fn(): string => esc_attr(wc_get_page_permalink('myaccount')), [], null, [Integration::EMAIL_POST_TYPE]));
+        $registry->register(new Personalization_Tag(__('Admin Order Note', 'woocommerce'), 'woocommerce/admin-order-note', __('Store', 'woocommerce'), function (array $context): string {
+            if (isset($context['wc_email'], $context['wc_email']->customer_note)) {
+                return nl2br(wptexturize($context['wc_email']->customer_note));
+            }
+            return '';
+        }, [], null, [Integration::EMAIL_POST_TYPE]));
     }
 }

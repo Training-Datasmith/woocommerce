@@ -1,20 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
 
-namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
-
-use Automattic\WooCommerce\Internal\Logging\SafeGlobalFunctionProxy;
+use Automattic\Woo_Commerce\Internal\Logging\Safe_Global_Function_Proxy;
 use WC_Payment_Gateway;
-
 defined('ABSPATH') || exit;
-
 /**
  * PayPal payment gateway provider class.
  *
  * This class handles all the custom logic for the PayPal payment gateway provider.
  */
-class PayPal extends PaymentGateway
+class Pay_Pal extends Payment_Gateway
 {
     /**
      * Try to determine if the payment gateway is in test mode.
@@ -30,7 +27,6 @@ class PayPal extends PaymentGateway
     {
         return $this->is_paypal_in_sandbox_mode($payment_gateway) ?? parent::is_in_test_mode($payment_gateway);
     }
-
     /**
      * Try to determine if the payment gateway is in dev mode.
      *
@@ -45,7 +41,6 @@ class PayPal extends PaymentGateway
     {
         return $this->is_paypal_in_sandbox_mode($payment_gateway) ?? parent::is_in_dev_mode($payment_gateway);
     }
-
     /**
      * Check if the payment gateway has a payments processor account connected.
      *
@@ -58,7 +53,6 @@ class PayPal extends PaymentGateway
     {
         return $this->is_paypal_onboarded($payment_gateway) ?? parent::is_account_connected($payment_gateway);
     }
-
     /**
      * Check if the payment gateway has completed the onboarding process.
      *
@@ -72,7 +66,6 @@ class PayPal extends PaymentGateway
     {
         return $this->is_paypal_onboarded($payment_gateway) ?? parent::is_onboarding_completed($payment_gateway);
     }
-
     /**
      * Try to determine if the payment gateway is in test mode onboarding (aka sandbox or test-drive).
      *
@@ -87,7 +80,6 @@ class PayPal extends PaymentGateway
     {
         return $this->is_paypal_in_sandbox_mode($payment_gateway) ?? parent::is_in_test_mode_onboarding($payment_gateway);
     }
-
     /**
      * Check if the PayPal payment gateway is in sandbox mode.
      *
@@ -100,42 +92,27 @@ class PayPal extends PaymentGateway
      */
     private function is_paypal_in_sandbox_mode(WC_Payment_Gateway $payment_gateway): ?bool
     {
-        if (class_exists('\WooCommerce\PayPalCommerce\PPCP') &&
-            is_callable('\WooCommerce\PayPalCommerce\PPCP::container')) {
+        if (class_exists('\WooCommerce\PayPalCommerce\PPCP') && is_callable('\WooCommerce\PayPalCommerce\PPCP::container')) {
             try {
-                $container = \WooCommerce\PayPalCommerce\PPCP::container();
-
+                $container = \Woo_Commerce\Pay_Pal_Commerce\PPCP::container();
                 if ($container->has('settings.connection-state')) {
                     $state = $container->get('settings.connection-state');
-
                     return $state->is_sandbox();
                 }
-
                 // Backwards compatibility with pre 3.0.0 (deprecated).
-                if ($container->has('onboarding.environment') &&
-                    defined('\WooCommerce\PayPalCommerce\Onboarding\Environment::SANDBOX')) {
-                    $environment         = $container->get('onboarding.environment');
+                if ($container->has('onboarding.environment') && defined('\WooCommerce\PayPalCommerce\Onboarding\Environment::SANDBOX')) {
+                    $environment = $container->get('onboarding.environment');
                     $current_environment = $environment->current_environment();
-
-                    return \WooCommerce\PayPalCommerce\Onboarding\Environment::SANDBOX === $current_environment;
+                    return \Woo_Commerce\Pay_Pal_Commerce\Onboarding\Environment::SANDBOX === $current_environment;
                 }
             } catch (\Throwable $e) {
                 // Do nothing but log so we can investigate.
-                SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                    'Failed to determine if gateway is in sandbox mode: ' . $e->getMessage(),
-                    [
-                        'gateway'   => $payment_gateway->id,
-                        'source'    => 'settings-payments',
-                        'exception' => $e,
-                    ]
-                );
+                Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway is in sandbox mode: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
             }
         }
-
         // Let the caller know that we couldn't determine the environment.
         return null;
     }
-
     /**
      * Check if the PayPal payment gateway is onboarded.
      *
@@ -146,37 +123,23 @@ class PayPal extends PaymentGateway
      */
     private function is_paypal_onboarded(WC_Payment_Gateway $payment_gateway): ?bool
     {
-        if (class_exists('\WooCommerce\PayPalCommerce\PPCP') &&
-            is_callable('\WooCommerce\PayPalCommerce\PPCP::container')) {
+        if (class_exists('\WooCommerce\PayPalCommerce\PPCP') && is_callable('\WooCommerce\PayPalCommerce\PPCP::container')) {
             try {
-                $container = \WooCommerce\PayPalCommerce\PPCP::container();
-
+                $container = \Woo_Commerce\Pay_Pal_Commerce\PPCP::container();
                 if ($container->has('settings.connection-state')) {
                     $state = $container->get('settings.connection-state');
-
                     return $state->is_connected();
                 }
-
                 // Backwards compatibility with pre 3.0.0 (deprecated).
-                if ($container->has('onboarding.state') &&
-                    defined('\WooCommerce\PayPalCommerce\Onboarding\State::STATE_ONBOARDED')) {
+                if ($container->has('onboarding.state') && defined('\WooCommerce\PayPalCommerce\Onboarding\State::STATE_ONBOARDED')) {
                     $state = $container->get('onboarding.state');
-
-                    return $state->current_state() >= \WooCommerce\PayPalCommerce\Onboarding\State::STATE_ONBOARDED;
+                    return $state->current_state() >= \Woo_Commerce\Pay_Pal_Commerce\Onboarding\State::STATE_ONBOARDED;
                 }
             } catch (\Throwable $e) {
                 // Do nothing but log so we can investigate.
-                SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                    'Failed to determine if gateway is onboarded: ' . $e->getMessage(),
-                    [
-                        'gateway'   => $payment_gateway->id,
-                        'source'    => 'settings-payments',
-                        'exception' => $e,
-                    ]
-                );
+                Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway is onboarded: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
             }
         }
-
         // Let the caller know that we couldn't determine the onboarding status.
         return null;
     }

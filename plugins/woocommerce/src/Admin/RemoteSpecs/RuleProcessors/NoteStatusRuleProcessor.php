@@ -1,22 +1,19 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor that compares against the status of another note. For
  * example, this could be used to conditionally create a note only if another
  * note has not been actioned.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\Notes\Notes;
-
+use Automattic\Woo_Commerce\Admin\Notes\Notes;
 /**
  * Rule processor that compares against the status of another note.
  */
-class NoteStatusRuleProcessor implements RuleProcessorInterface
+class Note_Status_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * Compare against the status of another note.
@@ -29,17 +26,11 @@ class NoteStatusRuleProcessor implements RuleProcessorInterface
     public function process($rule, $stored_state)
     {
         $status = Notes::get_note_status($rule->note_name);
-        if (! $status) {
+        if (!$status) {
             return false;
         }
-
-        return ComparisonOperation::compare(
-            $status,
-            $rule->status,
-            $rule->operation
-        );
+        return Comparison_Operation::compare($status, $rule->status, $rule->operation);
     }
-
     /**
      * Validates the rule.
      *
@@ -49,18 +40,15 @@ class NoteStatusRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->note_name)) {
+        if (!isset($rule->note_name)) {
             return false;
         }
-
-        if (! isset($rule->status)) {
+        if (!isset($rule->status)) {
             return false;
         }
-
-        if (! isset($rule->operation)) {
+        if (!isset($rule->operation)) {
             return false;
         }
-
         return true;
     }
 }

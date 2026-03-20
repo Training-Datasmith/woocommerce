@@ -1,26 +1,23 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\Features\Blueprint;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Blueprint;
 
 /**
  * Handles getting options from WooCommerce settings pages.
  *
  * Class SettingOptions
  */
-class SettingOptions
+class Setting_Options
 {
     /**
      * Setting option controller.
      */
     private readonly \WC_REST_Setting_Options_Controller $setting_option_controller;
-
     /**
      * Ignore setting types.
      */
-    private array $ignore_setting_types = [ 'title', 'sectionend', 'slotfill_placeholder', 'hidden' ];
-
+    private array $ignore_setting_types = ['title', 'sectionend', 'slotfill_placeholder', 'hidden'];
     /**
      * Constructor.
      */
@@ -28,7 +25,6 @@ class SettingOptions
     {
         $this->setting_option_controller = new \WC_REST_Setting_Options_Controller();
     }
-
     /**
      * Get options for a specific settings page.
      *
@@ -39,32 +35,26 @@ class SettingOptions
     public function get_page_options($page_id): array
     {
         $settings = $this->setting_option_controller->get_group_settings($page_id);
-
         if (is_wp_error($settings)) {
             throw new \Exception(esc_html($settings->get_error_message()));
         }
-
         $page_options = [];
-
         foreach ($settings as $setting) {
             // Skip if the setting type is not valid.
             if (in_array($setting['type'], $this->ignore_setting_types, true)) {
                 continue;
             }
-            if (! isset($setting['id'])) {
+            if (!isset($setting['id'])) {
                 continue;
             }
             $key = is_array($setting['option_key']) ? $setting['option_key'][0] : $setting['option_key'];
-
             // Skip if the option key is already in the page options.
             if (in_array($key, $page_options, true)) {
                 continue;
             }
-
-            $default_value        = $setting['default'] ?? null;
-            $page_options[ $key ] = get_option($key, $default_value);
+            $default_value = $setting['default'] ?? null;
+            $page_options[$key] = get_option($key, $default_value);
         }
-
         return $page_options;
     }
 }

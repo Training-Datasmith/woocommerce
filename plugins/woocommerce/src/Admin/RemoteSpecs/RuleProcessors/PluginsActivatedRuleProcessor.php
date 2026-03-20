@@ -1,20 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor for sending when the provided plugins are activated.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\PluginsProvider\PluginsProvider;
-
+use Automattic\Woo_Commerce\Admin\Plugins_Provider\Plugins_Provider;
 /**
  * Rule processor for sending when the provided plugins are activated.
  */
-class PluginsActivatedRuleProcessor implements RuleProcessorInterface
+class Plugins_Activated_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * The plugins provider.
@@ -22,7 +19,6 @@ class PluginsActivatedRuleProcessor implements RuleProcessorInterface
      * @var PluginsProviderInterface
      */
     protected $plugins_provider;
-
     /**
      * Constructor.
      *
@@ -30,9 +26,8 @@ class PluginsActivatedRuleProcessor implements RuleProcessorInterface
      */
     public function __construct($plugins_provider = null)
     {
-        $this->plugins_provider = $plugins_provider ?? new PluginsProvider();
+        $this->plugins_provider = $plugins_provider ?? new Plugins_Provider();
     }
-
     /**
      * Process the rule.
      *
@@ -43,29 +38,22 @@ class PluginsActivatedRuleProcessor implements RuleProcessorInterface
      */
     public function process($rule, $stored_state): bool
     {
-        if (! is_countable($rule->plugins) || 0 === count($rule->plugins)) {
+        if (!is_countable($rule->plugins) || 0 === count($rule->plugins)) {
             return false;
         }
-
         $active_plugin_slugs = $this->plugins_provider->get_active_plugin_slugs();
-
         foreach ($rule->plugins as $plugin_slug) {
-            if (! is_string($plugin_slug)) {
+            if (!is_string($plugin_slug)) {
                 $logger = wc_get_logger();
-                $logger->warning(
-                    __('Invalid plugin slug provided in the plugins activated rule.', 'woocommerce')
-                );
+                $logger->warning(__('Invalid plugin slug provided in the plugins activated rule.', 'woocommerce'));
                 return false;
             }
-
-            if (! in_array($plugin_slug, $active_plugin_slugs, true)) {
+            if (!in_array($plugin_slug, $active_plugin_slugs, true)) {
                 return false;
             }
         }
-
         return true;
     }
-
     /**
      * Validates the rule.
      *
@@ -75,10 +63,9 @@ class PluginsActivatedRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->plugins) || ! is_array($rule->plugins)) {
+        if (!isset($rule->plugins) || !is_array($rule->plugins)) {
             return false;
         }
-
         return true;
     }
 }

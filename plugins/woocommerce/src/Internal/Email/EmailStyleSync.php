@@ -1,28 +1,24 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Email;
 
-namespace Automattic\WooCommerce\Internal\Email;
-
-use Automattic\WooCommerce\Internal\RegisterHooksInterface;
-
+use Automattic\Woo_Commerce\Internal\Register_Hooks_Interface;
 /**
  * Helper class for syncing email styles with theme styles.
  *
  * @internal Just for internal use.
  */
-class EmailStyleSync implements RegisterHooksInterface
+class Email_Style_Sync implements Register_Hooks_Interface
 {
     /**
      * Option name for auto-sync setting.
      */
     public const AUTO_SYNC_OPTION = 'woocommerce_email_auto_sync_with_theme';
-
     /**
      * Flag to prevent recursive syncing.
      */
     private bool $is_syncing = false;
-
     /**
      * Register hooks and filters.
      */
@@ -31,20 +27,16 @@ class EmailStyleSync implements RegisterHooksInterface
         // Hook into theme change events.
         add_action('after_switch_theme', $this->sync_email_styles_with_theme(...));
         add_action('customize_save_after', $this->sync_email_styles_with_theme(...));
-
         // Hook into theme.json and global styles changes.
         add_action('wp_theme_json_data_updated', $this->sync_email_styles_with_theme(...));
         add_action('rest_after_insert_global_styles', $this->sync_email_styles_with_theme(...));
         add_action('update_option_wp_global_styles', $this->sync_email_styles_with_theme(...));
         add_action('save_post_wp_global_styles', $this->sync_email_styles_with_theme(...));
-
         // Hook into the theme editor save action.
         add_action('wp_ajax_wp_save_styles', $this->sync_email_styles_with_theme(...), 999);
-
         // Hook into auto-sync option update to trigger sync when enabled.
         add_action('update_option_' . self::AUTO_SYNC_OPTION, $this->maybe_sync_on_option_update(...), 10, 3);
     }
-
     /**
      * Trigger sync when auto-sync option is enabled.
      *
@@ -64,7 +56,6 @@ class EmailStyleSync implements RegisterHooksInterface
             }
         }
     }
-
     /**
      * Check if auto-sync is enabled.
      *
@@ -74,7 +65,6 @@ class EmailStyleSync implements RegisterHooksInterface
     {
         return 'yes' === get_option(self::AUTO_SYNC_OPTION, 'no');
     }
-
     /**
      * Set auto-sync enabled status.
      *
@@ -85,7 +75,6 @@ class EmailStyleSync implements RegisterHooksInterface
     {
         return update_option(self::AUTO_SYNC_OPTION, $enabled ? 'yes' : 'no');
     }
-
     /**
      * Sync email styles with theme styles if auto-sync is enabled.
      *
@@ -93,46 +82,38 @@ class EmailStyleSync implements RegisterHooksInterface
      */
     public function sync_email_styles_with_theme(): void
     {
-        if ($this->is_syncing || ! $this->is_auto_sync_enabled() || ! wp_theme_has_theme_json()) {
+        if ($this->is_syncing || !$this->is_auto_sync_enabled() || !wp_theme_has_theme_json()) {
             return;
         }
-
         $this->is_syncing = true;
-
         try {
             $this->update_email_colors();
         } finally {
             $this->is_syncing = false;
         }
     }
-
     /**
      * Update email colors from theme colors.
      */
     protected function update_email_colors()
     {
-        $colors = EmailColors::get_default_colors();
+        $colors = Email_Colors::get_default_colors();
         if (empty($colors)) {
             return;
         }
-
-        if (! empty($colors['base'])) {
+        if (!empty($colors['base'])) {
             update_option('woocommerce_email_base_color', $colors['base']);
         }
-
-        if (! empty($colors['bg'])) {
+        if (!empty($colors['bg'])) {
             update_option('woocommerce_email_background_color', $colors['bg']);
         }
-
-        if (! empty($colors['body_bg'])) {
+        if (!empty($colors['body_bg'])) {
             update_option('woocommerce_email_body_background_color', $colors['body_bg']);
         }
-
-        if (! empty($colors['body_text'])) {
+        if (!empty($colors['body_text'])) {
             update_option('woocommerce_email_text_color', $colors['body_text']);
         }
-
-        if (! empty($colors['footer_text'])) {
+        if (!empty($colors['footer_text'])) {
             update_option('woocommerce_email_footer_text_color', $colors['footer_text']);
         }
     }

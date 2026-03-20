@@ -1,22 +1,19 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\CLI\Migrator\Commands;
 
-namespace Automattic\WooCommerce\Internal\CLI\Migrator\Commands;
-
-use Automattic\WooCommerce\Internal\CLI\Migrator\Core\PlatformRegistry;
+use Automattic\Woo_Commerce\Internal\CLI\Migrator\Core\Platform_Registry;
 use WP_CLI;
-
 /**
  * Lists all registered migration platforms.
  */
-class ListCommand
+class List_Command
 {
     /**
      * The platform registry.
      */
-    private PlatformRegistry $platform_registry;
-
+    private Platform_Registry $platform_registry;
     /**
      * Initialize the command with its dependencies.
      *
@@ -24,11 +21,10 @@ class ListCommand
      *
      * @internal
      */
-    final public function init(PlatformRegistry $platform_registry): void
+    final public function init(Platform_Registry $platform_registry): void
     {
         $this->platform_registry = $platform_registry;
     }
-
     /**
      * Lists all registered migration platforms.
      *
@@ -43,42 +39,22 @@ class ListCommand
     {
         // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
         unset($args, $assoc_args);
-
         $platforms = $this->platform_registry->get_platforms();
-
         if (empty($platforms)) {
             WP_CLI::line('No migration platforms are registered.');
             return;
         }
-
         $formatted_items = [];
-        $platform_count  = count($platforms);
-        $current_index   = 0;
-
+        $platform_count = count($platforms);
+        $current_index = 0;
         foreach ($platforms as $id => $details) {
-            $formatted_items[] = [
-                'id'      => $id,
-                'name'    => $details['name'] ?? '',
-                'fetcher' => $details['fetcher'] ?? '',
-                'mapper'  => $details['mapper'] ?? '',
-            ];
-
+            $formatted_items[] = ['id' => $id, 'name' => $details['name'] ?? '', 'fetcher' => $details['fetcher'] ?? '', 'mapper' => $details['mapper'] ?? ''];
             // Add separator row between platforms (but not after the last one).
             ++$current_index;
             if ($current_index < $platform_count) {
-                $formatted_items[] = [
-                    'id'      => str_repeat('-', 20),
-                    'name'    => str_repeat('-', 25),
-                    'fetcher' => str_repeat('-', 30),
-                    'mapper'  => str_repeat('-', 30),
-                ];
+                $formatted_items[] = ['id' => str_repeat('-', 20), 'name' => str_repeat('-', 25), 'fetcher' => str_repeat('-', 30), 'mapper' => str_repeat('-', 30)];
             }
         }
-
-        WP_CLI\Utils\format_items(
-            'table',
-            $formatted_items,
-            [ 'id', 'name', 'fetcher', 'mapper' ]
-        );
+        WP_CLI\Utils\format_items('table', $formatted_items, ['id', 'name', 'fetcher', 'mapper']);
     }
 }

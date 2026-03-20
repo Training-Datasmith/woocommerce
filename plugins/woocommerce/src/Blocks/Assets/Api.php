@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Assets;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Assets;
 
 use Automattic\Jetpack\Constants;
-use Automattic\WooCommerce\Blocks\Domain\Package;
+use Automattic\Woo_Commerce\Blocks\Domain\Package;
 use Exception;
-
 /**
  * The Api class provides an interface to various asset registration helpers.
  *
@@ -23,66 +21,59 @@ class Api
      * @var string
      */
     public $wc_version;
-
     /**
      * Stores inline scripts already enqueued.
      */
     private array $inline_scripts = [];
-
     /**
      * Determines if caching is enabled for script data.
      */
     private readonly bool $disable_cache;
-
     /**
      * Stores loaded script data for the current request
      *
      * @var array|null
      */
     private $script_data;
-
     /**
      * Tracks whether script_data was modified during the current request.
      */
     private bool $script_data_modified = false;
-
     /**
      * Stores the hash for the script data, made up of the site url, plugin version and package path.
      *
      * @var string
      */
     private $script_data_hash;
-
     /**
      * Stores the transient key used to cache the script data. This will change if the site is accessed via HTTPS or HTTP.
      */
     private string $script_data_transient_key = 'woocommerce_blocks_asset_api_script_data';
-
     /**
      * Constructor for class
      *
      * @param Package $package An instance of Package.
      */
-    public function __construct(/**
-     * Reference to the Package instance
-     */
+    public function __construct(
+        /**
+         * Reference to the Package instance
+         */
         private readonly Package $package
-    ) {
+    )
+    {
         // Use wc- prefix here to prevent collisions when WC Core version catches up to a version previously used by the WC Blocks feature plugin.
-        $this->wc_version    = 'wc-' . Constants::get_constant('WC_VERSION');
-        $this->disable_cache = (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG) || wp_get_environment_type() !== 'production';
-
+        $this->wc_version = 'wc-' . Constants::get_constant('WC_VERSION');
+        $this->disable_cache = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG || wp_get_environment_type() !== 'production';
         // If the site is accessed via HTTPS, change the transient key. This is to prevent the script URLs being cached
         // with the first scheme they are accessed on after cache expiry.
         if (is_ssl()) {
             $this->script_data_transient_key .= '_ssl';
         }
-        if (! $this->disable_cache) {
+        if (!$this->disable_cache) {
             $this->script_data_hash = $this->get_script_data_hash();
         }
         add_action('shutdown', $this->update_script_data_cache(...), 20);
     }
-
     /**
      * Get the file modified time as a cache buster if we're in dev mode.
      *
@@ -97,7 +88,6 @@ class Api
         }
         return $this->wc_version;
     }
-
     /**
      * Retrieve the url to an asset for this plugin.
      *
@@ -110,7 +100,6 @@ class Api
     {
         return $this->package->get_url($relative_path);
     }
-
     /**
      * Get the path to a block's metadata
      *
@@ -122,12 +111,11 @@ class Api
     public function get_block_metadata_path(string $block_name, string $path = '')
     {
         $path_to_metadata_from_plugin_root = $this->package->get_path('assets/client/blocks/' . $path . $block_name . '/block.json');
-        if (! file_exists($path_to_metadata_from_plugin_root)) {
+        if (!file_exists($path_to_metadata_from_plugin_root)) {
             return false;
         }
         return $path_to_metadata_from_plugin_root;
     }
-
     /**
      * Generates a hash containing the site url, plugin version and package path.
      *
@@ -139,7 +127,6 @@ class Api
     {
         return md5(get_option('siteurl', '') . $this->wc_version . $this->package->get_path());
     }
-
     /**
      * Initialize and load cached script data from the transient cache.
      */
@@ -148,24 +135,12 @@ class Api
         if ($this->disable_cache) {
             return [];
         }
-
         $transient_value = json_decode((string) get_transient($this->script_data_transient_key), true);
-
-        if (
-            json_last_error() !== JSON_ERROR_NONE ||
-            empty($transient_value) ||
-            empty($transient_value['script_data']) ||
-            empty($transient_value['version']) ||
-            $transient_value['version'] !== $this->wc_version ||
-            empty($transient_value['hash']) ||
-            $transient_value['hash'] !== $this->script_data_hash
-        ) {
+        if (json_last_error() !== JSON_ERROR_NONE || empty($transient_value) || empty($transient_value['script_data']) || empty($transient_value['version']) || $transient_value['version'] !== $this->wc_version || empty($transient_value['hash']) || $transient_value['hash'] !== $this->script_data_hash) {
             return [];
         }
-
         return (array) ($transient_value['script_data'] ?? []);
     }
-
     /**
      * Store all cached script data in the transient cache.
      */
@@ -174,22 +149,11 @@ class Api
         if (is_null($this->script_data) || $this->disable_cache) {
             return;
         }
-        if (! $this->script_data_modified) {
+        if (!$this->script_data_modified) {
             return;
         }
-        set_transient(
-            $this->script_data_transient_key,
-            wp_json_encode(
-                [
-                    'script_data' => $this->script_data,
-                    'version'     => $this->wc_version,
-                    'hash'        => $this->script_data_hash,
-                ]
-            ),
-            DAY_IN_SECONDS * 30
-        );
+        set_transient($this->script_data_transient_key, wp_json_encode(['script_data' => $this->script_data, 'version' => $this->wc_version, 'hash' => $this->script_data_hash]), DAY_IN_SECONDS * 30);
     }
-
     /**
      * Use package path to find an asset data file and return the data.
      *
@@ -201,7 +165,6 @@ class Api
         $asset_path = $this->package->get_path($filename);
         return file_exists($asset_path) ? require $asset_path : [];
     }
-
     /**
      * Get src, version and dependencies given a script relative src.
      *
@@ -212,40 +175,23 @@ class Api
      */
     public function get_script_data($relative_src, $dependencies = []): array
     {
-        if (! $relative_src) {
-            return [
-                'src'          => '',
-                'version'      => '1',
-                'dependencies' => $dependencies,
-            ];
+        if (!$relative_src) {
+            return ['src' => '', 'version' => '1', 'dependencies' => $dependencies];
         }
-
         if (is_null($this->script_data)) {
             $this->script_data = $this->get_cached_script_data();
         }
-
-        if (empty($this->script_data[ $relative_src ])) {
+        if (empty($this->script_data[$relative_src])) {
             $asset_path = $this->package->get_path(str_replace('.js', '.asset.php', $relative_src));
             // The following require is safe because we are checking if the file exists and it is not a user input.
             // nosemgrep audit.php.lang.security.file.inclusion-arg.
             $asset = file_exists($asset_path) ? require $asset_path : [];
-
-            $this->script_data[ $relative_src ] = [
-                'src'          => $this->get_asset_url($relative_src),
-                'version'      => ! empty($asset['version']) ? $asset['version'] : $this->get_file_version($relative_src),
-                'dependencies' => ! empty($asset['dependencies']) ? $asset['dependencies'] : [],
-            ];
-            $this->script_data_modified         = true;
+            $this->script_data[$relative_src] = ['src' => $this->get_asset_url($relative_src), 'version' => !empty($asset['version']) ? $asset['version'] : $this->get_file_version($relative_src), 'dependencies' => !empty($asset['dependencies']) ? $asset['dependencies'] : []];
+            $this->script_data_modified = true;
         }
-
         // Return asset details as well as the requested dependencies array.
-        return [
-            'src'          => $this->script_data[ $relative_src ]['src'],
-            'version'      => $this->script_data[ $relative_src ]['version'],
-            'dependencies' => array_merge($this->script_data[ $relative_src ]['dependencies'], $dependencies),
-        ];
+        return ['src' => $this->script_data[$relative_src]['src'], 'version' => $this->script_data[$relative_src]['version'], 'dependencies' => array_merge($this->script_data[$relative_src]['dependencies'], $dependencies)];
     }
-
     /**
      * Registers a script according to `wp_register_script`, adding the correct prefix, and additionally loading translations.
      *
@@ -266,24 +212,19 @@ class Api
     public function register_script($handle, $relative_src, $dependencies = [], $has_i18n = true): void
     {
         $script_data = $this->get_script_data($relative_src, $dependencies);
-
         if (in_array($handle, $script_data['dependencies'], true)) {
             if (wp_get_environment_type() === 'development') {
-                $dependencies = array_diff($script_data['dependencies'], [ $handle ]);
-                add_action(
-                    'admin_notices',
-                    function () use ($handle): void {
-                        echo '<div class="error"><p>';
-                        /* translators: %s file handle name. */
-                        printf(esc_html__('Script with handle %s had a dependency on itself which has been removed. This is an indicator that your JS code has a circular dependency that can cause bugs.', 'woocommerce'), esc_html($handle));
-                        echo '</p></div>';
-                    }
-                );
+                $dependencies = array_diff($script_data['dependencies'], [$handle]);
+                add_action('admin_notices', function () use ($handle): void {
+                    echo '<div class="error"><p>';
+                    /* translators: %s file handle name. */
+                    printf(esc_html__('Script with handle %s had a dependency on itself which has been removed. This is an indicator that your JS code has a circular dependency that can cause bugs.', 'woocommerce'), esc_html($handle));
+                    echo '</p></div>';
+                });
             } else {
                 throw new Exception(sprintf('Script with handle %s had a dependency on itself. This is an indicator that your JS code has a circular dependency that can cause bugs.', $handle));
             }
         }
-
         /**
          * Filters the list of script dependencies.
          *
@@ -294,15 +235,12 @@ class Api
          * @return array
          */
         $script_dependencies = apply_filters('woocommerce_blocks_register_script_dependencies', $script_data['dependencies'], $handle);
-
         wp_register_script($handle, $script_data['src'], $script_dependencies, $script_data['version'], true);
-
         if ($has_i18n && function_exists('wp_set_script_translations')) {
             wp_set_script_translations($handle, 'woocommerce', $this->package->get_path('languages'));
             wp_set_script_translations($handle, 'woocommerce', $this->package->get_path('i18n/languages'));
         }
     }
-
     /**
      * Registers a style according to `wp_register_style`.
      *
@@ -319,15 +257,13 @@ class Api
     public function register_style($handle, $relative_src, $deps = [], $media = 'all', $rtl = false): void
     {
         $filename = str_replace(plugins_url('/', dirname(__DIR__)), '', $relative_src);
-        $src      = $this->get_asset_url($relative_src);
-        $ver      = $this->get_file_version($filename);
+        $src = $this->get_asset_url($relative_src);
+        $ver = $this->get_file_version($filename);
         wp_register_style($handle, $src, $deps, $ver, $media);
-
         if ($rtl) {
             wp_style_add_data($handle, 'rtl', 'replace');
         }
     }
-
     /**
      * Returns the appropriate asset path for current builds.
      *
@@ -337,9 +273,8 @@ class Api
      */
     public function get_block_asset_build_path($filename, $type = 'js'): string
     {
-        return "assets/client/blocks/$filename.$type";
+        return "assets/client/blocks/{$filename}.{$type}";
     }
-
     /**
      * Adds an inline script, once.
      *
@@ -348,16 +283,14 @@ class Api
      */
     public function add_inline_script($handle, $script): void
     {
-        if (! empty($this->inline_scripts[ $handle ]) && in_array($script, $this->inline_scripts[ $handle ], true)) {
+        if (!empty($this->inline_scripts[$handle]) && in_array($script, $this->inline_scripts[$handle], true)) {
             return;
         }
-
         wp_add_inline_script($handle, $script);
-
-        if (isset($this->inline_scripts[ $handle ])) {
-            $this->inline_scripts[ $handle ][] = $script;
+        if (isset($this->inline_scripts[$handle])) {
+            $this->inline_scripts[$handle][] = $script;
         } else {
-            $this->inline_scripts[ $handle ] = [ $script ];
+            $this->inline_scripts[$handle] = [$script];
         }
     }
 }

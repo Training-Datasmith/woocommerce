@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * Product Filter: Clear Button Block.
  */
-final class ProductFilterClearButton extends AbstractBlock
+final class Product_Filter_Clear_Button extends Abstract_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ final class ProductFilterClearButton extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-filter-clear-button';
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -25,7 +23,6 @@ final class ProductFilterClearButton extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Include and render the block.
      *
@@ -37,28 +34,15 @@ final class ProductFilterClearButton extends AbstractBlock
     protected function render($attributes, $content, $block): string
     {
         // don't render if its admin, or ajax in progress.
-        if (
-            is_admin() ||
-            wp_doing_ajax() ||
-            empty($block->context['filterData'])
-        ) {
+        if (is_admin() || wp_doing_ajax() || empty($block->context['filterData'])) {
             return '';
         }
-
         $p = new \WP_HTML_Tag_Processor($content);
-
         if ($p->next_tag()) {
             $p->set_attribute('data-wp-on--click', 'actions.removeAllActiveFilters');
-
             $content = $p->get_updated_html();
         }
-
-        $content = str_replace([ '<a', '</a>' ], [ '<button', '</button>' ], $content);
-
-        return sprintf(
-            '<div %1$s>%2$s</div>',
-            get_block_wrapper_attributes(),
-            $content
-        );
+        $content = str_replace(['<a', '</a>'], ['<button', '</button>'], $content);
+        return sprintf('<div %1$s>%2$s</div>', get_block_wrapper_attributes(), $content);
     }
 }

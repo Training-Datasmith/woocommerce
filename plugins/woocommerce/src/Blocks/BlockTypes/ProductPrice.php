@@ -1,33 +1,28 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-use Automattic\WooCommerce\Enums\ProductType;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
+use Automattic\Woo_Commerce\Enums\Product_Type;
 /**
  * ProductPrice class.
  */
-class ProductPrice extends AbstractBlock
+class Product_Price extends Abstract_Block
 {
-    use EnableBlockJsonAssetsTrait;
-
+    use Enable_Block_Json_Assets_Trait;
     /**
      * Block name.
      *
      * @var string
      */
     protected $block_name = 'product-price';
-
     /**
      * API version name.
      *
      * @var string
      */
     protected $api_version = '3';
-
     /**
      * Get the frontend style handle for this block type.
      */
@@ -35,7 +30,6 @@ class ProductPrice extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Overwrite parent method to prevent script registration.
      *
@@ -46,15 +40,13 @@ class ProductPrice extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Register the context.
      */
     protected function get_block_type_uses_context(): array
     {
-        return [ 'query', 'queryId', 'postId' ];
+        return ['query', 'queryId', 'postId'];
     }
-
     /**
      * Include and render the block.
      *
@@ -67,33 +59,22 @@ class ProductPrice extends AbstractBlock
     {
         $post_id = $block->context['postId'] ?? '';
         $product = wc_get_product($post_id);
-
         if ($product) {
-            $styles_and_classes = StyleAttributesUtils::get_classes_and_styles_by_attributes($attributes);
-
-            $is_descendant_of_product_collection       = isset($block->context['query']['isProductCollectionBlock']);
+            $styles_and_classes = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes);
+            $is_descendant_of_product_collection = isset($block->context['query']['isProductCollectionBlock']);
             $is_descendant_of_grouped_product_selector = isset($block->context['isDescendantOfGroupedProductSelector']);
-            $is_interactive                            = ! $is_descendant_of_product_collection && ! $is_descendant_of_grouped_product_selector && $product->is_type(ProductType::VARIABLE);
-
-            $wrapper_attributes     = [
-                'style' => $styles_and_classes['styles'] ?? '',
-                'class' => $styles_and_classes['classes'] ?? '',
-            ];
+            $is_interactive = !$is_descendant_of_product_collection && !$is_descendant_of_grouped_product_selector && $product->is_type(Product_Type::VARIABLE);
+            $wrapper_attributes = ['style' => $styles_and_classes['styles'] ?? '', 'class' => $styles_and_classes['classes'] ?? ''];
             $interactive_attributes = '';
-            $context_directive      = '';
-
+            $context_directive = '';
             if ($is_interactive) {
                 // phpcs:ignore Generic.Commenting.DocComment.MissingShort -- Type hint for PHPStan.
                 /** @var \WC_Product_Variable $product */
                 // Check if variation prices differ (replicates logic from WC_Product_Variable::get_available_variation).
-                $prices_vary = $product->get_variation_sale_price('min') !== $product->get_variation_sale_price('max')
-                    || $product->get_variation_regular_price('min') !== $product->get_variation_regular_price('max');
-
+                $prices_vary = $product->get_variation_sale_price('min') !== $product->get_variation_sale_price('max') || $product->get_variation_regular_price('min') !== $product->get_variation_regular_price('max');
                 $formatted_variations_data = [];
-
                 if ($prices_vary) {
                     $variations_data = $product->get_available_variations('objects');
-
                     foreach ($variations_data as $variation) {
                         /**
                          * Filter whether to show variation price.
@@ -105,58 +86,26 @@ class ProductPrice extends AbstractBlock
                          * @param \WC_Product_Variable  $product    The variable product.
                          * @param \WC_Product_Variation $variation  The variation.
                          */
-                        $show_variation_price = apply_filters(
-                            'woocommerce_show_variation_price',
-                            true,
-                            $product,
-                            $variation
-                        );
-
-                        if (! $show_variation_price) {
+                        $show_variation_price = apply_filters('woocommerce_show_variation_price', true, $product, $variation);
+                        if (!$show_variation_price) {
                             continue;
                         }
-
-                        $formatted_variations_data[ $variation->get_id() ] = [
-                            'price_html' => '<span class="price">' . $variation->get_price_html() . '</span>',
-                        ];
+                        $formatted_variations_data[$variation->get_id()] = ['price_html' => '<span class="price">' . $variation->get_price_html() . '</span>'];
                     }
                 }
-
                 if (empty($formatted_variations_data)) {
                     $is_interactive = false;
                 } else {
-                    wp_interactivity_config(
-                        'woocommerce',
-                        [
-                            'products' => [
-                                $product->get_id() => [
-                                    'price_html' => $product->get_price_html(),
-                                    'variations' => $formatted_variations_data,
-                                ],
-                            ],
-                        ]
-                    );
-
+                    wp_interactivity_config('woocommerce', ['products' => [$product->get_id() => ['price_html' => $product->get_price_html(), 'variations' => $formatted_variations_data]]]);
                     wp_enqueue_script_module('woocommerce/product-elements');
                     $wrapper_attributes['data-wp-interactive'] = 'woocommerce/product-elements';
-                    $context_directive                         = wp_interactivity_data_wp_context(
-                        [
-                            'productElementKey' => 'price_html',
-                        ]
-                    );
-                    $interactive_attributes                    = 'data-wp-watch="callbacks.updateValue" aria-live="polite" aria-atomic="true"';
+                    $context_directive = wp_interactivity_data_wp_context(['productElementKey' => 'price_html']);
+                    $interactive_attributes = 'data-wp-watch="callbacks.updateValue" aria-live="polite" aria-atomic="true"';
                 }
             }
-
-            return sprintf(
-                '<div %1$s %2$s><div class="wc-block-components-product-price wc-block-grid__product-price" %3$s>
+            return sprintf('<div %1$s %2$s><div class="wc-block-components-product-price wc-block-grid__product-price" %3$s>
 					%4$s
-				</div></div>',
-                get_block_wrapper_attributes($wrapper_attributes),
-                $context_directive,
-                $interactive_attributes,
-                $product->get_price_html()
-            );
+				</div></div>', get_block_wrapper_attributes($wrapper_attributes), $context_directive, $interactive_attributes, $product->get_price_html());
         }
     }
 }

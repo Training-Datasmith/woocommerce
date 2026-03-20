@@ -1,16 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Filters for maintaining backwards compatibility with deprecated options.
  */
-
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks;
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks;
 
 /**
  * DeprecatedOptions class.
  */
-class DeprecatedOptions
+class Deprecated_Options
 {
     /**
      * Initialize.
@@ -22,7 +21,6 @@ class DeprecatedOptions
         add_action('pre_update_option_woocommerce_task_list_hidden', self::update_deprecated_options(...), 10, 3);
         add_action('pre_update_option_woocommerce_extended_task_list_hidden', self::update_deprecated_options(...), 10, 3);
     }
-
     /**
      * Get the values from the correct source when attempting to retrieve deprecated options.
      *
@@ -35,7 +33,6 @@ class DeprecatedOptions
         if (defined('WC_INSTALLING') && WC_INSTALLING === true) {
             return $pre_option;
         }
-
         $hidden = get_option('woocommerce_task_list_hidden_lists', []);
         switch ($option) {
             case 'woocommerce_task_list_hidden':
@@ -44,7 +41,6 @@ class DeprecatedOptions
                 return in_array('extended', $hidden, true) ? 'yes' : 'no';
         }
     }
-
     /**
      * Updates the new option names when deprecated options are updated.
      * This is a temporary fallback until we can fully remove the old task list components.
@@ -58,16 +54,16 @@ class DeprecatedOptions
     {
         switch ($option) {
             case 'woocommerce_task_list_hidden':
-                $task_list = TaskLists::get_list('setup');
-                if (! $task_list) {
+                $task_list = Task_Lists::get_list('setup');
+                if (!$task_list) {
                     return;
                 }
                 $update = 'yes' === $value ? $task_list->hide() : $task_list->unhide();
                 delete_option('woocommerce_task_list_hidden');
                 return false;
             case 'woocommerce_extended_task_list_hidden':
-                $task_list = TaskLists::get_list('extended');
-                if (! $task_list) {
+                $task_list = Task_Lists::get_list('extended');
+                if (!$task_list) {
                     return;
                 }
                 $update = 'yes' === $value ? $task_list->hide() : $task_list->unhide();

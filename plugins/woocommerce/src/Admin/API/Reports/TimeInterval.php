@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Class for time interval and numeric range handling for reports.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports;
+namespace Automattic\Woo_Commerce\Admin\API\Reports;
 
 defined('ABSPATH') || exit;
-
 /**
  * Date & time interval and numeric range handling class for Reporting API.
  */
-class TimeInterval
+class Time_Interval
 {
     /**
      * Format string for ISO DateTime formatter.
@@ -20,14 +18,12 @@ class TimeInterval
      * @var string
      */
     public static $iso_datetime_format = 'Y-m-d\TH:i:s';
-
     /**
      * Format string for use in SQL queries.
      *
      * @var string
      */
     public static $sql_datetime_format = 'Y-m-d H:i:s';
-
     /**
      * Converts local datetime to GMT/UTC time.
      *
@@ -36,48 +32,44 @@ class TimeInterval
     public static function convert_local_datetime_to_gmt($datetime_string): \DateTime
     {
         $datetime = new \DateTime($datetime_string, new \DateTimeZone(wc_timezone_string()));
-        $datetime->setTimezone(new \DateTimeZone('GMT'));
+        $datetime->set_timezone(new \DateTimeZone('GMT'));
         return $datetime;
     }
-
     /**
      * Returns default 'before' parameter for the reports.
      *
      * @return DateTime
      */
-    public static function default_before(): \WC_DateTime
+    public static function default_before(): \Wc_date_Time
     {
-        $datetime = new \WC_DateTime();
+        $datetime = new \Wc_date_Time();
         // Set local timezone or offset.
         if (get_option('timezone_string')) {
-            $datetime->setTimezone(new \DateTimeZone(wc_timezone_string()));
+            $datetime->set_timezone(new \DateTimeZone(wc_timezone_string()));
         } else {
             $datetime->set_utc_offset(wc_timezone_offset());
         }
         return $datetime;
     }
-
     /**
      * Returns default 'after' parameter for the reports.
      *
      * @return DateTime
      */
-    public static function default_after(): \WC_DateTime
+    public static function default_after(): \Wc_date_Time
     {
-        $now       = time();
+        $now = time();
         $week_back = $now - WEEK_IN_SECONDS;
-
-        $datetime = new \WC_DateTime();
-        $datetime->setTimestamp($week_back);
+        $datetime = new \Wc_date_Time();
+        $datetime->set_timestamp($week_back);
         // Set local timezone or offset.
         if (get_option('timezone_string')) {
-            $datetime->setTimezone(new \DateTimeZone(wc_timezone_string()));
+            $datetime->set_timezone(new \DateTimeZone(wc_timezone_string()));
         } else {
             $datetime->set_utc_offset(wc_timezone_offset());
         }
         return $datetime;
     }
-
     /**
      * Returns date format to be used as grouping clause in SQL.
      *
@@ -88,30 +80,17 @@ class TimeInterval
     public static function db_datetime_format(string $time_interval, $table_name, $date_column_name = 'date_created'): string
     {
         $first_day_of_week = absint(get_option('start_of_week'));
-
         if (1 === $first_day_of_week) {
             // Week begins on Monday, ISO 8601.
             $week_format = "DATE_FORMAT({$table_name}.`{$date_column_name}`, '%x-%v')";
         } else {
             // Week begins on day other than specified by ISO 8601, needs to be in sync with function simple_week_number.
-            $week_format = "CONCAT(YEAR({$table_name}.`{$date_column_name}`), '-', LPAD( FLOOR( ( DAYOFYEAR({$table_name}.`{$date_column_name}`) + ( ( DATE_FORMAT(MAKEDATE(YEAR({$table_name}.`{$date_column_name}`),1), '%w') - $first_day_of_week + 7 ) % 7 ) - 1 ) / 7  ) + 1 , 2, '0'))";
-
+            $week_format = "CONCAT(YEAR({$table_name}.`{$date_column_name}`), '-', LPAD( FLOOR( ( DAYOFYEAR({$table_name}.`{$date_column_name}`) + ( ( DATE_FORMAT(MAKEDATE(YEAR({$table_name}.`{$date_column_name}`),1), '%w') - {$first_day_of_week} + 7 ) % 7 ) - 1 ) / 7  ) + 1 , 2, '0'))";
         }
-
         // Whenever this is changed, double check method time_interval_id to make sure they are in sync.
-        $mysql_date_format_mapping = [
-            'hour'    => "DATE_FORMAT({$table_name}.`{$date_column_name}`, '%Y-%m-%d %H')",
-            'day'     => "DATE_FORMAT({$table_name}.`{$date_column_name}`, '%Y-%m-%d')",
-            'week'    => $week_format,
-            'month'   => "DATE_FORMAT({$table_name}.`{$date_column_name}`, '%Y-%m')",
-            'quarter' => "CONCAT(YEAR({$table_name}.`{$date_column_name}`), '-', QUARTER({$table_name}.`{$date_column_name}`))",
-            'year'    => "YEAR({$table_name}.`{$date_column_name}`)",
-
-        ];
-
-        return $mysql_date_format_mapping[ $time_interval ];
+        $mysql_date_format_mapping = ['hour' => "DATE_FORMAT({$table_name}.`{$date_column_name}`, '%Y-%m-%d %H')", 'day' => "DATE_FORMAT({$table_name}.`{$date_column_name}`, '%Y-%m-%d')", 'week' => $week_format, 'month' => "DATE_FORMAT({$table_name}.`{$date_column_name}`, '%Y-%m')", 'quarter' => "CONCAT(YEAR({$table_name}.`{$date_column_name}`), '-', QUARTER({$table_name}.`{$date_column_name}`))", 'year' => "YEAR({$table_name}.`{$date_column_name}`)"];
+        return $mysql_date_format_mapping[$time_interval];
     }
-
     /**
      * Returns quarter for the DateTime.
      *
@@ -127,7 +106,6 @@ class TimeInterval
             default => null,
         };
     }
-
     /**
      * Returns simple week number for the DateTime, for week starting on $first_day_of_week.
      *
@@ -139,13 +117,11 @@ class TimeInterval
      */
     public static function simple_week_number($datetime, $first_day_of_week): int
     {
-        $beg_of_year_day          = new \DateTime("{$datetime->format('Y')}-01-01");
-        $adj_day_beg_of_year      = ((int) $beg_of_year_day->format('w') - $first_day_of_week + 7) % 7;
+        $beg_of_year_day = new \DateTime("{$datetime->format('Y')}-01-01");
+        $adj_day_beg_of_year = ((int) $beg_of_year_day->format('w') - $first_day_of_week + 7) % 7;
         $days_since_start_of_year = (int) $datetime->format('z') + 1;
-
-        return (int) floor((($days_since_start_of_year + $adj_day_beg_of_year - 1) / 7)) + 1;
+        return (int) floor(($days_since_start_of_year + $adj_day_beg_of_year - 1) / 7) + 1;
     }
-
     /**
      * Returns ISO 8601 week number for the DateTime, if week starts on Monday,
      * otherwise returns simple week number.
@@ -163,7 +139,6 @@ class TimeInterval
         }
         return self::simple_week_number($datetime, $first_day_of_week);
     }
-
     /**
      * Returns time interval id for the DateTime.
      *
@@ -174,28 +149,17 @@ class TimeInterval
     public static function time_interval_id($time_interval, $datetime)
     {
         // Whenever this is changed, double check method db_datetime_format to make sure they are in sync.
-        $php_time_format_for = [
-            'hour'    => 'Y-m-d H',
-            'day'     => 'Y-m-d',
-            'week'    => 'o-W',
-            'month'   => 'Y-m',
-            'quarter' => 'Y-' . self::quarter($datetime),
-            'year'    => 'Y',
-        ];
-
+        $php_time_format_for = ['hour' => 'Y-m-d H', 'day' => 'Y-m-d', 'week' => 'o-W', 'month' => 'Y-m', 'quarter' => 'Y-' . self::quarter($datetime), 'year' => 'Y'];
         // If the week does not begin on Monday.
         $first_day_of_week = absint(get_option('start_of_week'));
-
         if ('week' === $time_interval && 1 !== $first_day_of_week) {
             $week_no = self::simple_week_number($datetime, $first_day_of_week);
             $week_no = str_pad($week_no, 2, '0', STR_PAD_LEFT);
             $year_no = $datetime->format('Y');
-            return "$year_no-$week_no";
+            return "{$year_no}-{$week_no}";
         }
-
-        return $datetime->format($php_time_format_for[ $time_interval ]);
+        return $datetime->format($php_time_format_for[$time_interval]);
     }
-
     /**
      * Calculates number of time intervals between two dates, closed interval on both sides.
      *
@@ -209,26 +173,24 @@ class TimeInterval
     {
         switch ($interval) {
             case 'hour':
-                $end_timestamp   = (int) $end_datetime->format('U');
+                $end_timestamp = (int) $end_datetime->format('U');
                 $start_timestamp = (int) $start_datetime->format('U');
-                $addendum        = 0;
+                $addendum = 0;
                 // modulo HOUR_IN_SECONDS would normally work, but there are non-full hour timezones, e.g. Nepal.
                 $start_min_sec = (int) $start_datetime->format('i') * MINUTE_IN_SECONDS + (int) $start_datetime->format('s');
-                $end_min_sec   = (int) $end_datetime->format('i') * MINUTE_IN_SECONDS + (int) $end_datetime->format('s');
+                $end_min_sec = (int) $end_datetime->format('i') * MINUTE_IN_SECONDS + (int) $end_datetime->format('s');
                 if ($end_min_sec < $start_min_sec) {
                     $addendum = 1;
                 }
                 $diff_timestamp = $end_timestamp - $start_timestamp;
-
-                return (int) floor(($diff_timestamp) / HOUR_IN_SECONDS) + 1 + $addendum;
+                return (int) floor($diff_timestamp / HOUR_IN_SECONDS) + 1 + $addendum;
             case 'day':
-                $days               = $start_datetime->diff($end_datetime)->format('%r%a');
-                $end_hour_min_sec   = (int) $end_datetime->format('H') * HOUR_IN_SECONDS + (int) $end_datetime->format('i') * MINUTE_IN_SECONDS + (int) $end_datetime->format('s');
+                $days = $start_datetime->diff($end_datetime)->format('%r%a');
+                $end_hour_min_sec = (int) $end_datetime->format('H') * HOUR_IN_SECONDS + (int) $end_datetime->format('i') * MINUTE_IN_SECONDS + (int) $end_datetime->format('s');
                 $start_hour_min_sec = (int) $start_datetime->format('H') * HOUR_IN_SECONDS + (int) $start_datetime->format('i') * MINUTE_IN_SECONDS + (int) $start_datetime->format('s');
                 if ($end_hour_min_sec < $start_hour_min_sec) {
                     $days++;
                 }
-
                 return $days + 1;
             case 'week':
                 // @todo Optimize? approximately day count / 7, but year end is tricky, a week can have fewer days.
@@ -260,7 +222,6 @@ class TimeInterval
         }
         return 0;
     }
-
     /**
      * Returns a new DateTime object representing the next hour start/previous hour end if reversed.
      *
@@ -269,21 +230,18 @@ class TimeInterval
      */
     public static function next_hour_start($datetime, $reversed = false): \DateTime
     {
-        $hour_increment         = $reversed ? 0 : 1;
-        $timestamp              = (int) $datetime->format('U');
-        $seconds_into_hour      = (int) $datetime->format('i') * MINUTE_IN_SECONDS + (int) $datetime->format('s');
+        $hour_increment = $reversed ? 0 : 1;
+        $timestamp = (int) $datetime->format('U');
+        $seconds_into_hour = (int) $datetime->format('i') * MINUTE_IN_SECONDS + (int) $datetime->format('s');
         $hours_offset_timestamp = $timestamp + ($hour_increment * HOUR_IN_SECONDS - $seconds_into_hour);
-
         if ($reversed) {
             $hours_offset_timestamp--;
         }
-
         $hours_offset_time = new \DateTime();
-        $hours_offset_time->setTimestamp($hours_offset_timestamp);
-        $hours_offset_time->setTimezone(new \DateTimeZone(wc_timezone_string()));
+        $hours_offset_time->set_timestamp($hours_offset_timestamp);
+        $hours_offset_time->set_timezone(new \DateTimeZone(wc_timezone_string()));
         return $hours_offset_time;
     }
-
     /**
      * Returns a new DateTime object representing the next day start, or previous day end if reversed.
      *
@@ -293,20 +251,17 @@ class TimeInterval
      */
     public static function next_day_start($datetime, $reversed = false): object
     {
-        $oneday       = new \DateInterval('P1D');
+        $oneday = new \DateInterval('P1D');
         $new_datetime = clone $datetime;
-
         if ($reversed) {
             $new_datetime->sub($oneday);
-            $new_datetime->setTime(23, 59, 59);
+            $new_datetime->set_time(23, 59, 59);
         } else {
             $new_datetime->add($oneday);
-            $new_datetime->setTime(0, 0, 0);
+            $new_datetime->set_time(0, 0, 0);
         }
-
         return $new_datetime;
     }
-
     /**
      * Returns DateTime object representing the next week start, or previous week end if reversed.
      *
@@ -324,20 +279,19 @@ class TimeInterval
         // Default timezone set in wp-settings.php.
         $default_timezone = date_default_timezone_get();
         // Timezone that the WP site uses in Settings > General.
-        $original_timezone = $datetime->getTimezone();
+        $original_timezone = $datetime->get_timezone();
         // @codingStandardsIgnoreStart
         date_default_timezone_set('UTC');
-        $start_end_timestamp  = get_weekstartend($datetime->format('Y-m-d'));
+        $start_end_timestamp = get_weekstartend($datetime->format('Y-m-d'));
         date_default_timezone_set($default_timezone);
         // @codingStandardsIgnoreEnd
         if ($reversed) {
-            $result = \DateTime::createFromFormat('U', $start_end_timestamp['end'])->sub($seven_days);
+            $result = \DateTime::create_from_format('U', $start_end_timestamp['end'])->sub($seven_days);
         } else {
-            $result = \DateTime::createFromFormat('U', $start_end_timestamp['start'])->add($seven_days);
+            $result = \DateTime::create_from_format('U', $start_end_timestamp['start'])->add($seven_days);
         }
-        return \DateTime::createFromFormat('Y-m-d H:i:s', $result->format('Y-m-d H:i:s'), $original_timezone);
+        return \DateTime::create_from_format('Y-m-d H:i:s', $result->format('Y-m-d H:i:s'), $original_timezone);
     }
-
     /**
      * Returns a new DateTime object representing the next month start, or previous month end if reversed.
      *
@@ -348,27 +302,24 @@ class TimeInterval
     public static function next_month_start($datetime, $reversed = false)
     {
         $month_increment = 1;
-        $year            = $datetime->format('Y');
-        $month           = (int) $datetime->format('m');
-
+        $year = $datetime->format('Y');
+        $month = (int) $datetime->format('m');
         if ($reversed) {
-            $beg_of_month_datetime       = new \DateTime("$year-$month-01 00:00:00", new \DateTimeZone(wc_timezone_string()));
-            $timestamp                   = (int) $beg_of_month_datetime->format('U');
+            $beg_of_month_datetime = new \DateTime("{$year}-{$month}-01 00:00:00", new \DateTimeZone(wc_timezone_string()));
+            $timestamp = (int) $beg_of_month_datetime->format('U');
             $end_of_prev_month_timestamp = $timestamp - 1;
-            $datetime->setTimestamp($end_of_prev_month_timestamp);
+            $datetime->set_timestamp($end_of_prev_month_timestamp);
         } else {
             $month += $month_increment;
             if ($month > 12) {
                 $month = 1;
                 $year++;
             }
-            $day      = '01';
-            $datetime = new \DateTime("$year-$month-$day 00:00:00", new \DateTimeZone(wc_timezone_string()));
+            $day = '01';
+            $datetime = new \DateTime("{$year}-{$month}-{$day} 00:00:00", new \DateTimeZone(wc_timezone_string()));
         }
-
         return $datetime;
     }
-
     /**
      * Returns a new DateTime object representing the next quarter start, or previous quarter end if reversed.
      *
@@ -377,9 +328,8 @@ class TimeInterval
      */
     public static function next_quarter_start($datetime, $reversed = false): \DateTime
     {
-        $year  = $datetime->format('Y');
+        $year = $datetime->format('Y');
         $month = (int) $datetime->format('n');
-
         switch ($month) {
             case 1:
             case 2:
@@ -419,16 +369,14 @@ class TimeInterval
                 }
                 break;
         }
-        $datetime = new \DateTime("$year-$month-01 00:00:00", new \DateTimeZone(wc_timezone_string()));
+        $datetime = new \DateTime("{$year}-{$month}-01 00:00:00", new \DateTimeZone(wc_timezone_string()));
         if ($reversed) {
-            $timestamp                   = (int) $datetime->format('U');
+            $timestamp = (int) $datetime->format('U');
             $end_of_prev_month_timestamp = $timestamp - 1;
-            $datetime->setTimestamp($end_of_prev_month_timestamp);
+            $datetime->set_timestamp($end_of_prev_month_timestamp);
         }
-
         return $datetime;
     }
-
     /**
      * Return a new DateTime object representing the next year start, or previous year end if reversed.
      *
@@ -439,23 +387,20 @@ class TimeInterval
     public static function next_year_start($datetime, $reversed = false)
     {
         $year_increment = 1;
-        $year           = (int) $datetime->format('Y');
-        $month          = '01';
-        $day            = '01';
-
+        $year = (int) $datetime->format('Y');
+        $month = '01';
+        $day = '01';
         if ($reversed) {
-            $datetime                   = new \DateTime("$year-$month-$day 00:00:00", new \DateTimeZone(wc_timezone_string()));
-            $timestamp                  = (int) $datetime->format('U');
+            $datetime = new \DateTime("{$year}-{$month}-{$day} 00:00:00", new \DateTimeZone(wc_timezone_string()));
+            $timestamp = (int) $datetime->format('U');
             $end_of_prev_year_timestamp = $timestamp - 1;
-            $datetime->setTimestamp($end_of_prev_year_timestamp);
+            $datetime->set_timestamp($end_of_prev_year_timestamp);
         } else {
-            $year    += $year_increment;
-            $datetime = new \DateTime("$year-$month-$day 00:00:00", new \DateTimeZone(wc_timezone_string()));
+            $year += $year_increment;
+            $datetime = new \DateTime("{$year}-{$month}-{$day} 00:00:00", new \DateTimeZone(wc_timezone_string()));
         }
-
         return $datetime;
     }
-
     /**
      * Returns beginning of next time interval for provided DateTime.
      *
@@ -468,9 +413,8 @@ class TimeInterval
      */
     public static function iterate($datetime, $time_interval, $reversed = false): mixed
     {
-        return call_user_func([ self::class, "next_{$time_interval}_start" ], $datetime, $reversed);
+        return call_user_func([self::class, "next_{$time_interval}_start"], $datetime, $reversed);
     }
-
     /**
      * Returns expected number of items on the page in case of date ordering.
      *
@@ -491,7 +435,6 @@ class TimeInterval
         }
         return 0;
     }
-
     /**
      * Returns true if there are any intervals that need to be filled in the response.
      *
@@ -523,7 +466,6 @@ class TimeInterval
         // Invalid ordering.
         return false;
     }
-
     /**
      * Normalize "*_between" parameters to "*_min" and "*_max" for numeric values
      * and "*_after" and "*_before" for date values.
@@ -535,38 +477,30 @@ class TimeInterval
      */
     public static function normalize_between_params(array $request, $param_names, $is_date): array
     {
-        if (! is_array($param_names)) {
-            $param_names = [ $param_names ];
+        if (!is_array($param_names)) {
+            $param_names = [$param_names];
         }
-
         $normalized = [];
-
         foreach ($param_names as $param_name) {
-            if (! is_array($request[ $param_name . '_between' ])) {
+            if (!is_array($request[$param_name . '_between'])) {
                 continue;
             }
-
-            $range = $request[ $param_name . '_between' ];
-
+            $range = $request[$param_name . '_between'];
             if (2 !== count($range)) {
                 continue;
             }
-
             $min = $is_date ? '_after' : '_min';
             $max = $is_date ? '_before' : '_max';
-
             if ($range[0] < $range[1]) {
-                $normalized[ $param_name . $min ] = $range[0];
-                $normalized[ $param_name . $max ] = $range[1];
+                $normalized[$param_name . $min] = $range[0];
+                $normalized[$param_name . $max] = $range[1];
             } else {
-                $normalized[ $param_name . $min ] = $range[1];
-                $normalized[ $param_name . $max ] = $range[0];
+                $normalized[$param_name . $min] = $range[1];
+                $normalized[$param_name . $max] = $range[0];
             }
         }
-
         return $normalized;
     }
-
     /**
      * Validate a "*_between" range argument (an array with 2 numeric items).
      *
@@ -577,30 +511,22 @@ class TimeInterval
      */
     public static function rest_validate_between_numeric_arg($value, $request, $param): \WP_Error|true
     {
-        if (! wp_is_numeric_array($value)) {
+        if (!wp_is_numeric_array($value)) {
             return new \WP_Error(
                 'rest_invalid_param',
                 /* translators: 1: parameter name */
                 sprintf(__('%1$s is not a numerically indexed array.', 'woocommerce'), $param)
             );
         }
-
-        if (
-            ! is_array($value) ||
-            2 !== count($value) ||
-            ! is_numeric($value[0]) ||
-            ! is_numeric($value[1])
-        ) {
+        if (!is_array($value) || 2 !== count($value) || !is_numeric($value[0]) || !is_numeric($value[1])) {
             return new \WP_Error(
                 'rest_invalid_param',
                 /* translators: %s: parameter name */
                 sprintf(__('%s must contain 2 numbers.', 'woocommerce'), $param)
             );
         }
-
         return true;
     }
-
     /**
      * Validate a "*_between" range argument (an array with 2 date items).
      *
@@ -611,30 +537,22 @@ class TimeInterval
      */
     public static function rest_validate_between_date_arg($value, $request, $param): \WP_Error|true
     {
-        if (! wp_is_numeric_array($value)) {
+        if (!wp_is_numeric_array($value)) {
             return new \WP_Error(
                 'rest_invalid_param',
                 /* translators: 1: parameter name */
                 sprintf(__('%1$s is not a numerically indexed array.', 'woocommerce'), $param)
             );
         }
-
-        if (
-            ! is_array($value) ||
-            2 !== count($value) ||
-            ! rest_parse_date($value[0]) ||
-            ! rest_parse_date($value[1])
-        ) {
+        if (!is_array($value) || 2 !== count($value) || !rest_parse_date($value[0]) || !rest_parse_date($value[1])) {
             return new \WP_Error(
                 'rest_invalid_param',
                 /* translators: %s: parameter name */
                 sprintf(__('%s must contain 2 valid dates.', 'woocommerce'), $param)
             );
         }
-
         return true;
     }
-
     /**
      * Get dates from a timeframe string.
      *
@@ -644,71 +562,38 @@ class TimeInterval
      */
     public static function get_timeframe_dates($timeframe, $current_date = null): array|false
     {
-        if (! $current_date) {
+        if (!$current_date) {
             $current_date = new \DateTime();
         }
-        $current_year  = $current_date->format('Y');
+        $current_year = $current_date->format('Y');
         $current_month = $current_date->format('m');
-
         if ('last_week' === $timeframe) {
-            return [
-                'start' => $current_date->modify('last week monday')->format('Y-m-d 00:00:00'),
-                'end'   => $current_date->modify('this sunday')->format('Y-m-d 23:59:59'),
-            ];
+            return ['start' => $current_date->modify('last week monday')->format('Y-m-d 00:00:00'), 'end' => $current_date->modify('this sunday')->format('Y-m-d 23:59:59')];
         }
-
         if ('last_month' === $timeframe) {
-            return [
-                'start' => $current_date->modify('first day of previous month')->format('Y-m-d 00:00:00'),
-                'end'   => $current_date->modify('last day of this month')->format('Y-m-d 23:59:59'),
-            ];
+            return ['start' => $current_date->modify('first day of previous month')->format('Y-m-d 00:00:00'), 'end' => $current_date->modify('last day of this month')->format('Y-m-d 23:59:59')];
         }
-
         if ('last_quarter' === $timeframe) {
             switch ($current_month) {
                 case $current_month >= 1 && $current_month <= 3:
-                    return [
-                        'start' => ($current_year - 1) . '-10-01 00:00:00',
-                        'end'   => ($current_year - 1) . '-12-31 23:59:59',
-                    ];
+                    return ['start' => $current_year - 1 . '-10-01 00:00:00', 'end' => $current_year - 1 . '-12-31 23:59:59'];
                 case $current_month >= 4 && $current_month <= 6:
-                    return [
-                        'start' => $current_year . '-01-01 00:00:00',
-                        'end'   => $current_year . '-03-31 23:59:59',
-                    ];
+                    return ['start' => $current_year . '-01-01 00:00:00', 'end' => $current_year . '-03-31 23:59:59'];
                 case $current_month >= 7 && $current_month <= 9:
-                    return [
-                        'start' => $current_year . '-04-01 00:00:00',
-                        'end'   => $current_year . '-06-30 23:59:59',
-                    ];
+                    return ['start' => $current_year . '-04-01 00:00:00', 'end' => $current_year . '-06-30 23:59:59'];
                 case $current_month >= 10 && $current_month <= 12:
-                    return [
-                        'start' => $current_year . '-07-01 00:00:00',
-                        'end'   => $current_year . '-09-31 23:59:59',
-                    ];
+                    return ['start' => $current_year . '-07-01 00:00:00', 'end' => $current_year . '-09-31 23:59:59'];
             }
         }
-
         if ('last_6_months' === $timeframe) {
             if ($current_month >= 1 && $current_month <= 6) {
-                return [
-                    'start' => ($current_year - 1) . '-07-01 00:00:00',
-                    'end'   => ($current_year - 1) . '-12-31 23:59:59',
-                ];
+                return ['start' => $current_year - 1 . '-07-01 00:00:00', 'end' => $current_year - 1 . '-12-31 23:59:59'];
             }
-            return [
-                'start' => $current_year . '-01-01 00:00:00',
-                'end'   => $current_year . '-06-30 23:59:59',
-            ];
+            return ['start' => $current_year . '-01-01 00:00:00', 'end' => $current_year . '-06-30 23:59:59'];
         }
-
         if ('last_year' === $timeframe) {
-            return [
-                'start' => ($current_year - 1) . '-01-01 00:00:00',
-                'end'   => ($current_year - 1) . '-12-31 23:59:59',
-            ];
+            return ['start' => $current_year - 1 . '-01-01 00:00:00', 'end' => $current_year - 1 . '-12-31 23:59:59'];
         }
-
         return false;
     }
 }

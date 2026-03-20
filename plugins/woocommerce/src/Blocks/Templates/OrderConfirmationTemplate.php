@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Templates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Templates;
 
 /**
  * OrderConfirmationTemplate class.
  *
  * @internal
  */
-class OrderConfirmationTemplate extends AbstractPageTemplate
+class Order_Confirmation_Template extends Abstract_Page_Template
 {
     /**
      * The slug of the template.
@@ -17,7 +16,6 @@ class OrderConfirmationTemplate extends AbstractPageTemplate
      * @var string
      */
     public const SLUG = 'order-confirmation';
-
     /**
      * Initialization method.
      */
@@ -27,7 +25,6 @@ class OrderConfirmationTemplate extends AbstractPageTemplate
         add_filter('pre_get_document_title', $this->page_template_title(...));
         parent::init();
     }
-
     /**
      * Returns the title of the template.
      *
@@ -37,7 +34,6 @@ class OrderConfirmationTemplate extends AbstractPageTemplate
     {
         return _x('Order Confirmation', 'Template name', 'woocommerce');
     }
-
     /**
      * Returns the description of the template.
      *
@@ -47,7 +43,6 @@ class OrderConfirmationTemplate extends AbstractPageTemplate
     {
         return __('The Order Confirmation template serves as a receipt and confirmation of a successful purchase. It includes a summary of the ordered items, shipping, billing, and totals.', 'woocommerce');
     }
-
     /**
      * Remove edit page from admin bar.
      */
@@ -58,7 +53,6 @@ class OrderConfirmationTemplate extends AbstractPageTemplate
             $wp_admin_bar->remove_menu('edit');
         }
     }
-
     /**
      * Returns the page object assigned to this template/page.
      *
@@ -68,7 +62,6 @@ class OrderConfirmationTemplate extends AbstractPageTemplate
     {
         return null;
     }
-
     /**
      * True when viewing the Order Received endpoint.
      *

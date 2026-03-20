@@ -1,23 +1,20 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
 
 use WC_Gateway_BACS;
 use WC_Gateway_Cheque;
 use WC_Gateway_COD;
 use WC_Gateway_Paypal;
 use WC_Payment_Gateway;
-
 defined('ABSPATH') || exit;
-
 /**
  * WooCommerce core payment gateways provider class.
  *
  * This class handles all the custom logic for the payment gateways built into the WC core.
  */
-class WCCore extends PaymentGateway
+class Wc_Core extends Payment_Gateway
 {
     /**
      * Get the provider icon URL of the payment gateway.
@@ -37,7 +34,6 @@ class WCCore extends PaymentGateway
             default => parent::get_icon($payment_gateway),
         };
     }
-
     /**
      * Check if the payment gateway has a payments processor account connected.
      *
@@ -51,7 +47,7 @@ class WCCore extends PaymentGateway
         // Provide custom account connected logic for core payment gateways.
         return match ($payment_gateway->id) {
             // BACS requires bank account details to be set up.
-            WC_Gateway_BACS::ID => property_exists($payment_gateway, 'account_details') && ! empty($payment_gateway->account_details),
+            WC_Gateway_BACS::ID => property_exists($payment_gateway, 'account_details') && !empty($payment_gateway->account_details),
             // There is no account setup for these gateways, so we return true.
             WC_Gateway_Cheque::ID, WC_Gateway_COD::ID => true,
             // PayPal requires just an account email address to be set up.
@@ -59,7 +55,6 @@ class WCCore extends PaymentGateway
             default => parent::is_account_connected($payment_gateway),
         };
     }
-
     /**
      * Try to determine if the payment gateway is in test mode onboarding (aka sandbox or test-drive).
      *
@@ -80,7 +75,6 @@ class WCCore extends PaymentGateway
             default => parent::is_in_test_mode_onboarding($payment_gateway),
         };
     }
-
     /**
      * Get the plugin details for a WC core-provided payment gateway.
      *
@@ -91,11 +85,9 @@ class WCCore extends PaymentGateway
     public function get_plugin_details(WC_Payment_Gateway $payment_gateway): array
     {
         $plugin_details = parent::get_plugin_details($payment_gateway);
-
         // Since these are core-provided gateways, we need to make sure that the provider (WC) can't be deactivated.
         // The way to do this is to NOT provide a plugin file path.
         $plugin_details['file'] = '';
-
         return $plugin_details;
     }
 }

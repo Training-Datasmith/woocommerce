@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Exceptions for stock reservation.
  */
-
-namespace Automattic\WooCommerce\Checkout\Helpers;
+namespace Automattic\Woo_Commerce\Checkout\Helpers;
 
 defined('ABSPATH') || exit;
-
 /**
  * ReserveStockException class.
  */
-class ReserveStockException extends \Exception
+class Reserve_Stock_Exception extends \Exception
 {
     /**
      * Setup exception.
@@ -22,35 +20,36 @@ class ReserveStockException extends \Exception
      * @param int    $http_status_code Proper HTTP status code to respond with, e.g. 400.
      * @param array $error_data Extra error data.
      */
-    public function __construct(/**
-     * Sanitized error code.
-     */
+    public function __construct(
+        /**
+         * Sanitized error code.
+         */
         protected $error_code,
         $message,
-        $http_status_code = 400, /**
-     * Error extra data.
-     */
+        $http_status_code = 400,
+        /**
+         * Error extra data.
+         */
         protected $error_data = []
-    ) {
+    )
+    {
         parent::__construct($message, $http_status_code);
     }
-
     /**
      * Returns the error code.
      *
      * @return string
      */
-    public function getErrorCode()
+    public function get_error_code()
     {
         return $this->error_code;
     }
-
     /**
      * Returns error data.
      *
      * @return array
      */
-    public function getErrorData()
+    public function get_error_data()
     {
         return $this->error_data;
     }

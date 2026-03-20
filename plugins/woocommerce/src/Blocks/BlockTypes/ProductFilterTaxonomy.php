@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\ProductCollection\Utils as ProductCollectionUtils;
-use Automattic\WooCommerce\Internal\ProductFilters\FilterDataProvider;
-use Automattic\WooCommerce\Internal\ProductFilters\QueryClauses;
-use Automattic\WooCommerce\Internal\ProductFilters\TaxonomyHierarchyData;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Product_Collection\Utils as ProductCollectionUtils;
+use Automattic\Woo_Commerce\Internal\Product_Filters\Filter_Data_Provider;
+use Automattic\Woo_Commerce\Internal\Product_Filters\Query_Clauses;
+use Automattic\Woo_Commerce\Internal\Product_Filters\Taxonomy_Hierarchy_Data;
 /**
  * Product Filter: Taxonomy Block.
  */
-final class ProductFilterTaxonomy extends AbstractBlock
+final class Product_Filter_Taxonomy extends Abstract_Block
 {
     /**
      * Block name.
@@ -20,7 +18,6 @@ final class ProductFilterTaxonomy extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-filter-taxonomy';
-
     /**
      * Prepare the active filter items.
      *
@@ -32,54 +29,35 @@ final class ProductFilterTaxonomy extends AbstractBlock
      */
     public function prepare_selected_filters($items, array $params)
     {
-        $container      = wc_get_container();
-        $params_handler = $container->get(\Automattic\WooCommerce\Internal\ProductFilters\Params::class);
-
+        $container = wc_get_container();
+        $params_handler = $container->get(\Automattic\Woo_Commerce\Internal\Product_Filters\Params::class);
         // Use centralized parameter mapping to avoid hardcoding URL parameter formats.
         $taxonomy_params = $params_handler->get_param('taxonomy');
-
         $active_taxonomies = [];
-        $all_term_slugs    = [];
-
+        $all_term_slugs = [];
         foreach ($taxonomy_params as $taxonomy_slug => $param_key) {
-            if (! empty($params[ $param_key ]) && is_string($params[ $param_key ])) {
-                $term_slugs                          = array_map(sanitize_title(...), explode(',', $params[ $param_key ]));
-                $active_taxonomies[ $taxonomy_slug ] = $term_slugs;
-                $all_term_slugs                      = array_merge($all_term_slugs, $term_slugs);
+            if (!empty($params[$param_key]) && is_string($params[$param_key])) {
+                $term_slugs = array_map(sanitize_title(...), explode(',', $params[$param_key]));
+                $active_taxonomies[$taxonomy_slug] = $term_slugs;
+                $all_term_slugs = array_merge($all_term_slugs, $term_slugs);
             }
         }
-
         if (empty($active_taxonomies)) {
             return $items;
         }
-
         // Single query for all taxonomies and terms to avoid N+1 query problem.
-        $terms = get_terms(
-            [
-                'taxonomy'   => array_keys($active_taxonomies),
-                'slug'       => array_unique($all_term_slugs),
-                'hide_empty' => false,
-            ]
-        );
-
+        $terms = get_terms(['taxonomy' => array_keys($active_taxonomies), 'slug' => array_unique($all_term_slugs), 'hide_empty' => false]);
         if (is_wp_error($terms) || empty($terms)) {
             return $items;
         }
-
         foreach ($terms as $term) {
             $taxonomy_object = get_taxonomy($term->taxonomy);
             if ($taxonomy_object) {
-                $items[] = [
-                    'type'        => 'taxonomy/' . $term->taxonomy,
-                    'value'       => $term->slug,
-                    'activeLabel' => $taxonomy_object->labels->singular_name . ': ' . $term->name,
-                ];
+                $items[] = ['type' => 'taxonomy/' . $term->taxonomy, 'value' => $term->slug, 'activeLabel' => $taxonomy_object->labels->singular_name . ': ' . $term->name];
             }
         }
-
         return $items;
     }
-
     /**
      * Initialize this block type.
      *
@@ -89,13 +67,10 @@ final class ProductFilterTaxonomy extends AbstractBlock
     protected function initialize(): void
     {
         parent::initialize();
-
         add_filter('woocommerce_blocks_product_filters_selected_items', $this->prepare_selected_filters(...), 10, 2);
-
         // Register REST field for menu_order on sortable taxonomies.
         $this->register_taxonomy_menu_order_rest_field();
     }
-
     /**
      * Register a REST field to expose the menu_order meta for sortable taxonomies.
      * This allows the editor to display terms in menu order.
@@ -113,28 +88,14 @@ final class ProductFilterTaxonomy extends AbstractBlock
          * @param array $sortable_taxonomies List of taxonomy slugs that support custom ordering.
          * @return array List of taxonomy slugs that support custom ordering.
          */
-        $sortable_taxonomies = apply_filters('woocommerce_sortable_taxonomies', [ 'product_cat' ]);
-
+        $sortable_taxonomies = apply_filters('woocommerce_sortable_taxonomies', ['product_cat']);
         foreach ($sortable_taxonomies as $taxonomy) {
-            register_rest_field(
-                $taxonomy,
-                'menu_order',
-                [
-                    'get_callback' => function (array $term): int {
-                        $menu_order = get_term_meta($term['id'], 'order', true);
-                        return is_numeric($menu_order) ? (int) $menu_order : 0;
-                    },
-                    'schema'       => [
-                        'description' => __('Menu order, used to custom sort the term.', 'woocommerce'),
-                        'type'        => 'integer',
-                        'context'     => [ 'view', 'edit' ],
-                        'readonly'    => true,
-                    ],
-                ]
-            );
+            register_rest_field($taxonomy, 'menu_order', ['get_callback' => function (array $term): int {
+                $menu_order = get_term_meta($term['id'], 'order', true);
+                return is_numeric($menu_order) ? (int) $menu_order : 0;
+            }, 'schema' => ['description' => __('Menu order, used to custom sort the term.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true]]);
         }
     }
-
     /**
      * Extra data passed through from server to client for block.
      *
@@ -145,7 +106,6 @@ final class ProductFilterTaxonomy extends AbstractBlock
     protected function enqueue_data(array $attributes = []): void
     {
         parent::enqueue_data($attributes);
-
         if (is_admin()) {
             $this->asset_data_registry->add('filterableProductTaxonomies', $this->get_taxonomies());
             // Expose sortable taxonomies so the editor can show/hide "Menu order" option.
@@ -162,11 +122,10 @@ final class ProductFilterTaxonomy extends AbstractBlock
                  * @param array $sortable_taxonomies List of taxonomy slugs that support custom ordering.
                  * @return array List of taxonomy slugs that support custom ordering.
                  */
-                apply_filters('woocommerce_sortable_taxonomies', [ 'product_cat' ])
+                apply_filters('woocommerce_sortable_taxonomies', ['product_cat'])
             );
         }
     }
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -178,7 +137,6 @@ final class ProductFilterTaxonomy extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Render the block.
      *
@@ -193,115 +151,60 @@ final class ProductFilterTaxonomy extends AbstractBlock
         if (is_admin() || wp_doing_ajax() || empty($block_attributes['taxonomy'])) {
             return '';
         }
-
-        $taxonomy        = $block_attributes['taxonomy'];
+        $taxonomy = $block_attributes['taxonomy'];
         $taxonomy_object = get_taxonomy($taxonomy);
-
-        if (! $taxonomy_object || ! taxonomy_exists($taxonomy)) {
+        if (!$taxonomy_object || !taxonomy_exists($taxonomy)) {
             return '';
         }
-
         // Validate that this taxonomy is configured in the parameter map.
-        $container       = wc_get_container();
-        $params_handler  = $container->get(\Automattic\WooCommerce\Internal\ProductFilters\Params::class);
+        $container = wc_get_container();
+        $params_handler = $container->get(\Automattic\Woo_Commerce\Internal\Product_Filters\Params::class);
         $taxonomy_params = $params_handler->get_param('taxonomy');
-
-        if (! isset($taxonomy_params[ $taxonomy ])) {
+        if (!isset($taxonomy_params[$taxonomy])) {
             return '';
         }
-
         // Pass taxonomy parameter mapping to frontend via interactivity config.
-        wp_interactivity_config(
-            'woocommerce/product-filters',
-            [
-                'taxonomyParamsMap' => $taxonomy_params,
-            ]
-        );
-
-        $filter_context  = [
-            'showCounts' => $block_attributes['showCounts'] ?? false,
-            'items'      => [],
-            'groupLabel' => $taxonomy_object->labels->singular_name,
-        ];
+        wp_interactivity_config('woocommerce/product-filters', ['taxonomyParamsMap' => $taxonomy_params]);
+        $filter_context = ['showCounts' => $block_attributes['showCounts'] ?? false, 'items' => [], 'groupLabel' => $taxonomy_object->labels->singular_name];
         $taxonomy_counts = $this->get_taxonomy_term_counts($block, $taxonomy);
-
-        if (! empty($taxonomy_counts)) {
-            $hide_empty     = $block_attributes['hideEmpty'] ?? true;
-            $orderby        = $block_attributes['sortOrder'] ? explode('-', (string) $block_attributes['sortOrder'])[0] : 'name';
-            $order          = $block_attributes['sortOrder'] ? strtoupper(explode('-', (string) $block_attributes['sortOrder'])[1]) : 'DESC';
+        if (!empty($taxonomy_counts)) {
+            $hide_empty = $block_attributes['hideEmpty'] ?? true;
+            $orderby = $block_attributes['sortOrder'] ? explode('-', (string) $block_attributes['sortOrder'])[0] : 'name';
+            $order = $block_attributes['sortOrder'] ? strtoupper(explode('-', (string) $block_attributes['sortOrder'])[1]) : 'DESC';
             $taxonomy_terms = $this->get_sorted_terms($taxonomy, $taxonomy_counts, $hide_empty, $orderby, $order);
-
             if (is_wp_error($taxonomy_terms)) {
                 return '';
             }
-
             // Get selected terms from filter params.
-            $filter_params  = $block->context['filterParams'] ?? [];
+            $filter_params = $block->context['filterParams'] ?? [];
             $selected_terms = [];
-            $param_key      = $taxonomy_params[ $taxonomy ];
-
-            if ($filter_params && ! empty($filter_params[ $param_key ]) && is_string($filter_params[ $param_key ])) {
-                $selected_terms = array_filter(array_map(sanitize_title(...), explode(',', $filter_params[ $param_key ])));
+            $param_key = $taxonomy_params[$taxonomy];
+            if ($filter_params && !empty($filter_params[$param_key]) && is_string($filter_params[$param_key])) {
+                $selected_terms = array_filter(array_map(sanitize_title(...), explode(',', $filter_params[$param_key])));
             }
-
-            $taxonomy_options = array_map(
-                function (array $term) use ($taxonomy_counts, $selected_terms, $taxonomy): array {
-                    $term['count'] = $taxonomy_counts[ $term['term_id'] ] ?? 0;
-
-                    $option = [
-                        'label'    => $term['name'],
-                        'value'    => $term['slug'],
-                        'selected' => in_array($term['slug'], $selected_terms, true),
-                        'count'    => $term['count'],
-                        'type'     => 'taxonomy/' . $taxonomy,
-                    ];
-
-                    if (is_taxonomy_hierarchical($taxonomy)) {
-                        $option['id'] = $term['term_id'];
-
-                        if (isset($term['depth']) && $term['depth'] > 0) {
-                            $option['depth'] = $term['depth'];
-                        }
-                        if (isset($term['parent']) && $term['parent'] > 0) {
-                            $option['parent'] = $term['parent'];
-                        }
+            $taxonomy_options = array_map(function (array $term) use ($taxonomy_counts, $selected_terms, $taxonomy): array {
+                $term['count'] = $taxonomy_counts[$term['term_id']] ?? 0;
+                $option = ['label' => $term['name'], 'value' => $term['slug'], 'selected' => in_array($term['slug'], $selected_terms, true), 'count' => $term['count'], 'type' => 'taxonomy/' . $taxonomy];
+                if (is_taxonomy_hierarchical($taxonomy)) {
+                    $option['id'] = $term['term_id'];
+                    if (isset($term['depth']) && $term['depth'] > 0) {
+                        $option['depth'] = $term['depth'];
                     }
-                    return $option;
-                },
-                $taxonomy_terms
-            );
-
+                    if (isset($term['parent']) && $term['parent'] > 0) {
+                        $option['parent'] = $term['parent'];
+                    }
+                }
+                return $option;
+            }, $taxonomy_terms);
             $filter_context['items'] = $taxonomy_options;
         }
-
-        $wrapper_attributes = [
-            'data-wp-interactive' => 'woocommerce/product-filters',
-            'data-wp-key'         => wp_unique_prefixed_id($this->get_block_type()),
-            'data-wp-context'     => wp_json_encode(
-                [
-                    'activeLabelTemplate' => $taxonomy_object->labels->singular_name . ': {{label}}',
-                    'filterType'          => 'taxonomy/' . $taxonomy,
-                ],
-                JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
-            ),
-        ];
-
+        $wrapper_attributes = ['data-wp-interactive' => 'woocommerce/product-filters', 'data-wp-key' => wp_unique_prefixed_id($this->get_block_type()), 'data-wp-context' => wp_json_encode(['activeLabelTemplate' => $taxonomy_object->labels->singular_name . ': {{label}}', 'filterType' => 'taxonomy/' . $taxonomy], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)];
         if (empty($filter_context['items'])) {
             $wrapper_attributes['hidden'] = true;
-            $wrapper_attributes['class']  = 'wc-block-product-filter--hidden';
+            $wrapper_attributes['class'] = 'wc-block-product-filter--hidden';
         }
-
-        return sprintf(
-            '<div %1$s>%2$s</div>',
-            get_block_wrapper_attributes($wrapper_attributes),
-            array_reduce(
-                $block->parsed_block['innerBlocks'],
-                fn (string $carry, $parsed_block): string => $carry . (new \WP_Block($parsed_block, [ 'filterData' => $filter_context ]))->render(),
-                ''
-            )
-        );
+        return sprintf('<div %1$s>%2$s</div>', get_block_wrapper_attributes($wrapper_attributes), array_reduce($block->parsed_block['innerBlocks'], fn(string $carry, $parsed_block): string => $carry . (new \WP_Block($parsed_block, ['filterData' => $filter_context]))->render(), ''));
     }
-
     /**
      * Get terms sorted based on taxonomy type (hierarchical vs flat).
      *
@@ -314,42 +217,29 @@ final class ProductFilterTaxonomy extends AbstractBlock
      */
     private function get_sorted_terms($taxonomy, array $taxonomy_counts, $hide_empty, string $orderby, string $order)
     {
-        if (! is_taxonomy_hierarchical($taxonomy)) {
-            $args = [
-                'taxonomy'   => $taxonomy,
-                'hide_empty' => false,
-            ];
-
+        if (!is_taxonomy_hierarchical($taxonomy)) {
+            $args = ['taxonomy' => $taxonomy, 'hide_empty' => false];
             if ($hide_empty) {
                 $args['include'] = array_keys($taxonomy_counts);
             }
-
             $terms = get_terms($args);
-
             if (is_wp_error($terms) || empty($terms)) {
                 return [];
             }
-
             // Add menu_order to flat terms for sorting.
             if ('menu_order' === $orderby) {
                 // Prime term meta cache in single query to avoid N+1.
                 update_termmeta_cache(wp_list_pluck($terms, 'term_id'));
-                $terms = array_map(
-                    function (array $term): \stdClass {
-                        $menu_order         = get_term_meta($term['term_id'], 'order', true);
-                        $term['menu_order'] = is_numeric($menu_order) ? (int) $menu_order : 0;
-                        return (object) $term;
-                    },
-                    $terms
-                );
+                $terms = array_map(function (array $term): \stdClass {
+                    $menu_order = get_term_meta($term['term_id'], 'order', true);
+                    $term['menu_order'] = is_numeric($menu_order) ? (int) $menu_order : 0;
+                    return (object) $term;
+                }, $terms);
             }
-
             return $this->sort_terms_by_criteria($terms, $orderby, $order, $taxonomy_counts);
         }
-
         return $this->get_hierarchical_terms($taxonomy, $taxonomy_counts, $hide_empty, $orderby, $order);
     }
-
     /**
      * Retrieve the taxonomy term counts for current block.
      *
@@ -359,22 +249,18 @@ final class ProductFilterTaxonomy extends AbstractBlock
      */
     private function get_taxonomy_term_counts($block, $taxonomy)
     {
-        if (! isset($block->context['filterParams'])) {
+        if (!isset($block->context['filterParams'])) {
             return [];
         }
-
-        $query_vars = ProductCollectionUtils::get_query_vars($block, 1);
-
+        $query_vars = Product_Collection_Utils::get_query_vars($block, 1);
         // Remove current taxonomy from query vars to avoid circular counting.
-        $container       = wc_get_container();
-        $params_handler  = $container->get(\Automattic\WooCommerce\Internal\ProductFilters\Params::class);
+        $container = wc_get_container();
+        $params_handler = $container->get(\Automattic\Woo_Commerce\Internal\Product_Filters\Params::class);
         $taxonomy_params = $params_handler->get_param('taxonomy');
-
-        if (isset($taxonomy_params[ $taxonomy ])) {
-            $param_key = $taxonomy_params[ $taxonomy ];
-            unset($query_vars[ $param_key ]);
+        if (isset($taxonomy_params[$taxonomy])) {
+            $param_key = $taxonomy_params[$taxonomy];
+            unset($query_vars[$param_key]);
         }
-
         /**
          * Prevent circular counting when calculating filter counts with active attribute filters.
          * Removes product attribute taxonomy filters to ensure accurate cross-filter counting.
@@ -382,47 +268,33 @@ final class ProductFilterTaxonomy extends AbstractBlock
          * @see https://github.com/woocommerce/woocommerce/pull/52759
          */
         if (isset($query_vars['taxonomy']) && str_contains($query_vars['taxonomy'], 'pa_')) {
-            unset(
-                $query_vars['taxonomy'],
-                $query_vars['term']
-            );
+            unset($query_vars['taxonomy'], $query_vars['term']);
         }
-
         // Remove from tax_query if present.
-        if (! empty($query_vars['tax_query'])) {
+        if (!empty($query_vars['tax_query'])) {
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-            $query_vars['tax_query'] = ProductCollectionUtils::remove_query_array($query_vars['tax_query'], 'taxonomy', $taxonomy);
+            $query_vars['tax_query'] = Product_Collection_Utils::remove_query_array($query_vars['tax_query'], 'taxonomy', $taxonomy);
         }
-
-        return $container->get(FilterDataProvider::class)->with($container->get(QueryClauses::class))->get_taxonomy_counts($query_vars, $taxonomy);
+        return $container->get(Filter_Data_Provider::class)->with($container->get(Query_Clauses::class))->get_taxonomy_counts($query_vars, $taxonomy);
     }
-
     /**
      * Get product taxonomies for the block.
      */
     private function get_taxonomies(): array
     {
-        $container       = wc_get_container();
-        $params_handler  = $container->get(\Automattic\WooCommerce\Internal\ProductFilters\Params::class);
+        $container = wc_get_container();
+        $params_handler = $container->get(\Automattic\Woo_Commerce\Internal\Product_Filters\Params::class);
         $taxonomy_params = $params_handler->get_param('taxonomy');
-        $taxonomy_data   = [];
-
+        $taxonomy_data = [];
         foreach (array_keys($taxonomy_params) as $taxonomy_slug) {
             $taxonomy = get_taxonomy($taxonomy_slug);
-
-            if (! $taxonomy) {
+            if (!$taxonomy) {
                 continue;
             }
-
-            $taxonomy_data[] = [
-                'label' => $taxonomy->labels->singular_name,
-                'name'  => $taxonomy->name,
-            ];
+            $taxonomy_data[] = ['label' => $taxonomy->labels->singular_name, 'name' => $taxonomy->name];
         }
-
         return $taxonomy_data;
     }
-
     /**
      * Sort hierarchical terms recursively maintaining parent-child relationships.
      *
@@ -435,13 +307,12 @@ final class ProductFilterTaxonomy extends AbstractBlock
     private function sort_hierarchy_terms(array $terms, string $orderby, string $order, array $taxonomy_counts): array
     {
         foreach ($terms as $term) {
-            if (! empty($term['children'])) {
+            if (!empty($term['children'])) {
                 $term['children'] = $this->sort_terms_by_criteria($term['children'], $orderby, $order, $taxonomy_counts);
             }
         }
         return $this->sort_terms_by_criteria($terms, $orderby, $order, $taxonomy_counts);
     }
-
     /**
      * Flatten hierarchical term tree into flat array maintaining depth-first order.
      *
@@ -462,36 +333,30 @@ final class ProductFilterTaxonomy extends AbstractBlock
         if ($depth > 10) {
             return;
         }
-
-        if (! is_array($terms)) {
+        if (!is_array($terms)) {
             return;
         }
-
         foreach ($terms as $term) {
             // Validate term structure.
-            if (! is_array($term)) {
+            if (!is_array($term)) {
                 continue;
             }
-            if (! isset($term['term_id'])) {
+            if (!isset($term['term_id'])) {
                 continue;
             }
             $term_id = $term['term_id'];
-
             // Prevent circular references.
-            if (isset($visited_ids[ $term_id ])) {
+            if (isset($visited_ids[$term_id])) {
                 continue;
             }
-
-            $visited_ids[ $term_id ] = true;
-            $result[ $term_id ]      = $term;
-
-            if (! empty($term['children']) && is_array($term['children'])) {
+            $visited_ids[$term_id] = true;
+            $result[$term_id] = $term;
+            if (!empty($term['children']) && is_array($term['children'])) {
                 $this->flatten_terms_list($term['children'], $result, $visited_ids, $depth + 1);
-                unset($result[ $term_id ]['children']);
+                unset($result[$term_id]['children']);
             }
         }
     }
-
     /**
      * Get taxonomy terms ordered hierarchically.
      *
@@ -505,24 +370,16 @@ final class ProductFilterTaxonomy extends AbstractBlock
     private function get_hierarchical_terms(string $taxonomy, array $taxonomy_counts, bool $hide_empty, string $orderby, string $order): array
     {
         // Use TaxonomyHierarchyData for hierarchy operations.
-        $container      = wc_get_container();
-        $hierarchy_data = $container->get(TaxonomyHierarchyData::class)->get_hierarchy_map($taxonomy);
-
+        $container = wc_get_container();
+        $hierarchy_data = $container->get(Taxonomy_Hierarchy_Data::class)->get_hierarchy_map($taxonomy);
         $sorted_term = $this->sort_hierarchy_terms($hierarchy_data['tree'], $orderby, $order, $taxonomy_counts);
-
         $flat_list = [];
         $this->flatten_terms_list($sorted_term, $flat_list);
-
-        if (! $hide_empty) {
+        if (!$hide_empty) {
             return $flat_list;
         }
-
-        return array_filter(
-            $flat_list,
-            fn (array $term) => ! empty($taxonomy_counts[ $term['term_id'] ])
-        );
+        return array_filter($flat_list, fn(array $term) => !empty($taxonomy_counts[$term['term_id']]));
     }
-
     /**
      * Sort terms by the specified criteria (name, count, or menu_order).
      *
@@ -535,39 +392,31 @@ final class ProductFilterTaxonomy extends AbstractBlock
     private function sort_terms_by_criteria(array $terms, string $orderby, string $order, array $taxonomy_counts): array
     {
         $sort_order = 'DESC' === strtoupper($order) ? -1 : 1;
-
-        usort(
-            $terms,
-            function ($a, $b) use ($orderby, $sort_order, $taxonomy_counts): int {
-                $a = (object) $a;
-                $b = (object) $b;
-                switch ($orderby) {
-                    case 'count':
-                        $count_a    = $taxonomy_counts[ $a->term_id ] ?? 0;
-                        $count_b    = $taxonomy_counts[ $b->term_id ] ?? 0;
-                        $comparison = $count_a <=> $count_b;
-                        break;
-
-                    case 'menu_order':
-                        $order_a    = $a->menu_order ?? 0;
-                        $order_b    = $b->menu_order ?? 0;
-                        $comparison = $order_a <=> $order_b;
-                        // Secondary sort by name when menu_order is equal.
-                        if (0 === $comparison) {
-                            $comparison = strcasecmp((string) $a->name, (string) $b->name);
-                        }
-                        break;
-
-                    case 'name':
-                    default:
+        usort($terms, function ($a, $b) use ($orderby, $sort_order, $taxonomy_counts): int {
+            $a = (object) $a;
+            $b = (object) $b;
+            switch ($orderby) {
+                case 'count':
+                    $count_a = $taxonomy_counts[$a->term_id] ?? 0;
+                    $count_b = $taxonomy_counts[$b->term_id] ?? 0;
+                    $comparison = $count_a <=> $count_b;
+                    break;
+                case 'menu_order':
+                    $order_a = $a->menu_order ?? 0;
+                    $order_b = $b->menu_order ?? 0;
+                    $comparison = $order_a <=> $order_b;
+                    // Secondary sort by name when menu_order is equal.
+                    if (0 === $comparison) {
                         $comparison = strcasecmp((string) $a->name, (string) $b->name);
-                        break;
-                }
-
-                return $comparison * $sort_order;
+                    }
+                    break;
+                case 'name':
+                default:
+                    $comparison = strcasecmp((string) $a->name, (string) $b->name);
+                    break;
             }
-        );
-
+            return $comparison * $sort_order;
+        });
         return $terms;
     }
 }

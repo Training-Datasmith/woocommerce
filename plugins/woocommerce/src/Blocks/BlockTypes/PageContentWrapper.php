@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * Used in templates to wrap page content. Allows content to be populated at template level.
  *
  * @internal
  */
-class PageContentWrapper extends AbstractBlock
+class Page_Content_Wrapper extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,7 +16,6 @@ class PageContentWrapper extends AbstractBlock
      * @var string
      */
     protected $block_name = 'page-content-wrapper';
-
     /**
      * It isn't necessary to register block assets.
      *
@@ -28,7 +26,6 @@ class PageContentWrapper extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the frontend style handle for this block type.
      */

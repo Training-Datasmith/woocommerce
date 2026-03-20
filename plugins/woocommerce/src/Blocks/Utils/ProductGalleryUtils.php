@@ -1,14 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Utils;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Utils;
 
 /**
  * Utility methods used for the Product Gallery block.
  * {@internal This class and its methods are not intended for public use.}
  */
-class ProductGalleryUtils
+class Product_Gallery_Utils
 {
     /**
      * Get all image IDs for the product.
@@ -18,22 +17,18 @@ class ProductGalleryUtils
      */
     public static function get_all_image_ids($product): array
     {
-        if (! $product instanceof \WC_Product) {
+        if (!$product instanceof \WC_Product) {
             wc_doing_it_wrong(__FUNCTION__, __('Invalid product object.', 'woocommerce'), '9.8.0');
             return [];
         }
-
-        $gallery_image_ids           = self::get_product_gallery_image_ids($product);
+        $gallery_image_ids = self::get_product_gallery_image_ids($product);
         $product_variation_image_ids = self::get_product_variation_image_ids($product);
-        $all_image_ids               = array_values(array_map(intval(...), array_unique(array_merge($gallery_image_ids, $product_variation_image_ids))));
-
+        $all_image_ids = array_values(array_map(intval(...), array_unique(array_merge($gallery_image_ids, $product_variation_image_ids))));
         if (empty($all_image_ids)) {
             return [];
         }
-
         return $all_image_ids;
     }
-
     /**
      * Get the product gallery image data.
      *
@@ -46,7 +41,6 @@ class ProductGalleryUtils
         $all_image_ids = self::get_all_image_ids($product);
         return self::get_image_src_data($all_image_ids, $size, $product->get_title());
     }
-
     /**
      * Get the product gallery image count.
      *
@@ -58,7 +52,6 @@ class ProductGalleryUtils
         $all_image_ids = self::get_all_image_ids($product);
         return count($all_image_ids);
     }
-
     /**
      * Get the image source data.
      *
@@ -70,45 +63,27 @@ class ProductGalleryUtils
     public static function get_image_src_data($image_ids, $size, $product_title = ''): array
     {
         $image_src_data = [];
-
         foreach ($image_ids as $index => $image_id) {
             if (0 === $image_id) {
                 // Handle placeholder image.
-                $image_src_data[] = [
-                    'id'     => 0,
-                    'src'    => wc_placeholder_img_src(),
-                    'srcset' => '',
-                    'sizes'  => '',
-                    'alt'    => '',
-                ];
+                $image_src_data[] = ['id' => 0, 'src' => wc_placeholder_img_src(), 'srcset' => '', 'sizes' => '', 'alt' => ''];
                 continue;
             }
-
             // Get the image source.
             $full_src = wp_get_attachment_image_src($image_id, $size);
-
             // Get srcset and sizes.
             $srcset = wp_get_attachment_image_srcset($image_id, $size);
-            $sizes  = wp_get_attachment_image_sizes($image_id, $size);
-            $alt    = get_post_meta($image_id, '_wp_attachment_image_alt', true);
-
-            $image_src_data[] = [
-                'id'     => $image_id,
-                'src'    => $full_src ? $full_src[0] : '',
-                'srcset' => $srcset ?: '',
-                'sizes'  => $sizes ?: '',
-                'alt'    => $alt ?: sprintf(
-                    /* translators: 1: Product title 2: Image number */
-                    __('%1$s - Image %2$d', 'woocommerce'),
-                    $product_title,
-                    $index + 1
-                ),
-            ];
+            $sizes = wp_get_attachment_image_sizes($image_id, $size);
+            $alt = get_post_meta($image_id, '_wp_attachment_image_alt', true);
+            $image_src_data[] = ['id' => $image_id, 'src' => $full_src ? $full_src[0] : '', 'srcset' => $srcset ?: '', 'sizes' => $sizes ?: '', 'alt' => $alt ?: sprintf(
+                /* translators: 1: Product title 2: Image number */
+                __('%1$s - Image %2$d', 'woocommerce'),
+                $product_title,
+                $index + 1
+            )];
         }
-
         return $image_src_data;
     }
-
     /**
      * Get the product variation image data.
      *
@@ -118,12 +93,10 @@ class ProductGalleryUtils
     public static function get_product_variation_image_ids($product): array
     {
         $variation_image_ids = [];
-
-        if (! $product instanceof \WC_Product) {
+        if (!$product instanceof \WC_Product) {
             wc_doing_it_wrong(__FUNCTION__, __('Invalid product object.', 'woocommerce'), '9.8.0');
             return $variation_image_ids;
         }
-
         try {
             if ($product->is_type('variable')) {
                 $variations = $product->get_children();
@@ -131,7 +104,7 @@ class ProductGalleryUtils
                     $variation = wc_get_product($variation_id);
                     if ($variation) {
                         $variation_image_id = $variation->get_image_id();
-                        if (! empty($variation_image_id) && ! in_array(strval($variation_image_id), $variation_image_ids, true)) {
+                        if (!empty($variation_image_id) && !in_array(strval($variation_image_id), $variation_image_ids, true)) {
                             $variation_image_ids[] = strval($variation_image_id);
                         }
                     }
@@ -139,12 +112,10 @@ class ProductGalleryUtils
             }
         } catch (\Exception $e) {
             // Log the error but continue execution.
-            error_log('Error getting product variation image IDs: ' . $e->getMessage());
+            error_log('Error getting product variation image IDs: ' . $e->get_message());
         }
-
         return $variation_image_ids;
     }
-
     /**
      * Get the product gallery image IDs.
      *
@@ -154,34 +125,26 @@ class ProductGalleryUtils
     public static function get_product_gallery_image_ids($product): array
     {
         $product_image_ids = [];
-
         // Main product featured image.
         $featured_image_id = $product->get_image_id();
-
         if ($featured_image_id) {
             $product_image_ids[] = $featured_image_id;
         }
-
         // All other product gallery images.
         $product_gallery_image_ids = $product->get_gallery_image_ids();
-
-        if (! empty($product_gallery_image_ids)) {
+        if (!empty($product_gallery_image_ids)) {
             // We don't want to show the same image twice, so we have to remove the featured image from the gallery if it's there.
             $product_image_ids = array_unique(array_merge($product_image_ids, $product_gallery_image_ids));
         }
-
         // If the Product image is not set and there are no gallery images, we need to set it to a placeholder image.
-        if (! $featured_image_id && empty($product_gallery_image_ids)) {
+        if (!$featured_image_id && empty($product_gallery_image_ids)) {
             $product_image_ids[] = '0';
         }
-
         foreach ($product_image_ids as $key => $image_id) {
-            $product_image_ids[ $key ] = strval($image_id);
+            $product_image_ids[$key] = strval($image_id);
         }
-
         // Reindex array.
         $product_image_ids = array_values($product_image_ids);
-
         return $product_image_ids;
     }
 }

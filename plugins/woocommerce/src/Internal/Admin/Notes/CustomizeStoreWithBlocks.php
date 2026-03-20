@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Admin: Customize your online store with WooCommerce blocks.
  *
@@ -8,29 +8,24 @@ declare(strict_types=1);
  *
  * @package WooCommerce\Admin
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\Notes;
+namespace Automattic\Woo_Commerce\Internal\Admin\Notes;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\Notes\Note;
-use Automattic\WooCommerce\Admin\Notes\NoteTraits;
-
+use Automattic\Woo_Commerce\Admin\Notes\Note;
+use Automattic\Woo_Commerce\Admin\Notes\Note_Traits;
 /**
  * Customize_Store_With_Blocks.
  */
-class CustomizeStoreWithBlocks
+class Customize_Store_With_Blocks
 {
     /**
      * Note traits.
      */
-    use NoteTraits;
-
+    use Note_Traits;
     /**
      * Name of the note for use in the database.
      */
     public const NOTE_NAME = 'wc-admin-customize-store-with-blocks';
-
     /**
      * Get the note.
      *
@@ -39,39 +34,25 @@ class CustomizeStoreWithBlocks
     public static function get_note()
     {
         $onboarding_profile = get_option('woocommerce_onboarding_profile', []);
-
         // Confirm that $onboarding_profile is set.
         if (empty($onboarding_profile)) {
             return;
         }
-
         // Make sure that the person who filled out the OBW was not setting up
         // the store for their customer/client.
-        if (
-            ! isset($onboarding_profile['setup_client']) ||
-            $onboarding_profile['setup_client']
-        ) {
+        if (!isset($onboarding_profile['setup_client']) || $onboarding_profile['setup_client']) {
             return;
         }
-
         // We want to show the note after fourteen days.
-        if (! self::is_wc_admin_active_in_date_range('week-1-4', 14 * DAY_IN_SECONDS)) {
+        if (!self::is_wc_admin_active_in_date_range('week-1-4', 14 * DAY_IN_SECONDS)) {
             return;
         }
-
         // Don't show if there aren't products.
-        $query    = new \WC_Product_Query(
-            [
-                'limit'  => 1,
-                'return' => 'ids',
-                'status' => [ 'publish' ],
-            ]
-        );
+        $query = new \WC_Product_Query(['limit' => 1, 'return' => 'ids', 'status' => ['publish']]);
         $products = $query->get_products();
         if (0 === count($products)) {
             return;
         }
-
         $note = new Note();
         $note->set_title(__('Customize your online store with WooCommerce blocks', 'woocommerce'));
         $note->set_content(__('With our blocks, you can select and display products, categories, filters, and more virtually anywhere on your site — no need to use shortcodes or edit lines of code. Learn more about how to use each one of them.', 'woocommerce'));
@@ -79,12 +60,7 @@ class CustomizeStoreWithBlocks
         $note->set_name(self::NOTE_NAME);
         $note->set_content_data((object) []);
         $note->set_source('woocommerce-admin');
-        $note->add_action(
-            'customize-store-with-blocks',
-            __('Learn more', 'woocommerce'),
-            'https://woocommerce.com/posts/how-to-customize-your-online-store-with-woocommerce-blocks/?utm_source=inbox&utm_medium=product',
-            Note::E_WC_ADMIN_NOTE_ACTIONED
-        );
+        $note->add_action('customize-store-with-blocks', __('Learn more', 'woocommerce'), 'https://woocommerce.com/posts/how-to-customize-your-online-store-with-woocommerce-blocks/?utm_source=inbox&utm_medium=product', Note::E_WC_ADMIN_NOTE_ACTIONED);
         return $note;
     }
 }

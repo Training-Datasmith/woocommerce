@@ -1,24 +1,21 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Launch Your Store Controller
  *
  * Handles requests to /launch-your-store/*
  */
+namespace Automattic\Woo_Commerce\Admin\API;
 
-namespace Automattic\WooCommerce\Admin\API;
-
-use Automattic\WooCommerce\Admin\WCAdminHelper;
-
+use Automattic\Woo_Commerce\Admin\Wc_Admin_Helper;
 defined('ABSPATH') || exit;
-
 /**
  * Launch Your Store controller.
  *
  * @internal
  */
-class LaunchYourStore
+class Launch_Your_Store
 {
     /**
      * Endpoint namespace.
@@ -26,98 +23,34 @@ class LaunchYourStore
      * @var string
      */
     protected $namespace = 'wc-admin';
-
     /**
      * Route base.
      *
      * @var string
      */
     protected $rest_base = 'launch-your-store';
-
     /**
      * Register routes.
      */
     public function register_routes(): void
     {
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/initialize-coming-soon',
-            [
-                [
-                    'methods'             => 'POST',
-                    'callback'            => $this->initialize_coming_soon(...),
-                    'permission_callback' => $this->must_be_shop_manager_or_admin(...),
-                ],
-            ]
-        );
-
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/update-survey-status',
-            [
-                [
-                    'methods'             => 'POST',
-                    'callback'            => $this->update_survey_status(...),
-                    'permission_callback' => $this->must_be_shop_manager_or_admin(...),
-                    'args'                => [
-                        'status' => [
-                            'type' => 'string',
-                            'enum' => [ 'yes', 'no' ],
-                        ],
-                    ],
-                ],
-            ]
-        );
-
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/survey-completed',
-            [
-                [
-                    'methods'             => 'GET',
-                    'callback'            => $this->has_survey_completed(...),
-                    'permission_callback' => $this->must_be_shop_manager_or_admin(...),
-                ],
-            ]
-        );
-
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/woopayments/test-orders/count',
-            [
-                [
-                    'methods'             => 'GET',
-                    'callback'            => $this->get_woopay_test_orders_count(...),
-                    'permission_callback' => $this->must_be_shop_manager_or_admin(...),
-                ],
-            ]
-        );
-
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/woopayments/test-orders',
-            [
-                [
-                    'methods'             => 'DELETE',
-                    'callback'            => $this->delete_woopay_test_orders(...),
-                    'permission_callback' => $this->must_be_shop_manager_or_admin(...),
-                ],
-            ]
-        );
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/initialize-coming-soon', [['methods' => 'POST', 'callback' => $this->initialize_coming_soon(...), 'permission_callback' => $this->must_be_shop_manager_or_admin(...)]]);
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/update-survey-status', [['methods' => 'POST', 'callback' => $this->update_survey_status(...), 'permission_callback' => $this->must_be_shop_manager_or_admin(...), 'args' => ['status' => ['type' => 'string', 'enum' => ['yes', 'no']]]]]);
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/survey-completed', [['methods' => 'GET', 'callback' => $this->has_survey_completed(...), 'permission_callback' => $this->must_be_shop_manager_or_admin(...)]]);
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/woopayments/test-orders/count', [['methods' => 'GET', 'callback' => $this->get_woopay_test_orders_count(...), 'permission_callback' => $this->must_be_shop_manager_or_admin(...)]]);
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/woopayments/test-orders', [['methods' => 'DELETE', 'callback' => $this->delete_woopay_test_orders(...), 'permission_callback' => $this->must_be_shop_manager_or_admin(...)]]);
     }
-
     /**
      * User must be either shop_manager or administrator.
      */
     public function must_be_shop_manager_or_admin(): bool
     {
         // phpcs:ignore
-        if (! current_user_can('manage_woocommerce') && ! current_user_can('administrator')) {
+        if (!current_user_can('manage_woocommerce') && !current_user_can('administrator')) {
             return false;
         }
         return true;
     }
-
     /**
      * Initializes options for coming soon. Overwrites existing coming soon status but keeps the private link and share key.
      *
@@ -127,32 +60,20 @@ class LaunchYourStore
     {
         $current_user_id = get_current_user_id();
         // Abort if we don't have a user id for some reason.
-        if (! $current_user_id) {
+        if (!$current_user_id) {
             return;
         }
-
-        $coming_soon      = 'yes';
-        $store_pages_only = WCAdminHelper::is_site_fresh() ? 'no' : 'yes';
-        $private_link     = 'no';
-        $share_key        = wp_generate_password(32, false);
-
+        $coming_soon = 'yes';
+        $store_pages_only = Wc_Admin_Helper::is_site_fresh() ? 'no' : 'yes';
+        $private_link = 'no';
+        $share_key = wp_generate_password(32, false);
         update_option('woocommerce_coming_soon', $coming_soon);
         update_option('woocommerce_store_pages_only', $store_pages_only);
         add_option('woocommerce_private_link', $private_link);
         add_option('woocommerce_share_key', $share_key);
-
-        wc_admin_record_tracks_event(
-            'launch_your_store_initialize_coming_soon',
-            [
-                'coming_soon'      => $coming_soon,
-                'store_pages_only' => $store_pages_only,
-                'private_link'     => $private_link,
-            ]
-        );
-
+        wc_admin_record_tracks_event('launch_your_store_initialize_coming_soon', ['coming_soon' => $coming_soon, 'store_pages_only' => $store_pages_only, 'private_link' => $private_link]);
         return true;
     }
-
     /**
      * Count the test orders created during Woo Payments test mode.
      *
@@ -160,21 +81,16 @@ class LaunchYourStore
      */
     public function get_woopay_test_orders_count()
     {
-        $return = (fn ($count) => new \WP_REST_Response([ 'count' => $count ]));
-
-        $orders = wc_get_orders(
-            [
-                // phpcs:ignore
-                'meta_key'   => '_wcpay_mode',
-                // phpcs:ignore
-                'meta_value' => 'test',
-                'return'     => 'ids',
-            ]
-        );
-
+        $return = fn($count) => new \WP_REST_Response(['count' => $count]);
+        $orders = wc_get_orders([
+            // phpcs:ignore
+            'meta_key' => '_wcpay_mode',
+            // phpcs:ignore
+            'meta_value' => 'test',
+            'return' => 'ids',
+        ]);
         return $return(count($orders));
     }
-
     /**
      * Delete WooPayments test orders.
      *
@@ -182,24 +98,18 @@ class LaunchYourStore
      */
     public function delete_woopay_test_orders()
     {
-        $return = (fn ($status = 204) => new \WP_REST_Response(null, $status));
-
-        $orders = wc_get_orders(
-            [
-                // phpcs:ignore
-                'meta_key'   => '_wcpay_mode',
-                // phpcs:ignore
-                'meta_value' => 'test',
-            ]
-        );
-
+        $return = fn($status = 204) => new \WP_REST_Response(null, $status);
+        $orders = wc_get_orders([
+            // phpcs:ignore
+            'meta_key' => '_wcpay_mode',
+            // phpcs:ignore
+            'meta_value' => 'test',
+        ]);
         foreach ($orders as $order) {
             $order->delete();
         }
-
         return $return();
     }
-
     /**
      * Update woocommerce_admin_launch_your_store_survey_completed to yes or no
      *
@@ -212,7 +122,6 @@ class LaunchYourStore
         update_option('woocommerce_admin_launch_your_store_survey_completed', $request->get_param('status'));
         return new \WP_REST_Response();
     }
-
     /**
      * Return woocommerce_admin_launch_your_store_survey_completed option.
      *

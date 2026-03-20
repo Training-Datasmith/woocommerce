@@ -1,43 +1,38 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Reports revenue stats controller
  *
  * Handles requests to the /reports/revenue/stats endpoint.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports\Revenue\Stats;
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Revenue\Stats;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\ExportableInterface;
-use Automattic\WooCommerce\Admin\API\Reports\ExportableTraits;
-use Automattic\WooCommerce\Admin\API\Reports\GenericStatsController;
-use Automattic\WooCommerce\Admin\API\Reports\Revenue\Query as RevenueQuery;
+use Automattic\Woo_Commerce\Admin\API\Reports\Exportable_Interface;
+use Automattic\Woo_Commerce\Admin\API\Reports\Exportable_Traits;
+use Automattic\Woo_Commerce\Admin\API\Reports\Generic_Stats_Controller;
+use Automattic\Woo_Commerce\Admin\API\Reports\Revenue\Query as RevenueQuery;
 use WP_REST_Request;
 use WP_REST_Response;
-
 /**
  * REST API Reports revenue stats controller class.
  *
  * @internal
  * @extends GenericStatsController
  */
-class Controller extends GenericStatsController implements ExportableInterface
+class Controller extends Generic_Stats_Controller implements Exportable_Interface
 {
     /**
      * Exportable traits.
      */
-    use ExportableTraits;
-
+    use Exportable_Traits;
     /**
      * Route base.
      *
      * @var string
      */
     protected $rest_base = 'reports/revenue/stats';
-
     /**
      * Maps query arguments from the REST request.
      *
@@ -45,22 +40,20 @@ class Controller extends GenericStatsController implements ExportableInterface
      */
     protected function prepare_reports_query($request): array
     {
-        $args                        = [];
-        $args['before']              = $request['before'];
-        $args['after']               = $request['after'];
-        $args['interval']            = $request['interval'];
-        $args['page']                = $request['page'];
-        $args['per_page']            = $request['per_page'];
-        $args['orderby']             = $request['orderby'];
-        $args['order']               = $request['order'];
-        $args['segmentby']           = $request['segmentby'];
-        $args['fields']              = $request['fields'];
+        $args = [];
+        $args['before'] = $request['before'];
+        $args['after'] = $request['after'];
+        $args['interval'] = $request['interval'];
+        $args['page'] = $request['page'];
+        $args['per_page'] = $request['per_page'];
+        $args['orderby'] = $request['orderby'];
+        $args['order'] = $request['order'];
+        $args['segmentby'] = $request['segmentby'];
+        $args['fields'] = $request['fields'];
         $args['force_cache_refresh'] = $request['force_cache_refresh'];
-        $args['date_type']           = $request['date_type'];
-
+        $args['date_type'] = $request['date_type'];
         return $args;
     }
-
     /**
      * Get data from RevenueQuery.
      *
@@ -71,10 +64,9 @@ class Controller extends GenericStatsController implements ExportableInterface
      */
     protected function get_datastore_data($query_args = [])
     {
-        $query = new RevenueQuery($query_args);
+        $query = new Revenue_Query($query_args);
         return $query->get_data();
     }
-
     /**
      * Get report items for export.
      *
@@ -85,15 +77,12 @@ class Controller extends GenericStatsController implements ExportableInterface
      */
     public function get_export_items($request)
     {
-        $response  = $this->get_items($request);
-        $data      = $response->get_data();
+        $response = $this->get_items($request);
+        $data = $response->get_data();
         $intervals = $data['intervals'];
-
         $response->set_data($intervals);
-
         return $response;
     }
-
     /**
      * Prepare a report data item for serialization.
      *
@@ -104,7 +93,6 @@ class Controller extends GenericStatsController implements ExportableInterface
     public function prepare_item_for_response($report, $request)
     {
         $response = parent::prepare_item_for_response($report, $request);
-
         /**
          * Filter a report returned from the API.
          *
@@ -116,91 +104,14 @@ class Controller extends GenericStatsController implements ExportableInterface
          */
         return apply_filters('woocommerce_rest_prepare_report_revenue_stats', $response, $report, $request);
     }
-
     /**
      * Get the Report's item properties schema.
      * Will be used by `get_item_schema` as `totals` and `subtotals`.
      */
     protected function get_item_properties_schema(): array
     {
-        return [
-            'total_sales'    => [
-                'description' => __('Total sales.', 'woocommerce'),
-                'type'        => 'number',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-                'indicator'   => true,
-                'format'      => 'currency',
-            ],
-            'net_revenue'    => [
-                'description' => __('Net sales.', 'woocommerce'),
-                'type'        => 'number',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-                'indicator'   => true,
-                'format'      => 'currency',
-            ],
-            'coupons'        => [
-                'description' => __('Amount discounted by coupons.', 'woocommerce'),
-                'type'        => 'number',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-            ],
-            'coupons_count'  => [
-                'description' => __('Unique coupons count.', 'woocommerce'),
-                'type'        => 'number',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-                'format'      => 'currency',
-            ],
-            'shipping'       => [
-                'title'       => __('Shipping', 'woocommerce'),
-                'description' => __('Total of shipping.', 'woocommerce'),
-                'type'        => 'number',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-                'indicator'   => true,
-                'format'      => 'currency',
-            ],
-            'taxes'          => [
-                'description' => __('Total of taxes.', 'woocommerce'),
-                'type'        => 'number',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-                'format'      => 'currency',
-            ],
-            'refunds'        => [
-                'title'       => __('Returns', 'woocommerce'),
-                'description' => __('Total of returns.', 'woocommerce'),
-                'type'        => 'number',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-                'indicator'   => true,
-                'format'      => 'currency',
-            ],
-            'orders_count'   => [
-                'description' => __('Number of orders.', 'woocommerce'),
-                'type'        => 'integer',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-            ],
-            'num_items_sold' => [
-                'description' => __('Items sold.', 'woocommerce'),
-                'type'        => 'integer',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-            ],
-            'gross_sales'    => [
-                'description' => __('Gross sales.', 'woocommerce'),
-                'type'        => 'number',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-                'indicator'   => true,
-                'format'      => 'currency',
-            ],
-        ];
+        return ['total_sales' => ['description' => __('Total sales.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true, 'indicator' => true, 'format' => 'currency'], 'net_revenue' => ['description' => __('Net sales.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true, 'indicator' => true, 'format' => 'currency'], 'coupons' => ['description' => __('Amount discounted by coupons.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true], 'coupons_count' => ['description' => __('Unique coupons count.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true, 'format' => 'currency'], 'shipping' => ['title' => __('Shipping', 'woocommerce'), 'description' => __('Total of shipping.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true, 'indicator' => true, 'format' => 'currency'], 'taxes' => ['description' => __('Total of taxes.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true, 'format' => 'currency'], 'refunds' => ['title' => __('Returns', 'woocommerce'), 'description' => __('Total of returns.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true, 'indicator' => true, 'format' => 'currency'], 'orders_count' => ['description' => __('Number of orders.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true], 'num_items_sold' => ['description' => __('Items sold.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true], 'gross_sales' => ['description' => __('Gross sales.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true, 'indicator' => true, 'format' => 'currency']];
     }
-
     /**
      * Get the Report's schema, conforming to JSON Schema.
      *
@@ -208,20 +119,12 @@ class Controller extends GenericStatsController implements ExportableInterface
      */
     public function get_item_schema()
     {
-        $schema          = parent::get_item_schema();
+        $schema = parent::get_item_schema();
         $schema['title'] = 'report_revenue_stats';
-
         // Products is not shown in intervals, only in totals.
-        $schema['properties']['totals']['properties']['products'] = [
-            'description' => __('Products sold.', 'woocommerce'),
-            'type'        => 'integer',
-            'context'     => [ 'view', 'edit' ],
-            'readonly'    => true,
-        ];
-
+        $schema['properties']['totals']['properties']['products'] = ['description' => __('Products sold.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true];
         return $this->add_additional_fields_schema($schema);
     }
-
     /**
      * Get the query params for collections.
      *
@@ -229,48 +132,13 @@ class Controller extends GenericStatsController implements ExportableInterface
      */
     public function get_collection_params()
     {
-        $params                    = parent::get_collection_params();
-        $params['orderby']['enum'] = $this->apply_custom_orderby_filters(
-            [
-                'date',
-                'total_sales',
-                'coupons',
-                'refunds',
-                'shipping',
-                'taxes',
-                'net_revenue',
-                'orders_count',
-                'items_sold',
-                'gross_sales',
-            ]
-        );
-        $params['segmentby']       = [
-            'description'       => __('Segment the response by additional constraint.', 'woocommerce'),
-            'type'              => 'string',
-            'enum'              => [
-                'product',
-                'category',
-                'variation',
-                'coupon',
-                'customer_type', // new vs returning.
-            ],
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-        $params['date_type']       = [
-            'description'       => __('Override the "woocommerce_date_type" option that is used for the database date field considered for revenue reports.', 'woocommerce'),
-            'type'              => 'string',
-            'enum'              => [
-                'date_paid',
-                'date_created',
-                'date_completed',
-            ],
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
+        $params = parent::get_collection_params();
+        $params['orderby']['enum'] = $this->apply_custom_orderby_filters(['date', 'total_sales', 'coupons', 'refunds', 'shipping', 'taxes', 'net_revenue', 'orders_count', 'items_sold', 'gross_sales']);
+        $params['segmentby'] = ['description' => __('Segment the response by additional constraint.', 'woocommerce'), 'type' => 'string', 'enum' => ['product', 'category', 'variation', 'coupon', 'customer_type'], 'validate_callback' => 'rest_validate_request_arg'];
+        $params['date_type'] = ['description' => __('Override the "woocommerce_date_type" option that is used for the database date field considered for revenue reports.', 'woocommerce'), 'type' => 'string', 'enum' => ['date_paid', 'date_created', 'date_completed'], 'validate_callback' => 'rest_validate_request_arg'];
         unset($params['fields']);
-
         return $params;
     }
-
     /**
      * Get the column names for export.
      *
@@ -278,19 +146,8 @@ class Controller extends GenericStatsController implements ExportableInterface
      */
     public function get_export_columns()
     {
-        return [
-            'date'         => __('Date', 'woocommerce'),
-            'orders_count' => __('Orders', 'woocommerce'),
-            'gross_sales'  => __('Gross sales', 'woocommerce'),
-            'refunds'      => __('Returns', 'woocommerce'),
-            'coupons'      => __('Coupons', 'woocommerce'),
-            'net_revenue'  => __('Net sales', 'woocommerce'),
-            'taxes'        => __('Taxes', 'woocommerce'),
-            'shipping'     => __('Shipping', 'woocommerce'),
-            'total_sales'  => __('Total sales', 'woocommerce'),
-        ];
+        return ['date' => __('Date', 'woocommerce'), 'orders_count' => __('Orders', 'woocommerce'), 'gross_sales' => __('Gross sales', 'woocommerce'), 'refunds' => __('Returns', 'woocommerce'), 'coupons' => __('Coupons', 'woocommerce'), 'net_revenue' => __('Net sales', 'woocommerce'), 'taxes' => __('Taxes', 'woocommerce'), 'shipping' => __('Shipping', 'woocommerce'), 'total_sales' => __('Total sales', 'woocommerce')];
     }
-
     /**
      * Get the column values for export.
      *
@@ -300,17 +157,6 @@ class Controller extends GenericStatsController implements ExportableInterface
     public function prepare_item_for_export($item)
     {
         $subtotals = (array) $item['subtotals'];
-
-        return [
-            'date'         => $item['date_start'],
-            'orders_count' => $subtotals['orders_count'],
-            'gross_sales'  => self::csv_number_format($subtotals['gross_sales']),
-            'refunds'      => self::csv_number_format($subtotals['refunds']),
-            'coupons'      => self::csv_number_format($subtotals['coupons']),
-            'net_revenue'  => self::csv_number_format($subtotals['net_revenue']),
-            'taxes'        => self::csv_number_format($subtotals['taxes']),
-            'shipping'     => self::csv_number_format($subtotals['shipping']),
-            'total_sales'  => self::csv_number_format($subtotals['total_sales']),
-        ];
+        return ['date' => $item['date_start'], 'orders_count' => $subtotals['orders_count'], 'gross_sales' => self::csv_number_format($subtotals['gross_sales']), 'refunds' => self::csv_number_format($subtotals['refunds']), 'coupons' => self::csv_number_format($subtotals['coupons']), 'net_revenue' => self::csv_number_format($subtotals['net_revenue']), 'taxes' => self::csv_number_format($subtotals['taxes']), 'shipping' => self::csv_number_format($subtotals['shipping']), 'total_sales' => self::csv_number_format($subtotals['total_sales'])];
     }
 }

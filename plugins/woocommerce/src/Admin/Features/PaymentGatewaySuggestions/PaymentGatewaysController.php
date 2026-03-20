@@ -1,20 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Logic for extending WC_REST_Payment_Gateways_Controller.
  */
+namespace Automattic\Woo_Commerce\Admin\Features\Payment_Gateway_Suggestions;
 
-namespace Automattic\WooCommerce\Admin\Features\PaymentGatewaySuggestions;
-
-use Automattic\WooCommerce\Admin\Features\TransientNotices;
-
+use Automattic\Woo_Commerce\Admin\Features\Transient_Notices;
 defined('ABSPATH') || exit;
-
 /**
  * PaymentGateway class
  */
-class PaymentGatewaysController
+class Payment_Gateways_Controller
 {
     /**
      * Initialize payment gateway changes.
@@ -25,7 +22,6 @@ class PaymentGatewaysController
         add_filter('admin_init', self::possibly_do_connection_return_action(...));
         add_action('woocommerce_admin_payment_gateway_connection_return', self::handle_successfull_connection(...));
     }
-
     /**
      * Add necessary fields to REST API response.
      *
@@ -37,31 +33,16 @@ class PaymentGatewaysController
     public static function extend_response($response, $gateway, $request)
     {
         $data = $response->get_data();
-
-        $data['needs_setup']          = $gateway->needs_setup();
+        $data['needs_setup'] = $gateway->needs_setup();
         $data['post_install_scripts'] = self::get_post_install_scripts($gateway);
-        $data['settings_url']         = method_exists($gateway, 'get_settings_url')
-            ? $gateway->get_settings_url()
-            : admin_url('admin.php?page=wc-settings&tab=checkout&section=' . strtolower((string) $gateway->id));
-
-        $return_url             = wc_admin_url('&task=payments&connection-return=' . strtolower((string) $gateway->id) . '&_wpnonce=' . wp_create_nonce('connection-return'));
-        $data['connection_url'] = method_exists($gateway, 'get_connection_url')
-            ? $gateway->get_connection_url($return_url)
-            : null;
-
-        $data['setup_help_text'] = method_exists($gateway, 'get_setup_help_text')
-            ? $gateway->get_setup_help_text()
-            : null;
-
-        $data['required_settings_keys'] = method_exists($gateway, 'get_required_settings_keys')
-            ? $gateway->get_required_settings_keys()
-            : [];
-
+        $data['settings_url'] = method_exists($gateway, 'get_settings_url') ? $gateway->get_settings_url() : admin_url('admin.php?page=wc-settings&tab=checkout&section=' . strtolower((string) $gateway->id));
+        $return_url = wc_admin_url('&task=payments&connection-return=' . strtolower((string) $gateway->id) . '&_wpnonce=' . wp_create_nonce('connection-return'));
+        $data['connection_url'] = method_exists($gateway, 'get_connection_url') ? $gateway->get_connection_url($return_url) : null;
+        $data['setup_help_text'] = method_exists($gateway, 'get_setup_help_text') ? $gateway->get_setup_help_text() : null;
+        $data['required_settings_keys'] = method_exists($gateway, 'get_required_settings_keys') ? $gateway->get_required_settings_keys() : [];
         $response->set_data($data);
-
         return $response;
     }
-
     /**
      * Get payment gateway scripts for post-install.
      *
@@ -70,44 +51,27 @@ class PaymentGatewaysController
      */
     public static function get_post_install_scripts($gateway): array
     {
-        $scripts    = [];
+        $scripts = [];
         $wp_scripts = wp_scripts();
-
-        $handles = method_exists($gateway, 'get_post_install_script_handles')
-            ? $gateway->get_post_install_script_handles()
-            : [];
-
+        $handles = method_exists($gateway, 'get_post_install_script_handles') ? $gateway->get_post_install_script_handles() : [];
         foreach ($handles as $handle) {
-            if (isset($wp_scripts->registered[ $handle ])) {
-                $scripts[] = $wp_scripts->registered[ $handle ];
+            if (isset($wp_scripts->registered[$handle])) {
+                $scripts[] = $wp_scripts->registered[$handle];
             }
         }
-
         return $scripts;
     }
-
     /**
      * Call an action after a gating has been successfully returned.
      */
     public static function possibly_do_connection_return_action(): void
     {
-        if (
-            ! isset($_GET['page']) ||
-            'wc-admin' !== $_GET['page'] ||
-            ! isset($_GET['task']) ||
-            'payments' !== $_GET['task'] ||
-            ! isset($_GET['connection-return']) ||
-            ! isset($_GET['_wpnonce']) ||
-            ! wp_verify_nonce(wc_clean(wp_unslash($_GET['_wpnonce'])), 'connection-return')
-        ) {
+        if (!isset($_GET['page']) || 'wc-admin' !== $_GET['page'] || !isset($_GET['task']) || 'payments' !== $_GET['task'] || !isset($_GET['connection-return']) || !isset($_GET['_wpnonce']) || !wp_verify_nonce(wc_clean(wp_unslash($_GET['_wpnonce'])), 'connection-return')) {
             return;
         }
-
         $gateway_id = sanitize_text_field(wp_unslash($_GET['connection-return']));
-
         do_action('woocommerce_admin_payment_gateway_connection_return', $gateway_id);
     }
-
     /**
      * Handle a successful gateway connection.
      *
@@ -116,40 +80,22 @@ class PaymentGatewaysController
     public static function handle_successfull_connection($gateway_id): void
     {
         // phpcs:disable WordPress.Security.NonceVerification
-        if (! isset($_GET['success']) || 1 !== intval($_GET['success'])) {
+        if (!isset($_GET['success']) || 1 !== intval($_GET['success'])) {
             return;
         }
         // phpcs:enable WordPress.Security.NonceVerification
-
         $payment_gateways = WC()->payment_gateways()->payment_gateways();
-        $payment_gateway  = $payment_gateways[ $gateway_id ] ?? null;
-
-        if (! $payment_gateway) {
+        $payment_gateway = $payment_gateways[$gateway_id] ?? null;
+        if (!$payment_gateway) {
             return;
         }
-
         $payment_gateway->update_option('enabled', 'yes');
-
-        TransientNotices::add(
-            [
-                'user_id' => get_current_user_id(),
-                'id'      => 'payment-gateway-connection-return-' . str_replace(',', '-', $gateway_id),
-                'status'  => 'success',
-                'content' => sprintf(
-                    /* translators: the title of the payment gateway */
-                    __('%s connected successfully', 'woocommerce'),
-                    $payment_gateway->method_title
-                ),
-            ]
-        );
-
-        wc_admin_record_tracks_event(
-            'tasklist_payment_connect_method',
-            [
-                'payment_method' => $gateway_id,
-            ]
-        );
-
+        Transient_Notices::add(['user_id' => get_current_user_id(), 'id' => 'payment-gateway-connection-return-' . str_replace(',', '-', $gateway_id), 'status' => 'success', 'content' => sprintf(
+            /* translators: the title of the payment gateway */
+            __('%s connected successfully', 'woocommerce'),
+            $payment_gateway->method_title
+        )]);
+        wc_admin_record_tracks_event('tasklist_payment_connect_method', ['payment_method' => $gateway_id]);
         wp_safe_redirect(wc_admin_url());
     }
 }

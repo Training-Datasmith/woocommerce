@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\CostOfGoodsSold;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Cost_Of_Goods_Sold;
 
 /**
  * Trait with common functionality for unit tests related to the Cost of Goods Sold feature.
  */
-trait CogsAwareUnitTestSuiteTrait
+trait Cogs_Aware_Unit_Test_Suite_Trait
 {
     /**
      * Enable the Cost of Goods Sold feature.
@@ -16,7 +15,6 @@ trait CogsAwareUnitTestSuiteTrait
     {
         update_option('woocommerce_feature_cost_of_goods_sold_enabled', 'yes');
     }
-
     /**
      * Enable the Cost of Goods Sold feature.
      */
@@ -24,7 +22,6 @@ trait CogsAwareUnitTestSuiteTrait
     {
         delete_option('woocommerce_feature_cost_of_goods_sold_enabled');
     }
-
     /**
      * Sets the expectation for a "doing it wrong" being thrown.
      *
@@ -32,15 +29,10 @@ trait CogsAwareUnitTestSuiteTrait
      */
     private function expect_doing_it_wrong_cogs_disabled(string $method_name): void
     {
-        $this->register_legacy_proxy_function_mocks(
-            [
-                'wc_doing_it_wrong' => function ($function_name, $message): void {
-                    // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                    throw new \Exception("Doing it wrong, function: '$function_name', message: '$message'");
-                },
-            ]
-        );
-
-        $this->expectExceptionMessage("Doing it wrong, function: '{$method_name}', message: 'The Cost of Goods sold feature is disabled, thus the method called will do nothing and will return dummy data.'");
+        $this->register_legacy_proxy_function_mocks(['wc_doing_it_wrong' => function ($function_name, $message): void {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new \Exception("Doing it wrong, function: '{$function_name}', message: '{$message}'");
+        }]);
+        $this->expect_exception_message("Doing it wrong, function: '{$method_name}', message: 'The Cost of Goods sold feature is disabled, thus the method called will do nothing and will return dummy data.'");
     }
 }

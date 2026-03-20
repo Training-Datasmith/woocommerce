@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Product Form Traits
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\ProductForm;
+namespace Automattic\Woo_Commerce\Internal\Admin\Product_Form;
 
 defined('ABSPATH') || exit;
-
 /**
  * ComponentTrait class.
  */
-trait ComponentTrait
+trait Component_Trait
 {
     /**
      * Component ID.
@@ -20,28 +18,24 @@ trait ComponentTrait
      * @var string
      */
     protected $id;
-
     /**
      * Plugin ID.
      *
      * @var string
      */
     protected $plugin_id;
-
     /**
      * Product form component location.
      *
      * @var string
      */
     protected $location;
-
     /**
      * Product form component order.
      *
      * @var number
      */
     protected $order;
-
     /**
      * Return id.
      *
@@ -51,7 +45,6 @@ trait ComponentTrait
     {
         return $this->id;
     }
-
     /**
      * Return plugin id.
      *

@@ -1,45 +1,32 @@
 <?php
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-use Automattic\WooCommerce\Blocks\Utils\BlockHooksTrait;
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Block_Hooks_Trait;
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * CustomerAccount class.
  */
-class CustomerAccount extends AbstractBlock
+class Customer_Account extends Abstract_Block
 {
-    use BlockHooksTrait;
-    use EnableBlockJsonAssetsTrait;
-
-    public const TEXT_ONLY    = 'text_only';
-    public const ICON_ONLY    = 'icon_only';
-    public const DISPLAY_ALT  = 'alt';
+    use Block_Hooks_Trait;
+    use Enable_Block_Json_Assets_Trait;
+    public const TEXT_ONLY = 'text_only';
+    public const ICON_ONLY = 'icon_only';
+    public const DISPLAY_ALT = 'alt';
     public const DISPLAY_LINE = 'line';
-
     /**
      * Block name.
      *
      * @var string
      */
     protected $block_name = 'customer-account';
-
     /**
      * Block Hook API placements.
      *
      * @var array
      */
-    protected $hooked_block_placements = [
-        [
-            'position' => 'after',
-            'anchor'   => 'core/navigation',
-            'area'     => 'header',
-            'callback' => 'should_unhook_block',
-            'version'  => '8.4.0',
-        ],
-    ];
-
+    protected $hooked_block_placements = [['position' => 'after', 'anchor' => 'core/navigation', 'area' => 'header', 'callback' => 'should_unhook_block', 'version' => '8.4.0']];
     /**
      * Initialize this block type.
      */
@@ -56,7 +43,6 @@ class CustomerAccount extends AbstractBlock
             add_filter('hooked_block_types', $this->register_hooked_block(...), 9, 4);
         }
     }
-
     /**
      * Callback for the Block Hooks API to modify the attributes of the hooked block.
      *
@@ -71,22 +57,17 @@ class CustomerAccount extends AbstractBlock
     public function modify_hooked_block_attributes($parsed_hooked_block, $hooked_block_type, $relative_position, $parsed_anchor_block, $context)
     {
         $parsed_hooked_block['attrs']['displayStyle'] = 'icon_only';
-        $parsed_hooked_block['attrs']['iconStyle']    = 'line';
-        $parsed_hooked_block['attrs']['iconClass']    = 'wc-block-customer-account__account-icon';
-
-        $customer_account_block_font_size = wp_get_global_styles([ 'blocks', 'woocommerce/customer-account', 'typography', 'fontSize' ]);
-
-        if (! is_string($customer_account_block_font_size)) {
-            $navigation_block_font_size = wp_get_global_styles([ 'blocks', 'core/navigation', 'typography', 'fontSize' ]);
-
+        $parsed_hooked_block['attrs']['iconStyle'] = 'line';
+        $parsed_hooked_block['attrs']['iconClass'] = 'wc-block-customer-account__account-icon';
+        $customer_account_block_font_size = wp_get_global_styles(['blocks', 'woocommerce/customer-account', 'typography', 'fontSize']);
+        if (!is_string($customer_account_block_font_size)) {
+            $navigation_block_font_size = wp_get_global_styles(['blocks', 'core/navigation', 'typography', 'fontSize']);
             if (is_string($navigation_block_font_size)) {
                 $parsed_hooked_block['attrs']['style']['typography']['fontSize'] = $navigation_block_font_size;
             }
         }
-
         return $parsed_hooked_block;
     }
-
     /**
      * Callback for the Block Hooks API to determine if the block should be auto-inserted.
      *
@@ -97,22 +78,18 @@ class CustomerAccount extends AbstractBlock
      */
     protected function should_unhook_block(array $hooked_blocks, $position, $anchor_block, $context): array
     {
-        $block_name      = $this->namespace . '/' . $this->block_name;
+        $block_name = $this->namespace . '/' . $this->block_name;
         $block_is_hooked = in_array($block_name, $hooked_blocks, true);
-
         if ($block_is_hooked) {
-            $active_theme   = wp_get_theme()->get('Name');
-            $exclude_themes = [ 'Twenty Twenty-Two', 'Twenty Twenty-Three' ];
-
+            $active_theme = wp_get_theme()->get('Name');
+            $exclude_themes = ['Twenty Twenty-Two', 'Twenty Twenty-Three'];
             if (in_array($active_theme, $exclude_themes, true)) {
                 $key = array_search($block_name, $hooked_blocks, true);
-                unset($hooked_blocks[ $key ]);
+                unset($hooked_blocks[$key]);
             }
         }
-
         return $hooked_blocks;
     }
-
     /**
      * Render the block.
      *
@@ -124,21 +101,17 @@ class CustomerAccount extends AbstractBlock
      */
     protected function render($attributes, $content, $block)
     {
-        $classes_and_styles = StyleAttributesUtils::get_classes_and_styles_by_attributes($attributes);
+        $classes_and_styles = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes);
         $has_myaccount_page = get_option('woocommerce_myaccount_page_id');
-        $account_link       = $has_myaccount_page ? wc_get_account_endpoint_url('dashboard') : wp_login_url();
-        $has_dropdown       = ! empty($attributes['hasDropdownNavigation']) && is_user_logged_in() && $has_myaccount_page;
-
-        $aria_label   = self::ICON_ONLY === $attributes['displayStyle'] ? ' aria-label="' . esc_attr($this->render_label()) . '"' : '';
+        $account_link = $has_myaccount_page ? wc_get_account_endpoint_url('dashboard') : wp_login_url();
+        $has_dropdown = !empty($attributes['hasDropdownNavigation']) && is_user_logged_in() && $has_myaccount_page;
+        $aria_label = self::ICON_ONLY === $attributes['displayStyle'] ? ' aria-label="' . esc_attr($this->render_label()) . '"' : '';
         $label_markup = self::ICON_ONLY === $attributes['displayStyle'] ? '' : '<span class="label">' . wp_kses($this->render_label(), []) . '</span>';
-
-        if (! $has_dropdown) {
+        if (!$has_dropdown) {
             return $this->render_link($attributes, $classes_and_styles, $account_link, $aria_label, $label_markup);
         }
-
         return $this->render_dropdown($attributes, $classes_and_styles, $aria_label, $label_markup);
     }
-
     /**
      * Render the block as a simple link (default behavior).
      *
@@ -153,26 +126,38 @@ class CustomerAccount extends AbstractBlock
     private function render_link($attributes, array $classes_and_styles, $account_link, string $aria_label, string $label_markup): string
     {
         $allowed_svg = $this->get_allowed_svg();
-
         ob_start();
         ?>
 		<div
-			class="wp-block-woocommerce-customer-account <?php echo esc_attr($classes_and_styles['classes']); ?>"
-			style="<?php echo esc_attr($classes_and_styles['styles']); ?>"
+			class="wp-block-woocommerce-customer-account <?php 
+        echo esc_attr($classes_and_styles['classes']);
+        ?>"
+			style="<?php 
+        echo esc_attr($classes_and_styles['styles']);
+        ?>"
 		>	
 			<a
 				class="wc-block-customer-account__link"
-				href="<?php echo esc_url($account_link); ?>"
-				<?php echo $aria_label; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
+				href="<?php 
+        echo esc_url($account_link);
+        ?>"
+				<?php 
+        echo $aria_label;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
 			>
-				<?php echo wp_kses($this->render_icon($attributes), $allowed_svg); ?>
-				<?php echo $label_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
+				<?php 
+        echo wp_kses($this->render_icon($attributes), $allowed_svg);
+        ?>
+				<?php 
+        echo $label_markup;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
 			</a>
 		</div>
-		<?php
+		<?php 
         return (string) ob_get_clean();
     }
-
     /**
      * Render the block as a dropdown navigation.
      *
@@ -186,23 +171,23 @@ class CustomerAccount extends AbstractBlock
     private function render_dropdown($attributes, array $classes_and_styles, string $aria_label, string $label_markup): string
     {
         $allowed_svg = $this->get_allowed_svg();
-
-        $context = [
-            'isDropdownOpen' => false,
-            'showAbove'      => false,
-            'alignRight'     => false,
-        ];
-
-        $menu_items    = wc_get_account_menu_items();
+        $context = ['isDropdownOpen' => false, 'showAbove' => false, 'alignRight' => false];
+        $menu_items = wc_get_account_menu_items();
         $dropdown_html = $this->render_dropdown_menu($menu_items);
-
         ob_start();
         ?>
 		<div
-			class="wp-block-woocommerce-customer-account wc-block-customer-account--has-dropdown <?php echo esc_attr($classes_and_styles['classes']); ?>"
-			style="<?php echo esc_attr($classes_and_styles['styles']); ?>"
+			class="wp-block-woocommerce-customer-account wc-block-customer-account--has-dropdown <?php 
+        echo esc_attr($classes_and_styles['classes']);
+        ?>"
+			style="<?php 
+        echo esc_attr($classes_and_styles['styles']);
+        ?>"
 			data-wp-interactive="woocommerce/customer-account/private"
-			<?php echo wp_interactivity_data_wp_context($context); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
+			<?php 
+        echo wp_interactivity_data_wp_context($context);
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
 			data-wp-class--wc-block-customer-account--align-right="context.alignRight"
 			data-wp-class--wc-block-customer-account--is-dropdown-open="context.isDropdownOpen"
 			data-wp-class--wc-block-customer-account--show-above="context.showAbove"
@@ -213,27 +198,42 @@ class CustomerAccount extends AbstractBlock
 			<button
 				type="button"
 				class="wc-block-customer-account__toggle"
-				<?php echo $aria_label; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
+				<?php 
+        echo $aria_label;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
 				aria-haspopup="true"
 				data-wp-bind--aria-expanded="context.isDropdownOpen"
 				data-wp-on--click="actions.toggleDropdown"
 			>
-				<?php echo wp_kses($this->render_icon($attributes), $allowed_svg); ?>
-				<?php echo $label_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
-				<?php echo $this->render_caret_icon(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
+				<?php 
+        echo wp_kses($this->render_icon($attributes), $allowed_svg);
+        ?>
+				<?php 
+        echo $label_markup;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
+				<?php 
+        echo $this->render_caret_icon();
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
 			</button>
 			<nav
 				class="wc-block-customer-account__dropdown"
-				aria-label="<?php echo esc_attr__('Account navigation', 'woocommerce'); ?>"
+				aria-label="<?php 
+        echo esc_attr__('Account navigation', 'woocommerce');
+        ?>"
 				data-wp-bind--hidden="!context.isDropdownOpen"
 			>
-				<?php echo $dropdown_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
+				<?php 
+        echo $dropdown_html;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
 			</nav>
 		</div>
-		<?php
+		<?php 
         return (string) ob_get_clean();
     }
-
     /**
      * Render the dropdown menu content with three sections.
      *
@@ -244,26 +244,18 @@ class CustomerAccount extends AbstractBlock
     private function render_dropdown_menu(array $menu_items): string
     {
         $sections = [];
-
         if (isset($menu_items['dashboard'])) {
-            $sections[] = $this->render_section([ 'dashboard' => $menu_items['dashboard'] ]);
+            $sections[] = $this->render_section(['dashboard' => $menu_items['dashboard']]);
         }
-
-        $nav_items = array_diff_key(
-            $menu_items,
-            array_flip([ 'dashboard', 'customer-logout' ])
-        );
-        if (! empty($nav_items)) {
+        $nav_items = array_diff_key($menu_items, array_flip(['dashboard', 'customer-logout']));
+        if (!empty($nav_items)) {
             $sections[] = $this->render_section($nav_items);
         }
-
         if (isset($menu_items['customer-logout'])) {
-            $sections[] = $this->render_section([ 'customer-logout' => $menu_items['customer-logout'] ]);
+            $sections[] = $this->render_section(['customer-logout' => $menu_items['customer-logout']]);
         }
-
         return implode('<div class="wc-block-customer-account__dropdown-divider"></div>', $sections);
     }
-
     /**
      * Render a dropdown section wrapping one or more menu items.
      *
@@ -279,7 +271,6 @@ class CustomerAccount extends AbstractBlock
         }
         return $output . '</div>';
     }
-
     /**
      * Render a single dropdown menu item.
      *
@@ -291,11 +282,8 @@ class CustomerAccount extends AbstractBlock
     private function render_menu_item($endpoint, $label): string
     {
         $url = wc_get_account_endpoint_url($endpoint);
-        return '<a href="' . esc_url($url) . '" class="wc-block-customer-account__dropdown-item">'
-            . esc_html($label)
-            . '</a>';
+        return '<a href="' . esc_url($url) . '" class="wc-block-customer-account__dropdown-item">' . esc_html($label) . '</a>';
     }
-
     /**
      * Render the caret/chevron icon for the dropdown toggle.
      *
@@ -307,7 +295,6 @@ class CustomerAccount extends AbstractBlock
 			<path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 		</svg>';
     }
-
     /**
      * Get the allowed SVG tags and attributes for wp_kses.
      *
@@ -315,31 +302,8 @@ class CustomerAccount extends AbstractBlock
      */
     private function get_allowed_svg(): array
     {
-        return [
-            'svg'    => [
-                'class'   => true,
-                'xmlns'   => true,
-                'width'   => true,
-                'height'  => true,
-                'viewbox' => true,
-            ],
-            'path'   => [
-                'd'         => true,
-                'fill'      => true,
-                'fill-rule' => true,
-                'clip-rule' => true,
-            ],
-            'circle' => [
-                'cx'           => true,
-                'cy'           => true,
-                'r'            => true,
-                'stroke'       => true,
-                'stroke-width' => true,
-                'fill'         => true,
-            ],
-        ];
+        return ['svg' => ['class' => true, 'xmlns' => true, 'width' => true, 'height' => true, 'viewbox' => true], 'path' => ['d' => true, 'fill' => true, 'fill-rule' => true, 'clip-rule' => true], 'circle' => ['cx' => true, 'cy' => true, 'r' => true, 'stroke' => true, 'stroke-width' => true, 'fill' => true]];
     }
-
     /**
      * Gets the icon to render depending on the iconStyle and displayStyle.
      *
@@ -352,7 +316,6 @@ class CustomerAccount extends AbstractBlock
         if (self::TEXT_ONLY === $attributes['displayStyle']) {
             return '';
         }
-
         if (self::DISPLAY_LINE === $attributes['iconStyle']) {
             return '<svg class="' . $attributes['iconClass'] . '" viewBox="1 1 29 29" fill="none" xmlns="http://www.w3.org/2000/svg">
 				<circle
@@ -371,7 +334,6 @@ class CustomerAccount extends AbstractBlock
 				/>
 			</svg>';
         }
-
         if (self::DISPLAY_ALT === $attributes['iconStyle']) {
             return '<svg class="' . $attributes['iconClass'] . '" xmlns="http://www.w3.org/2000/svg" viewBox="-4 -4 25 25">
 				<path
@@ -380,7 +342,6 @@ class CustomerAccount extends AbstractBlock
 				/>
 			</svg>';
         }
-
         return '<svg class="' . $attributes['iconClass'] . '" xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 25 25">
 			<path
 				fill-rule="evenodd"
@@ -390,7 +351,6 @@ class CustomerAccount extends AbstractBlock
 			/>
 		</svg>';
     }
-
     /**
      * Gets the label to render depending on the displayStyle.
      *
@@ -398,8 +358,6 @@ class CustomerAccount extends AbstractBlock
      */
     private function render_label()
     {
-        return get_current_user_id()
-            ? __('My Account', 'woocommerce')
-            : __('Login', 'woocommerce');
+        return get_current_user_id() ? __('My Account', 'woocommerce') : __('Login', 'woocommerce');
     }
 }

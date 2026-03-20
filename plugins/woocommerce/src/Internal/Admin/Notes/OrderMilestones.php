@@ -1,75 +1,51 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Admin (Dashboard) Order Milestones Note Provider.
  *
  * Adds a note to the merchant's inbox when certain order milestones are reached.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\Notes;
+namespace Automattic\Woo_Commerce\Internal\Admin\Notes;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\Notes\Note;
-use Automattic\WooCommerce\Admin\Notes\Notes;
-
+use Automattic\Woo_Commerce\Admin\Notes\Note;
+use Automattic\Woo_Commerce\Admin\Notes\Notes;
 /**
  * Order_Milestones
  */
-class OrderMilestones
+class Order_Milestones
 {
     /**
      * Name of the "other milestones" note.
      */
     public const NOTE_NAME = 'wc-admin-orders-milestone';
-
     /**
      * Option key name to store last order milestone.
      */
     public const LAST_ORDER_MILESTONE_OPTION_KEY = 'woocommerce_admin_last_orders_milestone';
-
     /**
      * Hook to process order milestones.
      */
     public const PROCESS_ORDERS_MILESTONE_HOOK = 'wc_admin_process_orders_milestone';
-
     /**
      * Allowed order statuses for calculating milestones.
      *
      * @var array
      */
-    protected $allowed_statuses = [
-        'pending',
-        'processing',
-        'completed',
-    ];
-
+    protected $allowed_statuses = ['pending', 'processing', 'completed'];
     /**
      * Orders count cache.
      *
      * @var int
      */
     protected $orders_count;
-
     /**
      * Further order milestone thresholds.
      *
      * @var array
      */
-    protected $milestones = [
-        1,
-        10,
-        100,
-        250,
-        500,
-        1000,
-        5000,
-        10000,
-        500000,
-        1000000,
-    ];
-
+    protected $milestones = [1, 10, 100, 250, 500, 1000, 5000, 10000, 500000, 1000000];
     /**
      * Delay hook attachment until after the WC post types have been registered.
      *
@@ -85,25 +61,20 @@ class OrderMilestones
          * @param array $allowed_statuses Order statuses that will count towards milestones.
          */
         $this->allowed_statuses = apply_filters('woocommerce_admin_order_milestone_statuses', $this->allowed_statuses);
-
         add_action('woocommerce_after_register_post_type', $this->init(...));
         register_deactivation_hook(WC_PLUGIN_FILE, $this->clear_scheduled_event(...));
     }
-
     /**
      * Hook everything up.
      */
     public function init(): void
     {
-        if (! wp_next_scheduled(self::PROCESS_ORDERS_MILESTONE_HOOK)) {
+        if (!wp_next_scheduled(self::PROCESS_ORDERS_MILESTONE_HOOK)) {
             wp_schedule_event(time(), 'hourly', self::PROCESS_ORDERS_MILESTONE_HOOK);
         }
-
         add_action('wc_admin_installed', $this->backfill_last_milestone(...));
-
         add_action(self::PROCESS_ORDERS_MILESTONE_HOOK, $this->possibly_add_note(...));
     }
-
     /**
      * Clear out our hourly milestone hook upon plugin deactivation.
      */
@@ -111,7 +82,6 @@ class OrderMilestones
     {
         wp_clear_scheduled_hook(self::PROCESS_ORDERS_MILESTONE_HOOK);
     }
-
     /**
      * Get the total count of orders (in the allowed statuses).
      *
@@ -121,13 +91,11 @@ class OrderMilestones
     public function get_orders_count($no_cache = false)
     {
         if ($no_cache || is_null($this->orders_count)) {
-            $status_counts      = array_map(wc_orders_count(...), $this->allowed_statuses);
+            $status_counts = array_map(wc_orders_count(...), $this->allowed_statuses);
             $this->orders_count = array_sum($status_counts);
         }
-
         return $this->orders_count;
     }
-
     /**
      * Backfill the store's current milestone.
      *
@@ -136,13 +104,11 @@ class OrderMilestones
     public function backfill_last_milestone(): void
     {
         // If the milestone notes have been disabled via filter, bail.
-        if (! $this->are_milestones_enabled()) {
+        if (!$this->are_milestones_enabled()) {
             return;
         }
-
         $this->set_last_milestone($this->get_current_milestone());
     }
-
     /**
      * Get the store's last milestone.
      *
@@ -152,7 +118,6 @@ class OrderMilestones
     {
         return get_option(self::LAST_ORDER_MILESTONE_OPTION_KEY, 0);
     }
-
     /**
      * Update the last reached milestone.
      *
@@ -162,7 +127,6 @@ class OrderMilestones
     {
         update_option(self::LAST_ORDER_MILESTONE_OPTION_KEY, $milestone);
     }
-
     /**
      * Calculate the current orders milestone.
      *
@@ -173,17 +137,14 @@ class OrderMilestones
     public function get_current_milestone()
     {
         $milestone_reached = 0;
-        $orders_count      = $this->get_orders_count();
-
+        $orders_count = $this->get_orders_count();
         foreach ($this->milestones as $milestone) {
             if ($milestone <= $orders_count) {
                 $milestone_reached = $milestone;
             }
         }
-
         return $milestone_reached;
     }
-
     /**
      * Get the appropriate note title for a given milestone.
      *
@@ -202,7 +163,6 @@ class OrderMilestones
             default => '',
         };
     }
-
     /**
      * Get the appropriate note content for a given milestone.
      *
@@ -218,7 +178,6 @@ class OrderMilestones
             default => '',
         };
     }
-
     /**
      * Get the appropriate note action for a given milestone.
      *
@@ -228,29 +187,12 @@ class OrderMilestones
     public static function get_note_action_for_milestone($milestone): array
     {
         return match ($milestone) {
-            1 => [
-                    'name'  => 'learn-more',
-                    'label' => __('Learn more', 'woocommerce'),
-                    'query' => 'https://woocommerce.com/document/managing-orders/?utm_source=inbox&utm_medium=product',
-                ],
-            10 => [
-                    'name'  => 'browse',
-                    'label' => __('Browse', 'woocommerce'),
-                    'query' => 'https://woocommerce.com/success-stories/?utm_source=inbox&utm_medium=product',
-                ],
-            100, 250, 500, 1000, 5000, 10000, 500000, 1000000 => [
-                    'name'  => 'review-orders',
-                    'label' => __('Review your orders', 'woocommerce'),
-                    'query' => '?page=wc-admin&path=/analytics/orders',
-                ],
-            default => [
-                    'name'  => '',
-                    'label' => '',
-                    'query' => '',
-                ],
+            1 => ['name' => 'learn-more', 'label' => __('Learn more', 'woocommerce'), 'query' => 'https://woocommerce.com/document/managing-orders/?utm_source=inbox&utm_medium=product'],
+            10 => ['name' => 'browse', 'label' => __('Browse', 'woocommerce'), 'query' => 'https://woocommerce.com/success-stories/?utm_source=inbox&utm_medium=product'],
+            100, 250, 500, 1000, 5000, 10000, 500000, 1000000 => ['name' => 'review-orders', 'label' => __('Review your orders', 'woocommerce'), 'query' => '?page=wc-admin&path=/analytics/orders'],
+            default => ['name' => '', 'label' => '', 'query' => ''],
         };
     }
-
     /**
      * Convenience method to see if the milestone notes are enabled.
      *
@@ -266,10 +208,8 @@ class OrderMilestones
          * @param boolean default true
          */
         $milestone_notes_enabled = apply_filters('woocommerce_admin_order_milestones_enabled', true);
-
         return $milestone_notes_enabled;
     }
-
     /**
      * Get the note. This is used for localizing the note.
      *
@@ -278,29 +218,23 @@ class OrderMilestones
     public static function get_note()
     {
         $note = Notes::get_note_by_name(self::NOTE_NAME);
-        if (! $note) {
+        if (!$note) {
             return false;
         }
         $content_data = $note->get_content_data();
-        if (! isset($content_data->current_milestone)) {
+        if (!isset($content_data->current_milestone)) {
             return false;
         }
-        return self::get_note_by_milestone(
-            $content_data->current_milestone
-        );
+        return self::get_note_by_milestone($content_data->current_milestone);
     }
-
     /**
      * Get the note by milestones.
      *
      * @param int $current_milestone Current milestone.
      */
-    public static function get_note_by_milestone($current_milestone): \Automattic\WooCommerce\Admin\Notes\Note
+    public static function get_note_by_milestone($current_milestone): \Automattic\Woo_Commerce\Admin\Notes\Note
     {
-        $content_data = (object) [
-            'current_milestone' => $current_milestone,
-        ];
-
+        $content_data = (object) ['current_milestone' => $current_milestone];
         $note = new Note();
         $note->set_title(self::get_note_title_for_milestone($current_milestone));
         $note->set_content(self::get_note_content_for_milestone($current_milestone));
@@ -312,38 +246,32 @@ class OrderMilestones
         $note->add_action($note_action['name'], $note_action['label'], $note_action['query']);
         return $note;
     }
-
     /**
      * Checks if a note can and should be added.
      */
     public function can_be_added(): bool
     {
         // If the milestone notes have been disabled via filter, bail.
-        if (! $this->are_milestones_enabled()) {
+        if (!$this->are_milestones_enabled()) {
             return false;
         }
-
-        $last_milestone    = $this->get_last_milestone();
+        $last_milestone = $this->get_last_milestone();
         $current_milestone = $this->get_current_milestone();
-
         if ($current_milestone <= $last_milestone) {
             return false;
         }
-
         return true;
     }
-
     /**
      * Add milestone notes for other significant thresholds.
      */
     public function possibly_add_note(): void
     {
-        if (! self::can_be_added()) {
+        if (!self::can_be_added()) {
             return;
         }
         $current_milestone = $this->get_current_milestone();
         $this->set_last_milestone($current_milestone);
-
         // We only want one milestone note at any time.
         Notes::delete_notes_with_name(self::NOTE_NAME);
         $note = static::get_note_by_milestone($current_milestone);

@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Admin\Settings\Exceptions;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Exceptions;
 
 /**
  * ApiException class.
  */
-class ApiException extends \Exception
+class Api_Exception extends \Exception
 {
     /**
      * Additional error data.
      */
     public array $additional_data = [];
-
     /**
      * Setup exception.
      *
@@ -24,34 +22,34 @@ class ApiException extends \Exception
      * @param array  $additional_data  Optional. Extra data (key value pairs) to expose in the error response.
      *                                 Defaults to empty array.
      */
-    public function __construct(/**
-     * Sanitized error code.
-     */
+    public function __construct(
+        /**
+         * Sanitized error code.
+         */
         public string $error_code,
         string $message,
         int $http_status_code = 400,
         array $additional_data = []
-    ) {
+    )
+    {
         $this->additional_data = array_filter($additional_data);
         parent::__construct($message, $http_status_code);
     }
-
     /**
      * Returns the error code.
      *
      * @return string The machine-readable error code.
      */
-    public function getErrorCode(): string
+    public function get_error_code(): string
     {
         return $this->error_code;
     }
-
     /**
      * Returns additional error data.
      *
      * @return array Extra data (key value pairs).
      */
-    public function getAdditionalData(): array
+    public function get_additional_data(): array
     {
         return $this->additional_data;
     }

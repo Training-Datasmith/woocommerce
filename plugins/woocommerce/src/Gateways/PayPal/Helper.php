@@ -1,14 +1,11 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Gateways\Pay_Pal;
 
-namespace Automattic\WooCommerce\Gateways\PayPal;
-
-use Automattic\WooCommerce\Gateways\PayPal\Constants as PayPalConstants;
+use Automattic\Woo_Commerce\Gateways\Pay_Pal\Constants as PayPalConstants;
 use WC_Order;
-
 defined('ABSPATH') || exit;
-
 /**
  * PayPal Helper Class
  *
@@ -24,29 +21,25 @@ class Helper
      */
     public static function is_paypal_gateway_available(): bool
     {
-        $settings    = get_option('woocommerce_paypal_settings', []);
-        $enabled     = isset($settings['enabled']) && 'yes' === $settings['enabled'];
+        $settings = get_option('woocommerce_paypal_settings', []);
+        $enabled = isset($settings['enabled']) && 'yes' === $settings['enabled'];
         $should_load = isset($settings['_should_load']) && 'yes' === $settings['_should_load'];
         return $enabled && $should_load;
     }
-
     /**
      * Check if the merchant is eligible for migration from WPS to PPCP.
      */
     public static function is_orders_v2_migration_eligible(): bool
     {
         $settings = get_option('woocommerce_paypal_settings', []);
-
         // If API keys are set, the merchant is not eligible for migration
         // as they may be using features that cannot be seamlessly migrated.
-        $is_test_mode  = isset($settings['testmode']) && 'yes' === $settings['testmode'];
-        $api_username  = $is_test_mode ? ($settings['sandbox_api_username'] ?? null) : ($settings['api_username'] ?? null);
-        $api_password  = $is_test_mode ? ($settings['sandbox_api_password'] ?? null) : ($settings['api_password'] ?? null);
-        $api_signature = $is_test_mode ? ($settings['sandbox_api_signature'] ?? null) : ($settings['api_signature'] ?? null);
-
+        $is_test_mode = isset($settings['testmode']) && 'yes' === $settings['testmode'];
+        $api_username = $is_test_mode ? $settings['sandbox_api_username'] ?? null : $settings['api_username'] ?? null;
+        $api_password = $is_test_mode ? $settings['sandbox_api_password'] ?? null : $settings['api_password'] ?? null;
+        $api_signature = $is_test_mode ? $settings['sandbox_api_signature'] ?? null : $settings['api_signature'] ?? null;
         return empty($api_username) && empty($api_password) && empty($api_signature);
     }
-
     /**
      * Get the WC order from the PayPal custom ID.
      *
@@ -57,31 +50,25 @@ class Helper
         if ('' === $custom_id) {
             return null;
         }
-
         $data = json_decode($custom_id, true);
-        if (! is_array($data)) {
+        if (!is_array($data)) {
             return null;
         }
-
         $order_id = $data['order_id'] ?? null;
-        if (! $order_id) {
+        if (!$order_id) {
             return null;
         }
-
         $order = wc_get_order($order_id);
-        if (! $order instanceof \WC_Order) {
+        if (!$order instanceof \WC_Order) {
             return null;
         }
-
         // Validate the order key.
         $order_key = $data['order_key'] ?? null;
         if ($order_key !== $order->get_order_key()) {
             return null;
         }
-
         return $order;
     }
-
     /**
      * Remove PII (Personally Identifiable Information) from data for logging.
      *
@@ -93,37 +80,32 @@ class Helper
      */
     public static function redact_data($data)
     {
-        if (! is_array($data)) {
+        if (!is_array($data)) {
             return $data;
         }
-
         $redacted_data = [];
-
         foreach ($data as $key => $value) {
             // Skip redacting the payee information as it belongs to the store merchant.
             if ('payee' === $key) {
-                $redacted_data[ $key ] = $value;
+                $redacted_data[$key] = $value;
                 continue;
             }
             // Mask the email address.
             if ('email_address' === $key || 'email' === $key) {
-                $redacted_data[ $key ] = self::mask_email((string) $value);
+                $redacted_data[$key] = self::mask_email((string) $value);
                 continue;
             }
-
             if (is_array($value)) {
-                $redacted_data[ $key ] = self::redact_data($value);
+                $redacted_data[$key] = self::redact_data($value);
             } elseif (in_array($key, Constants::FIELDS_TO_REDACT, true)) {
-                $redacted_data[ $key ] = '[redacted]';
+                $redacted_data[$key] = '[redacted]';
             } else {
                 // Keep non-PII data as is.
-                $redacted_data[ $key ] = $value;
+                $redacted_data[$key] = $value;
             }
         }
-
         return $redacted_data;
     }
-
     /**
      * Mask email address before @ keeping the full domain.
      *
@@ -135,24 +117,18 @@ class Helper
         if (empty($email)) {
             return $email;
         }
-
         $parts = explode('@', $email, 2);
         if (count($parts) !== 2 || empty($parts[0]) || empty($parts[1])) {
             return $email;
         }
         [$local, $domain] = $parts;
-
         if (strlen($local) <= 3) {
             $masked_local = str_repeat('*', strlen($local));
         } else {
-            $masked_local = substr($local, 0, 2)
-                        . str_repeat('*', max(1, strlen($local) - 3))
-                        . substr($local, -1);
+            $masked_local = substr($local, 0, 2) . str_repeat('*', max(1, strlen($local) - 3)) . substr($local, -1);
         }
-
         return $masked_local . '@' . $domain;
     }
-
     /**
      * Update the addresses in the order.
      *
@@ -164,24 +140,21 @@ class Helper
         if (!$order instanceof \WC_Order || empty($paypal_order_details)) {
             return;
         }
-
         // Bail early if '_paypal_addresses_updated' is 'yes', meaning the addresses update already have been successful.
-        if ('yes' === $order->get_meta(PayPalConstants::PAYPAL_ORDER_META_ADDRESSES_UPDATED, true)) {
+        if ('yes' === $order->get_meta(Pay_Pal_Constants::PAYPAL_ORDER_META_ADDRESSES_UPDATED, true)) {
             return;
         }
-
         // Update the shipping information.
         $full_name = $paypal_order_details['purchase_units'][0]['shipping']['name']['full_name'] ?? '';
-        if (! empty($full_name)) {
-            $name_parts             = explode(' ', (string) $full_name, 2);
+        if (!empty($full_name)) {
+            $name_parts = explode(' ', (string) $full_name, 2);
             $approximate_first_name = $name_parts[0] ?? '';
-            $approximate_last_name  = $name_parts[1] ?? '';
+            $approximate_last_name = $name_parts[1] ?? '';
             $order->set_shipping_first_name($approximate_first_name);
             $order->set_shipping_last_name($approximate_last_name);
         }
-
         $shipping_address = $paypal_order_details['purchase_units'][0]['shipping']['address'] ?? [];
-        if (! empty($shipping_address)) {
+        if (!empty($shipping_address)) {
             $order->set_shipping_country($shipping_address['country_code'] ?? '');
             $order->set_shipping_postcode($shipping_address['postal_code'] ?? '');
             $order->set_shipping_state($shipping_address['admin_area_1'] ?? '');
@@ -189,18 +162,16 @@ class Helper
             $order->set_shipping_address_1($shipping_address['address_line_1'] ?? '');
             $order->set_shipping_address_2($shipping_address['address_line_2'] ?? '');
         }
-
         // Update the billing information.
         $full_name = $paypal_order_details['payer']['name'] ?? [];
-        $email     = $paypal_order_details['payer']['email_address'] ?? '';
-        if (! empty($full_name)) {
+        $email = $paypal_order_details['payer']['email_address'] ?? '';
+        if (!empty($full_name)) {
             $order->set_billing_first_name($full_name['given_name'] ?? '');
             $order->set_billing_last_name($full_name['surname'] ?? '');
             $order->set_billing_email($email);
         }
-
         $billing_address = $paypal_order_details['payer']['address'] ?? [];
-        if (! empty($billing_address)) {
+        if (!empty($billing_address)) {
             $order->set_billing_country($billing_address['country_code'] ?? '');
             $order->set_billing_postcode($billing_address['postal_code'] ?? '');
             $order->set_billing_state($billing_address['admin_area_1'] ?? '');
@@ -208,8 +179,7 @@ class Helper
             $order->set_billing_address_1($billing_address['address_line_1'] ?? '');
             $order->set_billing_address_2($billing_address['address_line_2'] ?? '');
         }
-
-        $order->update_meta_data(PayPalConstants::PAYPAL_ORDER_META_ADDRESSES_UPDATED, 'yes');
+        $order->update_meta_data(Pay_Pal_Constants::PAYPAL_ORDER_META_ADDRESSES_UPDATED, 'yes');
         $order->save();
     }
 }

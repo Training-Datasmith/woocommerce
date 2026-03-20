@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * ProceedToCheckoutBlock class.
  */
-class ProceedToCheckoutBlock extends AbstractInnerBlock
+class Proceed_To_Checkout_Block extends Abstract_Inner_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class ProceedToCheckoutBlock extends AbstractInnerBlock
      * @var string
      */
     protected $block_name = 'proceed-to-checkout-block';
-
     /**
      * Extra data passed through from server to client for block.
      *

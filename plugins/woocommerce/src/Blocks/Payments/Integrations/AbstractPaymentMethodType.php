@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Payments\Integrations;
 
-namespace Automattic\WooCommerce\Blocks\Payments\Integrations;
-
-use Automattic\WooCommerce\Blocks\Payments\PaymentMethodTypeInterface;
-
+use Automattic\Woo_Commerce\Blocks\Payments\Payment_Method_Type_Interface;
 /**
  * AbstractPaymentMethodType class.
  *
  * @since 2.6.0
  */
-abstract class AbstractPaymentMethodType implements PaymentMethodTypeInterface
+abstract class Abstract_Payment_Method_Type implements Payment_Method_Type_Interface
 {
     /**
      * Payment method name defined by payment methods extending this class.
@@ -19,14 +17,12 @@ abstract class AbstractPaymentMethodType implements PaymentMethodTypeInterface
      * @var string
      */
     protected $name = '';
-
     /**
      * Settings from the WP options table
      *
      * @var array
      */
     protected $settings = [];
-
     /**
      * Get a setting from the settings array if set.
      *
@@ -36,9 +32,8 @@ abstract class AbstractPaymentMethodType implements PaymentMethodTypeInterface
      */
     protected function get_setting($name, $default = '')
     {
-        return $this->settings[ $name ] ?? $default;
+        return $this->settings[$name] ?? $default;
     }
-
     /**
      * Returns the name of the payment method.
      */
@@ -46,7 +41,6 @@ abstract class AbstractPaymentMethodType implements PaymentMethodTypeInterface
     {
         return $this->name;
     }
-
     /**
      * Returns if this payment method should be active. If false, the scripts will not be enqueued.
      *
@@ -56,7 +50,6 @@ abstract class AbstractPaymentMethodType implements PaymentMethodTypeInterface
     {
         return true;
     }
-
     /**
      * Returns an array of script handles to enqueue for this payment method in
      * the frontend context
@@ -67,7 +60,6 @@ abstract class AbstractPaymentMethodType implements PaymentMethodTypeInterface
     {
         return [];
     }
-
     /**
      * Returns an array of script handles to enqueue for this payment method in
      * the admin context
@@ -78,7 +70,6 @@ abstract class AbstractPaymentMethodType implements PaymentMethodTypeInterface
     {
         return $this->get_payment_method_script_handles();
     }
-
     /**
      * Returns an array of supported features.
      *
@@ -86,9 +77,8 @@ abstract class AbstractPaymentMethodType implements PaymentMethodTypeInterface
      */
     public function get_supported_features()
     {
-        return [ 'products' ];
+        return ['products'];
     }
-
     /**
      * An array of key, value pairs of data made available to payment methods
      * client side.
@@ -99,7 +89,6 @@ abstract class AbstractPaymentMethodType implements PaymentMethodTypeInterface
     {
         return [];
     }
-
     /**
      * Returns an array of script handles to enqueue in the frontend context.
      *
@@ -111,7 +100,6 @@ abstract class AbstractPaymentMethodType implements PaymentMethodTypeInterface
     {
         return $this->get_payment_method_script_handles();
     }
-
     /**
      * Returns an array of script handles to enqueue in the admin context.
      *
@@ -123,7 +111,6 @@ abstract class AbstractPaymentMethodType implements PaymentMethodTypeInterface
     {
         return $this->get_payment_method_script_handles_for_admin();
     }
-
     /**
      * An array of key, value pairs of data made available to the block on the client side.
      *

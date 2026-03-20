@@ -1,28 +1,24 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\CLI\Migrator\Commands;
 
-namespace Automattic\WooCommerce\Internal\CLI\Migrator\Commands;
-
-use Automattic\WooCommerce\Internal\CLI\Migrator\Core\CredentialManager;
-use Automattic\WooCommerce\Internal\CLI\Migrator\Core\PlatformRegistry;
+use Automattic\Woo_Commerce\Internal\CLI\Migrator\Core\Credential_Manager;
+use Automattic\Woo_Commerce\Internal\CLI\Migrator\Core\Platform_Registry;
 use WP_CLI;
-
 /**
  * The command for resetting platform credentials.
  */
-class ResetCommand
+class Reset_Command
 {
     /**
      * The credential manager.
      */
-    private CredentialManager $credential_manager;
-
+    private Credential_Manager $credential_manager;
     /**
      * The platform registry.
      */
-    private PlatformRegistry $platform_registry;
-
+    private Platform_Registry $platform_registry;
     /**
      * Initialize the command with its dependencies.
      *
@@ -31,12 +27,11 @@ class ResetCommand
      *
      * @internal
      */
-    final public function init(CredentialManager $credential_manager, PlatformRegistry $platform_registry): void
+    final public function init(Credential_Manager $credential_manager, Platform_Registry $platform_registry): void
     {
         $this->credential_manager = $credential_manager;
-        $this->platform_registry  = $platform_registry;
+        $this->platform_registry = $platform_registry;
     }
-
     /**
      * Resets (deletes) the credentials for a given platform.
      *
@@ -55,16 +50,13 @@ class ResetCommand
     public function __invoke(array $args, array $assoc_args): void
     {
         // Resolve and validate the platform.
-        $platform              = $this->platform_registry->resolve_platform($assoc_args);
+        $platform = $this->platform_registry->resolve_platform($assoc_args);
         $platform_display_name = $this->platform_registry->get_platform_display_name($platform);
-
-        if (! $this->credential_manager->has_credentials($platform)) {
+        if (!$this->credential_manager->has_credentials($platform)) {
             WP_CLI::warning("No credentials found for '{$platform_display_name}' to reset.");
             return;
         }
-
         $this->credential_manager->delete_credentials($platform);
-
         WP_CLI::success("Credentials for the '{$platform_display_name}' platform have been cleared.");
     }
 }

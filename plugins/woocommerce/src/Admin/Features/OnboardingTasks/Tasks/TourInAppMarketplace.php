@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Tasks;
 
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
-
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
-
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task;
 /**
  * Tour In-App Marketplace task
  */
-class TourInAppMarketplace extends Task
+class Tour_In_App_Marketplace extends Task
 {
     /**
      * ID.
@@ -18,7 +16,6 @@ class TourInAppMarketplace extends Task
     {
         return 'tour-in-app-marketplace';
     }
-
     /**
      * Title.
      *
@@ -26,12 +23,8 @@ class TourInAppMarketplace extends Task
      */
     public function get_title()
     {
-        return __(
-            'Discover ways of extending your store with a tour of the Woo Marketplace',
-            'woocommerce'
-        );
+        return __('Discover ways of extending your store with a tour of the Woo Marketplace', 'woocommerce');
     }
-
     /**
      * Content.
      */
@@ -39,7 +32,6 @@ class TourInAppMarketplace extends Task
     {
         return '';
     }
-
     /**
      * Time.
      */
@@ -47,7 +39,6 @@ class TourInAppMarketplace extends Task
     {
         return '';
     }
-
     /**
      * Task completion.
      */
@@ -55,7 +46,6 @@ class TourInAppMarketplace extends Task
     {
         return get_option('woocommerce_admin_dismissed_in_app_marketplace_tour') === 'yes';
     }
-
     /**
      * Action URL.
      *
@@ -65,7 +55,6 @@ class TourInAppMarketplace extends Task
     {
         return admin_url('admin.php?page=wc-admin&path=%2Fextensions&tutorial=true');
     }
-
     /**
      * Check if should record event when task is viewed
      */

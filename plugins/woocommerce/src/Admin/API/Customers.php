@@ -1,23 +1,21 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Customers Controller
  *
  * Handles requests to /customers/*
  */
-
-namespace Automattic\WooCommerce\Admin\API;
+namespace Automattic\Woo_Commerce\Admin\API;
 
 defined('ABSPATH') || exit;
-
 /**
  * Customers controller.
  *
  * @internal
  * @extends \Automattic\WooCommerce\Admin\API\Reports\Customers\Controller
  */
-class Customers extends \Automattic\WooCommerce\Admin\API\Reports\Customers\Controller
+class Customers extends \Automattic\Woo_Commerce\Admin\API\Reports\Customers\Controller
 {
     /**
      * Route base.
@@ -25,47 +23,14 @@ class Customers extends \Automattic\WooCommerce\Admin\API\Reports\Customers\Cont
      * @var string
      */
     protected $rest_base = 'customers';
-
     /**
      * Register the routes for customers.
      */
     public function register_routes(): void
     {
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base,
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_items(...),
-                    'permission_callback' => $this->get_items_permissions_check(...),
-                    'args'                => $this->get_collection_params(),
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
-
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/(?P<id>[\d-]+)',
-            [
-                'args'   => [
-                    'id' => [
-                        'description' => __('Unique ID for the resource.', 'woocommerce'),
-                        'type'        => 'integer',
-                    ],
-                ],
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_item(...),
-                    'permission_callback' => $this->get_items_permissions_check(...),
-                    'args'                => $this->get_collection_params(),
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
+        register_rest_route($this->namespace, '/' . $this->rest_base, [['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_items(...), 'permission_callback' => $this->get_items_permissions_check(...), 'args' => $this->get_collection_params()], 'schema' => [$this, 'get_public_item_schema']]);
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/(?P<id>[\d-]+)', ['args' => ['id' => ['description' => __('Unique ID for the resource.', 'woocommerce'), 'type' => 'integer']], ['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_item(...), 'permission_callback' => $this->get_items_permissions_check(...), 'args' => $this->get_collection_params()], 'schema' => [$this, 'get_public_item_schema']]);
     }
-
     /**
      * Maps query arguments from the REST request.
      *
@@ -74,11 +39,10 @@ class Customers extends \Automattic\WooCommerce\Admin\API\Reports\Customers\Cont
      */
     protected function prepare_reports_query($request)
     {
-        $args              = parent::prepare_reports_query($request);
+        $args = parent::prepare_reports_query($request);
         $args['customers'] = $request['include'];
         return $args;
     }
-
     /**
      * Get the query params for collections.
      *
@@ -86,7 +50,7 @@ class Customers extends \Automattic\WooCommerce\Admin\API\Reports\Customers\Cont
      */
     public function get_collection_params()
     {
-        $params            = parent::get_collection_params();
+        $params = parent::get_collection_params();
         $params['include'] = $params['customers'];
         unset($params['customers']);
         return $params;

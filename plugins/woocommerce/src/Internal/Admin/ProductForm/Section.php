@@ -1,11 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Handles product form section related methods.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\ProductForm;
+namespace Automattic\Woo_Commerce\Internal\Admin\Product_Form;
 
 /**
  * Section class.
@@ -28,18 +27,14 @@ class Section extends Component
     public function __construct($id, $plugin_id, $additional_args)
     {
         parent::__construct($id, $plugin_id, $additional_args);
-        $this->required_arguments = [
-            'title',
-        ];
-        $missing_arguments        = self::get_missing_arguments($additional_args);
+        $this->required_arguments = ['title'];
+        $missing_arguments = self::get_missing_arguments($additional_args);
         if (count($missing_arguments) > 0) {
-            throw new \Exception(
-                sprintf(
-                    /* translators: 1: Missing arguments list. */
-                    esc_html__('You are missing required arguments of WooCommerce ProductForm Section: %1$s', 'woocommerce'),
-                    join(', ', $missing_arguments)
-                )
-            );
+            throw new \Exception(sprintf(
+                /* translators: 1: Missing arguments list. */
+                esc_html__('You are missing required arguments of WooCommerce ProductForm Section: %1$s', 'woocommerce'),
+                join(', ', $missing_arguments)
+            ));
         }
     }
 }

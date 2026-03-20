@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Email_Editor\Wc_Transactional_Emails;
 
-namespace Automattic\WooCommerce\Internal\EmailEditor\WCTransactionalEmails;
-
-use Automattic\WooCommerce\Utilities\FeaturesUtil;
-
+use Automattic\Woo_Commerce\Utilities\Features_Util;
 /**
  * Class WCTransactionalEmails
  *
@@ -13,36 +11,18 @@ use Automattic\WooCommerce\Utilities\FeaturesUtil;
  *
  * @package Automattic\WooCommerce\Internal\EmailEditor\WCTransactionalEmails
  */
-class WCTransactionalEmails
+class Wc_Transactional_Emails
 {
     /**
      * Array of core transactional email types.
      *
      * @var array
      */
-    public static $core_transactional_emails = [
-        'admin_payment_gateway_enabled',
-        'cancelled_order',
-        'customer_cancelled_order',
-        'customer_completed_order',
-        'customer_failed_order',
-        'customer_invoice',
-        'customer_new_account',
-        'customer_note',
-        'customer_on_hold_order',
-        'customer_processing_order',
-        'customer_refunded_order',
-        'customer_partially_refunded_order',
-        'customer_reset_password',
-        'failed_order',
-        'new_order',
-    ];
-
+    public static $core_transactional_emails = ['admin_payment_gateway_enabled', 'cancelled_order', 'customer_cancelled_order', 'customer_completed_order', 'customer_failed_order', 'customer_invoice', 'customer_new_account', 'customer_note', 'customer_on_hold_order', 'customer_processing_order', 'customer_refunded_order', 'customer_partially_refunded_order', 'customer_reset_password', 'failed_order', 'new_order'];
     /**
      * Email template generator instance.
      */
-    private readonly \Automattic\WooCommerce\Internal\EmailEditor\WCTransactionalEmails\WCTransactionalEmailPostsGenerator $email_template_generator;
-
+    private readonly \Automattic\Woo_Commerce\Internal\Email_Editor\Wc_Transactional_Emails\Wc_Transactional_Email_Posts_Generator $email_template_generator;
     /**
      * Constructor.
      *
@@ -50,9 +30,8 @@ class WCTransactionalEmails
      */
     public function __construct()
     {
-        $this->email_template_generator = new WCTransactionalEmailPostsGenerator();
+        $this->email_template_generator = new Wc_Transactional_Email_Posts_Generator();
     }
-
     /**
      * Initialize the class.
      *
@@ -62,7 +41,6 @@ class WCTransactionalEmails
     {
         add_action('current_screen', $this->init_email_templates(...), 50);
     }
-
     /**
      * Get the Core WooCommerce transactional emails for the block editor.
      *
@@ -71,21 +49,14 @@ class WCTransactionalEmails
     public static function get_transactional_emails()
     {
         $emails = self::$core_transactional_emails;
-
-        if (FeaturesUtil::feature_is_enabled('point_of_sale')) {
+        if (Features_Util::feature_is_enabled('point_of_sale')) {
             $emails[] = 'customer_pos_completed_order';
             $emails[] = 'customer_pos_refunded_order';
         }
-
-        if (FeaturesUtil::feature_is_enabled('fulfillments')) {
-            $fulfillment_emails = [
-                'customer_fulfillment_created',
-                'customer_fulfillment_updated',
-                'customer_fulfillment_deleted',
-            ];
-            $emails             = array_merge($emails, $fulfillment_emails);
+        if (Features_Util::feature_is_enabled('fulfillments')) {
+            $fulfillment_emails = ['customer_fulfillment_created', 'customer_fulfillment_updated', 'customer_fulfillment_deleted'];
+            $emails = array_merge($emails, $fulfillment_emails);
         }
-
         /**
          * Filter the transactional emails for the block editor.
          *
@@ -95,30 +66,19 @@ class WCTransactionalEmails
          */
         return apply_filters('woocommerce_transactional_emails_for_block_editor', $emails);
     }
-
     /**
      * Initialize email templates on WooCommerce admin pages.
      */
     public function init_email_templates(): void
     {
-        if (! function_exists('wc_get_screen_ids')) {
+        if (!function_exists('wc_get_screen_ids')) {
             return;
         }
-
         $screen = get_current_screen();
-
-        $wc_screen_ids = array_merge(
-            wc_get_screen_ids(),
-            [
-                'woocommerce_page_wc-admin',
-                'edit-woo_email',
-            ]
-        );
-
-        if (! $screen || ! in_array($screen->id, $wc_screen_ids, true)) {
+        $wc_screen_ids = array_merge(wc_get_screen_ids(), ['woocommerce_page_wc-admin', 'edit-woo_email']);
+        if (!$screen || !in_array($screen->id, $wc_screen_ids, true)) {
             return;
         }
-
         // run only on WooCommerce admin pages.
         $this->email_template_generator->initialize();
     }

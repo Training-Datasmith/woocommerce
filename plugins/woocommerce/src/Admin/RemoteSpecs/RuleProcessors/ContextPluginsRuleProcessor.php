@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 /**
  * Rule processor for context_plugins rules.
@@ -15,7 +14,7 @@ namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
  *     "operation": "operation"
  * }
  */
-class ContextPluginsRuleProcessor implements RuleProcessorInterface
+class Context_Plugins_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * Constructor.
@@ -38,9 +37,9 @@ class ContextPluginsRuleProcessor implements RuleProcessorInterface
          * }
          */
         private readonly array $plugins
-    ) {
+    )
+    {
     }
-
     /**
      * Performs a comparison operation against the option value.
      *
@@ -52,17 +51,15 @@ class ContextPluginsRuleProcessor implements RuleProcessorInterface
     public function process($rule, $stored_state): bool
     {
         foreach ($this->plugins as $plugin) {
-            if (! isset($plugin->{$rule->name})) {
+            if (!isset($plugin->{$rule->name})) {
                 continue;
             }
-            if (ComparisonOperation::compare($plugin->{$rule->name}, $rule->value, $rule->operation)) {
+            if (Comparison_Operation::compare($plugin->{$rule->name}, $rule->value, $rule->operation)) {
                 return true;
             }
         }
-
         return false;
     }
-
     /**
      * Validates the rule.
      *
@@ -72,10 +69,9 @@ class ContextPluginsRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->name) || ! isset($rule->value) || ! isset($rule->operation)) {
+        if (!isset($rule->name) || !isset($rule->value) || !isset($rule->operation)) {
             return false;
         }
-
         return true;
     }
 }

@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Utils;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Utils;
 
 /**
  * BlockHooksTrait
  *
  * Shared functionality for using the Block Hooks API with WooCommerce Blocks.
  */
-trait BlockHooksTrait
+trait Block_Hooks_Trait
 {
     /**
      * Callback for `hooked_block_types` to auto-inject the mini-cart block into headers after navigation.
@@ -24,53 +23,39 @@ trait BlockHooksTrait
     public function register_hooked_block($hooked_blocks, $position, $anchor_block, $context)
     {
         // If the block has no hook placements, return early.
-        if (! isset($this->hooked_block_placements) || empty($this->hooked_block_placements)) {
+        if (!isset($this->hooked_block_placements) || empty($this->hooked_block_placements)) {
             return $hooked_blocks;
         }
-
         // Cache the block hooks version.
         static $block_hooks_version = null;
         if (defined('WP_RUN_CORE_TESTS') || is_null($block_hooks_version)) {
             $block_hooks_version = get_option('woocommerce_hooked_blocks_version');
         }
-
         // If block hooks are disabled or the version is not set, return early.
         if ('no' === $block_hooks_version || false === $block_hooks_version) {
             return $hooked_blocks;
         }
-
         // Valid placements are those that have no version specified,
         // or have a version that is less than or equal to version specified in the woocommerce_hooked_blocks_version option.
-        $valid_placements = array_filter(
-            $this->hooked_block_placements,
-            function (array $placement) use ($block_hooks_version): bool {
-                $placement_version = $placement['version'] ?? null;
-                return is_null($placement_version) || ! is_null($placement_version) && version_compare($block_hooks_version, $placement_version, '>=');
-            }
-        );
-
-        if ($context && ! empty($valid_placements)) {
+        $valid_placements = array_filter($this->hooked_block_placements, function (array $placement) use ($block_hooks_version): bool {
+            $placement_version = $placement['version'] ?? null;
+            return is_null($placement_version) || !is_null($placement_version) && version_compare($block_hooks_version, $placement_version, '>=');
+        });
+        if ($context && !empty($valid_placements)) {
             foreach ($valid_placements as $placement) {
-
                 if ($placement['position'] === $position && $placement['anchor'] === $anchor_block) {
                     // If an area has been specified for this placement.
-                    if (
-                        isset($placement['area']) &&
-                        ! $this->has_block_in_content($context)
-                        && $this->is_target_area($context, $placement['area'])
-                    ) {
+                    if (isset($placement['area']) && !$this->has_block_in_content($context) && $this->is_target_area($context, $placement['area'])) {
                         $hooked_blocks[] = $this->namespace . '/' . $this->block_name;
                     }
-
                     // If no area has been specified for this placement just insert the block.
                     // This is likely to be the case when we're inserting into the navigation block
                     // where we don't have a specific area to target.
-                    if (! isset($placement['area'])) {
+                    if (!isset($placement['area'])) {
                         $hooked_blocks[] = $this->namespace . '/' . $this->block_name;
                     }
-
                     // If a callback has been specified for this placement, call it. This allows for custom block-specific logic to be run.
-                    $callback = isset($placement['callback']) && is_callable([ $this, $placement['callback'] ]) ? [ $this, $placement['callback'] ] : null;
+                    $callback = isset($placement['callback']) && is_callable([$this, $placement['callback']]) ? [$this, $placement['callback']] : null;
                     if (null !== $callback) {
                         $modified_hooked_blocks = $callback($hooked_blocks, $position, $anchor_block, $context);
                         if (is_array($modified_hooked_blocks)) {
@@ -80,10 +65,8 @@ trait BlockHooksTrait
                 }
             }
         }
-
         return $hooked_blocks;
     }
-
     /**
      * Checks if the provided context contains a the block already.
      *
@@ -94,7 +77,6 @@ trait BlockHooksTrait
         $content = $this->get_context_content($context);
         return str_contains((string) $content, 'wp:' . $this->namespace . '/' . $this->block_name);
     }
-
     /**
      * Given a provided context, returns the content of the context.
      *
@@ -108,7 +90,6 @@ trait BlockHooksTrait
         $content = '' === $content && $context instanceof \WP_Block_Template ? $context->content : $content;
         return '' === $content && $context instanceof \WP_Post ? $context->post_content : $content;
     }
-
     /**
      * Given a provided context, returns whether the context refers to header content.
      *
@@ -118,15 +99,10 @@ trait BlockHooksTrait
      */
     protected function is_template_part_or_pattern($context, string $area): bool
     {
-        $is_pattern       = is_array($context) &&
-        (
-            (isset($context['blockTypes']) && in_array('core/template-part/' . $area, $context['blockTypes'], true)) ||
-            (isset($context['categories']) && in_array($area, $context['categories'], true))
-        );
+        $is_pattern = is_array($context) && (isset($context['blockTypes']) && in_array('core/template-part/' . $area, $context['blockTypes'], true) || isset($context['categories']) && in_array($area, $context['categories'], true));
         $is_template_part = $context instanceof \WP_Block_Template && $area === $context->area;
-        return ($is_pattern || $is_template_part);
+        return $is_pattern || $is_template_part;
     }
-
     /**
      * Given a provided context, returns whether the context refers to the target area and isn't marked as excluded.
      *
@@ -136,13 +112,11 @@ trait BlockHooksTrait
      */
     protected function is_target_area($context, $area): bool
     {
-        if ($this->is_template_part_or_pattern($context, $area) && ! $this->pattern_is_excluded($context)) {
+        if ($this->is_template_part_or_pattern($context, $area) && !$this->pattern_is_excluded($context)) {
             return true;
         }
-
         return false;
     }
-
     /**
      * Returns whether the pattern is excluded or not
      *
@@ -158,13 +132,9 @@ trait BlockHooksTrait
          *
          * @since 8.5.0
          */
-        $pattern_exclude_list = apply_filters(
-            'woocommerce_hooked_blocks_pattern_exclude_list',
-            array_unique(array_merge($this->hooked_block_excluded_patterns ?? [], [ 'twentytwentytwo/header-centered-logo', 'twentytwentytwo/header-stacked' ]))
-        );
-
+        $pattern_exclude_list = apply_filters('woocommerce_hooked_blocks_pattern_exclude_list', array_unique(array_merge($this->hooked_block_excluded_patterns ?? [], ['twentytwentytwo/header-centered-logo', 'twentytwentytwo/header-stacked'])));
         $pattern_slug = is_array($context) && isset($context['slug']) ? $context['slug'] : '';
-        if (! $pattern_slug) {
+        if (!$pattern_slug) {
             /**
              * Woo patterns have a slug property in $context, but core/theme patterns dont.
              * In that case, we fallback to the name property, as they're the same.

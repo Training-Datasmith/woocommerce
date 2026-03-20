@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Templates;
 
-namespace Automattic\WooCommerce\Blocks\Templates;
-
-use Automattic\WooCommerce\Blocks\Assets\AssetDataRegistry;
-
+use Automattic\Woo_Commerce\Blocks\Assets\Asset_Data_Registry;
 /**
  * ClassicTemplatesCompatibility class.
  *
@@ -13,29 +11,28 @@ use Automattic\WooCommerce\Blocks\Assets\AssetDataRegistry;
  *
  * @internal
  */
-class ClassicTemplatesCompatibility
+class Classic_Templates_Compatibility
 {
     /**
      * Constructor.
      *
      * @param AssetDataRegistry $asset_data_registry Instance of the asset data registry.
      */
-    public function __construct(protected \Automattic\WooCommerce\Blocks\Assets\AssetDataRegistry $asset_data_registry)
+    public function __construct(protected \Automattic\Woo_Commerce\Blocks\Assets\Asset_Data_Registry $asset_data_registry)
     {
         $this->init();
     }
-
     /**
      * Initialization method.
      */
-    protected function init() // phpcs:ignore WooCommerce.Functions.InternalInjectionMethod.MissingPublic
-    {if (! wp_is_block_theme()) {
-        add_action('template_redirect', $this->set_classic_template_data(...));
-        // We need to set this data on the widgets screen so the filters render previews.
-        add_action('load-widgets.php', $this->set_filterable_product_data(...));
+    protected function init()
+    {
+        if (!wp_is_block_theme()) {
+            add_action('template_redirect', $this->set_classic_template_data(...));
+            // We need to set this data on the widgets screen so the filters render previews.
+            add_action('load-widgets.php', $this->set_filterable_product_data(...));
+        }
     }
-    }
-
     /**
      * Executes the methods which set the necessary data needed for filter blocks to work correctly as widgets in Classic templates.
      */
@@ -44,7 +41,6 @@ class ClassicTemplatesCompatibility
         $this->set_filterable_product_data();
         $this->set_php_template_data();
     }
-
     /**
      * This method passes the value `has_filterable_products` to the front-end for product archive pages,
      * so that widget product filter blocks are aware of the context they are in and can render accordingly.
@@ -52,12 +48,10 @@ class ClassicTemplatesCompatibility
     public function set_filterable_product_data(): void
     {
         global $pagenow;
-
         if (is_shop() || is_product_taxonomy() || 'widgets.php' === $pagenow) {
             $this->asset_data_registry->add('hasFilterableProducts', true);
         }
     }
-
     /**
      * This method passes the value `is_rendering_php_template` to the front-end of Classic themes,
      * so that widget product filter blocks are aware of how to filter the products.

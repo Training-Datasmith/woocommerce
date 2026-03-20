@@ -1,11 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Onboarding
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\Onboarding;
+namespace Automattic\Woo_Commerce\Internal\Admin\Onboarding;
 
 /**
  * Initializes backend logic for the onboarding process.
@@ -19,12 +18,12 @@ class Onboarding
      */
     final public static function init(): void
     {
-        OnboardingHelper::instance()->init();
-        OnboardingIndustries::init();
-        OnboardingJetpack::instance()->init();
-        OnboardingMailchimp::instance()->init();
-        OnboardingProfile::init();
-        OnboardingSetupWizard::instance()->init();
-        OnboardingSync::instance()->init();
+        Onboarding_Helper::instance()->init();
+        Onboarding_Industries::init();
+        Onboarding_Jetpack::instance()->init();
+        Onboarding_Mailchimp::instance()->init();
+        Onboarding_Profile::init();
+        Onboarding_Setup_Wizard::instance()->init();
+        Onboarding_Sync::instance()->init();
     }
 }

@@ -1,11 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Orders;
 
-namespace Automattic\WooCommerce\Internal\Orders;
-
-use Automattic\WooCommerce\Enums\OrderStatus;
-use Automattic\WooCommerce\Internal\RestApiControllerBase;
+use Automattic\Woo_Commerce\Enums\Order_Status;
+use Automattic\Woo_Commerce\Internal\Rest_Api_Controller_Base;
 use WC_Data_Exception;
 use WC_Email;
 use WC_Order;
@@ -13,13 +12,12 @@ use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
-
 /**
  * Controller for the REST endpoint to run actions on orders.
  *
  * This first version only supports sending the order details to the customer (`send_order_details`).
  */
-class OrderActionsRestController extends RestApiControllerBase
+class Order_Actions_Rest_Controller extends Rest_Api_Controller_Base
 {
     /**
      * Get the WooCommerce REST API namespace for the class.
@@ -28,73 +26,15 @@ class OrderActionsRestController extends RestApiControllerBase
     {
         return 'order-actions';
     }
-
     /**
      * Register the REST API endpoints handled by this controller.
      */
     public function register_routes(): void
     {
-        register_rest_route(
-            $this->route_namespace,
-            '/orders/(?P<id>[\d]+)/actions/email_templates',
-            [
-                'args'   => [
-                    'id' => [
-                        'description' => __('Unique identifier of the order.', 'woocommerce'),
-                        'type'        => 'integer',
-                    ],
-                ],
-                [
-                    'methods'             => WP_REST_Server::READABLE,
-                    'callback'            => fn (\WP_REST_Request $request) => $this->run($request, 'get_email_templates'),
-                    'permission_callback' => $this->check_permissions(...),
-                    'args'                => [],
-                ],
-                'schema' => $this->get_schema_for_email_templates(...),
-            ]
-        );
-
-        register_rest_route(
-            $this->route_namespace,
-            '/orders/(?P<id>[\d]+)/actions/send_email',
-            [
-                'args'   => [
-                    'id' => [
-                        'description' => __('Unique identifier of the order.', 'woocommerce'),
-                        'type'        => 'integer',
-                    ],
-                ],
-                [
-                    'methods'             => WP_REST_Server::CREATABLE,
-                    'callback'            => fn (\WP_REST_Request $request) => $this->run($request, 'send_email'),
-                    'permission_callback' => $this->check_permissions(...),
-                    'args'                => $this->get_args_for_order_actions('send_email'),
-                ],
-                'schema' => $this->get_schema_for_order_actions(...),
-            ]
-        );
-
-        register_rest_route(
-            $this->route_namespace,
-            '/orders/(?P<id>[\d]+)/actions/send_order_details',
-            [
-                'args'   => [
-                    'id' => [
-                        'description' => __('Unique identifier of the order.', 'woocommerce'),
-                        'type'        => 'integer',
-                    ],
-                ],
-                [
-                    'methods'             => WP_REST_Server::CREATABLE,
-                    'callback'            => fn (\WP_REST_Request $request) => $this->run($request, 'send_order_details'),
-                    'permission_callback' => $this->check_permissions(...),
-                    'args'                => $this->get_args_for_order_actions('send_order_details'),
-                ],
-                'schema' => $this->get_schema_for_order_actions(...),
-            ]
-        );
+        register_rest_route($this->route_namespace, '/orders/(?P<id>[\d]+)/actions/email_templates', ['args' => ['id' => ['description' => __('Unique identifier of the order.', 'woocommerce'), 'type' => 'integer']], ['methods' => WP_REST_Server::READABLE, 'callback' => fn(\WP_REST_Request $request) => $this->run($request, 'get_email_templates'), 'permission_callback' => $this->check_permissions(...), 'args' => []], 'schema' => $this->get_schema_for_email_templates(...)]);
+        register_rest_route($this->route_namespace, '/orders/(?P<id>[\d]+)/actions/send_email', ['args' => ['id' => ['description' => __('Unique identifier of the order.', 'woocommerce'), 'type' => 'integer']], ['methods' => WP_REST_Server::CREATABLE, 'callback' => fn(\WP_REST_Request $request) => $this->run($request, 'send_email'), 'permission_callback' => $this->check_permissions(...), 'args' => $this->get_args_for_order_actions('send_email')], 'schema' => $this->get_schema_for_order_actions(...)]);
+        register_rest_route($this->route_namespace, '/orders/(?P<id>[\d]+)/actions/send_order_details', ['args' => ['id' => ['description' => __('Unique identifier of the order.', 'woocommerce'), 'type' => 'integer']], ['methods' => WP_REST_Server::CREATABLE, 'callback' => fn(\WP_REST_Request $request) => $this->run($request, 'send_order_details'), 'permission_callback' => $this->check_permissions(...), 'args' => $this->get_args_for_order_actions('send_order_details')], 'schema' => $this->get_schema_for_order_actions(...)]);
     }
-
     /**
      * Validate the order ID that is part of the endpoint URL.
      *
@@ -105,15 +45,12 @@ class OrderActionsRestController extends RestApiControllerBase
     private function validate_order_id(WP_REST_Request $request)
     {
         $order_id = $request->get_param('id');
-        $order    = wc_get_order($order_id);
-
-        if (! $order) {
-            return new WP_Error('woocommerce_rest_not_found', __('Order not found', 'woocommerce'), [ 'status' => 404 ]);
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            return new WP_Error('woocommerce_rest_not_found', __('Order not found', 'woocommerce'), ['status' => 404]);
         }
-
         return $order_id;
     }
-
     /**
      * Handle a request for one of the provided REST API endpoints.
      *
@@ -125,14 +62,11 @@ class OrderActionsRestController extends RestApiControllerBase
     protected function run(WP_REST_Request $request, string $method_name)
     {
         $order_id = $this->validate_order_id($request);
-
         if (is_wp_error($order_id)) {
             return $order_id;
         }
-
         return parent::run($request, $method_name);
     }
-
     /**
      * Permission check for REST API endpoint.
      *
@@ -142,14 +76,11 @@ class OrderActionsRestController extends RestApiControllerBase
     private function check_permissions(WP_REST_Request $request)
     {
         $order_id = $this->validate_order_id($request);
-
         if (is_wp_error($order_id)) {
             return $order_id;
         }
-
         return $this->check_permission($request, 'read_shop_order', $order_id);
     }
-
     /**
      * Get the accepted arguments for the POST request.
      *
@@ -159,89 +90,26 @@ class OrderActionsRestController extends RestApiControllerBase
      */
     private function get_args_for_order_actions(string $action_slug): array
     {
-        $args = [
-            'email'              => [
-                'description'       => __('Email address to send the order details to.', 'woocommerce'),
-                'type'              => 'string',
-                'format'            => 'email',
-                'context'           => [ 'edit' ],
-                'required'          => false,
-                'validate_callback' => 'rest_validate_request_arg',
-            ],
-            'force_email_update' => [
-                'description'       => __('Whether to update the billing email of the order, even if it already has one.', 'woocommerce'),
-                'type'              => 'boolean',
-                'context'           => [ 'edit' ],
-                'required'          => false,
-                'sanitize_callback' => 'rest_sanitize_boolean',
-                'validate_callback' => 'rest_validate_request_arg',
-            ],
-        ];
-
+        $args = ['email' => ['description' => __('Email address to send the order details to.', 'woocommerce'), 'type' => 'string', 'format' => 'email', 'context' => ['edit'], 'required' => false, 'validate_callback' => 'rest_validate_request_arg'], 'force_email_update' => ['description' => __('Whether to update the billing email of the order, even if it already has one.', 'woocommerce'), 'type' => 'boolean', 'context' => ['edit'], 'required' => false, 'sanitize_callback' => 'rest_sanitize_boolean', 'validate_callback' => 'rest_validate_request_arg']];
         if ('send_email' === $action_slug) {
-            $args['template_id'] = [
-                'description'       => __('The ID of the template to use for sending the email.', 'woocommerce'),
-                'type'              => 'string',
-                'enum'              => $this->get_template_id_enum(),
-                'context'           => [ 'edit' ],
-                'required'          => true,
-                'validate_callback' => 'rest_validate_request_arg',
-            ];
+            $args['template_id'] = ['description' => __('The ID of the template to use for sending the email.', 'woocommerce'), 'type' => 'string', 'enum' => $this->get_template_id_enum(), 'context' => ['edit'], 'required' => true, 'validate_callback' => 'rest_validate_request_arg'];
         }
-
         return $args;
     }
-
     /**
      * Get the schema for the email_templates action.
      */
     public function get_schema_for_email_templates(): array
     {
-        return [
-            '$schema'    => 'http://json-schema.org/draft-04/schema#',
-            'title'      => __('Email Template', 'woocommerce'),
-            'type'       => 'object',
-            'properties' => [
-                'id'          => [
-                    'description' => __('A unique ID string for the email template.', 'woocommerce'),
-                    'type'        => 'string',
-                    'enum'        => $this->get_template_id_enum(),
-                    'context'     => [ 'view', 'embed' ],
-                ],
-                'title'       => [
-                    'description' => __('The display name of the email template.', 'woocommerce'),
-                    'type'        => 'string',
-                    'context'     => [ 'view' ],
-                ],
-                'description' => [
-                    'description' => __('A description of the purpose of the email template.', 'woocommerce'),
-                    'type'        => 'string',
-                    'context'     => [ 'view' ],
-                ],
-            ],
-        ];
+        return ['$schema' => 'http://json-schema.org/draft-04/schema#', 'title' => __('Email Template', 'woocommerce'), 'type' => 'object', 'properties' => ['id' => ['description' => __('A unique ID string for the email template.', 'woocommerce'), 'type' => 'string', 'enum' => $this->get_template_id_enum(), 'context' => ['view', 'embed']], 'title' => ['description' => __('The display name of the email template.', 'woocommerce'), 'type' => 'string', 'context' => ['view']], 'description' => ['description' => __('A description of the purpose of the email template.', 'woocommerce'), 'type' => 'string', 'context' => ['view']]]];
     }
-
     /**
      * Get the schema for all order actions that don't have a separate schema.
      */
     public function get_schema_for_order_actions(): array
     {
-        return [
-            '$schema'    => 'http://json-schema.org/draft-04/schema#',
-            'title'      => __('Order Actions', 'woocommerce'),
-            'type'       => 'object',
-            'properties' => [
-                'message' => [
-                    'description' => __('A message indicating that the action completed successfully.', 'woocommerce'),
-                    'type'        => 'string',
-                    'context'     => [ 'edit' ],
-                    'readonly'    => true,
-                ],
-            ],
-        ];
+        return ['$schema' => 'http://json-schema.org/draft-04/schema#', 'title' => __('Order Actions', 'woocommerce'), 'type' => 'object', 'properties' => ['message' => ['description' => __('A message indicating that the action completed successfully.', 'woocommerce'), 'type' => 'string', 'context' => ['edit'], 'readonly' => true]]];
     }
-
     /**
      * Get the list of possible template ID values.
      *
@@ -253,24 +121,16 @@ class OrderActionsRestController extends RestApiControllerBase
     private function get_template_id_enum(): array
     {
         $enum = [];
-
         if (is_array(WC()->mailer()->emails)) {
-            $enum = array_map(
-                function (\WC_Email $template) {
-                    if (empty($template->id)) {
-                        return null;
-                    }
-
-                    return $template->id;
-                },
-                WC()->mailer()->emails,
-                [] // Strip off the associative array keys.
-            );
+            $enum = array_map(function (\WC_Email $template) {
+                if (empty($template->id)) {
+                    return null;
+                }
+                return $template->id;
+            }, WC()->mailer()->emails, []);
         }
-
         return array_filter($enum);
     }
-
     /**
      * Determine which email templates are available for the given order.
      *
@@ -281,44 +141,32 @@ class OrderActionsRestController extends RestApiControllerBase
     private function get_available_email_templates(WC_Order $order): array
     {
         $all_email_templates = WC()->mailer()->emails;
-        $order_status        = $order->get_status('edit');
-
-        $unavailable_statuses = [
-            OrderStatus::AUTO_DRAFT,
-            OrderStatus::DRAFT,
-            OrderStatus::NEW,
-            OrderStatus::TRASH,
-        ];
-
-        if (! $order->get_billing_email() || in_array($order_status, $unavailable_statuses, true)) {
+        $order_status = $order->get_status('edit');
+        $unavailable_statuses = [Order_Status::AUTO_DRAFT, Order_Status::DRAFT, Order_Status::NEW, Order_Status::TRASH];
+        if (!$order->get_billing_email() || in_array($order_status, $unavailable_statuses, true)) {
             return [];
         }
-
-        $valid_template_classes = [
-            'WC_Email_Customer_Invoice',
-        ];
+        $valid_template_classes = ['WC_Email_Customer_Invoice'];
         if ($this->order_is_partially_refunded($order)) {
             $valid_template_classes[] = 'WC_Email_Customer_Refunded_Order';
         }
-
         switch ($order_status) {
-            case OrderStatus::COMPLETED:
+            case Order_Status::COMPLETED:
                 $valid_template_classes[] = 'WC_Email_Customer_Completed_Order';
                 break;
-            case OrderStatus::FAILED:
+            case Order_Status::FAILED:
                 $valid_template_classes[] = 'WC_Email_Customer_Failed_Order';
                 break;
-            case OrderStatus::ON_HOLD:
+            case Order_Status::ON_HOLD:
                 $valid_template_classes[] = 'WC_Email_Customer_On_Hold_Order';
                 break;
-            case OrderStatus::PROCESSING:
+            case Order_Status::PROCESSING:
                 $valid_template_classes[] = 'WC_Email_Customer_Processing_Order';
                 break;
-            case OrderStatus::REFUNDED:
+            case Order_Status::REFUNDED:
                 $valid_template_classes[] = 'WC_Email_Customer_Refunded_Order';
                 break;
         }
-
         /**
          * Filter the list of valid email templates for a given order.
          *
@@ -332,18 +180,11 @@ class OrderActionsRestController extends RestApiControllerBase
          * @param string[] $valid_template_classes Array of email template class names that are valid for a given order.
          * @param WC_Order $order                  The order.
          */
-        $valid_template_classes = apply_filters(
-            'woocommerce_rest_order_actions_email_valid_template_classes',
-            $valid_template_classes,
-            $order
-        );
-
+        $valid_template_classes = apply_filters('woocommerce_rest_order_actions_email_valid_template_classes', $valid_template_classes, $order);
         $valid_template_classes = array_filter(array_unique($valid_template_classes), is_string(...));
-        $valid_templates        = array_fill_keys($valid_template_classes, '');
-
+        $valid_templates = array_fill_keys($valid_template_classes, '');
         return array_intersect_key($all_email_templates, $valid_templates);
     }
-
     /**
      * Retrieve an email template class using its ID, if it is available.
      *
@@ -359,19 +200,12 @@ class OrderActionsRestController extends RestApiControllerBase
         if (is_null($available_templates)) {
             $available_templates = WC()->mailer()->emails;
         }
-
-        $matching_templates = array_filter(
-            $available_templates,
-            fn ($template): bool => $template->id === $template_id
-        );
-
+        $matching_templates = array_filter($available_templates, fn($template): bool => $template->id === $template_id);
         if (empty($matching_templates)) {
             return null;
         }
-
         return reset($matching_templates);
     }
-
     /**
      * Callback to run for GET wc/v3/orders/(?P<id>[\d]+)/actions/email_templates.
      *
@@ -380,32 +214,16 @@ class OrderActionsRestController extends RestApiControllerBase
     protected function get_email_templates(WP_REST_Request $request): array
     {
         $order = wc_get_order($request->get_param('id'));
-
         $available_templates = $this->get_available_email_templates($order);
-        $templates           = [];
-
+        $templates = [];
         foreach ($available_templates as $template) {
-            $templates[] = [
-                'id'          => $template->id,
-                'title'       => $template->get_title(),
-                'description' => $template->get_description(),
-            ];
+            $templates[] = ['id' => $template->id, 'title' => $template->get_title(), 'description' => $template->get_description()];
         }
-
-        usort(
-            $templates,
-            fn (array $a, array $b): int => strcmp((string) $a['id'], (string) $b['id'])
-        );
-
-        $schema            = $this->get_schema_for_email_templates();
-        $context           = $request->get_param('context') ?? 'view';
-
-        return array_map(
-            fn (array $template) => rest_filter_response_by_context($template, $schema, $context),
-            $templates
-        );
+        usort($templates, fn(array $a, array $b): int => strcmp((string) $a['id'], (string) $b['id']));
+        $schema = $this->get_schema_for_email_templates();
+        $context = $request->get_param('context') ?? 'view';
+        return array_map(fn(array $template) => rest_filter_response_by_context($template, $schema, $context), $templates);
     }
-
     /**
      * Callback to run for POST wc/v3/orders/(?P<id>[\d]+)/actions/send_email.
      *
@@ -415,12 +233,11 @@ class OrderActionsRestController extends RestApiControllerBase
      */
     protected function send_email(WP_REST_Request $request)
     {
-        $order       = wc_get_order($request->get_param('id'));
-        $email       = $request->get_param('email');
-        $force       = wp_validate_boolean($request->get_param('force_email_update'));
+        $order = wc_get_order($request->get_param('id'));
+        $email = $request->get_param('email');
+        $force = wp_validate_boolean($request->get_param('force_email_update'));
         $template_id = $request->get_param('template_id');
-        $messages    = [];
-
+        $messages = [];
         if ($email) {
             $message = $this->maybe_update_billing_email($order, $email, $force);
             if (is_wp_error($message)) {
@@ -428,30 +245,18 @@ class OrderActionsRestController extends RestApiControllerBase
             }
             $messages[] = $message;
         }
-
-        if (! is_email($order->get_billing_email())) {
-            return new WP_Error(
-                'woocommerce_rest_missing_email',
-                __('Order does not have an email address.', 'woocommerce'),
-                [ 'status' => 400 ]
-            );
+        if (!is_email($order->get_billing_email())) {
+            return new WP_Error('woocommerce_rest_missing_email', __('Order does not have an email address.', 'woocommerce'), ['status' => 400]);
         }
-
         $available_templates = $this->get_available_email_templates($order);
-        $template            = $this->get_email_template_by_id($template_id, $available_templates);
-
+        $template = $this->get_email_template_by_id($template_id, $available_templates);
         if (is_null($template)) {
-            return new WP_Error(
-                'woocommerce_rest_invalid_email_template',
-                sprintf(
-                    // translators: %s is a string ID for an email template.
-                    __('%s is not a valid template for this order.', 'woocommerce'),
-                    esc_html($template_id)
-                ),
-                [ 'status' => 400 ]
-            );
+            return new WP_Error('woocommerce_rest_invalid_email_template', sprintf(
+                // translators: %s is a string ID for an email template.
+                __('%s is not a valid template for this order.', 'woocommerce'),
+                esc_html($template_id)
+            ), ['status' => 400]);
         }
-
         switch ($template_id) {
             // phpcs:disable WooCommerce.Commenting.CommentHooks.MissingSinceComment
             case 'customer_completed_order':
@@ -464,7 +269,8 @@ class OrderActionsRestController extends RestApiControllerBase
                 break;
             case 'customer_on_hold_order':
                 /** This action is documented in includes/class-wc-emails.php */
-                do_action('woocommerce_order_status_pending_to_on-hold_notification', $order->get_id(), $order); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+                do_action('woocommerce_order_status_pending_to_on-hold_notification', $order->get_id(), $order);
+                // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
                 break;
             case 'customer_processing_order':
                 /** This action is documented in includes/class-wc-emails.php */
@@ -480,11 +286,9 @@ class OrderActionsRestController extends RestApiControllerBase
                     do_action('woocommerce_order_fully_refunded_notification', $order->get_id());
                 }
                 break;
-                // phpcs:enable WooCommerce.Commenting.CommentHooks.MissingSinceComment
-
+            // phpcs:enable WooCommerce.Commenting.CommentHooks.MissingSinceComment
             case 'customer_invoice':
                 return $this->send_order_details($request);
-
             default:
                 /**
                  * Action to trigger sending a custom order email template from a REST API request.
@@ -500,7 +304,6 @@ class OrderActionsRestController extends RestApiControllerBase
                 do_action('woocommerce_rest_order_actions_email_send', $order->get_id(), $template_id);
                 break;
         }
-
         $user_agent = esc_html($request->get_header('User-Agent'));
         $messages[] = sprintf(
             // translators: 1. The name of an email template; 2. Email address.
@@ -508,25 +311,12 @@ class OrderActionsRestController extends RestApiControllerBase
             esc_html($template->get_title()),
             esc_html($order->get_billing_email())
         );
-
         $messages = array_filter($messages);
         foreach ($messages as $message) {
-            $order->add_order_note(
-                $message,
-                false,
-                true,
-                [
-                    'user_agent' => $user_agent ?: 'REST API',
-                    'note_group' => OrderNoteGroup::EMAIL_NOTIFICATION,
-                ]
-            );
+            $order->add_order_note($message, false, true, ['user_agent' => $user_agent ?: 'REST API', 'note_group' => Order_Note_Group::EMAIL_NOTIFICATION]);
         }
-
-        return [
-            'message' => implode(' ', $messages),
-        ];
+        return ['message' => implode(' ', $messages)];
     }
-
     /**
      * Handle the POST /orders/{id}/actions/send_order_details.
      *
@@ -535,11 +325,10 @@ class OrderActionsRestController extends RestApiControllerBase
      */
     protected function send_order_details(WP_REST_Request $request)
     {
-        $order    = wc_get_order($request->get_param('id'));
-        $email    = $request->get_param('email');
-        $force    = wp_validate_boolean($request->get_param('force_email_update'));
+        $order = wc_get_order($request->get_param('id'));
+        $email = $request->get_param('email');
+        $force = wp_validate_boolean($request->get_param('force_email_update'));
         $messages = [];
-
         if ($email) {
             $message = $this->maybe_update_billing_email($order, $email, $force);
             if (is_wp_error($message)) {
@@ -547,53 +336,30 @@ class OrderActionsRestController extends RestApiControllerBase
             }
             $messages[] = $message;
         }
-
-        if (! is_email($order->get_billing_email())) {
-            return new WP_Error(
-                'woocommerce_rest_missing_email',
-                __('Order does not have an email address.', 'woocommerce'),
-                [ 'status' => 400 ]
-            );
+        if (!is_email($order->get_billing_email())) {
+            return new WP_Error('woocommerce_rest_missing_email', __('Order does not have an email address.', 'woocommerce'), ['status' => 400]);
         }
-
         // phpcs:disable WooCommerce.Commenting.CommentHooks.MissingSinceComment
         /** This action is documented in includes/admin/meta-boxes/class-wc-meta-box-order-actions.php */
         do_action('woocommerce_before_resend_order_emails', $order, 'customer_invoice');
-
         WC()->payment_gateways();
         WC()->shipping();
         WC()->mailer()->customer_invoice($order);
-
         $user_agent = esc_html($request->get_header('User-Agent'));
         $messages[] = sprintf(
             // translators: %s is an email address.
             esc_html__('Order details sent to %s.', 'woocommerce'),
             esc_html($order->get_billing_email())
         );
-
         $messages = array_filter($messages);
         foreach ($messages as $message) {
-            $order->add_order_note(
-                $message,
-                false,
-                true,
-                [
-                    'user_agent' => $user_agent ?: 'REST API',
-                    'note_title' => __('Order confirmation email', 'woocommerce'),
-                    'note_group' => OrderNoteGroup::EMAIL_NOTIFICATION,
-                ]
-            );
+            $order->add_order_note($message, false, true, ['user_agent' => $user_agent ?: 'REST API', 'note_title' => __('Order confirmation email', 'woocommerce'), 'note_group' => Order_Note_Group::EMAIL_NOTIFICATION]);
         }
-
         // phpcs:disable WooCommerce.Commenting.CommentHooks.MissingSinceComment
         /** This action is documented in includes/admin/meta-boxes/class-wc-meta-box-order-actions.php */
         do_action('woocommerce_after_resend_order_email', $order, 'customer_invoice');
-
-        return [
-            'message' => implode(' ', $messages),
-        ];
+        return ['message' => implode(' ', $messages)];
     }
-
     /**
      * Update the billing email of an order when certain conditions are met.
      *
@@ -610,36 +376,24 @@ class OrderActionsRestController extends RestApiControllerBase
     private function maybe_update_billing_email(WC_Order $order, string $email, ?bool $force = false): \WP_Error|string
     {
         $existing_email = $order->get_billing_email('edit');
-
         if ($existing_email === $email) {
             return '';
         }
-
         if ($existing_email && true !== $force) {
-            return new WP_Error(
-                'woocommerce_rest_order_billing_email_exists',
-                __('Order already has a billing email.', 'woocommerce'),
-                [ 'status' => 400 ]
-            );
+            return new WP_Error('woocommerce_rest_order_billing_email_exists', __('Order already has a billing email.', 'woocommerce'), ['status' => 400]);
         }
-
         try {
             $order->set_billing_email($email);
             $order->save();
         } catch (WC_Data_Exception $e) {
-            return new WP_Error(
-                $e->getErrorCode(),
-                $e->getMessage()
-            );
+            return new WP_Error($e->get_error_code(), $e->get_message());
         }
-
         return sprintf(
             // translators: %s is an email address.
             __('Billing email updated to %s.', 'woocommerce'),
             esc_html($email)
         );
     }
-
     /**
      * Check if a given order has any partial refunds.
      *
@@ -650,19 +404,12 @@ class OrderActionsRestController extends RestApiControllerBase
     private function order_is_partially_refunded(WC_Order $order): bool
     {
         $remaining_amount = $order->get_remaining_refund_amount();
-        $remaining_items  = $order->get_remaining_refund_items();
-        $refunds          = $order->get_refunds();
-        $last_refund      = reset($refunds);
-
+        $remaining_items = $order->get_remaining_refund_items();
+        $refunds = $order->get_refunds();
+        $last_refund = reset($refunds);
         // phpcs:disable WooCommerce.Commenting.CommentHooks.MissingSinceComment
         /** This filter is documented in includes/wc-order-functions.php */
-        $partially_refunded = apply_filters(
-            'woocommerce_order_is_partially_refunded',
-            count($refunds) > 0 && ($remaining_amount > 0 || ($order->has_free_item() && $remaining_items > 0)),
-            $order->get_id(),
-            $last_refund ? $last_refund->get_id() : 0
-        );
-
+        $partially_refunded = apply_filters('woocommerce_order_is_partially_refunded', count($refunds) > 0 && ($remaining_amount > 0 || $order->has_free_item() && $remaining_items > 0), $order->get_id(), $last_refund ? $last_refund->get_id() : 0);
         return (bool) $partially_refunded;
     }
 }

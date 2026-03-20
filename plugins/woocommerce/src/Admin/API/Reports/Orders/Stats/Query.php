@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Class for parameter-based Order Stats Reports querying
  *
@@ -16,17 +16,14 @@ declare(strict_types=1);
  * $report = new \Automattic\WooCommerce\Admin\API\Reports\Orders\Stats\Query( $args );
  * $mydata = $report->get_data();
  */
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Orders\Stats;
 
-namespace Automattic\WooCommerce\Admin\API\Reports\Orders\Stats;
-
-use Automattic\WooCommerce\Admin\API\Reports\GenericQuery;
-
+use Automattic\Woo_Commerce\Admin\API\Reports\Generic_Query;
 defined('ABSPATH') || exit;
-
 /**
  * API\Reports\Orders\Stats\Query
  */
-class Query extends GenericQuery
+class Query extends Generic_Query
 {
     /**
      * Specific query name.
@@ -36,23 +33,11 @@ class Query extends GenericQuery
      * @var string
      */
     protected $name = 'orders-stats';
-
     /**
      * Valid fields for Orders report.
      */
     protected function get_default_query_vars(): array
     {
-        return [
-            'fields' => [
-                'net_revenue',
-                'avg_order_value',
-                'orders_count',
-                'avg_items_per_order',
-                'num_items_sold',
-                'coupons',
-                'coupons_count',
-                'total_customers',
-            ],
-        ];
+        return ['fields' => ['net_revenue', 'avg_order_value', 'orders_count', 'avg_items_per_order', 'num_items_sold', 'coupons', 'coupons_count', 'total_customers']];
     }
 }

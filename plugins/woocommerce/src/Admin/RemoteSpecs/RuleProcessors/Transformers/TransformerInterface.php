@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors\Transformers;
 
 use stdClass;
-
 /**
  * An interface to define a transformer.
  *
@@ -13,7 +11,7 @@ use stdClass;
  *
  * @package Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers
  */
-interface TransformerInterface
+interface Transformer_Interface
 {
     /**
      * Transform given value to a different value.
@@ -25,7 +23,6 @@ interface TransformerInterface
      * @return mixed|null
      */
     public function transform($value, ?stdClass $arguments = null, $default_value = null);
-
     /**
      * Validate Transformer arguments.
      *

@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * FeaturedItem class.
  */
-abstract class FeaturedItem extends AbstractDynamicBlock
+abstract class Featured_Item extends Abstract_Dynamic_Block
 {
     /**
      * Block name.
@@ -17,32 +15,18 @@ abstract class FeaturedItem extends AbstractDynamicBlock
      * @var string
      */
     protected $block_name;
-
     /**
      * Default attribute values.
      *
      * @var array
      */
-    protected $defaults = [
-        'align' => 'none',
-    ];
-
+    protected $defaults = ['align' => 'none'];
     /**
      * Global style enabled for this block.
      *
      * @var array
      */
-    protected $global_style_wrapper = [
-        'background_color',
-        'border_color',
-        'border_radius',
-        'border_width',
-        'font_size',
-        'padding',
-        'text_color',
-        'extra_classes',
-    ];
-
+    protected $global_style_wrapper = ['background_color', 'border_color', 'border_radius', 'border_width', 'font_size', 'padding', 'text_color', 'extra_classes'];
     /**
      * Initialize the block.
      */
@@ -52,21 +36,18 @@ abstract class FeaturedItem extends AbstractDynamicBlock
         add_filter('render_block_context', $this->update_context(...), 10, 3);
         add_filter('render_block_core/post-title', $this->restore_global_post(...), 10, 3);
     }
-
     /**
      * Current item (product or category) for context
      *
      * @var \WP_Term|\WC_Product|null
      */
     private $current_item;
-
     /**
      * Current featured item ID (product or category) for context
      *
      * @var int
      */
     protected $featured_item_id = 0;
-
     /**
      * Featured Item inner blocks names.
      * This is used to map all the inner blocks for a Featured Item block.
@@ -74,7 +55,6 @@ abstract class FeaturedItem extends AbstractDynamicBlock
      * @var array
      */
     protected $featured_item_inner_blocks_names = [];
-
     /**
      * Extract the inner block names for the Featured Item block. This way it's possible
      * to map all the inner blocks for a Featured Item block and manipulate the data as needed.
@@ -89,11 +69,9 @@ abstract class FeaturedItem extends AbstractDynamicBlock
         if (isset($block['blockName'])) {
             $result[] = $block['blockName'];
         }
-
         if ('woocommerce/product-template' === $block['blockName'] || 'core/post-template' === $block['blockName']) {
             return $result;
         }
-
         if (isset($block['innerBlocks'])) {
             foreach ($block['innerBlocks'] as $inner_block) {
                 $this->extract_featured_item_inner_block_names($inner_block, $result);
@@ -101,7 +79,6 @@ abstract class FeaturedItem extends AbstractDynamicBlock
         }
         return $result;
     }
-
     /**
      * Replace the global post for the Featured Item inner blocks and reset it after.
      *
@@ -116,27 +93,23 @@ abstract class FeaturedItem extends AbstractDynamicBlock
     {
         if ($this->featured_item_inner_blocks_names) {
             $block_name = end($this->featured_item_inner_blocks_names);
-
             if ($block_name === $block['blockName']) {
                 array_pop($this->featured_item_inner_blocks_names);
-
                 // Handle core blocks that need global post manipulation.
                 if ('core/post-excerpt' === $block_name || 'core/post-title' === $block_name) {
                     global $post;
-                    $post = get_post($this->featured_item_id); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-
+                    $post = get_post($this->featured_item_id);
+                    // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
                     if ($post instanceof \WP_Post) {
                         setup_postdata($post);
                     }
                 }
-
-                $context['postId']   = $this->featured_item_id;
+                $context['postId'] = $this->featured_item_id;
                 $context['postType'] = 'product';
-                $this->current_item  = wc_get_product($this->featured_item_id);
+                $this->current_item = wc_get_product($this->featured_item_id);
             }
         }
     }
-
     /**
      * Update context for inner blocks to provide postId and postType.
      *
@@ -149,25 +122,17 @@ abstract class FeaturedItem extends AbstractDynamicBlock
     public function update_context($context, array $parsed_block, $parent_block)
     {
         // Check if this is a featured item block and extract all inner block names.
-        if (('woocommerce/featured-product' === $parsed_block['blockName'] || 'woocommerce/featured-category' === $parsed_block['blockName'])
-            && isset($parsed_block['attrs'])) {
-
+        if (('woocommerce/featured-product' === $parsed_block['blockName'] || 'woocommerce/featured-category' === $parsed_block['blockName']) && isset($parsed_block['attrs'])) {
             $item = $this->get_item($parsed_block['attrs']);
             if ($item instanceof \WC_Product) {
                 $this->featured_item_id = $item->get_id();
-
-                $this->featured_item_inner_blocks_names = array_reverse(
-                    $this->extract_featured_item_inner_block_names($parsed_block)
-                );
+                $this->featured_item_inner_blocks_names = array_reverse($this->extract_featured_item_inner_block_names($parsed_block));
             }
         }
-
         // Replace post context for featured item inner blocks.
         $this->replace_post_for_featured_item_inner_block($parsed_block, $context);
-
         return $context;
     }
-
     /**
      * Restore global post data after rendering core/post-title.
      *
@@ -182,10 +147,8 @@ abstract class FeaturedItem extends AbstractDynamicBlock
         if ($this->current_item) {
             wp_reset_postdata();
         }
-
         return $block_content;
     }
-
     /**
      * Returns the featured item.
      *
@@ -193,7 +156,6 @@ abstract class FeaturedItem extends AbstractDynamicBlock
      * @return \WP_Term|\WC_Product|null
      */
     abstract protected function get_item($attributes);
-
     /**
      * Returns the name of the featured item.
      *
@@ -201,7 +163,6 @@ abstract class FeaturedItem extends AbstractDynamicBlock
      * @return string
      */
     abstract protected function get_item_title($item);
-
     /**
      * Returns the featured item image URL.
      *
@@ -210,7 +171,6 @@ abstract class FeaturedItem extends AbstractDynamicBlock
      * @return string
      */
     abstract protected function get_item_image($item, $size = 'full');
-
     /**
      * Renders the featured item attributes.
      *
@@ -219,7 +179,6 @@ abstract class FeaturedItem extends AbstractDynamicBlock
      * @return string
      */
     abstract protected function render_attributes($item, $attributes);
-
     /**
      * Render the featured item block.
      *
@@ -231,51 +190,38 @@ abstract class FeaturedItem extends AbstractDynamicBlock
     protected function render($attributes, $content, $block)
     {
         $item = $this->get_item($attributes);
-        if (! $item) {
+        if (!$item) {
             return '';
         }
-
         $aria_label = $attributes['ariaLabel'] ?? '';
         $attributes = wp_parse_args($attributes, $this->defaults);
-
         $attributes['height'] ??= wc_get_theme_support('featured_block::default_height', 500);
-
         $image_url = esc_url($this->get_image_url($attributes, $item));
-
-        $styles  = $this->get_styles($attributes);
+        $styles = $this->get_styles($attributes);
         $classes = $this->get_classes($attributes);
-
-        $output  = sprintf('<div class="%1$s wp-block-woocommerce-%2$s" style="%3$s">', esc_attr(trim($classes)), $this->block_name, esc_attr($styles));
+        $output = sprintf('<div class="%1$s wp-block-woocommerce-%2$s" style="%3$s">', esc_attr(trim($classes)), $this->block_name, esc_attr($styles));
         $output .= sprintf('<div class="wc-block-%s__wrapper">', $this->block_name);
         $output .= $this->render_overlay($attributes);
-
-        if (! $attributes['isRepeated'] && ! $attributes['hasParallax']) {
+        if (!$attributes['isRepeated'] && !$attributes['hasParallax']) {
             $output .= $this->render_image($attributes, $item, $image_url);
         } else {
             $output .= $this->render_bg_image($attributes, $image_url);
         }
-
-        if (isset($aria_label) && ! empty($aria_label)) {
+        if (isset($aria_label) && !empty($aria_label)) {
             $p = new \WP_HTML_Tag_Processor($content);
-
             if ($p->next_tag()) {
                 $p->set_attribute('aria-label', $aria_label);
                 $content = $p->get_updated_html();
             }
         }
-
         // Render additional attributes (e.g. description/price) for legacy compatibility.
         $output .= $this->render_attributes($item, $attributes);
-
-        if (! empty($content)) {
+        if (!empty($content)) {
             $output .= sprintf('<div class="wc-block-%s__inner-blocks">%s</div>', $this->block_name, $content);
         }
-
         $output .= '</div>';
-
         return $output . '</div>';
     }
-
     /**
      * Returns the url the item's image
      *
@@ -290,14 +236,11 @@ abstract class FeaturedItem extends AbstractDynamicBlock
         if ('none' !== $attributes['align'] || $attributes['height'] > 800) {
             $image_size = 'full';
         }
-
         if ($attributes['mediaId']) {
             return wp_get_attachment_image_url($attributes['mediaId'], $image_size);
         }
-
         return $this->get_item_image($item, $image_size);
     }
-
     /**
      * Renders the featured image as a div background.
      *
@@ -307,16 +250,12 @@ abstract class FeaturedItem extends AbstractDynamicBlock
     private function render_bg_image(array $attributes, $image_url): string
     {
         $styles = $this->get_bg_styles($attributes, $image_url);
-
-        $classes = [ "wc-block-{$this->block_name}__background-image" ];
-
+        $classes = ["wc-block-{$this->block_name}__background-image"];
         if ($attributes['hasParallax']) {
             $classes[] = ' has-parallax';
         }
-
         return sprintf('<div class="%1$s" style="%2$s" /></div>', esc_attr(implode(' ', $classes)), esc_attr($styles));
     }
-
     /**
      * Get the styles for the wrapper element (background image, color).
      *
@@ -328,31 +267,20 @@ abstract class FeaturedItem extends AbstractDynamicBlock
     public function get_bg_styles(array $attributes, $image_url)
     {
         $style = '';
-
         if ($attributes['isRepeated'] || $attributes['hasParallax']) {
-            $style .= "background-image: url($image_url);";
+            $style .= "background-image: url({$image_url});";
         }
-
-        if (! $attributes['isRepeated']) {
+        if (!$attributes['isRepeated']) {
             $style .= 'background-repeat: no-repeat;';
-
             $bg_size = 'cover' === $attributes['imageFit'] ? $attributes['imageFit'] : 'auto';
-            $style  .= 'background-size: ' . $bg_size . ';';
+            $style .= 'background-size: ' . $bg_size . ';';
         }
-
-        if ($this->hasFocalPoint($attributes)) {
-            $style .= sprintf(
-                'background-position: %s%% %s%%;',
-                $attributes['focalPoint']['x'] * 100,
-                $attributes['focalPoint']['y'] * 100
-            );
+        if ($this->has_focal_point($attributes)) {
+            $style .= sprintf('background-position: %s%% %s%%;', $attributes['focalPoint']['x'] * 100, $attributes['focalPoint']['y'] * 100);
         }
-
-        $global_style_style = StyleAttributesUtils::get_styles_by_attributes($attributes, $this->global_style_wrapper);
-
+        $global_style_style = Style_Attributes_Utils::get_styles_by_attributes($attributes, $this->global_style_wrapper);
         return $style . $global_style_style;
     }
-
     /**
      * Renders the featured image
      *
@@ -362,30 +290,16 @@ abstract class FeaturedItem extends AbstractDynamicBlock
      */
     private function render_image(array $attributes, $item, string $image_url): string
     {
-        $style   = sprintf('object-fit: %s;', esc_attr($attributes['imageFit']));
+        $style = sprintf('object-fit: %s;', esc_attr($attributes['imageFit']));
         $img_alt = $attributes['alt'] ?: $this->get_item_title($item);
-
-        if ($this->hasFocalPoint($attributes)) {
-            $style .= sprintf(
-                'object-position: %s%% %s%%;',
-                $attributes['focalPoint']['x'] * 100,
-                $attributes['focalPoint']['y'] * 100
-            );
+        if ($this->has_focal_point($attributes)) {
+            $style .= sprintf('object-position: %s%% %s%%;', $attributes['focalPoint']['x'] * 100, $attributes['focalPoint']['y'] * 100);
         }
-
-        if (! empty($image_url)) {
-            return sprintf(
-                '<img alt="%1$s" class="wc-block-%2$s__background-image" src="%3$s" style="%4$s" />',
-                esc_attr($img_alt),
-                $this->block_name,
-                esc_url($image_url),
-                esc_attr($style)
-            );
+        if (!empty($image_url)) {
+            return sprintf('<img alt="%1$s" class="wc-block-%2$s__background-image" src="%3$s" style="%4$s" />', esc_attr($img_alt), $this->block_name, esc_url($image_url), esc_attr($style));
         }
-
         return '';
     }
-
     /**
      * Get the styles for the wrapper element (background image, color).
      *
@@ -395,18 +309,13 @@ abstract class FeaturedItem extends AbstractDynamicBlock
     public function get_styles(array $attributes)
     {
         $style = '';
-
         $min_height = $attributes['minHeight'] ?? wc_get_theme_support('featured_block::default_height', 500);
-
         if (isset($attributes['minHeight'])) {
             $style .= sprintf('min-height:%dpx;', intval($min_height));
         }
-
-        $global_style_style = StyleAttributesUtils::get_styles_by_attributes($attributes, $this->global_style_wrapper);
-
+        $global_style_style = Style_Attributes_Utils::get_styles_by_attributes($attributes, $this->global_style_wrapper);
         return $style . $global_style_style;
     }
-
     /**
      * Get class names for the block container.
      *
@@ -415,31 +324,23 @@ abstract class FeaturedItem extends AbstractDynamicBlock
      */
     public function get_classes(array $attributes)
     {
-        $classes = [ 'wc-block-' . $this->block_name ];
-
+        $classes = ['wc-block-' . $this->block_name];
         if (isset($attributes['align'])) {
             $classes[] = "align{$attributes['align']}";
         }
-
-        if (isset($attributes['dimRatio']) && (0 !== $attributes['dimRatio'])) {
+        if (isset($attributes['dimRatio']) && 0 !== $attributes['dimRatio']) {
             $classes[] = 'has-background-dim';
-
             if (50 !== $attributes['dimRatio']) {
                 $classes[] = 'has-background-dim-' . 10 * round($attributes['dimRatio'] / 10);
             }
         }
-
         if (isset($attributes['contentAlign']) && 'center' !== $attributes['contentAlign']) {
             $classes[] = "has-{$attributes['contentAlign']}-content";
         }
-
-        $global_style_classes = StyleAttributesUtils::get_classes_by_attributes($attributes, $this->global_style_wrapper);
-
+        $global_style_classes = Style_Attributes_Utils::get_classes_by_attributes($attributes, $this->global_style_wrapper);
         $classes[] = $global_style_classes;
-
         return implode(' ', $classes);
     }
-
     /**
      * Renders the block overlay
      *
@@ -454,20 +355,17 @@ abstract class FeaturedItem extends AbstractDynamicBlock
         } else {
             $overlay_styles = 'background-color: #000000';
         }
-
         return sprintf('<div class="background-dim__overlay" style="%s"></div>', esc_attr($overlay_styles));
     }
-
     /**
      * Returns whether the focal point is defined for the block.
      *
      * @param array $attributes Block attributes. Default empty array.
      */
-    private function hasFocalPoint(array $attributes): bool
+    private function has_focal_point(array $attributes): bool
     {
         return is_array($attributes['focalPoint']) && 2 === count($attributes['focalPoint']);
     }
-
     /**
      * Extra data passed through from server to client for block.
      *

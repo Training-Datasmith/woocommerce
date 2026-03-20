@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Marketing_Recommendations;
 
-namespace Automattic\WooCommerce\Admin\Features\MarketingRecommendations;
-
-use Automattic\WooCommerce\Admin\RemoteSpecs\DataSourcePoller;
+use Automattic\Woo_Commerce\Admin\Remote_Specs\Data_Source_Poller;
 use WC_Helper;
-
 /**
  * Specs data source poller class for misc recommendations.
  *
@@ -25,44 +23,33 @@ use WC_Helper;
  *
  * @since 9.5.0
  */
-class MiscRecommendationsDataSourcePoller extends DataSourcePoller
+class Misc_Recommendations_Data_Source_Poller extends Data_Source_Poller
 {
     /**
      * Data Source Poller ID.
      */
     public const ID = 'misc_recommendations';
-
     /**
      * Class instance.
      *
      * @var MiscRecommendationsDataSourcePoller instance
      */
     protected static $instance;
-
     /**
      * Get class instance.
      */
     public static function get_instance()
     {
-        if (! self::$instance) {
-            self::$instance = new self(
-                self::ID,
-                self::get_data_sources(),
-                [
-                    'transient_expiry' => DAY_IN_SECONDS,
-                ]
-            );
+        if (!self::$instance) {
+            self::$instance = new self(self::ID, self::get_data_sources(), ['transient_expiry' => DAY_IN_SECONDS]);
         }
         return self::$instance;
     }
-
     /**
      * Get data sources.
      */
     public static function get_data_sources(): array
     {
-        return [
-            WC_Helper::get_woocommerce_com_base_url() . 'wp-json/wccom/marketing-tab/misc/recommendations.json',
-        ];
+        return [WC_Helper::get_woocommerce_com_base_url() . 'wp-json/wccom/marketing-tab/misc/recommendations.json'];
     }
 }

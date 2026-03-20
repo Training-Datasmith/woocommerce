@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments\Providers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments\Providers;
 
 /**
  * Lasership/OnTrac Shipping Provider class.
  */
-class LasershipOntracShippingProvider extends AbstractShippingProvider
+class Lasership_Ontrac_Shipping_Provider extends Abstract_Shipping_Provider
 {
     /**
      * Get the key of the shipping provider.
@@ -16,7 +15,6 @@ class LasershipOntracShippingProvider extends AbstractShippingProvider
     {
         return 'lasership-ontrac';
     }
-
     /**
      * Get the name of the shipping provider.
      */
@@ -24,7 +22,6 @@ class LasershipOntracShippingProvider extends AbstractShippingProvider
     {
         return 'LaserShip/OnTrac';
     }
-
     /**
      * Get the icon of the shipping provider.
      */
@@ -32,7 +29,6 @@ class LasershipOntracShippingProvider extends AbstractShippingProvider
     {
         return esc_url(WC()->plugin_url()) . '/assets/images/shipping_providers/lasership-ontrac.png';
     }
-
     /**
      * Get the tracking URL for a given tracking number.
      *

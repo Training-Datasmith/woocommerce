@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
 
 /**
  * Pseudo payment gateway for registering pseudo payment gateways for the settings page.
@@ -14,7 +13,7 @@ namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
  *
  * @internal
  */
-class PseudoWCPaymentGateway extends \WC_Payment_Gateway
+class Pseudo_Wc_Payment_Gateway extends \WC_Payment_Gateway
 {
     /**
      * Gateway ID.
@@ -22,87 +21,72 @@ class PseudoWCPaymentGateway extends \WC_Payment_Gateway
      * @var string
      */
     public $id = '';
-
     /**
      * Gateway title.
      *
      * @var string
      */
     public $title = '';
-
     /**
      * Gateway description.
      *
      * @var string
      */
     public $description = '';
-
     /**
      * Gateway method title.
      *
      * @var string
      */
     public $method_title = '';
-
     /**
      * Gateway method description.
      *
      * @var string
      */
     public $method_description = '';
-
     /**
      * Corresponding gateway plugin slug.
      */
     public string $plugin_slug = 'generic-plugin-slug';
-
     /**
      * Corresponding gateway plugin file.
      *
      * Skip the .php extension to match the format used by the WP API.
      */
     public string $plugin_file = 'generic-plugin-slug/generic-plugin-file';
-
     /**
      * The recommended payment methods list.
      */
     public array $recommended_payment_methods = [];
-
     /**
      * Whether or not this gateway still requires setup to function.
      */
     public bool $needs_setup = false;
-
     /**
      * The test mode.
      */
     public bool $test_mode = false;
-
     /**
      * The dev mode.
      */
     public bool $dev_mode = false;
-
     /**
      * The account connected flag.
      */
     public bool $account_connected = false;
-
     /**
      * The onboarding started flag.
      */
     public bool $onboarding_started = false;
-
     /**
      * The onboarding completed flag.
      */
     public bool $onboarding_completed = false;
-
     /**
      * The test mode onboarding flag.
      */
     public bool $test_mode_onboarding = false;
-
     /**
      * Constructor.
      *
@@ -112,13 +96,11 @@ class PseudoWCPaymentGateway extends \WC_Payment_Gateway
     public function __construct(string $id, array $props = [])
     {
         $this->id = $id;
-
         // Go through the props and set them on the object.
         foreach ($props as $prop => $value) {
-            $this->$prop = $value;
+            $this->{$prop} = $value;
         }
     }
-
     /**
      * Return whether or not this gateway still requires setup to function.
      */
@@ -126,7 +108,6 @@ class PseudoWCPaymentGateway extends \WC_Payment_Gateway
     {
         return $this->needs_setup;
     }
-
     /**
      * Get the gateway settings page URL.
      *
@@ -136,7 +117,6 @@ class PseudoWCPaymentGateway extends \WC_Payment_Gateway
     {
         return $this->settings_url ?? admin_url('admin.php?page=wc-settings&tab=checkout&section=' . strtolower($this->id));
     }
-
     /**
      * Get the gateway onboarding start/continue URL.
      *
@@ -146,7 +126,6 @@ class PseudoWCPaymentGateway extends \WC_Payment_Gateway
     {
         return $this->connection_url ?? $this->get_settings_url();
     }
-
     /**
      * Get the recommended payment methods list.
      *
@@ -158,7 +137,6 @@ class PseudoWCPaymentGateway extends \WC_Payment_Gateway
     {
         return $this->recommended_payment_methods;
     }
-
     /**
      * Check if the gateway is in test mode.
      *
@@ -168,7 +146,6 @@ class PseudoWCPaymentGateway extends \WC_Payment_Gateway
     {
         return $this->test_mode;
     }
-
     /**
      * Check if the gateway is in dev mode.
      *
@@ -178,7 +155,6 @@ class PseudoWCPaymentGateway extends \WC_Payment_Gateway
     {
         return $this->dev_mode;
     }
-
     /**
      * Check if the gateway has an account connected.
      *
@@ -188,7 +164,6 @@ class PseudoWCPaymentGateway extends \WC_Payment_Gateway
     {
         return $this->account_connected;
     }
-
     /**
      * Check if the gateway has started onboarding.
      *
@@ -198,7 +173,6 @@ class PseudoWCPaymentGateway extends \WC_Payment_Gateway
     {
         return $this->onboarding_started;
     }
-
     /**
      * Check if the gateway has completed onboarding.
      *
@@ -208,7 +182,6 @@ class PseudoWCPaymentGateway extends \WC_Payment_Gateway
     {
         return $this->onboarding_completed;
     }
-
     /**
      * Check if the gateway is in test mode onboarding.
      *

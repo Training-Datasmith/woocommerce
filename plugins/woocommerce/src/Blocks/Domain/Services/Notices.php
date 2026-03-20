@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Domain\Services;
 
-namespace Automattic\WooCommerce\Blocks\Domain\Services;
-
-use Automattic\WooCommerce\Blocks\Domain\Package;
-
+use Automattic\Woo_Commerce\Blocks\Domain\Package;
 /**
  * Service class for adding new-style Notices to WooCommerce core.
  *
@@ -16,12 +14,7 @@ class Notices
     /**
      * Templates used for notices.
      */
-    private array $notice_templates = [
-        'notices/error.php',
-        'notices/notice.php',
-        'notices/success.php',
-    ];
-
+    private array $notice_templates = ['notices/error.php', 'notices/notice.php', 'notices/success.php'];
     /**
      * Constructor
      *
@@ -32,34 +25,29 @@ class Notices
          * Holds the Package instance
          */
         private readonly Package $package
-    ) {
+    )
+    {
     }
-
     /**
      * Initialize notice hooks.
      */
     public function init(): void
     {
-        add_action(
-            'after_setup_theme',
-            function (): void {
-                /**
-                 * Allow classic theme developers to opt-in to using block notices.
-                 *
-                 * @since 8.8.0
-                 * @param bool $use_block_notices_in_classic_theme Whether to use block notices in classic theme.
-                 * @return bool
-                 */
-                if (wp_is_block_theme() || apply_filters('woocommerce_use_block_notices_in_classic_theme', false)) {
-                    add_filter('wc_get_template', $this->get_notices_template(...), 10, 5);
-                }
+        add_action('after_setup_theme', function (): void {
+            /**
+             * Allow classic theme developers to opt-in to using block notices.
+             *
+             * @since 8.8.0
+             * @param bool $use_block_notices_in_classic_theme Whether to use block notices in classic theme.
+             * @return bool
+             */
+            if (wp_is_block_theme() || apply_filters('woocommerce_use_block_notices_in_classic_theme', false)) {
+                add_filter('wc_get_template', $this->get_notices_template(...), 10, 5);
             }
-        );
-
+        });
         add_filter('woocommerce_kses_notice_allowed_tags', $this->add_kses_notice_allowed_tags(...));
         add_action('wp_head', $this->enqueue_notice_styles(...));
     }
-
     /**
      * Allow SVG icon in notices.
      *
@@ -67,22 +55,9 @@ class Notices
      */
     public function add_kses_notice_allowed_tags($allowed_tags): array
     {
-        $svg_args = [
-            'svg'  => [
-                'aria-hidden' => true,
-                'xmlns'       => true,
-                'width'       => true,
-                'height'      => true,
-                'viewbox'     => true,
-                'focusable'   => true,
-            ],
-            'path' => [
-                'd' => true,
-            ],
-        ];
+        $svg_args = ['svg' => ['aria-hidden' => true, 'xmlns' => true, 'width' => true, 'height' => true, 'viewbox' => true, 'focusable' => true], 'path' => ['d' => true]];
         return array_merge($allowed_tags, $svg_args);
     }
-
     /**
      * Replaces core notice templates with those from blocks.
      *
@@ -106,19 +81,15 @@ class Notices
     {
         if (in_array($template_name, $this->notice_templates, true)) {
             $directory = get_stylesheet_directory();
-            $file      = $directory . '/woocommerce/' . $template_name;
-
+            $file = $directory . '/woocommerce/' . $template_name;
             if (file_exists($file)) {
                 return $file;
             }
-
             $template = $this->package->get_path('templates/block-' . $template_name);
             wp_enqueue_style('wc-blocks-style');
         }
-
         return $template;
     }
-
     /**
      * Replaces all notices with the new block-based notices.
      */

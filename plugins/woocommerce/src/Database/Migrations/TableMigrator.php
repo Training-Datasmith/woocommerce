@@ -1,11 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Base class for all the WP posts to order table migrator.
  */
-
-namespace Automattic\WooCommerce\Database\Migrations;
+namespace Automattic\Woo_Commerce\Database\Migrations;
 
 /**
  * Base class for implementing WP posts to order tables migrations handlers.
@@ -13,13 +12,12 @@ namespace Automattic\WooCommerce\Database\Migrations;
  *
  * @package Automattic\WooCommerce\Database\Migrations
  */
-abstract class TableMigrator
+abstract class Table_Migrator
 {
     /**
      * An array of cumulated error messages.
      */
     private ?array $errors = null;
-
     /**
      * Clear the error messages list.
      */
@@ -27,7 +25,6 @@ abstract class TableMigrator
     {
         $this->errors = [];
     }
-
     /**
      * Add an error message to the errors list unless it's there already.
      *
@@ -38,12 +35,10 @@ abstract class TableMigrator
         if (is_null($this->errors)) {
             $this->errors = [];
         }
-
-        if (! in_array($error, $this->errors, true)) {
+        if (!in_array($error, $this->errors, true)) {
             $this->errors[] = $error;
         }
     }
-
     /**
      * Get the list of error messages added.
      */
@@ -51,7 +46,6 @@ abstract class TableMigrator
     {
         return $this->errors;
     }
-
     /**
      * Run $wpdb->query and add the error, if any, to the errors list.
      *
@@ -61,17 +55,13 @@ abstract class TableMigrator
     protected function db_query(string $query)
     {
         $wpdb = WC()->get_global('wpdb');
-
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $result = $wpdb->query($query);
-
         if ('' !== $wpdb->last_error) {
             $this->add_error($wpdb->last_error);
         }
-
         return $result;
     }
-
     /**
      * Run $wpdb->get_results and add the error, if any, to the errors list.
      *
@@ -82,17 +72,13 @@ abstract class TableMigrator
     protected function db_get_results(?string $query = null, string $output = OBJECT)
     {
         $wpdb = WC()->get_global('wpdb');
-
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $result = $wpdb->get_results($query, $output);
-
         if ('' !== $wpdb->last_error) {
             $this->add_error($wpdb->last_error);
         }
-
         return $result;
     }
-
     /**
      * Migrate a batch of orders, logging any database error that could arise and the exception thrown if any.
      *
@@ -105,19 +91,13 @@ abstract class TableMigrator
     {
         $this->clear_errors();
         $exception = null;
-
         try {
             $this->process_migration_batch_for_ids_core($entity_ids);
         } catch (\Exception $ex) {
             $exception = $ex;
         }
-
-        return [
-            'errors'    => $this->get_errors(),
-            'exception' => $exception,
-        ];
+        return ['errors' => $this->get_errors(), 'exception' => $exception];
     }
-
     // phpcs:disable Squiz.Commenting.FunctionComment.InvalidNoReturn, Squiz.Commenting.FunctionCommentThrowTag.Missing -- Methods are not marked abstract for back compat.
     /**
      * Return data to be migrated for a batch of entities.
@@ -130,7 +110,6 @@ abstract class TableMigrator
     {
         throw new \Exception('Not implemented');
     }
-
     /**
      * Process migration data for a batch of entities.
      *
@@ -152,7 +131,6 @@ abstract class TableMigrator
      * @deprecated 8.0.0 Use `fetch_sanitized_migration_data` and `process_migration_data` instead.
      */
     abstract protected function process_migration_batch_for_ids_core(array $entity_ids): void;
-
     /**
      * Check if the amount of processed database rows matches the amount of orders to process, and log an error if not.
      *
@@ -163,7 +141,7 @@ abstract class TableMigrator
     protected function maybe_add_insert_or_update_error(string $operation, $received_rows_count)
     {
         if (false === $received_rows_count) {
-            $this->add_error("$operation operation didn't complete, the database query failed");
+            $this->add_error("{$operation} operation didn't complete, the database query failed");
         }
     }
 }

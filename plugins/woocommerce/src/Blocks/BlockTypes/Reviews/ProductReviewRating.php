@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Reviews;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\Reviews;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AbstractBlock;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Abstract_Block;
 /**
  * ProductReviewRating class.
  */
-class ProductReviewRating extends AbstractBlock
+class Product_Review_Rating extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,7 +15,6 @@ class ProductReviewRating extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-review-rating';
-
     /**
      * Get the frontend style handle for this block type.
      *
@@ -27,7 +24,6 @@ class ProductReviewRating extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Render the block.
      *
@@ -38,38 +34,25 @@ class ProductReviewRating extends AbstractBlock
      */
     protected function render($attributes, $content, $block): string
     {
-        if (! isset($block->context['commentId'])) {
+        if (!isset($block->context['commentId'])) {
             return '';
         }
-
         $rating = intval(get_comment_meta($block->context['commentId'], 'rating', true));
-
         $html = '';
-
         if (0 < $rating) {
             // translators: %s: Rating.
             $label = sprintf(__('Rated %s out of 5', 'woocommerce'), $rating);
-            $html  = sprintf(
-                '<div class="wc-block-product-review-rating__container">
+            $html = sprintf('<div class="wc-block-product-review-rating__container">
 					<div class="wc-block-product-review-rating__stars" role="img" aria-label="%1$s">
 						%2$s
 					</div>
 				</div>
-				',
-                esc_attr($label),
-                wc_get_star_rating_html($rating)
-            );
+				', esc_attr($label), wc_get_star_rating_html($rating));
         }
-
-        return sprintf(
-            '<div %1$s>
+        return sprintf('<div %1$s>
 				%2$s
-			</div>',
-            get_block_wrapper_attributes(),
-            $html
-        );
+			</div>', get_block_wrapper_attributes(), $html);
     }
-
     /**
      * Get the frontend script handle for this block type.
      *

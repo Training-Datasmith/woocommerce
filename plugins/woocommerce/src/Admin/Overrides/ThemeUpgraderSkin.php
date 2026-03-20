@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Theme upgrader skin used in REST API response.
  */
-
-namespace Automattic\WooCommerce\Admin\Overrides;
+namespace Automattic\Woo_Commerce\Admin\Overrides;
 
 defined('ABSPATH') || exit;
-
 /**
  * Admin\Overrides\ThemeUpgraderSkin Class.
  */
-class ThemeUpgraderSkin extends \Theme_Upgrader_Skin
+class Theme_Upgrader_Skin extends \Theme_Upgrader_Skin
 {
     /**
      * Avoid undefined property error from \Theme_Upgrader::check_parent_theme_filter().
@@ -20,21 +18,18 @@ class ThemeUpgraderSkin extends \Theme_Upgrader_Skin
      * @var array
      */
     public $api;
-
     /**
      * Hide the skin header display.
      */
     public function header()
     {
     }
-
     /**
      * Hide the skin footer display.
      */
     public function footer()
     {
     }
-
     /**
      * Hide the skin feedback display.
      *
@@ -44,7 +39,6 @@ class ThemeUpgraderSkin extends \Theme_Upgrader_Skin
     public function feedback($string, ...$args)
     {
     }
-
     /**
      * Hide the skin after display.
      */

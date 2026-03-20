@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * ProductMeta class.
  */
-class ProductMeta extends AbstractBlock
+class Product_Meta extends Abstract_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class ProductMeta extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-meta';
-
     /**
      * Get the editor script data for this block type.
      *
@@ -25,7 +23,6 @@ class ProductMeta extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the editor style handle for this block type.
      */
@@ -33,7 +30,6 @@ class ProductMeta extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -43,7 +39,6 @@ class ProductMeta extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the frontend style handle for this block type.
      */

@@ -1,26 +1,22 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Accordion;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\Accordion;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AbstractBlock;
-use Automattic\WooCommerce\Blocks\BlockTypes\EnableBlockJsonAssetsTrait;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Abstract_Block;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Enable_Block_Json_Assets_Trait;
 /**
  * AccordionGroup class.
  */
-class AccordionGroup extends AbstractBlock
+class Accordion_Group extends Abstract_Block
 {
-    use EnableBlockJsonAssetsTrait;
-
+    use Enable_Block_Json_Assets_Trait;
     /**
      * Block name.
      *
      * @var string
      */
     protected $block_name = 'accordion-group';
-
     /**
      * Include and render the block.
      *
@@ -31,24 +27,17 @@ class AccordionGroup extends AbstractBlock
      */
     protected function render($attributes, $content, $block)
     {
-        if (! $content) {
+        if (!$content) {
             return $content;
         }
-
         $p = new \WP_HTML_Tag_Processor($content);
-
         if ($p->next_tag()) {
-            $interactivity_context = [
-                'autoclose' => $attributes['autoclose'],
-                'isOpen'    => [],
-            ];
+            $interactivity_context = ['autoclose' => $attributes['autoclose'], 'isOpen' => []];
             $p->set_attribute('data-wp-interactive', 'woocommerce/accordion');
             $p->set_attribute('data-wp-context', wp_json_encode($interactivity_context, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP));
-
             // Only modify content if directives have been set.
             $content = $p->get_updated_html();
         }
-
         return $content;
     }
 }

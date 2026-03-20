@@ -1,36 +1,25 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Blueprint\Exporters;
 
-namespace Automattic\WooCommerce\Admin\Features\Blueprint\Exporters;
-
-use Automattic\WooCommerce\Blueprint\Exporters\HasAlias;
-use Automattic\WooCommerce\Blueprint\Exporters\StepExporter;
-use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
-use Automattic\WooCommerce\Blueprint\UseWPFunctions;
-
+use Automattic\Woo_Commerce\Blueprint\Exporters\Has_Alias;
+use Automattic\Woo_Commerce\Blueprint\Exporters\Step_Exporter;
+use Automattic\Woo_Commerce\Blueprint\Steps\Set_Site_Options;
+use Automattic\Woo_Commerce\Blueprint\Use_Wp_Functions;
 /**
  * ExportWCCoreProfilerOptions class
  */
-class ExportWCCoreProfilerOptions implements StepExporter, HasAlias
+class Export_Wc_Core_Profiler_Options implements Step_Exporter, Has_Alias
 {
-    use UseWPFunctions;
-
+    use Use_Wp_Functions;
     /**
      * Export the step
      */
-    public function export(): \Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions
+    public function export(): \Automattic\Woo_Commerce\Blueprint\Steps\Set_Site_Options
     {
-        return new SetSiteOptions(
-            [
-                'blogname'                       => $this->wp_get_option('blogname'),
-                'woocommerce_allow_tracking'     => $this->wp_get_option('woocommerce_allow_tracking'),
-                'woocommerce_onboarding_profile' => $this->wp_get_option('woocommerce_onboarding_profile', []),
-                'woocommerce_default_country'    => $this->wp_get_option('woocommerce_default_country'),
-            ]
-        );
+        return new Set_Site_Options(['blogname' => $this->wp_get_option('blogname'), 'woocommerce_allow_tracking' => $this->wp_get_option('woocommerce_allow_tracking'), 'woocommerce_onboarding_profile' => $this->wp_get_option('woocommerce_onboarding_profile', []), 'woocommerce_default_country' => $this->wp_get_option('woocommerce_default_country')]);
     }
-
     /**
      * Get the step name
      */
@@ -38,7 +27,6 @@ class ExportWCCoreProfilerOptions implements StepExporter, HasAlias
     {
         return 'setSiteOptions';
     }
-
     /**
      * Get the alias
      */
@@ -46,7 +34,6 @@ class ExportWCCoreProfilerOptions implements StepExporter, HasAlias
     {
         return 'setWCCoreProfilerOptions';
     }
-
     /**
      * Return label used in the frontend.
      *
@@ -56,7 +43,6 @@ class ExportWCCoreProfilerOptions implements StepExporter, HasAlias
     {
         return __('Onboarding Configuration', 'woocommerce');
     }
-
     /**
      * Return description used in the frontend.
      *
@@ -66,7 +52,6 @@ class ExportWCCoreProfilerOptions implements StepExporter, HasAlias
     {
         return __('Includes onboarding configuration options', 'woocommerce');
     }
-
     /**
      * Check if the current user has the required capabilities for this step.
      *

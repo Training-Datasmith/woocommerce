@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * ProductResultsCount class.
  */
-class ProductResultsCount extends AbstractBlock
+class Product_Results_Count extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,7 +15,6 @@ class ProductResultsCount extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-results-count';
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -27,7 +24,6 @@ class ProductResultsCount extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Render the block.
      *
@@ -45,27 +41,14 @@ class ProductResultsCount extends AbstractBlock
         woocommerce_result_count();
         echo '</div>';
         $product_results_count = ob_get_clean();
-
         $p = new \WP_HTML_Tag_Processor($product_results_count);
-
         // Advance to the wrapper and add the attributes necessary for the block.
         $p->next_tag();
-        $parsed_style_attributes = StyleAttributesUtils::get_classes_and_styles_by_attributes($attributes);
-        $classes                 = array_merge(
-            explode(' ', (string) $parsed_style_attributes['classes']),
-            [
-                'woocommerce',
-                'wc-block-product-results-count',
-                'wp-block-woocommerce-product-results-count',
-            ],
-        );
+        $parsed_style_attributes = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes);
+        $classes = array_merge(explode(' ', (string) $parsed_style_attributes['classes']), ['woocommerce', 'wc-block-product-results-count', 'wp-block-woocommerce-product-results-count']);
         $p->set_attribute('class', implode(' ', $classes));
         $p->set_attribute('style', $parsed_style_attributes['styles']);
-        $p->set_attribute(
-            'data-wp-router-region',
-            'wc-product-results-count-' . ($block->context['queryId'] ?? 0)
-        );
-
+        $p->set_attribute('data-wp-router-region', 'wc-product-results-count-' . ($block->context['queryId'] ?? 0));
         return $p->get_updated_html();
     }
 }

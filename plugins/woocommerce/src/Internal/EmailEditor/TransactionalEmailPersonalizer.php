@@ -5,35 +5,30 @@
  *
  * @package Automattic\WooCommerce\Internal\EmailEditor
  */
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Email_Editor;
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\EmailEditor;
-
-use Automattic\WooCommerce\EmailEditor\Email_Editor_Container;
-use Automattic\WooCommerce\EmailEditor\Engine\Personalizer;
-
+use Automattic\Woo_Commerce\Email_Editor\Email_Editor_Container;
+use Automattic\Woo_Commerce\Email_Editor\Engine\Personalizer;
 /**
  * Class TransactionalEmailPersonalizer that internally uses the Personalizer class.
  * The inheritance is not used here because Personalizer needs to pass Personalization_Tags_Registry and
  * the combination of two different dependency injection containers is not possible.
  */
-class TransactionalEmailPersonalizer
+class Transactional_Email_Personalizer
 {
     /**
      * Personalizer instance for handling email content personalization.
      */
     private readonly Personalizer $personalizer;
-
     /**
      * Constructor.
      */
     public function __construct()
     {
-        $editor_container   = Email_Editor_Container::container();
+        $editor_container = Email_Editor_Container::container();
         $this->personalizer = $editor_container->get(Personalizer::class);
     }
-
     /**
      * Personalize transactional email content with specific handling.
      *
@@ -46,7 +41,6 @@ class TransactionalEmailPersonalizer
         $this->configure_context_by_email($email);
         return $this->personalizer->personalize_content($content);
     }
-
     /**
      * Configure personalization context based on WooCommerce email object.
      *
@@ -57,7 +51,6 @@ class TransactionalEmailPersonalizer
         $prepared_context = $this->prepare_context_data($this->personalizer->get_context(), $email);
         $this->personalizer->set_context($prepared_context);
     }
-
     /**
      * Prepare context data for email personalization.
      * Adds new order specific context data.
@@ -69,9 +62,8 @@ class TransactionalEmailPersonalizer
     public function prepare_context_data(array $previous_context, \WC_Email $email): array
     {
         $context = $previous_context;
-
         $context['recipient_email'] = $email->get_recipient();
-        $context['order']           = $email->object instanceof \WC_Order ? $email->object : null;
+        $context['order'] = $email->object instanceof \WC_Order ? $email->object : null;
         // For emails of type new_user or reset_password we want to set user directly from the object.
         if ($email->object instanceof \WP_User) {
             $context['wp_user'] = $email->object;
@@ -81,9 +73,7 @@ class TransactionalEmailPersonalizer
             $context['wp_user'] = null;
         }
         $context['wc_email'] = $email;
-
         $core_context = $context;
-
         /**
          * Filters the context data for email personalization.
          *
@@ -96,11 +86,9 @@ class TransactionalEmailPersonalizer
          * @return array Context data for personalization
          */
         $context = apply_filters('woocommerce_email_editor_integration_personalizer_context_data', $context, $email);
-
-        if (! is_array($context)) {
+        if (!is_array($context)) {
             return $core_context;
         }
-
         return $context;
     }
 }

@@ -1,10 +1,9 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-trait EnableBlockJsonAssetsTrait
+trait Enable_Block_Json_Assets_Trait
 {
     /**
      * Disable the script handle for this block type. We use block.json to load the script.
@@ -16,7 +15,6 @@ trait EnableBlockJsonAssetsTrait
     {
         return null;
     }
-
     /**
      * Disable the style handle for this block type. We use block.json to load the style.
      */
@@ -24,7 +22,6 @@ trait EnableBlockJsonAssetsTrait
     {
         return null;
     }
-
     /**
      * Disable the editor style handle for this block type. We use block.json to load the style.
      */

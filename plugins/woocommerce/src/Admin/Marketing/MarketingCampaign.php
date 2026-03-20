@@ -1,20 +1,19 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Represents a marketing/ads campaign for marketing channels.
  *
  * Marketing channels (implementing MarketingChannelInterface) can use this class to map their campaign data and present it to WooCommerce core.
  */
-
-namespace Automattic\WooCommerce\Admin\Marketing;
+namespace Automattic\Woo_Commerce\Admin\Marketing;
 
 /**
  * MarketingCampaign class
  *
  * @since x.x.x
  */
-class MarketingCampaign
+class Marketing_Campaign
 {
     /**
      * MarketingCampaign constructor.
@@ -26,10 +25,9 @@ class MarketingCampaign
      * @param Price|null            $cost       The cost of the marketing campaign with the currency.
      * @param Price|null            $sales      The sales of the marketing campaign with the currency.
      */
-    public function __construct(protected string $id, protected \Automattic\WooCommerce\Admin\Marketing\MarketingCampaignType $type, protected string $title, protected string $manage_url, protected ?\Automattic\WooCommerce\Admin\Marketing\Price $cost = null, protected ?\Automattic\WooCommerce\Admin\Marketing\Price $sales = null)
+    public function __construct(protected string $id, protected \Automattic\Woo_Commerce\Admin\Marketing\Marketing_Campaign_Type $type, protected string $title, protected string $manage_url, protected ?\Automattic\Woo_Commerce\Admin\Marketing\Price $cost = null, protected ?\Automattic\Woo_Commerce\Admin\Marketing\Price $sales = null)
     {
     }
-
     /**
      * Returns the marketing campaign's unique identifier.
      */
@@ -37,15 +35,13 @@ class MarketingCampaign
     {
         return $this->id;
     }
-
     /**
      * Returns the marketing campaign type.
      */
-    public function get_type(): MarketingCampaignType
+    public function get_type(): Marketing_Campaign_Type
     {
         return $this->type;
     }
-
     /**
      * Returns the title of the marketing campaign.
      */
@@ -53,7 +49,6 @@ class MarketingCampaign
     {
         return $this->title;
     }
-
     /**
      * Returns the URL to manage the marketing campaign.
      */
@@ -61,7 +56,6 @@ class MarketingCampaign
     {
         return $this->manage_url;
     }
-
     /**
      * Returns the cost of the marketing campaign with the currency.
      */
@@ -69,7 +63,6 @@ class MarketingCampaign
     {
         return $this->cost;
     }
-
     /**
      * Returns the sales of the marketing campaign with the currency.
      */

@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes\OrderConfirmation;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Order_Confirmation;
 
 /**
  * Summary class.
  */
-class Summary extends AbstractOrderConfirmationBlock
+class Summary extends Abstract_Order_Confirmation_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class Summary extends AbstractOrderConfirmationBlock
      * @var string
      */
     protected $block_name = 'order-confirmation-summary';
-
     /**
      * This renders the content of the block within the wrapper.
      *
@@ -26,20 +24,17 @@ class Summary extends AbstractOrderConfirmationBlock
      */
     protected function render_content($order, $permission = false, $attributes = [], $content = ''): string
     {
-        if (! $permission) {
+        if (!$permission) {
             return '';
         }
-
-        $content  = '<ul class="wc-block-order-confirmation-summary-list">';
+        $content = '<ul class="wc-block-order-confirmation-summary-list">';
         $content .= $this->render_summary_row(__('Order #:', 'woocommerce'), $order->get_order_number());
         $content .= $this->render_summary_row(__('Date:', 'woocommerce'), wc_format_datetime($order->get_date_created()));
         $content .= $this->render_summary_row(__('Total:', 'woocommerce'), $order->get_formatted_order_total());
         $content .= $this->render_summary_row(__('Email:', 'woocommerce'), $order->get_billing_email());
         $content .= $this->render_summary_row(__('Payment:', 'woocommerce'), $order->get_payment_method_title());
-
         return $content . '</ul>';
     }
-
     /**
      * Render row in the order summary.
      *

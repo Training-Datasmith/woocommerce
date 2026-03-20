@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * A Trait to help with managing the legacy coupon menu.
  */
+namespace Automattic\Woo_Commerce\Internal\Admin;
 
-namespace Automattic\WooCommerce\Internal\Admin;
-
-use Automattic\WooCommerce\Admin\Features\Features;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
 /**
  * CouponsMovedTrait trait.
  */
-trait CouponsMovedTrait
+trait Coupons_Moved_Trait
 {
     /**
      * The GET query key for the legacy menu.
@@ -20,14 +18,12 @@ trait CouponsMovedTrait
      * @var string
      */
     protected static $query_key = 'legacy_coupon_menu';
-
     /**
      * The key for storing an option in the DB.
      *
      * @var string
      */
     protected static $option_key = 'wc_admin_show_legacy_coupon_menu';
-
     /**
      * Get the URL for the legacy coupon management.
      *
@@ -35,9 +31,8 @@ trait CouponsMovedTrait
      */
     protected static function get_legacy_coupon_url()
     {
-        return self::get_coupon_url([ self::$query_key => true ]);
+        return self::get_coupon_url([self::$query_key => true]);
     }
-
     /**
      * Get the URL for the coupon management page.
      *
@@ -47,16 +42,9 @@ trait CouponsMovedTrait
      */
     protected static function get_coupon_url($args = [])
     {
-        $args = array_merge(
-            [
-                'post_type' => 'shop_coupon',
-            ],
-            $args
-        );
-
+        $args = array_merge(['post_type' => 'shop_coupon'], $args);
         return add_query_arg($args, admin_url('edit.php'));
     }
-
     /**
      * Get the new URL for managing coupons.
      *
@@ -71,15 +59,12 @@ trait CouponsMovedTrait
             case 'coupon':
             case 'coupons':
                 return self::get_coupon_url();
-
             case 'marketing':
                 $path = self::get_marketing_path();
                 break;
         }
-
         return "wc-admin&path={$path}";
     }
-
     /**
      * Get the WC Admin path for the marking page.
      */
@@ -87,7 +72,6 @@ trait CouponsMovedTrait
     {
         return '/marketing/overview';
     }
-
     /**
      * Whether we should display the legacy coupon menu item.
      *
@@ -103,12 +87,8 @@ trait CouponsMovedTrait
          * @param bool $display Whether the menu should be displayed or not.
          * @return bool
          */
-        return apply_filters(
-            'wc_admin_show_legacy_coupon_menu',
-            ! Features::is_enabled('navigation')
-        );
+        return apply_filters('wc_admin_show_legacy_coupon_menu', !Features::is_enabled('navigation'));
     }
-
     /**
      * Set whether we should display the legacy coupon menu item.
      *

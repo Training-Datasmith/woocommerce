@@ -3,20 +3,17 @@
 /**
  * OrderPriceFormatter class file.
  */
-
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Email;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Email;
 
 use WC_Abstract_Order;
 use WC_Order_Item;
-
 /**
  * Helper class for formatting prices in order emails.
  *
  * @internal Just for internal use.
  */
-class OrderPriceFormatter
+class Order_Price_Formatter
 {
     /**
      * Gets item subtotal - formatted for display in emails.
@@ -28,11 +25,10 @@ class OrderPriceFormatter
      */
     public static function get_formatted_item_subtotal(WC_Abstract_Order $order, WC_Order_Item $item, string $tax_display): string
     {
-        $includes_tax  = 'excl' !== $tax_display;
+        $includes_tax = 'excl' !== $tax_display;
         $item_subtotal = $order->get_item_subtotal($item, $includes_tax);
         return self::format_price($order, $item_subtotal, $includes_tax);
     }
-
     /**
      * Helper method to format price with or without tax.
      *
@@ -43,12 +39,6 @@ class OrderPriceFormatter
      */
     private static function format_price(WC_Abstract_Order $order, float $amount, bool $includes_tax): string
     {
-        return wc_price(
-            $amount,
-            [
-                'ex_tax_label' => (! $includes_tax && $order->get_prices_include_tax()) ? 1 : 0,
-                'currency'     => $order->get_currency(),
-            ]
-        );
+        return wc_price($amount, ['ex_tax_label' => !$includes_tax && $order->get_prices_include_tax() ? 1 : 0, 'currency' => $order->get_currency()]);
     }
 }

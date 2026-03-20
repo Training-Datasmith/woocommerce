@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Blueprint\Exporters;
 
-namespace Automattic\WooCommerce\Admin\Features\Blueprint\Exporters;
-
-use Automattic\WooCommerce\Blueprint\Steps\RunSql;
-use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
-use Automattic\WooCommerce\Blueprint\Util;
-
+use Automattic\Woo_Commerce\Blueprint\Steps\Run_Sql;
+use Automattic\Woo_Commerce\Blueprint\Steps\Set_Site_Options;
+use Automattic\Woo_Commerce\Blueprint\Util;
 /**
  * Class ExportWCSettingsShipping
  *
@@ -15,7 +13,7 @@ use Automattic\WooCommerce\Blueprint\Util;
  *
  * @package Automattic\WooCommerce\Admin\Features\Blueprint\Exporters
  */
-class ExportWCSettingsShipping extends ExportWCSettings
+class Export_Wc_Settings_Shipping extends Export_Wc_Settings
 {
     /**
      * Export WooCommerce shipping settings.
@@ -25,19 +23,10 @@ class ExportWCSettingsShipping extends ExportWCSettings
     public function export(): array
     {
         $shipping_settings = parent::export();
-
-        $steps = array_merge(
-            [ $shipping_settings ],
-            $this->get_steps_for_classes_and_terms(),
-            $this->get_steps_for_zones(),
-            $this->get_steps_for_locations(),
-            $this->get_steps_for_methods_and_options()
-        );
-
+        $steps = array_merge([$shipping_settings], $this->get_steps_for_classes_and_terms(), $this->get_steps_for_zones(), $this->get_steps_for_locations(), $this->get_steps_for_methods_and_options());
         $steps[] = $this->get_step_for_local_pickup();
         return $steps;
     }
-
     /**
      * Retrieve term data based on provided classes.
      *
@@ -47,19 +36,10 @@ class ExportWCSettingsShipping extends ExportWCSettings
     protected function get_terms(array $classes): array
     {
         global $wpdb;
-
-        $term_ids = array_map(fn (array $term): int => (int) $term['term_id'], $classes);
+        $term_ids = array_map(fn(array $term): int => (int) $term['term_id'], $classes);
         $term_ids = implode(', ', $term_ids);
-
-        return ! empty($term_ids) ? $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}terms WHERE term_id IN (%s)",
-                $term_ids
-            ),
-            ARRAY_A
-        ) : [];
+        return !empty($term_ids) ? $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}terms WHERE term_id IN (%s)", $term_ids), ARRAY_A) : [];
     }
-
     /**
      * Retrieve shipping classes and related terms.
      *
@@ -68,33 +48,18 @@ class ExportWCSettingsShipping extends ExportWCSettings
     protected function get_steps_for_classes_and_terms(): array
     {
         global $wpdb;
-
-        $classes = $wpdb->get_results(
-            "SELECT * FROM {$wpdb->prefix}term_taxonomy WHERE taxonomy = 'product_shipping_class'",
-            ARRAY_A
-        );
-
-        $classes_steps = array_map(
-            fn ($class_row): \Automattic\WooCommerce\Blueprint\Steps\RunSql => new RunSql(Util::array_to_insert_sql($class_row, $wpdb->prefix . 'term_taxonomy', 'replace into')),
-            $classes
-        );
-
-        $terms = array_map(
-            fn ($term): \Automattic\WooCommerce\Blueprint\Steps\RunSql => new RunSql(Util::array_to_insert_sql($term, $wpdb->prefix . 'terms', 'replace into')),
-            $this->get_terms($classes)
-        );
-
+        $classes = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}term_taxonomy WHERE taxonomy = 'product_shipping_class'", ARRAY_A);
+        $classes_steps = array_map(fn($class_row): \Automattic\Woo_Commerce\Blueprint\Steps\Run_Sql => new Run_Sql(Util::array_to_insert_sql($class_row, $wpdb->prefix . 'term_taxonomy', 'replace into')), $classes);
+        $terms = array_map(fn($term): \Automattic\Woo_Commerce\Blueprint\Steps\Run_Sql => new Run_Sql(Util::array_to_insert_sql($term, $wpdb->prefix . 'terms', 'replace into')), $this->get_terms($classes));
         return array_merge($classes_steps, $terms);
     }
-
     /**
      * Get the name of the step.
      */
     public function get_step_name(): string
     {
-        return RunSql::get_step_name();
+        return Run_Sql::get_step_name();
     }
-
     /**
      * Return label used in the frontend.
      */
@@ -102,7 +67,6 @@ class ExportWCSettingsShipping extends ExportWCSettings
     {
         return __('Shipping', 'woocommerce');
     }
-
     /**
      * Return description used in the frontend.
      */
@@ -110,7 +74,6 @@ class ExportWCSettingsShipping extends ExportWCSettings
     {
         return __('Includes all settings in WooCommerce | Settings | Shipping.', 'woocommerce');
     }
-
     /**
      * Get the alias.
      */
@@ -118,7 +81,6 @@ class ExportWCSettingsShipping extends ExportWCSettings
     {
         return 'setWCShipping';
     }
-
     /**
      * Retrieve shipping zones from the database.
      *
@@ -127,13 +89,8 @@ class ExportWCSettingsShipping extends ExportWCSettings
     private function get_steps_for_zones(): array
     {
         global $wpdb;
-
-        return array_map(
-            fn ($zone): \Automattic\WooCommerce\Blueprint\Steps\RunSql => new RunSql(Util::array_to_insert_sql($zone, $wpdb->prefix . 'woocommerce_shipping_zones', 'replace into')),
-            $wpdb->get_results("SELECT * FROM {$wpdb->prefix}woocommerce_shipping_zones", ARRAY_A)
-        );
+        return array_map(fn($zone): \Automattic\Woo_Commerce\Blueprint\Steps\Run_Sql => new Run_Sql(Util::array_to_insert_sql($zone, $wpdb->prefix . 'woocommerce_shipping_zones', 'replace into')), $wpdb->get_results("SELECT * FROM {$wpdb->prefix}woocommerce_shipping_zones", ARRAY_A));
     }
-
     /**
      * Retrieve shipping zone locations.
      *
@@ -142,13 +99,8 @@ class ExportWCSettingsShipping extends ExportWCSettings
     private function get_steps_for_locations(): array
     {
         global $wpdb;
-
-        return array_map(
-            fn ($location): \Automattic\WooCommerce\Blueprint\Steps\RunSql => new RunSql(Util::array_to_insert_sql($location, $wpdb->prefix . 'woocommerce_shipping_zone_locations', 'replace into')),
-            $wpdb->get_results("SELECT * FROM {$wpdb->prefix}woocommerce_shipping_zone_locations", ARRAY_A)
-        );
+        return array_map(fn($location): \Automattic\Woo_Commerce\Blueprint\Steps\Run_Sql => new Run_Sql(Util::array_to_insert_sql($location, $wpdb->prefix . 'woocommerce_shipping_zone_locations', 'replace into')), $wpdb->get_results("SELECT * FROM {$wpdb->prefix}woocommerce_shipping_zone_locations", ARRAY_A));
     }
-
     /**
      * Retrieve shipping methods and options.
      *
@@ -157,41 +109,19 @@ class ExportWCSettingsShipping extends ExportWCSettings
     private function get_steps_for_methods_and_options(): array
     {
         global $wpdb;
-
-        $methods        = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}woocommerce_shipping_zone_methods", ARRAY_A);
-        $method_options = $wpdb->get_results(
-            "SELECT * FROM {$wpdb->prefix}options WHERE option_name LIKE 'woocommerce_flat_rate_%_settings'
-            OR option_name LIKE 'woocommerce_free_shipping_%_settings'",
-            ARRAY_A
-        );
-
-        return array_merge(
-            array_map(
-                fn ($method): \Automattic\WooCommerce\Blueprint\Steps\RunSql => new RunSql(Util::array_to_insert_sql($method, $wpdb->prefix . 'woocommerce_shipping_zone_methods', 'replace into')),
-                $methods
-            ),
-            array_map(
-                fn ($option): \Automattic\WooCommerce\Blueprint\Steps\RunSql => new RunSql(Util::array_to_insert_sql($option, $wpdb->prefix . 'options', 'replace into')),
-                $method_options
-            )
-        );
+        $methods = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}woocommerce_shipping_zone_methods", ARRAY_A);
+        $method_options = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}options WHERE option_name LIKE 'woocommerce_flat_rate_%_settings'\n            OR option_name LIKE 'woocommerce_free_shipping_%_settings'", ARRAY_A);
+        return array_merge(array_map(fn($method): \Automattic\Woo_Commerce\Blueprint\Steps\Run_Sql => new Run_Sql(Util::array_to_insert_sql($method, $wpdb->prefix . 'woocommerce_shipping_zone_methods', 'replace into')), $methods), array_map(fn($option): \Automattic\Woo_Commerce\Blueprint\Steps\Run_Sql => new Run_Sql(Util::array_to_insert_sql($option, $wpdb->prefix . 'options', 'replace into')), $method_options));
     }
-
     /**
      * Retrieve local pickup settings.
      *
      * @return SetSiteOptions Local pickup settings step.
      */
-    private function get_step_for_local_pickup(): SetSiteOptions
+    private function get_step_for_local_pickup(): Set_Site_Options
     {
-        return new SetSiteOptions(
-            [
-                'woocommerce_pickup_location_settings' => get_option('woocommerce_pickup_location_settings', []),
-                'pickup_location_pickup_locations'     => get_option('pickup_location_pickup_locations', []),
-            ]
-        );
+        return new Set_Site_Options(['woocommerce_pickup_location_settings' => get_option('woocommerce_pickup_location_settings', []), 'pickup_location_pickup_locations' => get_option('pickup_location_pickup_locations', [])]);
     }
-
     /**
      * Check if the current user has the required capabilities for this step.
      *
@@ -201,7 +131,6 @@ class ExportWCSettingsShipping extends ExportWCSettings
     {
         return current_user_can('manage_woocommerce');
     }
-
     /**
      * Get the page ID for the settings page.
      */

@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes\OrderConfirmation;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Order_Confirmation;
 
 /**
  * BillingWrapper class.
  */
-class BillingWrapper extends AbstractOrderConfirmationBlock
+class Billing_Wrapper extends Abstract_Order_Confirmation_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class BillingWrapper extends AbstractOrderConfirmationBlock
      * @var string
      */
     protected $block_name = 'order-confirmation-billing-wrapper';
-
     /**
      * This renders the content of the billing wrapper.
      *
@@ -26,12 +24,11 @@ class BillingWrapper extends AbstractOrderConfirmationBlock
      */
     protected function render_content($order, $permission = false, $attributes = [], $content = '')
     {
-        if (! $order || ! $order->has_billing_address() || ! $permission) {
+        if (!$order || !$order->has_billing_address() || !$permission) {
             return '';
         }
         return $content;
     }
-
     /**
      * Get the frontend style handle for this block type.
      */

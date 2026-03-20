@@ -1,67 +1,56 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * PageController
  */
+namespace Automattic\Woo_Commerce\Admin;
 
-namespace Automattic\WooCommerce\Admin;
-
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Internal\Admin\Loader;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Internal\Admin\Loader;
 use WC_Gateway_BACS;
 use WC_Gateway_Cheque;
 use WC_Gateway_COD;
 use WC_Gateway_Paypal;
-
 defined('ABSPATH') || exit;
-
 /**
  * PageController
  */
-class PageController
+class Page_Controller
 {
     /**
      * App entry point.
      */
     public const APP_ENTRY_POINT = 'wc-admin';
-
     // JS-powered page root.
     public const PAGE_ROOT = 'wc-admin';
-
     /**
      * Singleton instance of self.
      *
      * @var PageController
      */
     private static $instance = false;
-
     /**
      * Current page ID (or false if not registered with this controller).
      *
      * @var string
      */
     private $current_page;
-
     /**
      * Registered pages
      * Contains information (breadcrumbs, menu info) about JS powered pages and classic WooCommerce pages.
      */
     private array $pages = [];
-
     /**
      * We want a single instance of this class so we can accurately track registered menus and pages.
      */
     public static function get_instance()
     {
-        if (! self::$instance) {
+        if (!self::$instance) {
             self::$instance = new self();
         }
-
         return self::$instance;
     }
-
     /**
      * Constructor.
      * Hooks added here should be removed in `wc_admin_initialize` via the feature plugin.
@@ -70,13 +59,11 @@ class PageController
     {
         add_action('admin_menu', $this->register_page_handler(...));
         add_action('admin_menu', $this->register_store_details_page(...));
-
         // priority is 20 to run after https://github.com/woocommerce/woocommerce/blob/a55ae325306fc2179149ba9b97e66f32f84fdd9c/includes/admin/class-wc-admin-menus.php#L165.
         add_action('admin_head', $this->remove_app_entry_page_menu_item(...), 20);
         // Using low priority to run before other hooks.
         add_action('admin_init', $this->maybe_redirect_payment_tasks_to_settings(...), 1);
     }
-
     /**
      * Connect an existing page to wc-admin.
      *
@@ -95,10 +82,9 @@ class PageController
      */
     public function connect_page($options): void
     {
-        if (! is_array($options['title'])) {
-            $options['title'] = [ $options['title'] ];
+        if (!is_array($options['title'])) {
+            $options['title'] = [$options['title']];
         }
-
         /**
          * Filter the options when connecting or registering a page.
          *
@@ -119,55 +105,40 @@ class PageController
          * }
          */
         $options = apply_filters('woocommerce_navigation_connect_page_options', $options);
-
         // In the future, we should consider check for collision, but keep in mind that the current behavior is: the later call silently overwrites the earlier one.
         $id = $options['id'] ?? null;
-
         if (is_string($id) && '' !== $id) {
-            $this->pages[ $id ] = $options;
+            $this->pages[$id] = $options;
         }
     }
-
     /**
      * Determine the current page ID, if it was registered with this controller.
      */
     public function determine_current_page(): void
     {
-        $current_url       = '';
+        $current_url = '';
         $current_screen_id = $this->get_current_screen_id();
-
         if (isset($_SERVER['REQUEST_URI'])) {
             $current_url = esc_url_raw(wp_unslash($_SERVER['REQUEST_URI']));
         }
-
         $current_query = wp_parse_url($current_url, PHP_URL_QUERY);
         parse_str((string) $current_query, $current_pieces);
-        $current_path  = empty($current_pieces['page']) ? '' : $current_pieces['page'];
+        $current_path = empty($current_pieces['page']) ? '' : $current_pieces['page'];
         $current_path .= empty($current_pieces['path']) ? '' : '&path=' . $current_pieces['path'];
-
         foreach ($this->pages as $page) {
             if (isset($page['js_page']) && $page['js_page']) {
                 // Check registered admin pages.
-                if (
-                    $page['path'] === $current_path
-                ) {
+                if ($page['path'] === $current_path) {
                     $this->current_page = $page;
                     return;
                 }
-            } else {
-                // Check connected admin pages.
-                if (
-                    isset($page['screen_id']) &&
-                    $page['screen_id'] === $current_screen_id
-                ) {
-                    $this->current_page = $page;
-                    return;
-                }
+            } else if (isset($page['screen_id']) && $page['screen_id'] === $current_screen_id) {
+                $this->current_page = $page;
+                return;
             }
         }
         $this->current_page = false;
     }
-
     /**
      * Get breadcrumbs for WooCommerce Admin Page navigation.
      *
@@ -176,50 +147,36 @@ class PageController
     public function get_breadcrumbs()
     {
         $current_page = $this->get_current_page();
-
         // Bail if this isn't a page registered with this controller.
         if (false === $current_page) {
             // Filter documentation below.
-            return apply_filters('woocommerce_navigation_get_breadcrumbs', [ '' ], $current_page);
+            return apply_filters('woocommerce_navigation_get_breadcrumbs', [''], $current_page);
         }
-
-        $page_title = ! empty($current_page['page_title']) ? $current_page['page_title'] : $current_page['title'];
+        $page_title = !empty($current_page['page_title']) ? $current_page['page_title'] : $current_page['title'];
         $page_title = (array) $page_title;
         if (1 === count($page_title)) {
             $breadcrumbs = $page_title;
         } else {
             // If this page has multiple title pieces, only link the first one.
-            $breadcrumbs = array_merge(
-                [
-                    [ $current_page['path'], reset($page_title) ],
-                ],
-                array_slice($page_title, 1)
-            );
+            $breadcrumbs = array_merge([[$current_page['path'], reset($page_title)]], array_slice($page_title, 1));
         }
-
         if (isset($current_page['parent'])) {
             $parent_id = $current_page['parent'];
-
             while ($parent_id) {
-                if (isset($this->pages[ $parent_id ])) {
-                    $parent = $this->pages[ $parent_id ];
-
+                if (isset($this->pages[$parent_id])) {
+                    $parent = $this->pages[$parent_id];
                     if (str_starts_with((string) $parent['path'], self::PAGE_ROOT)) {
                         $parent['path'] = 'admin.php?page=' . $parent['path'];
                     }
-
-                    array_unshift($breadcrumbs, [ $parent['path'], reset($parent['title']) ]);
+                    array_unshift($breadcrumbs, [$parent['path'], reset($parent['title'])]);
                     $parent_id = $parent['parent'] ?? false;
                 } else {
                     $parent_id = false;
                 }
             }
         }
-
-        $woocommerce_breadcrumb = [ 'admin.php?page=' . self::PAGE_ROOT, __('WooCommerce', 'woocommerce') ];
-
+        $woocommerce_breadcrumb = ['admin.php?page=' . self::PAGE_ROOT, __('WooCommerce', 'woocommerce')];
         array_unshift($breadcrumbs, $woocommerce_breadcrumb);
-
         /**
          * The navigation breadcrumbs for the current page.
          *
@@ -228,7 +185,6 @@ class PageController
          */
         return apply_filters('woocommerce_navigation_get_breadcrumbs', $breadcrumbs, $current_page);
     }
-
     /**
      * Get the current page.
      *
@@ -238,17 +194,14 @@ class PageController
     {
         // If 'current_screen' hasn't fired yet, the current page calculation
         // will fail which causes `false` to be returned for all subsequent calls.
-        if (! did_action('current_screen')) {
+        if (!did_action('current_screen')) {
             _doing_it_wrong(__FUNCTION__, esc_html__('Current page retrieval should be called on or after the `current_screen` hook.', 'woocommerce'), '0.16.0');
         }
-
         if (is_null($this->current_page)) {
             $this->determine_current_page();
         }
-
         return $this->current_page;
     }
-
     /**
      * Returns the current screen ID.
      *
@@ -278,98 +231,52 @@ class PageController
              */
             return apply_filters('woocommerce_navigation_current_screen_id', false, null);
         }
-
         $current_screen = get_current_screen();
-        if (! $current_screen) {
+        if (!$current_screen) {
             // Filter documentation below.
             return apply_filters('woocommerce_navigation_current_screen_id', false, $current_screen);
         }
-
-        $screen_pieces = [ $current_screen->id ];
-
+        $screen_pieces = [$current_screen->id];
         if ($current_screen->action) {
             $screen_pieces[] = $current_screen->action;
         }
-
-        if (
-            ! empty($current_screen->taxonomy) &&
-            isset($current_screen->post_type) &&
-            'product' === $current_screen->post_type
-        ) {
+        if (!empty($current_screen->taxonomy) && isset($current_screen->post_type) && 'product' === $current_screen->post_type) {
             // Editing a product attribute.
             if (str_starts_with((string) $current_screen->taxonomy, 'pa_')) {
-                $screen_pieces = [ 'product_page_product_attribute-edit' ];
+                $screen_pieces = ['product_page_product_attribute-edit'];
             }
-
             // Editing a product taxonomy term.
-            if (! empty($_GET['tag_ID'])) {
-                $screen_pieces = [ $current_screen->taxonomy ];
+            if (!empty($_GET['tag_ID'])) {
+                $screen_pieces = [$current_screen->taxonomy];
             }
         }
-
         // Pages with default tab values.
-        $pages_with_tabs = apply_filters(
-            'woocommerce_navigation_pages_with_tabs',
-            [
-                'wc-reports'  => 'orders',
-                'wc-settings' => 'general',
-                'wc-status'   => 'status',
-                'wc-addons'   => 'browse-extensions',
-            ]
-        );
-
+        $pages_with_tabs = apply_filters('woocommerce_navigation_pages_with_tabs', ['wc-reports' => 'orders', 'wc-settings' => 'general', 'wc-status' => 'status', 'wc-addons' => 'browse-extensions']);
         // Tabs that have sections as well.
-        $wc_emails    = \WC_Emails::instance();
+        $wc_emails = \WC_Emails::instance();
         $wc_email_ids = array_map(sanitize_title(...), array_keys($wc_emails->get_emails()));
-
-        $tabs_with_sections = apply_filters(
-            'woocommerce_navigation_page_tab_sections',
-            [
-                'products'          => [ '', 'inventory', 'downloadable', 'download_urls', 'advanced' ],
-                'shipping'          => [ '', 'options', 'classes', 'pickup_location' ],
-                'checkout'          => [ WC_Gateway_BACS::ID, WC_Gateway_Cheque::ID, WC_Gateway_COD::ID, WC_Gateway_Paypal::ID ],
-                'email'             => $wc_email_ids,
-                'advanced'          => [
-                    '',
-                    'keys',
-                    'webhooks',
-                    'legacy_api',
-                    'woocommerce_com',
-                    'features',
-                    'blueprint',
-                ],
-                'browse-extensions' => [ 'helper' ],
-            ]
-        );
-
-        if (! empty($_GET['page'])) {
+        $tabs_with_sections = apply_filters('woocommerce_navigation_page_tab_sections', ['products' => ['', 'inventory', 'downloadable', 'download_urls', 'advanced'], 'shipping' => ['', 'options', 'classes', 'pickup_location'], 'checkout' => [WC_Gateway_BACS::ID, WC_Gateway_Cheque::ID, WC_Gateway_COD::ID, WC_Gateway_Paypal::ID], 'email' => $wc_email_ids, 'advanced' => ['', 'keys', 'webhooks', 'legacy_api', 'woocommerce_com', 'features', 'blueprint'], 'browse-extensions' => ['helper']]);
+        if (!empty($_GET['page'])) {
             $page = wc_clean(wp_unslash($_GET['page']));
             if (in_array($page, array_keys($pages_with_tabs))) {
-                if (! empty($_GET['tab'])) {
+                if (!empty($_GET['tab'])) {
                     $tab = wc_clean(wp_unslash($_GET['tab']));
                 } else {
-                    $tab = $pages_with_tabs[ $page ];
+                    $tab = $pages_with_tabs[$page];
                 }
-
                 $screen_pieces[] = $tab;
-
-                if (! empty($_GET['section'])) {
+                if (!empty($_GET['section'])) {
                     $section = wc_clean(wp_unslash($_GET['section']));
-                    if (
-                        isset($tabs_with_sections[ $tab ]) &&
-                        in_array($section, array_values($tabs_with_sections[ $tab ]), true)
-                    ) {
+                    if (isset($tabs_with_sections[$tab]) && in_array($section, array_values($tabs_with_sections[$tab]), true)) {
                         $screen_pieces[] = $section;
                     }
                 }
-
                 // Editing a shipping zone.
-                if (('shipping' === $tab) && isset($_GET['zone_id'])) {
+                if ('shipping' === $tab && isset($_GET['zone_id'])) {
                     $screen_pieces[] = 'edit_zone';
                 }
             }
         }
-
         /**
          * The current screen id.
          *
@@ -380,7 +287,6 @@ class PageController
          */
         return apply_filters('woocommerce_navigation_current_screen_id', implode('-', $screen_pieces), $current_screen);
     }
-
     /**
      * Returns the path from an ID.
      *
@@ -389,12 +295,11 @@ class PageController
      */
     public function get_path_from_id($id)
     {
-        if (isset($this->pages[ $id ]) && isset($this->pages[ $id ]['path'])) {
-            return $this->pages[ $id ]['path'];
+        if (isset($this->pages[$id]) && isset($this->pages[$id]['path'])) {
+            return $this->pages[$id]['path'];
         }
         return $id;
     }
-
     /**
      * Returns true if we are on a page connected to this controller.
      *
@@ -403,19 +308,16 @@ class PageController
     public function is_connected_page()
     {
         $current_page = $this->get_current_page();
-
         if (false === $current_page) {
             $is_connected_page = false;
         } else {
-            $is_connected_page = isset($current_page['js_page']) ? ! $current_page['js_page'] : true;
+            $is_connected_page = isset($current_page['js_page']) ? !$current_page['js_page'] : true;
         }
-
         // Disable embed on the block editor.
         $current_screen = did_action('current_screen') ? get_current_screen() : false;
-        if (! empty($current_screen) && method_exists($current_screen, 'is_block_editor') && $current_screen->is_block_editor()) {
+        if (!empty($current_screen) && method_exists($current_screen, 'is_block_editor') && $current_screen->is_block_editor()) {
             $is_connected_page = false;
         }
-
         /**
          * Whether or not the current page is an existing page connected to this controller.
          *
@@ -426,7 +328,6 @@ class PageController
          */
         return apply_filters('woocommerce_navigation_is_connected_page', $is_connected_page, $current_page);
     }
-
     /**
      * Returns true if we are on a page registered with this controller.
      *
@@ -435,13 +336,11 @@ class PageController
     public function is_registered_page()
     {
         $current_page = $this->get_current_page();
-
         if (false === $current_page) {
             $is_registered_page = false;
         } else {
             $is_registered_page = isset($current_page['js_page']) && $current_page['js_page'];
         }
-
         /**
          * Whether or not the current page was registered with this controller.
          *
@@ -452,7 +351,6 @@ class PageController
          */
         return apply_filters('woocommerce_navigation_is_registered_page', $is_registered_page, $current_page);
     }
-
     /**
      * Adds a JS powered page to wc-admin.
      *
@@ -471,58 +369,26 @@ class PageController
      */
     public function register_page($options): void
     {
-        $defaults = [
-            'id'         => null,
-            'parent'     => null,
-            'title'      => '',
-            'page_title' => '',
-            'capability' => 'view_woocommerce_reports',
-            'path'       => '',
-            'icon'       => '',
-            'position'   => null,
-            'js_page'    => true,
-        ];
-
+        $defaults = ['id' => null, 'parent' => null, 'title' => '', 'page_title' => '', 'capability' => 'view_woocommerce_reports', 'path' => '', 'icon' => '', 'position' => null, 'js_page' => true];
         $options = wp_parse_args($options, $defaults);
-
         if (!str_starts_with((string) $options['path'], self::PAGE_ROOT)) {
             $options['path'] = self::PAGE_ROOT . '&path=' . $options['path'];
         }
-
         if (null !== $options['position']) {
             $options['position'] = intval(round($options['position']));
         }
-
         if (empty($options['page_title'])) {
             $options['page_title'] = $options['title'];
         }
-
         if (is_null($options['parent'])) {
-            add_menu_page(
-                $options['page_title'],
-                $options['title'],
-                $options['capability'],
-                $options['path'],
-                self::page_wrapper(...),
-                $options['icon'],
-                $options['position']
-            );
+            add_menu_page($options['page_title'], $options['title'], $options['capability'], $options['path'], self::page_wrapper(...), $options['icon'], $options['position']);
         } else {
             $parent_path = $this->get_path_from_id($options['parent']);
             // @todo check for null path.
-            add_submenu_page(
-                $parent_path,
-                $options['page_title'],
-                $options['title'],
-                $options['capability'],
-                $options['path'],
-                self::page_wrapper(...)
-            );
+            add_submenu_page($parent_path, $options['page_title'], $options['title'], $options['capability'], $options['path'], self::page_wrapper(...));
         }
-
         $this->connect_page($options);
     }
-
     /**
      * Get registered pages.
      *
@@ -532,7 +398,6 @@ class PageController
     {
         return $this->pages;
     }
-
     /**
      * Set up a div for the app to render into.
      */
@@ -540,7 +405,6 @@ class PageController
     {
         Loader::page_wrapper();
     }
-
     /**
      * Connects existing WooCommerce pages.
      *
@@ -550,22 +414,13 @@ class PageController
     {
         require_once WC_ADMIN_ABSPATH . 'includes/react-admin/connect-existing-pages.php';
     }
-
     /**
      * Registers the store details (profiler) page.
      */
     public function register_store_details_page(): void
     {
-        wc_admin_register_page(
-            [
-                'id'     => 'setup-wizard',
-                'title'  => __('Setup Wizard', 'woocommerce'),
-                'parent' => '',
-                'path'   => '/setup-wizard',
-            ]
-        );
+        wc_admin_register_page(['id' => 'setup-wizard', 'title' => __('Setup Wizard', 'woocommerce'), 'parent' => '', 'path' => '/setup-wizard']);
     }
-
     /**
      * Remove the menu item for the app entry point page.
      */
@@ -573,10 +428,9 @@ class PageController
     {
         global $submenu;
         // User does not have capabilities to see the submenu.
-        if (! current_user_can('manage_woocommerce') || empty($submenu['woocommerce'])) {
+        if (!current_user_can('manage_woocommerce') || empty($submenu['woocommerce'])) {
             return;
         }
-
         $wc_admin_key = null;
         foreach ($submenu['woocommerce'] as $submenu_key => $submenu_item) {
             // Our app entry page menu item has no title.
@@ -585,14 +439,11 @@ class PageController
                 break;
             }
         }
-
-        if (! $wc_admin_key) {
+        if (!$wc_admin_key) {
             return;
         }
-
-        unset($submenu['woocommerce'][ $wc_admin_key ]);
+        unset($submenu['woocommerce'][$wc_admin_key]);
     }
-
     /**
      * Returns true if we are on a JS powered admin page or
      * a "classic" (non JS app) powered admin page (an embedded page).
@@ -604,7 +455,6 @@ class PageController
         }
         return (bool) self::is_embed_page();
     }
-
     /**
      * Returns true if we are on a JS powered admin page.
      */
@@ -614,7 +464,6 @@ class PageController
         return isset($_GET['page']) && 'wc-admin' === $_GET['page'];
         // phpcs:enable WordPress.Security.NonceVerification
     }
-
     /**
      * Returns true if we are on a settings page.
      */
@@ -624,7 +473,6 @@ class PageController
         return isset($_GET['page']) && 'wc-settings' === $_GET['page'];
         // phpcs:enable WordPress.Security.NonceVerification
     }
-
     /**
      *  Returns true if we are on a "classic" (non JS app) powered admin page.
      *
@@ -634,7 +482,6 @@ class PageController
     {
         return wc_admin_is_connected_page();
     }
-
     /**
      * Returns true if we are on a modern settings page.
      */
@@ -642,7 +489,6 @@ class PageController
     {
         return self::is_settings_page() && Features::is_enabled('settings');
     }
-
     /**
      * Redirect payment tasks to the settings page.
      *
@@ -652,38 +498,31 @@ class PageController
     public function maybe_redirect_payment_tasks_to_settings(): void
     {
         // Bail if we are not in the WP admin or not on a WC admin page.
-        if (! is_admin() || ! self::is_admin_page()) {
+        if (!is_admin() || !self::is_admin_page()) {
             return;
         }
-
         // Bail if we are not requesting a page for a WooCommerce task.
         // phpcs:ignore WordPress.Security.NonceVerification
         if (empty($_GET['task'])) {
             return;
         }
-
         // Only sufficiently capable users should be redirected.
-        if (! current_user_can('manage_woocommerce')) {
+        if (!current_user_can('manage_woocommerce')) {
             return;
         }
-
         // Get the current task ID.
         // phpcs:ignore WordPress.Security.NonceVerification
         $task_id = wc_clean(wp_unslash($_GET['task']));
-
         // Bail if the task is not a payments task.
-        if (! in_array($task_id, [ 'payments', 'woocommerce-payments' ], true)) {
+        if (!in_array($task_id, ['payments', 'woocommerce-payments'], true)) {
             return;
         }
-
         $redirect_url = admin_url('admin.php?page=wc-settings&tab=checkout&from=WCADMIN_PAYMENT_TASK');
-
         // The WooPayments task is always redirected to the settings page.
         if ('woocommerce-payments' === $task_id) {
             wp_safe_redirect($redirect_url);
             exit;
         }
-
         // The generic payments task is only redirected if the request is a regular user request,
         // not part of an onboarding flow or other special case.
         $special_request_params = [
@@ -706,11 +545,10 @@ class PageController
         ];
         foreach ($special_request_params as $param) {
             // phpcs:ignore WordPress.Security.NonceVerification
-            if (isset($_GET[ $param ])) {
+            if (isset($_GET[$param])) {
                 return;
             }
         }
-
         // If we reach this point, we can safely redirect to the settings page.
         wp_safe_redirect($redirect_url);
         exit;

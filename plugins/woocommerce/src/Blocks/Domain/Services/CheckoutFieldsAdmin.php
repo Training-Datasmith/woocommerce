@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Domain\Services;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Domain\Services;
 
 /**
  * Service class managing checkout fields and its related extensibility points in the admin area.
  */
-class CheckoutFieldsAdmin
+class Checkout_Fields_Admin
 {
     /**
      * Sets up core fields.
@@ -18,10 +17,10 @@ class CheckoutFieldsAdmin
         /**
          * Checkout field controller.
          */
-        private readonly CheckoutFields $checkout_fields_controller
-    ) {
+        private readonly Checkout_Fields $checkout_fields_controller
+    )
+    {
     }
-
     /**
      * Initialize hooks. This is not run Store API requests.
      */
@@ -32,7 +31,6 @@ class CheckoutFieldsAdmin
         add_filter('woocommerce_admin_shipping_fields', $this->admin_address_fields(...), 10, 3);
         add_filter('woocommerce_admin_shipping_fields', $this->admin_order_fields(...), 10, 3);
     }
-
     /**
      * Converts the shape of a checkout field to match whats needed in the WooCommerce meta boxes.
      *
@@ -42,28 +40,16 @@ class CheckoutFieldsAdmin
      */
     protected function format_field_for_meta_box(array $field, $key): array
     {
-        $formatted_field = [
-            'id'              => $key,
-            'label'           => $field['label'],
-            'value'           => $field['value'],
-            'type'            => $field['type'],
-            'update_callback' => $this->update_callback(...),
-            'show'            => true,
-            'wrapper_class'   => 'form-field-wide',
-        ];
-
+        $formatted_field = ['id' => $key, 'label' => $field['label'], 'value' => $field['value'], 'type' => $field['type'], 'update_callback' => $this->update_callback(...), 'show' => true, 'wrapper_class' => 'form-field-wide'];
         if ('select' === $field['type']) {
             $formatted_field['options'] = array_column($field['options'], 'label', 'value');
         }
-
         if ('checkbox' === $field['type']) {
-            $formatted_field['checked_value']   = '1';
+            $formatted_field['checked_value'] = '1';
             $formatted_field['unchecked_value'] = '0';
         }
-
         return $formatted_field;
     }
-
     /**
      * Updates a field value for an order.
      *
@@ -74,10 +60,9 @@ class CheckoutFieldsAdmin
     public function update_callback(string $key, $value, \WC_Order $order): void
     {
         [$group, $key] = explode('/', $key, 2);
-        $group               = CheckoutFields::get_group_name($group);
+        $group = Checkout_Fields::get_group_name($group);
         $this->checkout_fields_controller->persist_field_for_order($key, $value, $order, $group, false);
     }
-
     /**
      * Injects address fields in WC admin orders screen.
      *
@@ -88,31 +73,18 @@ class CheckoutFieldsAdmin
      */
     public function admin_address_fields($fields, $order = null, string $context = 'edit')
     {
-        if (! $order instanceof \WC_Order) {
+        if (!$order instanceof \WC_Order) {
             return $fields;
         }
-
-        $group_name        = doing_action('woocommerce_admin_billing_fields') ? 'billing' : 'shipping';
+        $group_name = doing_action('woocommerce_admin_billing_fields') ? 'billing' : 'shipping';
         $additional_fields = $this->checkout_fields_controller->get_order_additional_fields_with_values($order, 'address', $group_name, $context);
         foreach ($additional_fields as $key => $field) {
-            $prefixed_key              = CheckoutFields::get_group_key($group_name) . $key;
-            $additional_fields[ $key ] = $this->format_field_for_meta_box($field, $prefixed_key);
+            $prefixed_key = Checkout_Fields::get_group_key($group_name) . $key;
+            $additional_fields[$key] = $this->format_field_for_meta_box($field, $prefixed_key);
         }
-
-        array_splice(
-            $fields,
-            array_search(
-                'state',
-                array_keys($fields),
-                true
-            ) + 1,
-            0,
-            $additional_fields
-        );
-
+        array_splice($fields, array_search('state', array_keys($fields), true) + 1, 0, $additional_fields);
         return $fields;
     }
-
     /**
      * Injects contact fields in WC admin orders screen.
      *
@@ -123,20 +95,16 @@ class CheckoutFieldsAdmin
      */
     public function admin_contact_fields($fields, $order = null, string $context = 'edit')
     {
-        if (! $order instanceof \WC_Order) {
+        if (!$order instanceof \WC_Order) {
             return $fields;
         }
-
         $additional_fields = $this->checkout_fields_controller->get_order_additional_fields_with_values($order, 'contact', 'other', $context);
-
         foreach ($additional_fields as $key => $field) {
-            $prefixed_key              = CheckoutFields::get_group_key('other') . $key;
-            $additional_fields[ $key ] = $this->format_field_for_meta_box($field, $prefixed_key);
+            $prefixed_key = Checkout_Fields::get_group_key('other') . $key;
+            $additional_fields[$key] = $this->format_field_for_meta_box($field, $prefixed_key);
         }
-
         return array_merge($fields, $additional_fields);
     }
-
     /**
      * Injects additional fields in WC admin orders screen.
      *
@@ -147,17 +115,14 @@ class CheckoutFieldsAdmin
      */
     public function admin_order_fields($fields, $order = null, string $context = 'edit')
     {
-        if (! $order instanceof \WC_Order) {
+        if (!$order instanceof \WC_Order) {
             return $fields;
         }
-
         $additional_fields = $this->checkout_fields_controller->get_order_additional_fields_with_values($order, 'order', 'other', $context);
-
         foreach ($additional_fields as $key => $field) {
-            $prefixed_key              = CheckoutFields::get_group_key('other') . $key;
-            $additional_fields[ $key ] = $this->format_field_for_meta_box($field, $prefixed_key);
+            $prefixed_key = Checkout_Fields::get_group_key('other') . $key;
+            $additional_fields[$key] = $this->format_field_for_meta_box($field, $prefixed_key);
         }
-
         return array_merge($fields, $additional_fields);
     }
 }

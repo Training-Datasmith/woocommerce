@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * ProductOnSale class.
  */
-class ProductOnSale extends AbstractProductGrid
+class Product_On_Sale extends Abstract_Product_Grid
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class ProductOnSale extends AbstractProductGrid
      * @var string
      */
     protected $block_name = 'product-on-sale';
-
     /**
      * Set args specific to this block
      *
@@ -23,19 +21,13 @@ class ProductOnSale extends AbstractProductGrid
      */
     protected function set_block_query_args(&$query_args)
     {
-        $query_args['post__in'] = array_merge([ 0 ], wc_get_product_ids_on_sale());
+        $query_args['post__in'] = array_merge([0], wc_get_product_ids_on_sale());
     }
     /**
      * Get block attributes.
      */
     protected function get_block_type_attributes(): array
     {
-        return array_merge(
-            parent::get_block_type_attributes(),
-            [
-                'className' => $this->get_schema_string(),
-                'orderby'   => $this->get_schema_orderby(),
-            ]
-        );
+        return array_merge(parent::get_block_type_attributes(), ['className' => $this->get_schema_string(), 'orderby' => $this->get_schema_orderby()]);
     }
 }

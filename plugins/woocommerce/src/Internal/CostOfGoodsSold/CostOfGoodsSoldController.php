@@ -1,23 +1,20 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Cost_Of_Goods_Sold;
 
-namespace Automattic\WooCommerce\Internal\CostOfGoodsSold;
-
-use Automattic\WooCommerce\Enums\FeaturePluginCompatibility;
-use Automattic\WooCommerce\Internal\Features\FeaturesController;
-use Automattic\WooCommerce\Internal\RegisterHooksInterface;
-
+use Automattic\Woo_Commerce\Enums\Feature_Plugin_Compatibility;
+use Automattic\Woo_Commerce\Internal\Features\Features_Controller;
+use Automattic\Woo_Commerce\Internal\Register_Hooks_Interface;
 /**
  * Main controller for the Cost of Goods Sold feature.
  */
-class CostOfGoodsSoldController implements RegisterHooksInterface
+class Cost_Of_Goods_Sold_Controller implements Register_Hooks_Interface
 {
     /**
      * The instance of FeaturesController to use.
      */
-    private FeaturesController $features_controller;
-
+    private Features_Controller $features_controller;
     /**
      * Register hooks.
      */
@@ -25,18 +22,16 @@ class CostOfGoodsSoldController implements RegisterHooksInterface
     {
         add_filter('woocommerce_debug_tools', $this->add_debug_tools_entry(...), 999, 1);
     }
-
     /**
      * Initialize the instance, runs when the instance is created by the dependency injection container.
      *
      * @internal
      * @param FeaturesController $features_controller The instance of FeaturesController to use.
      */
-    final public function init(FeaturesController $features_controller): void
+    final public function init(Features_Controller $features_controller): void
     {
         $this->features_controller = $features_controller;
     }
-
     /**
      * Is the Cost of Goods Sold engine enabled?
      *
@@ -46,7 +41,6 @@ class CostOfGoodsSoldController implements RegisterHooksInterface
     {
         return $this->features_controller->feature_is_enabled('cost_of_goods_sold');
     }
-
     /**
      * Add the feature information for the features settings page.
      *
@@ -56,20 +50,9 @@ class CostOfGoodsSoldController implements RegisterHooksInterface
      */
     public function add_feature_definition($features_controller): void
     {
-        $definition = [
-            'description'                  => __('Allows entering cost of goods sold information for products.', 'woocommerce'),
-            'is_experimental'              => false,
-            'enabled_by_default'           => false,
-            'default_plugin_compatibility' => FeaturePluginCompatibility::COMPATIBLE,
-        ];
-
-        $features_controller->add_feature_definition(
-            'cost_of_goods_sold',
-            __('Cost of Goods Sold', 'woocommerce'),
-            $definition
-        );
+        $definition = ['description' => __('Allows entering cost of goods sold information for products.', 'woocommerce'), 'is_experimental' => false, 'enabled_by_default' => false, 'default_plugin_compatibility' => Feature_Plugin_Compatibility::COMPATIBLE];
+        $features_controller->add_feature_definition('cost_of_goods_sold', __('Cost of Goods Sold', 'woocommerce'), $definition);
     }
-
     /**
      * Add the entry for "add/remove COGS value column to/from the product meta lookup table" to the WooCommerce admin tools.
      *
@@ -82,28 +65,12 @@ class CostOfGoodsSoldController implements RegisterHooksInterface
     {
         // If the feature is disabled we show the tool for removing the column, but not for adding it.
         $column_exists = $this->product_meta_lookup_table_cogs_value_columns_exist();
-        if (! $this->feature_is_enabled() && ! $column_exists) {
+        if (!$this->feature_is_enabled() && !$column_exists) {
             return $tools_array;
         }
-
-        $tools_array['generate_cogs_value_meta_column'] = [
-            'name'     => $column_exists ?
-                __('Remove COGS columns from the product meta lookup table', 'woocommerce') :
-                __('Create COGS columns in the product meta lookup table', 'woocommerce'),
-            'button'   => $column_exists ?
-                __('Remove columns', 'woocommerce') :
-                __('Create columns', 'woocommerce'),
-            'desc'     =>
-                $column_exists ?
-                __('This tool will remove the Cost of Goods Sold (COGS) related columns from the product meta lookup table. COGS will continue working (if the feature is enabled) but some functionality will not be available.', 'woocommerce') :
-                __('This tool will generate the necessary Cost of Goods Sold (COGS) related columns in the product meta lookup table, and populate them from existing product data.', 'woocommerce'),
-            'callback' =>
-                $column_exists ? $this->remove_lookup_cogs_columns(...) : $this->generate_lookup_cogs_columns(...),
-        ];
-
+        $tools_array['generate_cogs_value_meta_column'] = ['name' => $column_exists ? __('Remove COGS columns from the product meta lookup table', 'woocommerce') : __('Create COGS columns in the product meta lookup table', 'woocommerce'), 'button' => $column_exists ? __('Remove columns', 'woocommerce') : __('Create columns', 'woocommerce'), 'desc' => $column_exists ? __('This tool will remove the Cost of Goods Sold (COGS) related columns from the product meta lookup table. COGS will continue working (if the feature is enabled) but some functionality will not be available.', 'woocommerce') : __('This tool will generate the necessary Cost of Goods Sold (COGS) related columns in the product meta lookup table, and populate them from existing product data.', 'woocommerce'), 'callback' => $column_exists ? $this->remove_lookup_cogs_columns(...) : $this->generate_lookup_cogs_columns(...)];
         return $tools_array;
     }
-
     /**
      * Handler for the "add COGS value column to the product meta lookup table" admin tool.
      *
@@ -112,18 +79,11 @@ class CostOfGoodsSoldController implements RegisterHooksInterface
     public function generate_lookup_cogs_columns(): void
     {
         global $wpdb;
-
-        if ($this->feature_is_enabled() && ! $this->product_meta_lookup_table_cogs_value_columns_exist()) {
+        if ($this->feature_is_enabled() && !$this->product_meta_lookup_table_cogs_value_columns_exist()) {
             $wpdb->query("ALTER TABLE {$wpdb->prefix}wc_product_meta_lookup ADD COLUMN cogs_total_value DECIMAL(19,4)");
-            $wpdb->query(
-                "UPDATE {$wpdb->prefix}wc_product_meta_lookup AS lookup
-    			JOIN {$wpdb->prefix}postmeta AS pm ON lookup.product_id = pm.post_id
-    			SET lookup.cogs_total_value = CAST(pm.meta_value AS DECIMAL(19, 4))
-    			WHERE pm.meta_key = '_cogs_total_value';"
-            );
+            $wpdb->query("UPDATE {$wpdb->prefix}wc_product_meta_lookup AS lookup\n    \t\t\tJOIN {$wpdb->prefix}postmeta AS pm ON lookup.product_id = pm.post_id\n    \t\t\tSET lookup.cogs_total_value = CAST(pm.meta_value AS DECIMAL(19, 4))\n    \t\t\tWHERE pm.meta_key = '_cogs_total_value';");
         }
     }
-
     /**
      * Handler for the "remove COGS value column to the product meta lookup table" admin tool.
      *
@@ -132,12 +92,10 @@ class CostOfGoodsSoldController implements RegisterHooksInterface
     public function remove_lookup_cogs_columns(): void
     {
         global $wpdb;
-
         if ($this->product_meta_lookup_table_cogs_value_columns_exist()) {
             $wpdb->query("ALTER TABLE {$wpdb->prefix}wc_product_meta_lookup DROP COLUMN cogs_total_value");
         }
     }
-
     /**
      * Tells if the COGS value column exists in the product meta lookup table.
      *
@@ -146,15 +104,8 @@ class CostOfGoodsSoldController implements RegisterHooksInterface
     public function product_meta_lookup_table_cogs_value_columns_exist(): bool
     {
         global $wpdb;
-
-        return (bool) $wpdb->get_var(
-            $wpdb->prepare(
-                "SHOW COLUMNS FROM {$wpdb->prefix}wc_product_meta_lookup LIKE %s",
-                'cogs_total_value'
-            )
-        );
+        return (bool) $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$wpdb->prefix}wc_product_meta_lookup LIKE %s", 'cogs_total_value'));
     }
-
     /**
      * Get the tooltip text for the COGS value field in the product editor.
      *
@@ -163,8 +114,6 @@ class CostOfGoodsSoldController implements RegisterHooksInterface
      */
     public function get_general_cost_edit_field_tooltip(bool $for_variable_products)
     {
-        return $for_variable_products ?
-            __('Add the amount it costs you to buy or make this product. This will be applied as the default value for variations.', 'woocommerce') :
-            __('Add the amount it costs you to buy or make this product.', 'woocommerce');
+        return $for_variable_products ? __('Add the amount it costs you to buy or make this product. This will be applied as the default value for variations.', 'woocommerce') : __('Add the amount it costs you to buy or make this product.', 'woocommerce');
     }
 }

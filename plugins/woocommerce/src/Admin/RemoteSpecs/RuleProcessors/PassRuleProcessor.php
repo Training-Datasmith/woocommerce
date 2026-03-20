@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor that passes. This is required because an empty set of rules
  * (or predicate) evaluates to false.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
 /**
  * Rule processor that passes.
  */
-class PassRuleProcessor implements RuleProcessorInterface
+class Pass_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * Passes the rule.
@@ -27,7 +25,6 @@ class PassRuleProcessor implements RuleProcessorInterface
     {
         return true;
     }
-
     /**
      * Validates the rule.
      *

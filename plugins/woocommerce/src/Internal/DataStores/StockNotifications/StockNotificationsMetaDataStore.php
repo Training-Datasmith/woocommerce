@@ -3,19 +3,15 @@
 /**
  * StockNotificationsMetaDataStore class file.
  */
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Data_Stores\Stock_Notifications;
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\DataStores\StockNotifications;
-
-use Automattic\WooCommerce\Internal\DataStores\CustomMetaDataStore;
-
+use Automattic\Woo_Commerce\Internal\Data_Stores\Custom_Meta_Data_Store;
 defined('ABSPATH') || exit;
-
 /**
  * Mimics a WP metadata (i.e. add_metadata(), get_metadata() and friends) implementation using a custom table.
  */
-class StockNotificationsMetaDataStore extends CustomMetaDataStore
+class Stock_Notifications_Meta_Data_Store extends Custom_Meta_Data_Store
 {
     /**
      * Returns the name of the table used for storage.
@@ -25,7 +21,6 @@ class StockNotificationsMetaDataStore extends CustomMetaDataStore
         global $wpdb;
         return $wpdb->prefix . 'wc_stock_notificationmeta';
     }
-
     /**
      * Returns the name of the field/column used for identifiying metadata entries.
      */
@@ -33,7 +28,6 @@ class StockNotificationsMetaDataStore extends CustomMetaDataStore
     {
         return 'id';
     }
-
     /**
      * Returns the name of the field/column used for associating meta with objects.
      */
@@ -41,7 +35,6 @@ class StockNotificationsMetaDataStore extends CustomMetaDataStore
     {
         return 'notification_id';
     }
-
     /**
      * Delete by notification ID.
      *
@@ -51,14 +44,8 @@ class StockNotificationsMetaDataStore extends CustomMetaDataStore
     public function delete_by_notification_id($notification_id): bool
     {
         global $wpdb;
-
-        $table  = $this->get_table_name();
-        $result = $wpdb->delete(
-            $table,
-            [ 'notification_id' => $notification_id ],
-            [ '%d' ]
-        );
-
+        $table = $this->get_table_name();
+        $result = $wpdb->delete($table, ['notification_id' => $notification_id], ['%d']);
         return false === $result ? false : true;
     }
 }

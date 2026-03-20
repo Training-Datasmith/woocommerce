@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Coming_Soon;
 
-namespace Automattic\WooCommerce\Internal\ComingSoon;
-
-use Automattic\WooCommerce\Utilities\FeaturesUtil;
-
+use Automattic\Woo_Commerce\Utilities\Features_Util;
 /**
  * Adds hooks to add a badge to the WordPress admin bar showing site visibility.
  */
-class ComingSoonAdminBarBadge
+class Coming_Soon_Admin_Bar_Badge
 {
     /**
      * Sets up the hooks.
@@ -20,7 +18,6 @@ class ComingSoonAdminBarBadge
     {
         add_action('init', $this->init_hooks(...));
     }
-
     /**
      * Sets up the hooks if user has required capabilities.
      *
@@ -29,15 +26,13 @@ class ComingSoonAdminBarBadge
     public function init_hooks(): void
     {
         // Early exit if the user is not logged in as administrator / shop manager.
-        if (! is_user_logged_in() || ! current_user_can('manage_woocommerce')) {
+        if (!is_user_logged_in() || !current_user_can('manage_woocommerce')) {
             return;
         }
-
         add_action('admin_bar_menu', $this->site_visibility_badge(...), 31);
         add_action('wp_head', $this->output_css(...));
         add_action('admin_head', $this->output_css(...));
     }
-
     /**
      * Add site visibility cache badge to WP admin bar.
      *
@@ -47,16 +42,10 @@ class ComingSoonAdminBarBadge
     public function site_visibility_badge($wp_admin_bar): void
     {
         // Early exit if LYS feature is disabled.
-        if (! FeaturesUtil::feature_is_enabled('site_visibility_badge')) {
+        if (!Features_Util::feature_is_enabled('site_visibility_badge')) {
             return;
         }
-
-        $labels = [
-            'coming-soon'       => __('Coming soon', 'woocommerce'),
-            'store-coming-soon' => __('Store coming soon', 'woocommerce'),
-            'live'              => __('Live', 'woocommerce'),
-        ];
-
+        $labels = ['coming-soon' => __('Coming soon', 'woocommerce'), 'store-coming-soon' => __('Store coming soon', 'woocommerce'), 'live' => __('Live', 'woocommerce')];
         if (get_option('woocommerce_coming_soon') === 'yes') {
             if (get_option('woocommerce_store_pages_only') === 'yes') {
                 $key = 'store-coming-soon';
@@ -66,18 +55,9 @@ class ComingSoonAdminBarBadge
         } else {
             $key = 'live';
         }
-
-        $args = [
-            'id'    => 'woocommerce-site-visibility-badge',
-            'title' => $labels[ $key ],
-            'href'  => admin_url('admin.php?page=wc-settings&tab=site-visibility'),
-            'meta'  => [
-                'class' => 'woocommerce-site-status-badge-' . $key,
-            ],
-        ];
+        $args = ['id' => 'woocommerce-site-visibility-badge', 'title' => $labels[$key], 'href' => admin_url('admin.php?page=wc-settings&tab=site-visibility'), 'meta' => ['class' => 'woocommerce-site-status-badge-' . $key]];
         $wp_admin_bar->add_node($args);
     }
-
     /**
      * Output CSS for site visibility badge.
      *
@@ -86,10 +66,9 @@ class ComingSoonAdminBarBadge
     public function output_css(): void
     {
         // Early exit if LYS feature is disabled.
-        if (! FeaturesUtil::feature_is_enabled('site_visibility_badge')) {
+        if (!Features_Util::feature_is_enabled('site_visibility_badge')) {
             return;
         }
-
         if (is_admin_bar_showing()) {
             echo '<style>
 				#wpadminbar .quicklinks #wp-admin-bar-woocommerce-site-visibility-badge {

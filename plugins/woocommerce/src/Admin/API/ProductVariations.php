@@ -1,25 +1,22 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Product Variations Controller
  *
  * Handles requests to /products/variations.
  */
+namespace Automattic\Woo_Commerce\Admin\API;
 
-namespace Automattic\WooCommerce\Admin\API;
-
-use Automattic\WooCommerce\Enums\ProductType;
-
+use Automattic\Woo_Commerce\Enums\Product_Type;
 defined('ABSPATH') || exit;
-
 /**
  * Product variations controller.
  *
  * @internal
  * @extends WC_REST_Product_Variations_Controller
  */
-class ProductVariations extends \WC_REST_Product_Variations_Controller
+class Product_Variations extends \WC_REST_Product_Variations_Controller
 {
     /**
      * Endpoint namespace.
@@ -27,30 +24,15 @@ class ProductVariations extends \WC_REST_Product_Variations_Controller
      * @var string
      */
     protected $namespace = 'wc-analytics';
-
     /**
      * Register the routes for products.
      */
     public function register_routes(): void
     {
         parent::register_routes();
-
         // Add a route for listing variations without specifying the parent product ID.
-        register_rest_route(
-            $this->namespace,
-            '/variations',
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_items(...),
-                    'permission_callback' => $this->get_items_permissions_check(...),
-                    'args'                => $this->get_collection_params(),
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
+        register_rest_route($this->namespace, '/variations', [['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_items(...), 'permission_callback' => $this->get_items_permissions_check(...), 'args' => $this->get_collection_params()], 'schema' => [$this, 'get_public_item_schema']]);
     }
-
     /**
      * Get the query params for collections.
      *
@@ -58,15 +40,10 @@ class ProductVariations extends \WC_REST_Product_Variations_Controller
      */
     public function get_collection_params()
     {
-        $params           = parent::get_collection_params();
-        $params['search'] = [
-            'description'       => __('Search by similar product name, sku, or attribute value.', 'woocommerce'),
-            'type'              => 'string',
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
+        $params = parent::get_collection_params();
+        $params['search'] = ['description' => __('Search by similar product name, sku, or attribute value.', 'woocommerce'), 'type' => 'string', 'validate_callback' => 'rest_validate_request_arg'];
         return $params;
     }
-
     /**
      * Add in conditional search filters for variations.
      *
@@ -78,25 +55,21 @@ class ProductVariations extends \WC_REST_Product_Variations_Controller
     public static function add_wp_query_filter($where, $wp_query)
     {
         global $wpdb;
-
         $search = $wp_query->get('search');
         if ($search) {
-            $like       = '%' . $wpdb->esc_like($search) . '%';
+            $like = '%' . $wpdb->esc_like($search) . '%';
             $conditions = [
-                $wpdb->prepare("{$wpdb->posts}.post_title LIKE %s", $like), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-                $wpdb->prepare('attr_search_meta.meta_value LIKE %s', $like), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                $wpdb->prepare("{$wpdb->posts}.post_title LIKE %s", $like),
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                $wpdb->prepare('attr_search_meta.meta_value LIKE %s', $like),
             ];
-
             if (wc_product_sku_enabled()) {
                 $conditions[] = $wpdb->prepare('wc_product_meta_lookup.sku LIKE %s', $like);
             }
-
             $where .= ' AND (' . implode(' OR ', $conditions) . ')';
         }
-
         return $where;
     }
-
     /**
      * Join posts meta tables when variation search query is present.
      *
@@ -108,22 +81,15 @@ class ProductVariations extends \WC_REST_Product_Variations_Controller
     public static function add_wp_query_join($join, $wp_query)
     {
         global $wpdb;
-
         $search = $wp_query->get('search');
         if ($search) {
-            $join .= " LEFT JOIN {$wpdb->postmeta} AS attr_search_meta
-						ON {$wpdb->posts}.ID = attr_search_meta.post_id
-						AND attr_search_meta.meta_key LIKE 'attribute_%' ";
+            $join .= " LEFT JOIN {$wpdb->postmeta} AS attr_search_meta\n\t\t\t\t\t\tON {$wpdb->posts}.ID = attr_search_meta.post_id\n\t\t\t\t\t\tAND attr_search_meta.meta_key LIKE 'attribute_%' ";
         }
-
-        if (wc_product_sku_enabled() && ! strstr($join, 'wc_product_meta_lookup')) {
-            $join .= " LEFT JOIN {$wpdb->wc_product_meta_lookup} wc_product_meta_lookup
-						ON $wpdb->posts.ID = wc_product_meta_lookup.product_id ";
+        if (wc_product_sku_enabled() && !strstr($join, 'wc_product_meta_lookup')) {
+            $join .= " LEFT JOIN {$wpdb->wc_product_meta_lookup} wc_product_meta_lookup\n\t\t\t\t\t\tON {$wpdb->posts}.ID = wc_product_meta_lookup.product_id ";
         }
-
         return $join;
     }
-
     /**
      * Add product name and sku filtering to the WC API.
      *
@@ -133,20 +99,16 @@ class ProductVariations extends \WC_REST_Product_Variations_Controller
     protected function prepare_objects_query($request)
     {
         $args = parent::prepare_objects_query($request);
-
-        if (! empty($request['search'])) {
+        if (!empty($request['search'])) {
             $args['search'] = $request['search'];
             unset($args['s']);
         }
-
         // Retrieve variations without specifying a parent product.
         if ("/{$this->namespace}/variations" === $request->get_route()) {
             unset($args['post_parent']);
         }
-
         return $args;
     }
-
     /**
      * Get a collection of posts and add the post title filter option to WP_Query.
      *
@@ -157,14 +119,13 @@ class ProductVariations extends \WC_REST_Product_Variations_Controller
     {
         add_filter('posts_where', self::add_wp_query_filter(...), 10, 2);
         add_filter('posts_join', self::add_wp_query_join(...), 10, 2);
-        add_filter('posts_groupby', \Automattic\WooCommerce\Admin\API\Products::add_wp_query_group_by(...), 10, 2);
+        add_filter('posts_groupby', \Automattic\Woo_Commerce\Admin\API\Products::add_wp_query_group_by(...), 10, 2);
         $response = parent::get_items($request);
         remove_filter('posts_where', self::add_wp_query_filter(...), 10);
         remove_filter('posts_join', self::add_wp_query_join(...), 10);
-        remove_filter('posts_groupby', \Automattic\WooCommerce\Admin\API\Products::add_wp_query_group_by(...), 10);
+        remove_filter('posts_groupby', \Automattic\Woo_Commerce\Admin\API\Products::add_wp_query_group_by(...), 10);
         return $response;
     }
-
     /**
      * Get the Product's schema, conforming to JSON Schema.
      *
@@ -173,28 +134,11 @@ class ProductVariations extends \WC_REST_Product_Variations_Controller
     public function get_item_schema()
     {
         $schema = parent::get_item_schema();
-
-        $schema['properties']['name']      = [
-            'description' => __('Product parent name.', 'woocommerce'),
-            'type'        => 'string',
-            'context'     => [ 'view', 'edit' ],
-        ];
-        $schema['properties']['type']      = [
-            'description' => __('Product type.', 'woocommerce'),
-            'type'        => 'string',
-            'default'     => ProductType::VARIATION,
-            'enum'        => [ ProductType::VARIATION ],
-            'context'     => [ 'view', 'edit' ],
-        ];
-        $schema['properties']['parent_id'] = [
-            'description' => __('Product parent ID.', 'woocommerce'),
-            'type'        => 'integer',
-            'context'     => [ 'view', 'edit' ],
-        ];
-
+        $schema['properties']['name'] = ['description' => __('Product parent name.', 'woocommerce'), 'type' => 'string', 'context' => ['view', 'edit']];
+        $schema['properties']['type'] = ['description' => __('Product type.', 'woocommerce'), 'type' => 'string', 'default' => Product_Type::VARIATION, 'enum' => [Product_Type::VARIATION], 'context' => ['view', 'edit']];
+        $schema['properties']['parent_id'] = ['description' => __('Product parent ID.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit']];
         return $schema;
     }
-
     /**
      * Prepare a single variation output for response.
      *
@@ -204,16 +148,13 @@ class ProductVariations extends \WC_REST_Product_Variations_Controller
      */
     public function prepare_object_for_response($object, $request)
     {
-        $context  = empty($request['context']) ? 'view' : $request['context'];
+        $context = empty($request['context']) ? 'view' : $request['context'];
         $response = parent::prepare_object_for_response($object, $request);
-        $data     = $response->get_data();
-
-        $data['name']      = $object->get_name($context);
-        $data['type']      = $object->get_type();
+        $data = $response->get_data();
+        $data['name'] = $object->get_name($context);
+        $data['type'] = $object->get_type();
         $data['parent_id'] = $object->get_parent_id($context);
-
         $response->set_data($data);
-
         return $response;
     }
 }

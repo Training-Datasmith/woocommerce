@@ -1,13 +1,12 @@
 <?php
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-use Automattic\WooCommerce\Admin\Features\Features;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
 /**
  * MiniCartItemsBlock class.
  */
-class MiniCartItemsBlock extends AbstractInnerBlock
+class Mini_Cart_Items_Block extends Abstract_Inner_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class MiniCartItemsBlock extends AbstractInnerBlock
      * @var string
      */
     protected $block_name = 'mini-cart-items-block';
-
     /**
      * Render the markup for the Mini-Cart Contents block.
      *
@@ -29,10 +27,8 @@ class MiniCartItemsBlock extends AbstractInnerBlock
         if (Features::is_enabled('experimental-iapi-mini-cart')) {
             return $this->render_experimental_iapi_markup($attributes, $content, $block);
         }
-
         return $content;
     }
-
     /**
      * Render experimental iAPI block markup.
      *
@@ -43,19 +39,19 @@ class MiniCartItemsBlock extends AbstractInnerBlock
      */
     protected function render_experimental_iapi_markup($attributes, $content, $block): string|false
     {
-        $wrapper_attributes = get_block_wrapper_attributes(
-            [
-                'class'    => 'wc-block-mini-cart__items',
-                'tabindex' => '-1',
-            ]
-        );
-
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => 'wc-block-mini-cart__items', 'tabindex' => '-1']);
         ob_start();
         ?>
-		<div <?php echo $wrapper_attributes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>>
-			<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
+		<div <?php 
+        echo $wrapper_attributes;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>>
+			<?php 
+        echo $content;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
 		</div>
-		<?php
+		<?php 
         return ob_get_clean();
     }
 }

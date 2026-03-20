@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Templates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Templates;
 
 /**
  * CartTemplate class.
  *
  * @internal
  */
-class CartTemplate extends AbstractPageTemplate
+class Cart_Template extends Abstract_Page_Template
 {
     /**
      * The slug of the template.
@@ -17,7 +16,6 @@ class CartTemplate extends AbstractPageTemplate
      * @var string
      */
     public const SLUG = 'page-cart';
-
     /**
      * Returns the title of the template.
      *
@@ -27,7 +25,6 @@ class CartTemplate extends AbstractPageTemplate
     {
         return _x('Page: Cart', 'Template name', 'woocommerce');
     }
-
     /**
      * Returns the description of the template.
      *
@@ -37,7 +34,6 @@ class CartTemplate extends AbstractPageTemplate
     {
         return __('The Cart template displays the items selected by the user for purchase, including quantities, prices, and discounts. It allows users to review their choices before proceeding to checkout.', 'woocommerce');
     }
-
     /**
      * Returns the page object assigned to this template/page.
      *
@@ -48,7 +44,6 @@ class CartTemplate extends AbstractPageTemplate
         $page_id = wc_get_page_id('cart');
         return $page_id ? get_post($page_id) : null;
     }
-
     /**
      * True when viewing the cart page or cart endpoint.
      */
@@ -58,7 +53,6 @@ class CartTemplate extends AbstractPageTemplate
         $placeholder = $this->get_placeholder_page();
         return null !== $placeholder && $post instanceof \WP_Post && $placeholder->post_name === $post->post_name;
     }
-
     /**
      * When the page should be displaying the template, add it to the hierarchy.
      *

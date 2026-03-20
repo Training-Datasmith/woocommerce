@@ -1,22 +1,20 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * PriceFilter class.
  */
-class RatingFilter extends AbstractBlock
+class Rating_Filter extends Abstract_Block
 {
     /**
      * Block name.
      *
      * @var string
      */
-    protected $block_name  = 'rating-filter';
+    protected $block_name = 'rating-filter';
     public const RATING_QUERY_VAR = 'rating_filter';
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -26,7 +24,6 @@ class RatingFilter extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the frontend style handle for this block type.
      *
@@ -34,6 +31,6 @@ class RatingFilter extends AbstractBlock
      */
     protected function get_block_type_style(): array
     {
-        return array_merge(parent::get_block_type_style(), [ 'wc-blocks-packages-style' ]);
+        return array_merge(parent::get_block_type_style(), ['wc-blocks-packages-style']);
     }
 }

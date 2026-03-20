@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Utils;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Utils;
 
 use WP_Query;
-
 /**
  * BlocksWpQuery query.
  *
@@ -14,7 +12,7 @@ use WP_Query;
  *
  * @deprecated 2.5.0
  */
-class BlocksWpQuery extends WP_Query
+class Blocks_Wp_Query extends WP_Query
 {
     /**
      * Constructor.
@@ -27,14 +25,13 @@ class BlocksWpQuery extends WP_Query
      */
     public function __construct($query = '')
     {
-        if (! empty($query)) {
+        if (!empty($query)) {
             $this->init();
-            $this->query      = wp_parse_args($query);
+            $this->query = wp_parse_args($query);
             $this->query_vars = $this->query;
             $this->parse_query_vars();
         }
     }
-
     /**
      * Get cached posts, if a cache exists.
      *
@@ -53,25 +50,14 @@ class BlocksWpQuery extends WP_Query
      */
     public function get_cached_posts($transient_version = '')
     {
-        $hash            = md5(wp_json_encode($this->query_vars));
-        $transient_name  = 'wc_blocks_query_' . $hash;
+        $hash = md5(wp_json_encode($this->query_vars));
+        $transient_name = 'wc_blocks_query_' . $hash;
         $transient_value = get_transient($transient_name);
-
         if (isset($transient_value, $transient_value['version'], $transient_value['value']) && $transient_value['version'] === $transient_version) {
             return $transient_value['value'];
         }
-
         $results = $this->get_posts();
-
-        set_transient(
-            $transient_name,
-            [
-                'version' => $transient_version,
-                'value'   => $results,
-            ],
-            DAY_IN_SECONDS * 30
-        );
-
+        set_transient($transient_name, ['version' => $transient_version, 'value' => $results], DAY_IN_SECONDS * 30);
         return $results;
     }
 }

@@ -1,27 +1,24 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Handles emailing users CSV Export download links.
  */
+namespace Automattic\Woo_Commerce\Admin;
 
-namespace Automattic\WooCommerce\Admin;
-
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit;
 }
-
 /**
  * Include dependencies.
  */
-if (! class_exists('WC_Email', false)) {
+if (!class_exists('WC_Email', false)) {
     include_once WC_ABSPATH . 'includes/emails/class-wc-email.php';
 }
-
 /**
  * ReportCSVEmail Class.
  */
-class ReportCSVEmail extends \WC_Email
+class Report_Csv_Email extends \WC_Email
 {
     /**
      * Report labels.
@@ -29,31 +26,27 @@ class ReportCSVEmail extends \WC_Email
      * @var array
      */
     protected $report_labels;
-
     /**
      * Report type (e.g. 'customers').
      *
      * @var string
      */
     protected $report_type;
-
     /**
      * Download URL.
      *
      * @var string
      */
     protected $download_url;
-
     /**
      * Constructor.
      */
     public function __construct()
     {
-        $this->id             = 'admin_report_export_download';
-        $this->template_base  = WC()->plugin_path() . '/includes/react-admin/emails/';
-        $this->template_html  = 'html-admin-report-export-download.php';
+        $this->id = 'admin_report_export_download';
+        $this->template_base = WC()->plugin_path() . '/includes/react-admin/emails/';
+        $this->template_html = 'html-admin-report-export-download.php';
         $this->template_plain = 'plain-admin-report-export-download.php';
-
         /**
          * Used to customise report email labels.
          *
@@ -63,40 +56,22 @@ class ReportCSVEmail extends \WC_Email
          *
          * @return string[] An Array of labels.
          */
-        $this->report_labels = apply_filters(
-            'woocommerce_report_export_email_labels',
-            [
-                'categories' => __('Categories', 'woocommerce'),
-                'coupons'    => __('Coupons', 'woocommerce'),
-                'customers'  => __('Customers', 'woocommerce'),
-                'downloads'  => __('Downloads', 'woocommerce'),
-                'orders'     => __('Orders', 'woocommerce'),
-                'products'   => __('Products', 'woocommerce'),
-                'revenue'    => __('Revenue', 'woocommerce'),
-                'stock'      => __('Stock', 'woocommerce'),
-                'taxes'      => __('Taxes', 'woocommerce'),
-                'variations' => __('Variations', 'woocommerce'),
-            ]
-        );
-
+        $this->report_labels = apply_filters('woocommerce_report_export_email_labels', ['categories' => __('Categories', 'woocommerce'), 'coupons' => __('Coupons', 'woocommerce'), 'customers' => __('Customers', 'woocommerce'), 'downloads' => __('Downloads', 'woocommerce'), 'orders' => __('Orders', 'woocommerce'), 'products' => __('Products', 'woocommerce'), 'revenue' => __('Revenue', 'woocommerce'), 'stock' => __('Stock', 'woocommerce'), 'taxes' => __('Taxes', 'woocommerce'), 'variations' => __('Variations', 'woocommerce')]);
         // Call parent constructor.
         parent::__construct();
     }
-
     /**
      * This email has no user-facing settings.
      */
     public function init_form_fields(): void
     {
     }
-
     /**
      * This email has no user-facing settings.
      */
     public function init_settings(): void
     {
     }
-
     /**
      * Return email type.
      */
@@ -104,7 +79,6 @@ class ReportCSVEmail extends \WC_Email
     {
         return class_exists('DOMDocument') ? 'html' : 'plain';
     }
-
     /**
      * Get email heading.
      *
@@ -114,7 +88,6 @@ class ReportCSVEmail extends \WC_Email
     {
         return __('Your Report Download', 'woocommerce');
     }
-
     /**
      * Get email subject.
      *
@@ -124,47 +97,20 @@ class ReportCSVEmail extends \WC_Email
     {
         return __('[{site_title}]: Your {report_name} Report download is ready', 'woocommerce');
     }
-
     /**
      * Get content html.
      */
     public function get_content_html(): string
     {
-        return wc_get_template_html(
-            $this->template_html,
-            [
-                'report_name'   => $this->report_type,
-                'download_url'  => $this->download_url,
-                'email_heading' => $this->get_heading(),
-                'sent_to_admin' => true,
-                'plain_text'    => false,
-                'email'         => $this,
-            ],
-            '',
-            $this->template_base
-        );
+        return wc_get_template_html($this->template_html, ['report_name' => $this->report_type, 'download_url' => $this->download_url, 'email_heading' => $this->get_heading(), 'sent_to_admin' => true, 'plain_text' => false, 'email' => $this], '', $this->template_base);
     }
-
     /**
      * Get content plain.
      */
     public function get_content_plain(): string
     {
-        return wc_get_template_html(
-            $this->template_plain,
-            [
-                'report_name'   => $this->report_type,
-                'download_url'  => $this->download_url,
-                'email_heading' => $this->get_heading(),
-                'sent_to_admin' => true,
-                'plain_text'    => true,
-                'email'         => $this,
-            ],
-            '',
-            $this->template_base
-        );
+        return wc_get_template_html($this->template_plain, ['report_name' => $this->report_type, 'download_url' => $this->download_url, 'email_heading' => $this->get_heading(), 'sent_to_admin' => true, 'plain_text' => true, 'email' => $this], '', $this->template_base);
     }
-
     /**
      * Trigger the sending of this email.
      *
@@ -174,21 +120,13 @@ class ReportCSVEmail extends \WC_Email
      */
     public function trigger($user_id, $report_type, $download_url): void
     {
-        $user               = new \WP_User($user_id);
-        $this->recipient    = $user->user_email;
+        $user = new \WP_User($user_id);
+        $this->recipient = $user->user_email;
         $this->download_url = $download_url;
-
-        if (isset($this->report_labels[ $report_type ])) {
-            $this->report_type                   = $this->report_labels[ $report_type ];
+        if (isset($this->report_labels[$report_type])) {
+            $this->report_type = $this->report_labels[$report_type];
             $this->placeholders['{report_name}'] = $this->report_type;
         }
-
-        $this->send(
-            $this->get_recipient(),
-            $this->get_subject(),
-            $this->get_content(),
-            $this->get_headers(),
-            $this->get_attachments()
-        );
+        $this->send($this->get_recipient(), $this->get_subject(), $this->get_content(), $this->get_headers(), $this->get_attachments());
     }
 }

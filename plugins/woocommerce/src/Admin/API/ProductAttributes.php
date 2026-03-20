@@ -1,60 +1,37 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Product Attributes Controller
  *
  * Handles requests to /products/attributes.
  */
-
-namespace Automattic\WooCommerce\Admin\API;
+namespace Automattic\Woo_Commerce\Admin\API;
 
 defined('ABSPATH') || exit;
-
 /**
  * Product categories controller.
  *
  * @internal
  * @extends WC_REST_Product_Attributes_Controller
  */
-class ProductAttributes extends \WC_REST_Product_Attributes_Controller
+class Product_Attributes extends \WC_REST_Product_Attributes_Controller
 {
-    use CustomAttributeTraits;
-
+    use Custom_Attribute_Traits;
     /**
      * Endpoint namespace.
      *
      * @var string
      */
     protected $namespace = 'wc-analytics';
-
     /**
      * Register the routes for custom product attributes.
      */
     public function register_routes(): void
     {
         parent::register_routes();
-
-        register_rest_route(
-            $this->namespace,
-            'products/attributes/(?P<slug>[a-z0-9_\-]+)',
-            [
-                'args'   => [
-                    'slug' => [
-                        'description' => __('Slug identifier for the resource.', 'woocommerce'),
-                        'type'        => 'string',
-                    ],
-                ],
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_item_by_slug(...),
-                    'permission_callback' => $this->get_items_permissions_check(...),
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
+        register_rest_route($this->namespace, 'products/attributes/(?P<slug>[a-z0-9_\-]+)', ['args' => ['slug' => ['description' => __('Slug identifier for the resource.', 'woocommerce'), 'type' => 'string']], ['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_item_by_slug(...), 'permission_callback' => $this->get_items_permissions_check(...)], 'schema' => [$this, 'get_public_item_schema']]);
     }
-
     /**
      * Get the query params for collections
      *
@@ -62,16 +39,10 @@ class ProductAttributes extends \WC_REST_Product_Attributes_Controller
      */
     public function get_collection_params()
     {
-        $params           = parent::get_collection_params();
-        $params['search'] = [
-            'description'       => __('Search by similar attribute name.', 'woocommerce'),
-            'type'              => 'string',
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-
+        $params = parent::get_collection_params();
+        $params['search'] = ['description' => __('Search by similar attribute name.', 'woocommerce'), 'type' => 'string', 'validate_callback' => 'rest_validate_request_arg'];
         return $params;
     }
-
     /**
      * Get the Attribute's schema, conforming to JSON Schema.
      *
@@ -81,11 +52,9 @@ class ProductAttributes extends \WC_REST_Product_Attributes_Controller
     {
         $schema = parent::get_item_schema();
         // Custom attributes substitute slugs for numeric IDs.
-        $schema['properties']['id']['type'] = [ 'integer', 'string' ];
-
+        $schema['properties']['id']['type'] = ['integer', 'string'];
         return $schema;
     }
-
     /**
      * Get a single attribute by it's slug.
      *
@@ -97,18 +66,13 @@ class ProductAttributes extends \WC_REST_Product_Attributes_Controller
         if (empty($request['slug'])) {
             return [];
         }
-
         $attributes = $this->get_custom_attribute_by_slug($request['slug']);
-
         if (is_wp_error($attributes)) {
             return $attributes;
         }
-
         $response_items = $this->format_custom_attribute_items_for_response($attributes);
-
         return reset($response_items);
     }
-
     /**
      * Format custom attribute items for response (mimic the structure of a taxonomy - backed attribute).
      *
@@ -118,29 +82,15 @@ class ProductAttributes extends \WC_REST_Product_Attributes_Controller
     protected function format_custom_attribute_items_for_response($custom_attributes)
     {
         $response = [];
-
         foreach ($custom_attributes as $attribute_key => $attribute_value) {
-            $data = [
-                'id'           => $attribute_key,
-                'name'         => $attribute_value['name'],
-                'slug'         => $attribute_key,
-                'type'         => 'select',
-                'order_by'     => 'menu_order',
-                'has_archives' => false,
-            ];
-
+            $data = ['id' => $attribute_key, 'name' => $attribute_value['name'], 'slug' => $attribute_key, 'type' => 'select', 'order_by' => 'menu_order', 'has_archives' => false];
             $item_response = rest_ensure_response($data);
-            $item_response->add_links($this->prepare_links((object) [ 'attribute_id' => $attribute_key ]));
-            $item_response = $this->prepare_response_for_collection(
-                $item_response
-            );
-
+            $item_response->add_links($this->prepare_links((object) ['attribute_id' => $attribute_key]));
+            $item_response = $this->prepare_response_for_collection($item_response);
             $response[] = $item_response;
         }
-
         return $response;
     }
-
     /**
      * Get all attributes, with support for searching (which includes custom attributes).
      *
@@ -152,26 +102,21 @@ class ProductAttributes extends \WC_REST_Product_Attributes_Controller
         if (empty($request['search'])) {
             return parent::get_items($request);
         }
-
-        $search_string       = $request['search'];
-        $custom_attributes   = $this->get_custom_attributes([ 'name' => $search_string ]);
+        $search_string = $request['search'];
+        $custom_attributes = $this->get_custom_attributes(['name' => $search_string]);
         $matching_attributes = $this->format_custom_attribute_items_for_response($custom_attributes);
         $taxonomy_attributes = wc_get_attribute_taxonomies();
-
         foreach ($taxonomy_attributes as $attribute_obj) {
             // Skip taxonomy attributes that didn't match the query.
             if (false === stripos((string) $attribute_obj->attribute_label, (string) $search_string)) {
                 continue;
             }
-
-            $attribute             = $this->prepare_item_for_response($attribute_obj, $request);
+            $attribute = $this->prepare_item_for_response($attribute_obj, $request);
             $matching_attributes[] = $this->prepare_response_for_collection($attribute);
         }
-
         $response = rest_ensure_response($matching_attributes);
         $response->header('X-WP-Total', count($matching_attributes));
         $response->header('X-WP-TotalPages', 1);
-
         return $response;
     }
 }

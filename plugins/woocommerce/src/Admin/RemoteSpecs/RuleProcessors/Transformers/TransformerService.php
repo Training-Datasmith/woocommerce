@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors\Transformers;
 
 use InvalidArgumentException;
-
 /**
  * A simple service class for the Transformer classes.
  *
@@ -13,7 +11,7 @@ use InvalidArgumentException;
  *
  * @package Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers
  */
-class TransformerService
+class Transformer_Service
 {
     /**
      * Create a transformer object by name.
@@ -25,15 +23,12 @@ class TransformerService
     public static function create_transformer($name): ?object
     {
         $camel_cased = str_replace(' ', '', ucwords(str_replace('_', ' ', $name)));
-
         $classname = __NAMESPACE__ . '\\' . $camel_cased;
-        if (! class_exists($classname)) {
+        if (!class_exists($classname)) {
             return null;
         }
-
         return new $classname();
     }
-
     /**
      * Apply transformers to the given value.
      *
@@ -48,40 +43,34 @@ class TransformerService
     public static function apply($target_value, array $transformer_configs, $is_default_set, $default_value)
     {
         foreach ($transformer_configs as $transformer_config) {
-            if (! isset($transformer_config->use)) {
+            if (!isset($transformer_config->use)) {
                 throw new InvalidArgumentException('Missing required config value: use');
             }
-
-            if (! isset($transformer_config->arguments)) {
+            if (!isset($transformer_config->arguments)) {
                 $transformer_config->arguments = null;
             }
-
             $transformer = self::create_transformer($transformer_config->use);
             if (null === $transformer) {
-                throw new InvalidArgumentException("Unable to find a transformer by name: {$transformer_config->use}"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                throw new InvalidArgumentException("Unable to find a transformer by name: {$transformer_config->use}");
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
-
             $target_value = $transformer->transform($target_value, $transformer_config->arguments, $is_default_set ? $default_value : null);
-
             // Break early when there's no more value to traverse.
             if (null === $target_value) {
                 break;
             }
         }
-
         if ($is_default_set) {
             // Nulls always return the default value.
             if (null === $target_value) {
                 return $default_value;
             }
-
             // When type of the default value is different from the target value, return the default value
             // to ensure type safety.
             if (gettype($default_value) !== gettype($target_value)) {
                 return $default_value;
             }
         }
-
         return $target_value;
     }
 }

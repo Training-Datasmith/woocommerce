@@ -1,26 +1,22 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Add_To_Cart_With_Options;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\AddToCartWithOptions;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AbstractBlock;
-use Automattic\WooCommerce\Blocks\BlockTypes\EnableBlockJsonAssetsTrait;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Abstract_Block;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Enable_Block_Json_Assets_Trait;
 /**
  * VariationDescription class.
  */
-class VariationDescription extends AbstractBlock
+class Variation_Description extends Abstract_Block
 {
-    use EnableBlockJsonAssetsTrait;
-
+    use Enable_Block_Json_Assets_Trait;
     /**
      * Block name.
      *
      * @var string
      */
     protected $block_name = 'add-to-cart-with-options-variation-description';
-
     /**
      * Render the block.
      *
@@ -33,46 +29,20 @@ class VariationDescription extends AbstractBlock
     protected function render($attributes, $content, $block): string
     {
         global $product;
-
-        if (! $product instanceof \WC_Product_Variable) {
+        if (!$product instanceof \WC_Product_Variable) {
             return '';
         }
-
-        $variations                = $product->get_available_variations('objects');
+        $variations = $product->get_available_variations('objects');
         $formatted_variations_data = [];
         foreach ($variations as $variation) {
             $variation_description = $variation->get_description();
-            if (is_string($variation_description) && ! empty($variation_description)) {
-                $formatted_variations_data[ $variation->get_id() ] = [
-                    'variation_description' => wp_kses_post(wc_format_content($variation_description)),
-                ];
+            if (is_string($variation_description) && !empty($variation_description)) {
+                $formatted_variations_data[$variation->get_id()] = ['variation_description' => wp_kses_post(wc_format_content($variation_description))];
             }
         }
-
-        wp_interactivity_config(
-            'woocommerce',
-            [
-                'products' => [
-                    $product->get_id() => [
-                        'variations' => $formatted_variations_data,
-                    ],
-                ],
-            ]
-        );
-
-        $context_directive = wp_interactivity_data_wp_context(
-            [
-                'productElementKey' => 'variation_description',
-            ]
-        );
-
-        $wrapper_attributes = [
-            'data-wp-interactive'  => 'woocommerce/product-elements',
-            'data-wp-bind--hidden' => '!state.productData.variation_description',
-            'aria-live'            => 'polite',
-            'aria-atomic'          => 'true',
-        ];
-
+        wp_interactivity_config('woocommerce', ['products' => [$product->get_id() => ['variations' => $formatted_variations_data]]]);
+        $context_directive = wp_interactivity_data_wp_context(['productElementKey' => 'variation_description']);
+        $wrapper_attributes = ['data-wp-interactive' => 'woocommerce/product-elements', 'data-wp-bind--hidden' => '!state.productData.variation_description', 'aria-live' => 'polite', 'aria-atomic' => 'true'];
         return '<div ' . $context_directive . ' ' . get_block_wrapper_attributes($wrapper_attributes) . ' data-wp-watch="callbacks.updateValue"></div>';
     }
 }

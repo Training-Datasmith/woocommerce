@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Class for parameter-based Categories Report querying
  *
@@ -15,22 +15,18 @@ declare(strict_types=1);
  * $report = new \Automattic\WooCommerce\Admin\API\Reports\Categories\Query( $args );
  * $mydata = $report->get_data();
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports\Categories;
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Categories;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\Query as ReportsQuery;
-
+use Automattic\Woo_Commerce\Admin\API\Reports\Query as ReportsQuery;
 /**
  * API\Reports\Categories\Query
  *
  * @deprecated 9.3.0 Categories\Query class is deprecated. Please use `GenericQuery`, \WC_Object_Query`, or use `DataStore` directly.
  */
-class Query extends ReportsQuery
+class Query extends Reports_Query
 {
     public const REPORT_NAME = 'report-categories';
-
     /**
      * Valid fields for Categories report.
      *
@@ -39,10 +35,8 @@ class Query extends ReportsQuery
     protected function get_default_query_vars(): array
     {
         wc_deprecated_function(self::class . '::' . __FUNCTION__, '9.3.0', '`GenericQuery`, `\WC_Object_Query`, or direct `DataStore` use');
-
         return [];
     }
-
     /**
      * Get categories data based on the current query vars.
      *
@@ -53,8 +47,7 @@ class Query extends ReportsQuery
     public function get_data()
     {
         wc_deprecated_function(self::class . '::' . __FUNCTION__, '9.3.0', '`GenericQuery`, `\WC_Object_Query`, or direct `DataStore` use');
-
-        $args    = apply_filters('woocommerce_analytics_categories_query_args', $this->get_query_vars());
+        $args = apply_filters('woocommerce_analytics_categories_query_args', $this->get_query_vars());
         $results = \WC_Data_Store::load(self::REPORT_NAME)->get_data($args);
         return apply_filters('woocommerce_analytics_categories_select_query', $results, $args);
     }

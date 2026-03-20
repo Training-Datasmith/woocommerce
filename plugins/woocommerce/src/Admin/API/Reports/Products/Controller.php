@@ -1,29 +1,26 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Reports products controller
  *
  * Handles requests to the /reports/products endpoint.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports\Products;
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Products;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\ExportableInterface;
-use Automattic\WooCommerce\Admin\API\Reports\GenericController;
-use Automattic\WooCommerce\Admin\API\Reports\GenericQuery;
+use Automattic\Woo_Commerce\Admin\API\Reports\Exportable_Interface;
+use Automattic\Woo_Commerce\Admin\API\Reports\Generic_Controller;
+use Automattic\Woo_Commerce\Admin\API\Reports\Generic_Query;
 use WP_REST_Request;
 use WP_REST_Response;
-
 /**
  * REST API Reports products controller class.
  *
  * @internal
  * @extends GenericController
  */
-class Controller extends GenericController implements ExportableInterface
+class Controller extends Generic_Controller implements Exportable_Interface
 {
     /**
      * Route base.
@@ -31,18 +28,12 @@ class Controller extends GenericController implements ExportableInterface
      * @var string
      */
     protected $rest_base = 'reports/products';
-
     /**
      * Mapping between external parameter name and name used in query class.
      *
      * @var array
      */
-    protected $param_mapping = [
-        'categories' => 'category_includes',
-        'products'   => 'product_includes',
-        'variations' => 'variation_includes',
-    ];
-
+    protected $param_mapping = ['categories' => 'category_includes', 'products' => 'product_includes', 'variations' => 'variation_includes'];
     /**
      * Get data from `'products'` GenericQuery.
      *
@@ -53,10 +44,9 @@ class Controller extends GenericController implements ExportableInterface
      */
     protected function get_datastore_data($query_args = [])
     {
-        $query = new GenericQuery($query_args, 'products');
+        $query = new Generic_Query($query_args, 'products');
         return $query->get_data();
     }
-
     /**
      * Prepare a report data item for serialization.
      *
@@ -68,7 +58,6 @@ class Controller extends GenericController implements ExportableInterface
     {
         $response = parent::prepare_item_for_response($report, $request);
         $response->add_links($this->prepare_links($report));
-
         /**
          * Filter a report returned from the API.
          *
@@ -86,7 +75,6 @@ class Controller extends GenericController implements ExportableInterface
         }
         return $filtered_response;
     }
-
     /**
      * Maps query arguments from the REST request.
      *
@@ -94,20 +82,19 @@ class Controller extends GenericController implements ExportableInterface
      */
     protected function prepare_reports_query($request): array
     {
-        $args       = [];
+        $args = [];
         $registered = array_keys($this->get_collection_params());
         foreach ($registered as $param_name) {
-            if (isset($request[ $param_name ])) {
-                if (isset($this->param_mapping[ $param_name ])) {
-                    $args[ $this->param_mapping[ $param_name ] ] = $request[ $param_name ];
+            if (isset($request[$param_name])) {
+                if (isset($this->param_mapping[$param_name])) {
+                    $args[$this->param_mapping[$param_name]] = $request[$param_name];
                 } else {
-                    $args[ $param_name ] = $request[ $param_name ];
+                    $args[$param_name] = $request[$param_name];
                 }
             }
         }
         return $args;
     }
-
     /**
      * Prepare links for the request.
      *
@@ -116,13 +103,8 @@ class Controller extends GenericController implements ExportableInterface
      */
     protected function prepare_links($object)
     {
-        return [
-            'product' => [
-                'href' => rest_url(sprintf('/%s/%s/%d', $this->namespace, 'products', $object['product_id'])),
-            ],
-        ];
+        return ['product' => ['href' => rest_url(sprintf('/%s/%s/%d', $this->namespace, 'products', $object['product_id']))]];
     }
-
     /**
      * Get the Report's schema, conforming to JSON Schema.
      *
@@ -130,103 +112,9 @@ class Controller extends GenericController implements ExportableInterface
      */
     public function get_item_schema()
     {
-        $schema = [
-            '$schema'    => 'http://json-schema.org/draft-04/schema#',
-            'title'      => 'report_products',
-            'type'       => 'object',
-            'properties' => [
-                'product_id'    => [
-                    'type'        => 'integer',
-                    'readonly'    => true,
-                    'context'     => [ 'view', 'edit' ],
-                    'description' => __('Product ID.', 'woocommerce'),
-                ],
-                'items_sold'    => [
-                    'type'        => 'integer',
-                    'readonly'    => true,
-                    'context'     => [ 'view', 'edit' ],
-                    'description' => __('Number of items sold.', 'woocommerce'),
-                ],
-                'net_revenue'   => [
-                    'type'        => 'number',
-                    'readonly'    => true,
-                    'context'     => [ 'view', 'edit' ],
-                    'description' => __('Total Net sales of all items sold.', 'woocommerce'),
-                ],
-                'orders_count'  => [
-                    'type'        => 'integer',
-                    'readonly'    => true,
-                    'context'     => [ 'view', 'edit' ],
-                    'description' => __('Number of orders product appeared in.', 'woocommerce'),
-                ],
-                'extended_info' => [
-                    'name'             => [
-                        'type'        => 'string',
-                        'readonly'    => true,
-                        'context'     => [ 'view', 'edit' ],
-                        'description' => __('Product name.', 'woocommerce'),
-                    ],
-                    'price'            => [
-                        'type'        => 'number',
-                        'readonly'    => true,
-                        'context'     => [ 'view', 'edit' ],
-                        'description' => __('Product price.', 'woocommerce'),
-                    ],
-                    'image'            => [
-                        'type'        => 'string',
-                        'readonly'    => true,
-                        'context'     => [ 'view', 'edit' ],
-                        'description' => __('Product image.', 'woocommerce'),
-                    ],
-                    'permalink'        => [
-                        'type'        => 'string',
-                        'readonly'    => true,
-                        'context'     => [ 'view', 'edit' ],
-                        'description' => __('Product link.', 'woocommerce'),
-                    ],
-                    'category_ids'     => [
-                        'type'        => 'array',
-                        'readonly'    => true,
-                        'context'     => [ 'view', 'edit' ],
-                        'description' => __('Product category IDs.', 'woocommerce'),
-                    ],
-                    'stock_status'     => [
-                        'type'        => 'string',
-                        'readonly'    => true,
-                        'context'     => [ 'view', 'edit' ],
-                        'description' => __('Product inventory status.', 'woocommerce'),
-                    ],
-                    'stock_quantity'   => [
-                        'type'        => 'integer',
-                        'readonly'    => true,
-                        'context'     => [ 'view', 'edit' ],
-                        'description' => __('Product inventory quantity.', 'woocommerce'),
-                    ],
-                    'low_stock_amount' => [
-                        'type'        => 'integer',
-                        'readonly'    => true,
-                        'context'     => [ 'view', 'edit' ],
-                        'description' => __('Product inventory threshold for low stock.', 'woocommerce'),
-                    ],
-                    'variations'       => [
-                        'type'        => 'array',
-                        'readonly'    => true,
-                        'context'     => [ 'view', 'edit' ],
-                        'description' => __('Product variations IDs.', 'woocommerce'),
-                    ],
-                    'sku'              => [
-                        'type'        => 'string',
-                        'readonly'    => true,
-                        'context'     => [ 'view', 'edit' ],
-                        'description' => __('Product SKU.', 'woocommerce'),
-                    ],
-                ],
-            ],
-        ];
-
+        $schema = ['$schema' => 'http://json-schema.org/draft-04/schema#', 'title' => 'report_products', 'type' => 'object', 'properties' => ['product_id' => ['type' => 'integer', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Product ID.', 'woocommerce')], 'items_sold' => ['type' => 'integer', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Number of items sold.', 'woocommerce')], 'net_revenue' => ['type' => 'number', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Total Net sales of all items sold.', 'woocommerce')], 'orders_count' => ['type' => 'integer', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Number of orders product appeared in.', 'woocommerce')], 'extended_info' => ['name' => ['type' => 'string', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Product name.', 'woocommerce')], 'price' => ['type' => 'number', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Product price.', 'woocommerce')], 'image' => ['type' => 'string', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Product image.', 'woocommerce')], 'permalink' => ['type' => 'string', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Product link.', 'woocommerce')], 'category_ids' => ['type' => 'array', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Product category IDs.', 'woocommerce')], 'stock_status' => ['type' => 'string', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Product inventory status.', 'woocommerce')], 'stock_quantity' => ['type' => 'integer', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Product inventory quantity.', 'woocommerce')], 'low_stock_amount' => ['type' => 'integer', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Product inventory threshold for low stock.', 'woocommerce')], 'variations' => ['type' => 'array', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Product variations IDs.', 'woocommerce')], 'sku' => ['type' => 'string', 'readonly' => true, 'context' => ['view', 'edit'], 'description' => __('Product SKU.', 'woocommerce')]]]];
         return $this->add_additional_fields_schema($schema);
     }
-
     /**
      * Get the query params for collections.
      *
@@ -234,58 +122,14 @@ class Controller extends GenericController implements ExportableInterface
      */
     public function get_collection_params()
     {
-        $params                    = parent::get_collection_params();
-        $params['orderby']['enum'] = $this->apply_custom_orderby_filters(
-            [
-                'date',
-                'net_revenue',
-                'orders_count',
-                'items_sold',
-                'product_name',
-                'variations',
-                'sku',
-            ]
-        );
-        $params['categories']      = [
-            'description'       => __('Limit result to items from the specified categories.', 'woocommerce'),
-            'type'              => 'array',
-            'sanitize_callback' => 'wp_parse_id_list',
-            'validate_callback' => 'rest_validate_request_arg',
-            'items'             => [
-                'type' => 'integer',
-            ],
-        ];
-        $params['match']           = [
-            'description'       => __('Indicates whether all the conditions should be true for the resulting set, or if any one of them is sufficient. Match affects the following parameters: status_is, status_is_not, product_includes, product_excludes, coupon_includes, coupon_excludes, customer, categories', 'woocommerce'),
-            'type'              => 'string',
-            'default'           => 'all',
-            'enum'              => [
-                'all',
-                'any',
-            ],
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-        $params['products']        = [
-            'description'       => __('Limit result to items with specified product ids.', 'woocommerce'),
-            'type'              => 'array',
-            'sanitize_callback' => 'wp_parse_id_list',
-            'validate_callback' => 'rest_validate_request_arg',
-            'items'             => [
-                'type' => 'integer',
-            ],
-
-        ];
-        $params['extended_info'] = [
-            'description'       => __('Add additional piece of info about each product to the report.', 'woocommerce'),
-            'type'              => 'boolean',
-            'default'           => false,
-            'sanitize_callback' => 'wc_string_to_bool',
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-
+        $params = parent::get_collection_params();
+        $params['orderby']['enum'] = $this->apply_custom_orderby_filters(['date', 'net_revenue', 'orders_count', 'items_sold', 'product_name', 'variations', 'sku']);
+        $params['categories'] = ['description' => __('Limit result to items from the specified categories.', 'woocommerce'), 'type' => 'array', 'sanitize_callback' => 'wp_parse_id_list', 'validate_callback' => 'rest_validate_request_arg', 'items' => ['type' => 'integer']];
+        $params['match'] = ['description' => __('Indicates whether all the conditions should be true for the resulting set, or if any one of them is sufficient. Match affects the following parameters: status_is, status_is_not, product_includes, product_excludes, coupon_includes, coupon_excludes, customer, categories', 'woocommerce'), 'type' => 'string', 'default' => 'all', 'enum' => ['all', 'any'], 'validate_callback' => 'rest_validate_request_arg'];
+        $params['products'] = ['description' => __('Limit result to items with specified product ids.', 'woocommerce'), 'type' => 'array', 'sanitize_callback' => 'wp_parse_id_list', 'validate_callback' => 'rest_validate_request_arg', 'items' => ['type' => 'integer']];
+        $params['extended_info'] = ['description' => __('Add additional piece of info about each product to the report.', 'woocommerce'), 'type' => 'boolean', 'default' => false, 'sanitize_callback' => 'wc_string_to_bool', 'validate_callback' => 'rest_validate_request_arg'];
         return $params;
     }
-
     /**
      * Get stock status column export value.
      *
@@ -295,10 +139,8 @@ class Controller extends GenericController implements ExportableInterface
     protected function get_stock_status($status)
     {
         $statuses = wc_get_product_stock_status_options();
-
-        return $statuses[ $status ] ?? '';
+        return $statuses[$status] ?? '';
     }
-
     /**
      * Get categories column export value.
      *
@@ -307,17 +149,9 @@ class Controller extends GenericController implements ExportableInterface
      */
     protected function get_categories($category_ids)
     {
-        $category_names = get_terms(
-            [
-                'taxonomy' => 'product_cat',
-                'include'  => $category_ids,
-                'fields'   => 'names',
-            ]
-        );
-
+        $category_names = get_terms(['taxonomy' => 'product_cat', 'include' => $category_ids, 'fields' => 'names']);
         return implode(', ', $category_names);
     }
-
     /**
      * Get the column names for export.
      *
@@ -325,33 +159,19 @@ class Controller extends GenericController implements ExportableInterface
      */
     public function get_export_columns()
     {
-        $export_columns = [
-            'product_name' => __('Product title', 'woocommerce'),
-            'sku'          => __('SKU', 'woocommerce'),
-            'items_sold'   => __('Items sold', 'woocommerce'),
-            'net_revenue'  => __('N. Revenue', 'woocommerce'),
-            'orders_count' => __('Orders', 'woocommerce'),
-            'product_cat'  => __('Category', 'woocommerce'),
-            'variations'   => __('Variations', 'woocommerce'),
-        ];
-
+        $export_columns = ['product_name' => __('Product title', 'woocommerce'), 'sku' => __('SKU', 'woocommerce'), 'items_sold' => __('Items sold', 'woocommerce'), 'net_revenue' => __('N. Revenue', 'woocommerce'), 'orders_count' => __('Orders', 'woocommerce'), 'product_cat' => __('Category', 'woocommerce'), 'variations' => __('Variations', 'woocommerce')];
         if ('yes' === get_option('woocommerce_manage_stock')) {
             $export_columns['stock_status'] = __('Status', 'woocommerce');
-            $export_columns['stock']        = __('Stock', 'woocommerce');
+            $export_columns['stock'] = __('Stock', 'woocommerce');
         }
-
         /**
          * Filter to add or remove column names from the products report for
          * export.
          *
          * @since 1.6.0
          */
-        return apply_filters(
-            'woocommerce_report_products_export_columns',
-            $export_columns
-        );
+        return apply_filters('woocommerce_report_products_export_columns', $export_columns);
     }
-
     /**
      * Get the column values for export.
      *
@@ -360,36 +180,22 @@ class Controller extends GenericController implements ExportableInterface
      */
     public function prepare_item_for_export($item)
     {
-        $export_item = [
-            'product_name' => $item['extended_info']['name'],
-            'sku'          => $item['extended_info']['sku'],
-            'items_sold'   => $item['items_sold'],
-            'net_revenue'  => $item['net_revenue'],
-            'orders_count' => $item['orders_count'],
-            'product_cat'  => $this->get_categories($item['extended_info']['category_ids']),
-            'variations'   => isset($item['extended_info']['variations']) ? count($item['extended_info']['variations']) : 0,
-        ];
-
+        $export_item = ['product_name' => $item['extended_info']['name'], 'sku' => $item['extended_info']['sku'], 'items_sold' => $item['items_sold'], 'net_revenue' => $item['net_revenue'], 'orders_count' => $item['orders_count'], 'product_cat' => $this->get_categories($item['extended_info']['category_ids']), 'variations' => isset($item['extended_info']['variations']) ? count($item['extended_info']['variations']) : 0];
         if ('yes' === get_option('woocommerce_manage_stock')) {
             if ($item['extended_info']['manage_stock']) {
                 $export_item['stock_status'] = $this->get_stock_status($item['extended_info']['stock_status']);
-                $export_item['stock']        = $item['extended_info']['stock_quantity'];
+                $export_item['stock'] = $item['extended_info']['stock_quantity'];
             } else {
                 $export_item['stock_status'] = __('N/A', 'woocommerce');
-                $export_item['stock']        = __('N/A', 'woocommerce');
+                $export_item['stock'] = __('N/A', 'woocommerce');
             }
         }
-
         /**
          * Filter to prepare extra columns in the export item for the products
          * report.
          *
          * @since 1.6.0
          */
-        return apply_filters(
-            'woocommerce_report_products_prepare_export_item',
-            $export_item,
-            $item
-        );
+        return apply_filters('woocommerce_report_products_prepare_export_item', $export_item, $item);
     }
 }

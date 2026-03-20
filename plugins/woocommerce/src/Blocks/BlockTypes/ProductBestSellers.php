@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * ProductBestSellers class.
  */
-class ProductBestSellers extends AbstractProductGrid
+class Product_Best_Sellers extends Abstract_Product_Grid
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class ProductBestSellers extends AbstractProductGrid
      * @var string
      */
     protected $block_name = 'product-best-sellers';
-
     /**
      * Set args specific to this block
      *

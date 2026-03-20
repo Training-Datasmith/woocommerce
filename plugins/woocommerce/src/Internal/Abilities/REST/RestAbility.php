@@ -3,13 +3,10 @@
 /**
  * REST Ability class file.
  */
-
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Abilities\REST;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Abilities\REST;
 
 defined('ABSPATH') || exit;
-
 /**
  * Custom WP_Ability subclass for REST API-based abilities.
  *
@@ -18,7 +15,7 @@ defined('ABSPATH') || exit;
  * actual output. This is necessary because WooCommerce schemas are often
  * incomplete or inaccurate regarding nullable fields and type variations.
  */
-class RestAbility extends \WP_Ability
+class Rest_Ability extends \WP_Ability
 {
     /**
      * Skip output validation for REST abilities.

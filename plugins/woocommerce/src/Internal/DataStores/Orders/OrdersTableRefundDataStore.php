@@ -1,71 +1,31 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Order refund data store. Refunds are based on orders (essentially negative orders) but there is slight difference in how we save them.
  * For example, order save hooks etc can't be fired when saving refund, so we need to do it a separate datastore.
  */
-
-namespace Automattic\WooCommerce\Internal\DataStores\Orders;
+namespace Automattic\Woo_Commerce\Internal\Data_Stores\Orders;
 
 use WC_Cache_Helper;
 use WC_Meta_Data;
-
 /**
  * Class OrdersTableRefundDataStore.
  */
-class OrdersTableRefundDataStore extends OrdersTableDataStore
+class Orders_Table_Refund_Data_Store extends Orders_Table_Data_Store
 {
     /**
      * Data stored in meta keys, but not considered "meta" for refund.
      *
      * @var string[]
      */
-    protected $internal_meta_keys = [
-        '_refund_amount',
-        '_refund_reason',
-        '_refunded_by',
-        '_refunded_payment',
-    ];
-
+    protected $internal_meta_keys = ['_refund_amount', '_refund_reason', '_refunded_by', '_refunded_payment'];
     /**
      * We do not have and use all the getters and setters from OrderTableDataStore, so we only select the props we actually need.
      *
      * @var \string[][]
      */
-    protected $operational_data_column_mapping = [
-        'id'                        => [ 'type' => 'int' ],
-        'order_id'                  => [ 'type' => 'int' ],
-        'woocommerce_version'       => [
-            'type' => 'string',
-            'name' => 'version',
-        ],
-        'prices_include_tax'        => [
-            'type' => 'bool',
-            'name' => 'prices_include_tax',
-        ],
-        'coupon_usages_are_counted' => [
-            'type' => 'bool',
-            'name' => 'recorded_coupon_usage_counts',
-        ],
-        'shipping_tax_amount'       => [
-            'type' => 'decimal',
-            'name' => 'shipping_tax',
-        ],
-        'shipping_total_amount'     => [
-            'type' => 'decimal',
-            'name' => 'shipping_total',
-        ],
-        'discount_tax_amount'       => [
-            'type' => 'decimal',
-            'name' => 'discount_tax',
-        ],
-        'discount_total_amount'     => [
-            'type' => 'decimal',
-            'name' => 'discount_total',
-        ],
-    ];
-
+    protected $operational_data_column_mapping = ['id' => ['type' => 'int'], 'order_id' => ['type' => 'int'], 'woocommerce_version' => ['type' => 'string', 'name' => 'version'], 'prices_include_tax' => ['type' => 'bool', 'name' => 'prices_include_tax'], 'coupon_usages_are_counted' => ['type' => 'bool', 'name' => 'recorded_coupon_usage_counts'], 'shipping_tax_amount' => ['type' => 'decimal', 'name' => 'shipping_tax'], 'shipping_total_amount' => ['type' => 'decimal', 'name' => 'shipping_total'], 'discount_tax_amount' => ['type' => 'decimal', 'name' => 'discount_tax'], 'discount_total_amount' => ['type' => 'decimal', 'name' => 'discount_total']];
     /**
      * Delete a refund order from database.
      *
@@ -75,20 +35,16 @@ class OrdersTableRefundDataStore extends OrdersTableDataStore
     public function delete(&$refund, $args = []): void
     {
         $refund_id = $refund->get_id();
-        if (! $refund_id) {
+        if (!$refund_id) {
             return;
         }
-
         $refund_cache_key = WC_Cache_Helper::get_cache_prefix('orders') . 'refunds' . $refund->get_parent_id();
         wp_cache_delete($refund_cache_key, 'orders');
-
         $this->delete_order_data_from_custom_order_tables($refund_id);
         $refund->set_id(0);
-
         $orders_table_is_authoritative = $refund->get_data_store()->get_current_class_name() === self::class;
-
         if ($orders_table_is_authoritative) {
-            $data_synchronizer = wc_get_container()->get(DataSynchronizer::class);
+            $data_synchronizer = wc_get_container()->get(Data_Synchronizer::class);
             if ($data_synchronizer->data_sync_is_enabled()) {
                 // Delete the associated post, which in turn deletes order items, etc. through {@see WC_Post_Data}.
                 // Once we stop creating posts for orders, we should do the cleanup here instead.
@@ -98,7 +54,6 @@ class OrdersTableRefundDataStore extends OrdersTableDataStore
             }
         }
     }
-
     /**
      * Helper method to set refund props.
      *
@@ -127,7 +82,6 @@ class OrdersTableRefundDataStore extends OrdersTableDataStore
             }
         }
     }
-
     /**
      * Method to create a refund in the database.
      *
@@ -135,10 +89,10 @@ class OrdersTableRefundDataStore extends OrdersTableDataStore
      */
     public function create(&$refund): void
     {
-        $refund->set_status('completed'); // Refund are always marked completed.
+        $refund->set_status('completed');
+        // Refund are always marked completed.
         $this->persist_save($refund);
     }
-
     /**
      * Update refund in database.
      *
@@ -148,7 +102,6 @@ class OrdersTableRefundDataStore extends OrdersTableDataStore
     {
         $this->persist_updates($refund);
         $refund->apply_changes();
-
         // phpcs:disable WooCommerce.Commenting.CommentHooks.MissingSinceComment
         /**
          * This action is documented in woocommerce/includes/data-stores/class-wc-order-refund-data-store-cpt.php.
@@ -156,7 +109,6 @@ class OrdersTableRefundDataStore extends OrdersTableDataStore
         do_action('woocommerce_update_order_refund', $refund->get_id(), $refund);
         // phpcs:enable
     }
-
     /**
      * Helper method that updates post meta based on an refund object.
      * Mostly used for backwards compatibility purposes in this datastore.
@@ -166,24 +118,17 @@ class OrdersTableRefundDataStore extends OrdersTableDataStore
     public function update_order_meta(&$refund): void
     {
         parent::update_order_meta($refund);
-
         // Update additional props.
-        $updated_props     = [];
-        $meta_key_to_props = [
-            '_refund_amount'    => 'amount',
-            '_refunded_by'      => 'refunded_by',
-            '_refunded_payment' => 'refunded_payment',
-            '_refund_reason'    => 'reason',
-        ];
-
+        $updated_props = [];
+        $meta_key_to_props = ['_refund_amount' => 'amount', '_refunded_by' => 'refunded_by', '_refunded_payment' => 'refunded_payment', '_refund_reason' => 'reason'];
         $props_to_update = $this->get_props_to_update($refund, $meta_key_to_props);
         foreach ($props_to_update as $meta_key => $prop) {
-            $meta_object        = new WC_Meta_Data();
-            $meta_object->key   = $meta_key;
-            $meta_object->value = $refund->{"get_$prop"}('edit');
-            $existing_meta      = $this->data_store_meta->get_metadata_by_key($refund, $meta_key);
+            $meta_object = new WC_Meta_Data();
+            $meta_object->key = $meta_key;
+            $meta_object->value = $refund->{"get_{$prop}"}('edit');
+            $existing_meta = $this->data_store_meta->get_metadata_by_key($refund, $meta_key);
             if ($existing_meta) {
-                $existing_meta   = $existing_meta[0];
+                $existing_meta = $existing_meta[0];
                 $meta_object->id = $existing_meta->id;
                 $this->update_meta($refund, $meta_object);
             } else {
@@ -191,7 +136,6 @@ class OrdersTableRefundDataStore extends OrdersTableDataStore
             }
             $updated_props[] = $prop;
         }
-
         /**
          * Fires after updating meta for a order refund.
          *
@@ -199,7 +143,6 @@ class OrdersTableRefundDataStore extends OrdersTableDataStore
          */
         do_action('woocommerce_order_refund_object_updated_props', $refund, $updated_props);
     }
-
     /**
      * Get a title for the new post type.
      */
@@ -208,10 +151,9 @@ class OrdersTableRefundDataStore extends OrdersTableDataStore
         return sprintf(
             /* translators: %s: Order date */
             __('Refund &ndash; %s', 'woocommerce'),
-            (new \DateTime('now'))->format(_x('M d, Y @ h:i A', 'Order date parsed by DateTime::format', 'woocommerce')) // phpcs:ignore WordPress.WP.I18n.MissingTranslatorsComment, WordPress.WP.I18n.UnorderedPlaceholdersText
+            (new \DateTime('now'))->format(_x('M d, Y @ h:i A', 'Order date parsed by DateTime::format', 'woocommerce'))
         );
     }
-
     /**
      * Returns data store object to use backfilling.
      */
@@ -219,5 +161,4 @@ class OrdersTableRefundDataStore extends OrdersTableDataStore
     {
         return new \WC_Order_Refund_Data_Store_CPT();
     }
-
 }

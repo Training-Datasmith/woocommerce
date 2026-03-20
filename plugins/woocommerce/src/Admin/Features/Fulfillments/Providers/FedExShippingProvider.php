@@ -1,25 +1,22 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments\Providers;
 
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments\Providers;
-
-use Automattic\WooCommerce\Admin\Features\Fulfillments\FulfillmentUtils;
-
+use Automattic\Woo_Commerce\Admin\Features\Fulfillments\Fulfillment_Utils;
 /**
  * FedEx Shipping Provider implementation.
  *
  * Handles FedEx tracking number detection and validation for all FedEx services.
  */
-class FedExShippingProvider extends AbstractShippingProvider
+class Fed_Ex_Shipping_Provider extends Abstract_Shipping_Provider
 {
     /**
      * List of countries where FedEx has significant operations.
      *
      * @var array<string>
      */
-    private array $supported_countries = [ 'US', 'CA', 'GB', 'DE', 'FR', 'AU', 'JP', 'MX', 'CN', 'IN', 'IT', 'ES', 'NL', 'BE', 'CH', 'AT', 'BR', 'SG' ];
-
+    private array $supported_countries = ['US', 'CA', 'GB', 'DE', 'FR', 'AU', 'JP', 'MX', 'CN', 'IN', 'IT', 'ES', 'NL', 'BE', 'CH', 'AT', 'BR', 'SG'];
     /**
      * Gets the unique provider key.
      *
@@ -29,7 +26,6 @@ class FedExShippingProvider extends AbstractShippingProvider
     {
         return 'fedex';
     }
-
     /**
      * Gets the display name of the provider.
      *
@@ -39,7 +35,6 @@ class FedExShippingProvider extends AbstractShippingProvider
     {
         return 'FedEx';
     }
-
     /**
      * Gets the path to the provider's icon.
      *
@@ -49,7 +44,6 @@ class FedExShippingProvider extends AbstractShippingProvider
     {
         return esc_url(WC()->plugin_url()) . '/assets/images/shipping_providers/fedex.png';
     }
-
     /**
      * Generates the tracking URL for a given tracking number.
      *
@@ -60,7 +54,6 @@ class FedExShippingProvider extends AbstractShippingProvider
     {
         return 'https://www.fedex.com/fedextrack/?tracknumbers=' . rawurlencode($tracking_number);
     }
-
     /**
      * Gets the list of origin countries supported by FedEx.
      *
@@ -70,7 +63,6 @@ class FedExShippingProvider extends AbstractShippingProvider
     {
         return $this->supported_countries;
     }
-
     /**
      * Gets the list of destination countries supported by FedEx.
      *
@@ -80,7 +72,6 @@ class FedExShippingProvider extends AbstractShippingProvider
     {
         return $this->supported_countries;
     }
-
     /**
      * Checks if FedEx can ship between two countries.
      *
@@ -90,10 +81,8 @@ class FedExShippingProvider extends AbstractShippingProvider
      */
     public function can_ship_from_to(string $shipping_from, string $shipping_to): bool
     {
-        return in_array($shipping_from, $this->supported_countries, true) &&
-            in_array($shipping_to, $this->supported_countries, true);
+        return in_array($shipping_from, $this->supported_countries, true) && in_array($shipping_to, $this->supported_countries, true);
     }
-
     /**
      * Validates and parses a FedEx tracking number.
      *
@@ -104,95 +93,82 @@ class FedExShippingProvider extends AbstractShippingProvider
      */
     public function try_parse_tracking_number(string $tracking_number, string $shipping_from, string $shipping_to): ?array
     {
-        if (empty($tracking_number) || ! $this->can_ship_from_to($shipping_from, $shipping_to)) {
+        if (empty($tracking_number) || !$this->can_ship_from_to($shipping_from, $shipping_to)) {
             return null;
         }
-
-        $tracking_number  = strtoupper((string) preg_replace('/\s+/', '', $tracking_number)); // Remove spaces and uppercase for consistency.
-        $is_north_america = in_array($shipping_from, [ 'US', 'CA' ], true); // North America flag for scoring.
-        $is_us_domestic   = 'US' === $shipping_from && 'US' === $shipping_to; // US domestic flag for scoring.
-
+        $tracking_number = strtoupper((string) preg_replace('/\s+/', '', $tracking_number));
+        // Remove spaces and uppercase for consistency.
+        $is_north_america = in_array($shipping_from, ['US', 'CA'], true);
+        // North America flag for scoring.
+        $is_us_domestic = 'US' === $shipping_from && 'US' === $shipping_to;
+        // US domestic flag for scoring.
         // FedEx tracking number patterns with enhanced validation and comments.
         $patterns = [
             // FedEx Door Tag: DT + 12 digits (US/CA only).
-            '/^DT\d{12}$/'       => $is_north_america ? 90 : 0,
-
+            '/^DT\d{12}$/' => $is_north_america ? 90 : 0,
             // FedEx Custom Critical: 0 or 1 followed by 13-23 digits (very rare, highest confidence).
             '/^0[01]\d{13,23}$/' => 98,
-
             // FedEx SmartPost: 023 + 17 digits (US only, SmartPost).
-            '/^023\d{17}$/'      => 97,
-
+            '/^023\d{17}$/' => 97,
             // FedEx SmartPost: 58 + 17-19 digits (older SmartPost).
-            '/^58\d{17,19}$/'    => 96,
-
+            '/^58\d{17,19}$/' => 96,
             // FedEx Express: 12 digits (most common, with check digit validation).
-            '/^\d{12}$/'         => function () use ($tracking_number, $is_north_america, $is_us_domestic): int {
-                if (FulfillmentUtils::validate_fedex_check_digit($tracking_number)) {
-                    return $is_north_america || $is_us_domestic ? 98 : 85; // High confidence if check digit valid.
+            '/^\d{12}$/' => function () use ($tracking_number, $is_north_america, $is_us_domestic): int {
+                if (Fulfillment_Utils::validate_fedex_check_digit($tracking_number)) {
+                    return $is_north_america || $is_us_domestic ? 98 : 85;
+                    // High confidence if check digit valid.
                 }
-                return $is_north_america ? ($is_us_domestic ? 98 : 85) : 70; // Lower if check digit invalid.
+                return $is_north_america ? $is_us_domestic ? 98 : 85 : 70;
+                // Lower if check digit invalid.
             },
-
             // FedEx Express: 15 digits (less common, with check digit validation).
-            '/^\d{15}$/'         => function () use ($tracking_number, $is_north_america): int {
-                if (FulfillmentUtils::validate_fedex_check_digit($tracking_number)) {
-                    return $is_north_america ? 96 : 80; // High confidence if check digit valid.
+            '/^\d{15}$/' => function () use ($tracking_number, $is_north_america): int {
+                if (Fulfillment_Utils::validate_fedex_check_digit($tracking_number)) {
+                    return $is_north_america ? 96 : 80;
+                    // High confidence if check digit valid.
                 }
-                return $is_north_america ? 80 : 65; // Lower if check digit invalid.
+                return $is_north_america ? 80 : 65;
+                // Lower if check digit invalid.
             },
-
             // FedEx Express: 14 digits (with check digit validation).
-            '/^\d{14}$/'         => function () use ($tracking_number, $is_north_america): int {
-                if (FulfillmentUtils::validate_fedex_check_digit($tracking_number)) {
-                    return $is_north_america ? 95 : 78; // High confidence if check digit valid.
+            '/^\d{14}$/' => function () use ($tracking_number, $is_north_america): int {
+                if (Fulfillment_Utils::validate_fedex_check_digit($tracking_number)) {
+                    return $is_north_america ? 95 : 78;
+                    // High confidence if check digit valid.
                 }
-                return $is_north_america ? 78 : 60; // Lower if check digit invalid.
+                return $is_north_america ? 78 : 60;
+                // Lower if check digit invalid.
             },
-
             // FedEx Express: 34 digits (rare, international bulk shipments).
-            '/^\d{34}$/'         => 90,
-
+            '/^\d{34}$/' => 90,
             // FedEx Ground: 96 + 18-20 digits (US/CA only).
-            '/^96\d{18,20}$/'    => $is_north_america ? 95 : 60,
-
+            '/^96\d{18,20}$/' => $is_north_america ? 95 : 60,
             // FedEx Ground: 7 + 11-20 digits (US/CA only, legacy).
-            '/^7\d{11,20}$/'     => $is_north_america ? 90 : 75,
-
+            '/^7\d{11,20}$/' => $is_north_america ? 90 : 75,
             // FedEx Freight: 97 + 13-23 digits (Freight/LTL).
-            '/^97\d{13,23}$/'    => 93,
-
+            '/^97\d{13,23}$/' => 93,
             // FedEx Express International: 3 + 10-14 digits (Europe/Asia).
-            '/^3\d{10,14}$/'     => 92,
-
+            '/^3\d{10,14}$/' => 92,
             // FedEx International Priority: 8 + 8-14 digits (Europe/Asia).
-            '/^8\d{8,14}$/'      => fn () => in_array($shipping_from, [ 'GB', 'DE', 'FR', 'IT', 'ES', 'NL' ], true) ? 93 : 75,
-
+            '/^8\d{8,14}$/' => fn() => in_array($shipping_from, ['GB', 'DE', 'FR', 'IT', 'ES', 'NL'], true) ? 93 : 75,
             // FedEx Express Next Flight Out: NFO + 10-15 digits.
-            '/^NFO\d{10,15}$/'   => 92,
-
+            '/^NFO\d{10,15}$/' => 92,
             // FedEx SameDay: SD + 10-15 digits.
-            '/^SD\d{10,15}$/'    => 90,
-
+            '/^SD\d{10,15}$/' => 90,
             // Fallback: 20 digit numeric (used by some international and legacy services).
-            '/^\d{20}$/'         => 70,
-
+            '/^\d{20}$/' => 70,
             // Fallback: 22 digit numeric (rare, legacy).
-            '/^\d{22}$/'         => 65,
+            '/^\d{22}$/' => 65,
         ];
-
         foreach ($patterns as $pattern => $base_score) {
             if (preg_match($pattern, $tracking_number)) {
                 $score = is_callable($base_score) ? $base_score() : $base_score;
                 if ($score > 0) {
-                    return [
-                        'url'             => $this->get_tracking_url($tracking_number),
-                        'ambiguity_score' => $score,
-                    ];
+                    return ['url' => $this->get_tracking_url($tracking_number), 'ambiguity_score' => $score];
                 }
             }
         }
-
-        return null; // No matching pattern found.
+        return null;
+        // No matching pattern found.
     }
 }

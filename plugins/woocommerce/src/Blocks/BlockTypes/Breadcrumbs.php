@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * Breadcrumbs class.
  */
-class Breadcrumbs extends AbstractBlock
+class Breadcrumbs extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,7 +15,6 @@ class Breadcrumbs extends AbstractBlock
      * @var string
      */
     protected $block_name = 'breadcrumbs';
-
     /**
      * Render the block.
      *
@@ -32,25 +29,15 @@ class Breadcrumbs extends AbstractBlock
         ob_start();
         woocommerce_breadcrumb();
         $breadcrumb = ob_get_clean();
-
-        if (! $breadcrumb) {
+        if (!$breadcrumb) {
             return;
         }
-
-        $classes_and_styles = StyleAttributesUtils::get_classes_and_styles_by_attributes($attributes, [], [ 'font_size' ]);
-
-        $font_size_classes_and_styles  = $this->get_font_size_classes_and_styles($attributes);
+        $classes_and_styles = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes, [], ['font_size']);
+        $font_size_classes_and_styles = $this->get_font_size_classes_and_styles($attributes);
         $classes_and_styles['classes'] = $classes_and_styles['classes'] . ' ' . $font_size_classes_and_styles['class'] . ' ';
-        $classes_and_styles['styles']  = $classes_and_styles['styles'] . ' ' . $font_size_classes_and_styles['style'] . ' ';
-
-        return sprintf(
-            '<div class="woocommerce wp-block-breadcrumbs wc-block-breadcrumbs %1$s" style="%2$s">%3$s</div>',
-            esc_attr($classes_and_styles['classes']),
-            esc_attr($classes_and_styles['styles']),
-            $breadcrumb
-        );
+        $classes_and_styles['styles'] = $classes_and_styles['styles'] . ' ' . $font_size_classes_and_styles['style'] . ' ';
+        return sprintf('<div class="woocommerce wp-block-breadcrumbs wc-block-breadcrumbs %1$s" style="%2$s">%3$s</div>', esc_attr($classes_and_styles['classes']), esc_attr($classes_and_styles['styles']), $breadcrumb);
     }
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -60,7 +47,6 @@ class Breadcrumbs extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Gets font size classes and styles for the breadcrumbs block.
      *
@@ -75,26 +61,13 @@ class Breadcrumbs extends AbstractBlock
     private function get_font_size_classes_and_styles(array $attributes): array
     {
         $font_size = $attributes['fontSize'] ?? '';
-
         $custom_font_size = $attributes['style']['typography']['fontSize'] ?? '';
-
-        if (! $font_size && '' === $custom_font_size) {
-            return [
-                'class' => null,
-                'style' => null,
-            ];
+        if (!$font_size && '' === $custom_font_size) {
+            return ['class' => null, 'style' => null];
         }
-
         if ('' !== $custom_font_size) {
-            return [
-                'class' => null,
-                'style' => sprintf('font-size: %s;', $custom_font_size),
-            ];
+            return ['class' => null, 'style' => sprintf('font-size: %s;', $custom_font_size)];
         }
-
-        return [
-            'class' => sprintf('has-font-size has-%s-font-size', $font_size),
-            'style' => null,
-        ];
+        return ['class' => sprintf('has-font-size has-%s-font-size', $font_size), 'style' => null];
     }
 }

@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Admin\Suggestions\Incentives;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Suggestions\Incentives;
 
 /**
  * Abstract class for payment extension suggestion incentive provider classes.
@@ -10,12 +9,10 @@ namespace Automattic\WooCommerce\Internal\Admin\Suggestions\Incentives;
 abstract class Incentive
 {
     public const PREFIX = 'woocommerce_admin_pes_incentive_';
-
     /**
      * The user meta name for storing dismissed incentives.
      */
     protected string $dismissed_meta_name = self::PREFIX . 'dismissed';
-
     /**
      * Constructor.
      *
@@ -26,9 +23,9 @@ abstract class Incentive
          * The suggestion ID this incentive provider is for.
          */
         protected string $suggestion_id
-    ) {
+    )
+    {
     }
-
     /**
      * Get the details of all the incentives.
      *
@@ -41,21 +38,12 @@ abstract class Incentive
      */
     public function get_all(string $country_code, string $incentive_type = ''): array
     {
-        $incentives = array_filter(
-            $this->get_incentives($country_code),
-            $this->validate_incentive(...)
-        );
-
-        if (! empty($incentive_type)) {
-            $incentives = array_filter(
-                $incentives,
-                fn (array $incentive) => $incentive['type'] === $incentive_type
-            );
+        $incentives = array_filter($this->get_incentives($country_code), $this->validate_incentive(...));
+        if (!empty($incentive_type)) {
+            $incentives = array_filter($incentives, fn(array $incentive) => $incentive['type'] === $incentive_type);
         }
-
         return array_values($incentives);
     }
-
     /**
      * Get an incentive by promo ID.
      *
@@ -69,19 +57,13 @@ abstract class Incentive
      */
     public function get_by_promo_id(string $promo_id, string $country_code, string $incentive_type = ''): ?array
     {
-        $incentives = array_filter(
-            $this->get_all($country_code, $incentive_type),
-            fn (array $incentive) => $incentive['promo_id'] === $promo_id
-        );
-
+        $incentives = array_filter($this->get_all($country_code, $incentive_type), fn(array $incentive) => $incentive['promo_id'] === $promo_id);
         if (empty($incentives)) {
             return null;
         }
-
         // Get the first found incentive, in the unlikely case there are multiple incentives with the same promo ID.
         return reset($incentives);
     }
-
     /**
      * Get an incentive by ID.
      *
@@ -94,19 +76,13 @@ abstract class Incentive
      */
     public function get_by_id(string $incentive_id, string $country_code): ?array
     {
-        $incentives = array_filter(
-            $this->get_all($country_code),
-            fn (array $incentive) => $incentive['id'] === $incentive_id
-        );
-
+        $incentives = array_filter($this->get_all($country_code), fn(array $incentive) => $incentive['id'] === $incentive_id);
         if (empty($incentives)) {
             return null;
         }
-
         // Get the first found incentive, in the unlikely case there are multiple incentives with the same ID.
         return reset($incentives);
     }
-
     /**
      * Check if an incentive should be visible.
      *
@@ -119,29 +95,24 @@ abstract class Incentive
     public function is_visible(string $id, string $country_code, bool $skip_extension_active_check = false): bool
     {
         // The extension plugin must not be active, unless we are asked to skip the check.
-        if (! $skip_extension_active_check && $this->is_extension_active()) {
+        if (!$skip_extension_active_check && $this->is_extension_active()) {
             return false;
         }
-
         // The current WP user must have the required capabilities.
-        if (! $this->user_has_caps()) {
+        if (!$this->user_has_caps()) {
             return false;
         }
-
         // An incentive must be available.
         if (empty($this->get_by_id($id, $country_code))) {
             return false;
         }
-
         // If the incentive has been dismissed in all contexts, don't show it.
         // We don't know the full list of contexts, so we can't assume anything beyond `all`.
         if ($this->is_dismissed($id, 'all')) {
             return false;
         }
-
         return true;
     }
-
     /**
      * Dismiss an incentive.
      *
@@ -161,19 +132,12 @@ abstract class Incentive
         if ($this->is_dismissed($id, $context)) {
             return false;
         }
-
         $all_dismissed_incentives = $this->get_all_dismissed_incentives();
-        if (empty($all_dismissed_incentives[ $this->suggestion_id ])) {
-            $all_dismissed_incentives[ $this->suggestion_id ] = [];
+        if (empty($all_dismissed_incentives[$this->suggestion_id])) {
+            $all_dismissed_incentives[$this->suggestion_id] = [];
             ksort($all_dismissed_incentives);
         }
-
-        $all_dismissed_incentives[ $this->suggestion_id ][] = [
-            'id'        => $id,
-            'context'   => $context,
-            'timestamp' => $timestamp ?? time(),
-        ];
-
+        $all_dismissed_incentives[$this->suggestion_id][] = ['id' => $id, 'context' => $context, 'timestamp' => $timestamp ?? time()];
         /**
          * Fires when a payments extension suggestion incentive is dismissed.
          *
@@ -185,10 +149,8 @@ abstract class Incentive
          * @since 9.9.0
          */
         do_action('woocommerce_admin_payments_extension_suggestion_incentive_dismissed', $id, $this->suggestion_id, $context);
-
         return $this->save_all_dismissed_incentives($all_dismissed_incentives);
     }
-
     /**
      * Check if an incentive has been manually dismissed.
      *
@@ -203,34 +165,22 @@ abstract class Incentive
         if (empty($id)) {
             return false;
         }
-
         $all_dismissed_incentives = $this->get_all_dismissed_incentives();
-
         // If there are no dismissed incentives for the suggestion, return early.
-        $dismissed_incentives = $all_dismissed_incentives[ $this->suggestion_id ] ?? [];
+        $dismissed_incentives = $all_dismissed_incentives[$this->suggestion_id] ?? [];
         if (empty($dismissed_incentives)) {
             return false;
         }
-
         // Check if the incentive is dismissed in the given context.
-        if (in_array(
-            $id,
-            array_column(
-                array_filter(
-                    $dismissed_incentives,
-                    // All context dismissals are always included.
-                    fn (array $dismissed_incentive): bool => 'all' === $dismissed_incentive['context'] || $context === $dismissed_incentive['context']
-                ),
-                'id'
-            ),
-            true
-        )) {
+        if (in_array($id, array_column(array_filter(
+            $dismissed_incentives,
+            // All context dismissals are always included.
+            fn(array $dismissed_incentive): bool => 'all' === $dismissed_incentive['context'] || $context === $dismissed_incentive['context']
+        ), 'id'), true)) {
             return true;
         }
-
         return false;
     }
-
     /**
      * Get the dismissals (contexts) for an incentive.
      *
@@ -241,29 +191,14 @@ abstract class Incentive
     public function get_dismissals(string $id): array
     {
         $all_dismissed_incentives = $this->get_all_dismissed_incentives();
-
         // If there are no dismissed incentives for the suggestion, return early.
-        $dismissed_incentives = $all_dismissed_incentives[ $this->suggestion_id ] ?? [];
+        $dismissed_incentives = $all_dismissed_incentives[$this->suggestion_id] ?? [];
         if (empty($dismissed_incentives)) {
             return [];
         }
-
-        $dismissals = array_values(
-            array_filter(
-                $dismissed_incentives,
-                fn (array $dismissed_incentive): bool => $id === $dismissed_incentive['id']
-            )
-        );
-
-        return array_map(
-            fn (array $dismissed_incentive): array => [
-                'timestamp' => $dismissed_incentive['timestamp'],
-                'context'   => $dismissed_incentive['context'],
-            ],
-            $dismissals
-        );
+        $dismissals = array_values(array_filter($dismissed_incentives, fn(array $dismissed_incentive): bool => $id === $dismissed_incentive['id']));
+        return array_map(fn(array $dismissed_incentive): array => ['timestamp' => $dismissed_incentive['timestamp'], 'context' => $dismissed_incentive['context']], $dismissals);
     }
-
     /**
      * Get all the dismissed incentives grouped by suggestion.
      *
@@ -275,10 +210,8 @@ abstract class Incentive
         if (empty($all_dismissed_incentives)) {
             return [];
         }
-
         return $all_dismissed_incentives;
     }
-
     /**
      * Save all the dismissed incentives list.
      *
@@ -290,7 +223,6 @@ abstract class Incentive
     {
         return (bool) update_user_meta(get_current_user_id(), $this->dismissed_meta_name, $dismissed_incentives);
     }
-
     /**
      * Check if the current user has the required capabilities to view incentives.
      *
@@ -300,7 +232,6 @@ abstract class Incentive
     {
         return current_user_can('manage_woocommerce');
     }
-
     /**
      * Validate an incentive details.
      *
@@ -313,23 +244,20 @@ abstract class Incentive
     protected function validate_incentive(array $incentive): bool
     {
         // The incentive must have an ID, a promo ID, and a type.
-        $required_keys = [ 'id', 'promo_id', 'type' ];
+        $required_keys = ['id', 'promo_id', 'type'];
         foreach ($required_keys as $key) {
-            if (empty($incentive[ $key ])) {
+            if (empty($incentive[$key])) {
                 return false;
             }
         }
-
         return true;
     }
-
     /**
      * Check if the corresponding extension suggestion plugin is active.
      *
      * @return boolean Whether the corresponding extension suggestion plugin is active.
      */
     abstract protected function is_extension_active(): bool;
-
     /**
      * Get eligible incentives.
      *

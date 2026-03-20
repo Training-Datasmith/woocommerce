@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor that negates the rules in the rule's operand.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
 /**
  * Rule processor that negates the rules in the rule's operand.
  */
-class NotRuleProcessor implements RuleProcessorInterface
+class Not_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * The rule evaluator to use.
@@ -20,7 +18,6 @@ class NotRuleProcessor implements RuleProcessorInterface
      * @var RuleEvaluator
      */
     protected $rule_evaluator;
-
     /**
      * Constructor.
      *
@@ -28,9 +25,8 @@ class NotRuleProcessor implements RuleProcessorInterface
      */
     public function __construct($rule_evaluator = null)
     {
-        $this->rule_evaluator = $rule_evaluator ?? new RuleEvaluator();
+        $this->rule_evaluator = $rule_evaluator ?? new Rule_Evaluator();
     }
-
     /**
      * Evaluates the rules in the operand and negates the result.
      *
@@ -41,14 +37,9 @@ class NotRuleProcessor implements RuleProcessorInterface
      */
     public function process($rule, $stored_state): bool
     {
-        $evaluated_operand = $this->rule_evaluator->evaluate(
-            $rule->operand,
-            $stored_state
-        );
-
-        return ! $evaluated_operand;
+        $evaluated_operand = $this->rule_evaluator->evaluate($rule->operand, $stored_state);
+        return !$evaluated_operand;
     }
-
     /**
      * Validates the rule.
      *
@@ -58,10 +49,9 @@ class NotRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->operand)) {
+        if (!isset($rule->operand)) {
             return false;
         }
-
         return true;
     }
 }

@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Registry;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Registry;
 
 /**
  * Definition for the FactoryType dependency type.
  *
  * @since 2.5.0
  */
-class FactoryType extends AbstractDependencyType
+class Factory_Type extends Abstract_Dependency_Type
 {
     /**
      * Invokes and returns the value from the stored internal callback.

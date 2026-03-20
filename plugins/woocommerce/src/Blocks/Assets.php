@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks;
 
-namespace Automattic\WooCommerce\Blocks;
-
-use Automattic\WooCommerce\Blocks\Assets\Api as AssetApi;
-
+use Automattic\Woo_Commerce\Blocks\Assets\Api as AssetApi;
 /**
  * Assets class.
  *
@@ -24,7 +22,6 @@ class Assets
     {
         _deprecated_function('Assets::init', '5.0.0');
     }
-
     /**
      * Register block scripts & styles.
      *
@@ -35,7 +32,6 @@ class Assets
     {
         _deprecated_function('Assets::register_assets', '5.0.0');
     }
-
     /**
      * Register the vendors style file. We need to do it after the other files
      * because we need to check if `wp-edit-post` has been enqueued.
@@ -46,7 +42,6 @@ class Assets
     {
         _deprecated_function('Assets::enqueue_scripts', '5.0.0');
     }
-
     /**
      * Add body classes.
      *
@@ -59,7 +54,6 @@ class Assets
         _deprecated_function('Assets::add_theme_body_class', '5.0.0');
         return $classes;
     }
-
     /**
      * Add theme class to admin body.
      *
@@ -72,7 +66,6 @@ class Assets
         _deprecated_function('Assets::add_theme_admin_body_class', '5.0.0');
         return $classes;
     }
-
     /**
      * Adds a redirect field to the login form so blocks can redirect users after login.
      *
@@ -82,7 +75,6 @@ class Assets
     {
         _deprecated_function('Assets::redirect_to_field', '5.0.0');
     }
-
     /**
      * Queues a block script in the frontend.
      *
@@ -98,7 +90,7 @@ class Assets
     public static function register_block_script($script_name, $handle = '', $dependencies = []): void
     {
         _deprecated_function('register_block_script', '4.5.0');
-        $asset_api = Package::container()->get(AssetApi::class);
+        $asset_api = Package::container()->get(Asset_Api::class);
         $asset_api->register_block_script($script_name, $handle, $dependencies);
     }
 }

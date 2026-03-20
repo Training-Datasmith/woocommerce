@@ -1,22 +1,19 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor that performs a comparison operation against the number of
  * products.
  */
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
-
-use Automattic\WooCommerce\Enums\ProductStatus;
-
+use Automattic\Woo_Commerce\Enums\Product_Status;
 defined('ABSPATH') || exit;
-
 /**
  * Rule processor that performs a comparison operation against the number of
  * products.
  */
-class ProductCountRuleProcessor implements RuleProcessorInterface
+class Product_Count_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * The product query.
@@ -24,7 +21,6 @@ class ProductCountRuleProcessor implements RuleProcessorInterface
      * @var WC_Product_Query
      */
     protected $product_query;
-
     /**
      * Constructor.
      *
@@ -32,16 +28,8 @@ class ProductCountRuleProcessor implements RuleProcessorInterface
      */
     public function __construct($product_query = null)
     {
-        $this->product_query = $product_query ?? new \WC_Product_Query(
-            [
-                    'limit'    => 1,
-                    'paginate' => true,
-                    'return'   => 'ids',
-                    'status'   => [ ProductStatus::PUBLISH ],
-                ]
-        );
+        $this->product_query = $product_query ?? new \WC_Product_Query(['limit' => 1, 'paginate' => true, 'return' => 'ids', 'status' => [Product_Status::PUBLISH]]);
     }
-
     /**
      * Performs a comparison operation against the number of products.
      *
@@ -53,14 +41,8 @@ class ProductCountRuleProcessor implements RuleProcessorInterface
     public function process($rule, $stored_state)
     {
         $products = $this->product_query->get_products();
-
-        return ComparisonOperation::compare(
-            $products->total,
-            $rule->value,
-            $rule->operation
-        );
+        return Comparison_Operation::compare($products->total, $rule->value, $rule->operation);
     }
-
     /**
      * Validates the rule.
      *
@@ -70,14 +52,12 @@ class ProductCountRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->value)) {
+        if (!isset($rule->value)) {
             return false;
         }
-
-        if (! isset($rule->operation)) {
+        if (!isset($rule->operation)) {
             return false;
         }
-
         return true;
     }
 }

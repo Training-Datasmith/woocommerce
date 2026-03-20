@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Tasks;
 
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
-
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
-
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task;
 /**
  * Store Details Task
  */
-class StoreDetails extends Task
+class Store_Details extends Task
 {
     /**
      * ID.
@@ -18,7 +16,6 @@ class StoreDetails extends Task
     {
         return 'store_details';
     }
-
     /**
      * Title.
      *
@@ -34,7 +31,6 @@ class StoreDetails extends Task
         }
         return __('Store details', 'woocommerce');
     }
-
     /**
      * Content.
      *
@@ -42,12 +38,8 @@ class StoreDetails extends Task
      */
     public function get_content()
     {
-        return __(
-            'Your store address is required to set the origin country for shipping, currencies, and payment options.',
-            'woocommerce'
-        );
+        return __('Your store address is required to set the origin country for shipping, currencies, and payment options.', 'woocommerce');
     }
-
     /**
      * Time.
      *
@@ -57,7 +49,6 @@ class StoreDetails extends Task
     {
         return __('4 minutes', 'woocommerce');
     }
-
     /**
      * Time.
      *
@@ -65,26 +56,22 @@ class StoreDetails extends Task
      */
     public function get_action_url()
     {
-        return ! $this->is_complete() ? admin_url('admin.php?page=wc-settings&tab=general&tutorial=true') : admin_url('admin.php?page=wc-settings&tab=general');
+        return !$this->is_complete() ? admin_url('admin.php?page=wc-settings&tab=general&tutorial=true') : admin_url('admin.php?page=wc-settings&tab=general');
     }
-
     /**
      * Task completion.
      */
     public function is_complete(): bool
     {
-        $country        = WC()->countries->get_base_country();
+        $country = WC()->countries->get_base_country();
         $country_locale = WC()->countries->get_country_locale();
-        $locale         = $country_locale[ $country ] ?? [];
-
+        $locale = $country_locale[$country] ?? [];
         $hide_postcode = $locale['postcode']['hidden'] ?? false;
         // If postcode is hidden, just check that the store address and city are set.
         if ($hide_postcode) {
             return get_option('woocommerce_store_address', '') !== '' && get_option('woocommerce_store_city', '') !== '';
         }
-
         // Mark as completed if the store address, city and postcode are set. We don't need to check the country because it's set by default.
-        return get_option('woocommerce_store_address', '') !== '' && get_option('woocommerce_store_city', '') !== '' &&
-        get_option('woocommerce_store_postcode', '') !== '';
+        return get_option('woocommerce_store_address', '') !== '' && get_option('woocommerce_store_city', '') !== '' && get_option('woocommerce_store_postcode', '') !== '';
     }
 }

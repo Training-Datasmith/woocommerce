@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Enums\ProductStatus;
-
+use Automattic\Woo_Commerce\Enums\Product_Status;
 /**
  * RelatedProducts class.
  */
-class RelatedProducts extends AbstractBlock
+class Related_Products extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,14 +15,12 @@ class RelatedProducts extends AbstractBlock
      * @var string
      */
     protected $block_name = 'related-products';
-
     /**
      * The Block with its attributes before it gets rendered
      *
      * @var array
      */
     protected $parsed_block;
-
     /**
      * Initialize this block type.
      *
@@ -35,21 +31,9 @@ class RelatedProducts extends AbstractBlock
     protected function initialize()
     {
         parent::initialize();
-        add_filter(
-            'pre_render_block',
-            $this->update_query(...),
-            10,
-            2
-        );
-
-        add_filter(
-            'render_block',
-            $this->render_block(...),
-            10,
-            2
-        );
+        add_filter('pre_render_block', $this->update_query(...), 10, 2);
+        add_filter('render_block', $this->render_block(...), 10, 2);
     }
-
     /**
      * It isn't necessary register block assets because it is a server side block.
      */
@@ -57,7 +41,6 @@ class RelatedProducts extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the frontend style handle for this block type.
      */
@@ -65,7 +48,6 @@ class RelatedProducts extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Update the query for the product query block.
      *
@@ -77,22 +59,13 @@ class RelatedProducts extends AbstractBlock
         if ('core/query' !== $parsed_block['blockName']) {
             return $pre_render;
         }
-
         $this->parsed_block = $parsed_block;
-
-        if (ProductQuery::is_woocommerce_variation($parsed_block) && 'woocommerce/related-products' === $parsed_block['attrs']['namespace']) {
+        if (Product_Query::is_woocommerce_variation($parsed_block) && 'woocommerce/related-products' === $parsed_block['attrs']['namespace']) {
             // Set this so that our product filters can detect if it's a PHP template.
-            add_filter(
-                'query_loop_block_query_vars',
-                $this->build_query(...),
-                10,
-                2
-            );
+            add_filter('query_loop_block_query_vars', $this->build_query(...), 10, 2);
         }
-
         return $pre_render;
     }
-
     /**
      * Return a custom query based on attributes, filters and global WP_Query.
      *
@@ -102,23 +75,15 @@ class RelatedProducts extends AbstractBlock
     public function build_query(array $query, $block = null): array
     {
         $parsed_block = $this->parsed_block;
-        if (! $this->is_related_products_block($parsed_block, $block)) {
+        if (!$this->is_related_products_block($parsed_block, $block)) {
             return $query;
         }
-
         $related_products_ids = $this->get_related_products_ids($query['posts_per_page']);
         if (count($related_products_ids) < 1) {
             return [];
         }
-
-        return [
-            'post_type'      => 'product',
-            'post__in'       => $related_products_ids,
-            'post_status'    => ProductStatus::PUBLISH,
-            'posts_per_page' => $query['posts_per_page'],
-        ];
+        return ['post_type' => 'product', 'post__in' => $related_products_ids, 'post_status' => Product_Status::PUBLISH, 'posts_per_page' => $query['posts_per_page']];
     }
-
     /**
      * If there are no related products, return an empty string.
      *
@@ -129,19 +94,16 @@ class RelatedProducts extends AbstractBlock
      */
     public function render_block(string $content, array $block): string
     {
-        if (! $this->is_related_products_block($block)) {
+        if (!$this->is_related_products_block($block)) {
             return $content;
         }
-
         // If there are no related products, render nothing.
         $related_products_ids = $this->get_related_products_ids();
         if (count($related_products_ids) < 1) {
             return '';
         }
-
         return $content;
     }
-
     /**
      * Determines whether the block is a related products block.
      *
@@ -153,13 +115,11 @@ class RelatedProducts extends AbstractBlock
     private function is_related_products_block(array $parsed_block, $rendered_block = null): bool
     {
         $is_product_collection_block = $rendered_block->context['query']['isProductCollectionBlock'] ?? false;
-        if (! $is_product_collection_block && 'woocommerce/related-products' === ($parsed_block['attrs']['namespace'] ?? null) && ProductQuery::is_woocommerce_variation($parsed_block)) {
+        if (!$is_product_collection_block && 'woocommerce/related-products' === ($parsed_block['attrs']['namespace'] ?? null) && Product_Query::is_woocommerce_variation($parsed_block)) {
             return true;
         }
-
         return false;
     }
-
     /**
      * Get related products ids.
      * The logic is copied from the core function woocommerce_related_products. https://github.com/woocommerce/woocommerce/blob/ca49caabcba84ce9f60a03c6d3534ec14b350b80/plugins/woocommerce/includes/wc-template-functions.php/#L2039-L2074
@@ -170,28 +130,22 @@ class RelatedProducts extends AbstractBlock
     private function get_related_products_ids($product_per_page = 5): array
     {
         global $post;
-
         $product = wc_get_product($post->ID);
-
-        if (! $product instanceof \WC_Product) {
+        if (!$product instanceof \WC_Product) {
             return [];
         }
-
         $related_products_ids = wc_get_related_products($product->get_id(), $product_per_page, $product->get_upsell_ids());
-        if (! empty($related_products_ids)) {
+        if (!empty($related_products_ids)) {
             // Optimization: reduce the number of SQLs needed to populate product objects.
             _prime_post_caches($related_products_ids);
-
             $related_products = array_filter(array_map(wc_get_product(...), $related_products_ids), wc_products_array_filter_visible(...));
             $related_products = wc_products_array_orderby($related_products, 'rand', 'desc');
-            /** @var \WC_Product[] $related_products */ // phpcs:ignore Generic.Commenting.DocComment.MissingShort
-
+            /** @var \WC_Product[] $related_products */
+            // phpcs:ignore Generic.Commenting.DocComment.MissingShort
             // Optimization: reduce the number of SQLs needed to fetch images when rendering.
-            _prime_post_caches(array_filter(array_map(fn (\WC_Product $product): int => (int) $product->get_image_id(), $related_products)));
-
-            $related_products_ids = array_map(fn (\WC_Product $product) => $product->get_id(), $related_products);
+            _prime_post_caches(array_filter(array_map(fn(\WC_Product $product): int => (int) $product->get_image_id(), $related_products)));
+            $related_products_ids = array_map(fn(\WC_Product $product) => $product->get_id(), $related_products);
         }
-
         return $related_products_ids;
     }
 }

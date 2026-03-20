@@ -1,18 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Class for adding segmenting support without cluttering the data stores.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports;
+namespace Automattic\Woo_Commerce\Admin\API\Reports;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\Coupons\DataStore as CouponsDataStore;
-use Automattic\WooCommerce\Admin\API\Reports\Taxes\Stats\DataStore as TaxesStatsDataStore;
-use Automattic\WooCommerce\Enums\ProductType;
-
+use Automattic\Woo_Commerce\Admin\API\Reports\Coupons\Data_Store as CouponsDataStore;
+use Automattic\Woo_Commerce\Admin\API\Reports\Taxes\Stats\Data_Store as TaxesStatsDataStore;
+use Automattic\Woo_Commerce\Enums\Product_Type;
 /**
  * Date & time interval and numeric range handling class for Reporting API.
  */
@@ -24,14 +21,12 @@ class Segmenter
      * @var array|bool
      */
     protected $all_segment_ids = false;
-
     /**
      * Array of all segment labels.
      *
      * @var array
      */
     protected $segment_labels = [];
-
     /**
      * Constructor.
      *
@@ -47,9 +42,9 @@ class Segmenter
          * SQL definition for each column.
          */
         protected $report_columns
-    ) {
+    )
+    {
     }
-
     /**
      * Filters definitions for SELECT clauses based on query_args and joins them into one string usable in SELECT clause.
      *
@@ -62,22 +57,19 @@ class Segmenter
         if (isset($this->query_args['fields']) && is_array($this->query_args['fields'])) {
             $keep = [];
             foreach ($this->query_args['fields'] as $field) {
-                if (isset($columns_mapping[ $field ])) {
-                    $keep[ $field ] = $columns_mapping[ $field ];
+                if (isset($columns_mapping[$field])) {
+                    $keep[$field] = $columns_mapping[$field];
                 }
             }
             $selections = implode(', ', $keep);
         } else {
             $selections = implode(', ', $columns_mapping);
         }
-
         if ($selections) {
             return ',' . $selections;
         }
-
         return $selections;
     }
-
     /**
      * Update row-level db result for segments in 'totals' section to the format used for output.
      *
@@ -89,30 +81,21 @@ class Segmenter
     protected function reformat_totals_segments($segments_db_result, $segment_dimension): array
     {
         $segment_result = [];
-
         if (strpos($segment_dimension, '.')) {
             $segment_dimension = substr(strstr($segment_dimension, '.'), 1);
         }
-
         $segment_labels = $this->get_segment_labels();
         foreach ($segments_db_result as $segment_data) {
-            $segment_id = $segment_data[ $segment_dimension ];
-            if (! isset($segment_labels[ $segment_id ])) {
+            $segment_id = $segment_data[$segment_dimension];
+            if (!isset($segment_labels[$segment_id])) {
                 continue;
             }
-
-            unset($segment_data[ $segment_dimension ]);
-            $segment_datum                 = [
-                'segment_id'    => $segment_id,
-                'segment_label' => $segment_labels[ $segment_id ],
-                'subtotals'     => $segment_data,
-            ];
-            $segment_result[ $segment_id ] = $segment_datum;
+            unset($segment_data[$segment_dimension]);
+            $segment_datum = ['segment_id' => $segment_id, 'segment_label' => $segment_labels[$segment_id], 'subtotals' => $segment_data];
+            $segment_result[$segment_id] = $segment_datum;
         }
-
         return $segment_result;
     }
-
     /**
      * Merges segmented results for totals response part.
      *
@@ -146,37 +129,25 @@ class Segmenter
     protected function merge_segment_totals_results($segment_dimension, $result1, $result2): array
     {
         $result_segments = [];
-        $segment_labels  = $this->get_segment_labels();
-
+        $segment_labels = $this->get_segment_labels();
         foreach ($result1 as $segment_data) {
-            $segment_id = $segment_data[ $segment_dimension ];
-            if (! isset($segment_labels[ $segment_id ])) {
+            $segment_id = $segment_data[$segment_dimension];
+            if (!isset($segment_labels[$segment_id])) {
                 continue;
             }
-
-            unset($segment_data[ $segment_dimension ]);
-            $result_segments[ $segment_id ] = [
-                'segment_label' => $segment_labels[ $segment_id ],
-                'segment_id'    => $segment_id,
-                'subtotals'     => $segment_data,
-            ];
+            unset($segment_data[$segment_dimension]);
+            $result_segments[$segment_id] = ['segment_label' => $segment_labels[$segment_id], 'segment_id' => $segment_id, 'subtotals' => $segment_data];
         }
-
         foreach ($result2 as $segment_data) {
-            $segment_id = $segment_data[ $segment_dimension ];
-            if (! isset($segment_labels[ $segment_id ])) {
+            $segment_id = $segment_data[$segment_dimension];
+            if (!isset($segment_labels[$segment_id])) {
                 continue;
             }
-
-            unset($segment_data[ $segment_dimension ]);
-            if (! isset($result_segments[ $segment_id ])) {
-                $result_segments[ $segment_id ] = [
-                    'segment_label' => $segment_labels[ $segment_id ],
-                    'segment_id'    => $segment_id,
-                    'subtotals'     => [],
-                ];
+            unset($segment_data[$segment_dimension]);
+            if (!isset($result_segments[$segment_id])) {
+                $result_segments[$segment_id] = ['segment_label' => $segment_labels[$segment_id], 'segment_id' => $segment_id, 'subtotals' => []];
             }
-            $result_segments[ $segment_id ]['subtotals'] = array_merge($result_segments[ $segment_id ]['subtotals'], $segment_data);
+            $result_segments[$segment_id]['subtotals'] = array_merge($result_segments[$segment_id]['subtotals'], $segment_data);
         }
         return $result_segments;
     }
@@ -219,59 +190,43 @@ class Segmenter
     protected function merge_segment_intervals_results($segment_dimension, $result1, $result2): array
     {
         $result_segments = [];
-        $segment_labels  = $this->get_segment_labels();
-
+        $segment_labels = $this->get_segment_labels();
         foreach ($result1 as $segment_data) {
-            $segment_id = $segment_data[ $segment_dimension ];
-            if (! isset($segment_labels[ $segment_id ])) {
+            $segment_id = $segment_data[$segment_dimension];
+            if (!isset($segment_labels[$segment_id])) {
                 continue;
             }
-
             $time_interval = $segment_data['time_interval'];
-            if (! isset($result_segments[ $time_interval ])) {
-                $result_segments[ $time_interval ]             = [];
-                $result_segments[ $time_interval ]['segments'] = [];
+            if (!isset($result_segments[$time_interval])) {
+                $result_segments[$time_interval] = [];
+                $result_segments[$time_interval]['segments'] = [];
             }
-
             unset($segment_data['time_interval']);
             unset($segment_data['datetime_anchor']);
-            unset($segment_data[ $segment_dimension ]);
-            $segment_datum = [
-                'segment_label' => $segment_labels[ $segment_id ],
-                'segment_id'    => $segment_id,
-                'subtotals'     => $segment_data,
-            ];
-            $result_segments[ $time_interval ]['segments'][ $segment_id ] = $segment_datum;
+            unset($segment_data[$segment_dimension]);
+            $segment_datum = ['segment_label' => $segment_labels[$segment_id], 'segment_id' => $segment_id, 'subtotals' => $segment_data];
+            $result_segments[$time_interval]['segments'][$segment_id] = $segment_datum;
         }
-
         foreach ($result2 as $segment_data) {
-            $segment_id = $segment_data[ $segment_dimension ];
-            if (! isset($segment_labels[ $segment_id ])) {
+            $segment_id = $segment_data[$segment_dimension];
+            if (!isset($segment_labels[$segment_id])) {
                 continue;
             }
-
             $time_interval = $segment_data['time_interval'];
-            if (! isset($result_segments[ $time_interval ])) {
-                $result_segments[ $time_interval ]             = [];
-                $result_segments[ $time_interval ]['segments'] = [];
+            if (!isset($result_segments[$time_interval])) {
+                $result_segments[$time_interval] = [];
+                $result_segments[$time_interval]['segments'] = [];
             }
-
             unset($segment_data['time_interval']);
             unset($segment_data['datetime_anchor']);
-            unset($segment_data[ $segment_dimension ]);
-
-            if (! isset($result_segments[ $time_interval ]['segments'][ $segment_id ])) {
-                $result_segments[ $time_interval ]['segments'][ $segment_id ] = [
-                    'segment_label' => $segment_labels[ $segment_id ],
-                    'segment_id'    => $segment_id,
-                    'subtotals'     => [],
-                ];
+            unset($segment_data[$segment_dimension]);
+            if (!isset($result_segments[$time_interval]['segments'][$segment_id])) {
+                $result_segments[$time_interval]['segments'][$segment_id] = ['segment_label' => $segment_labels[$segment_id], 'segment_id' => $segment_id, 'subtotals' => []];
             }
-            $result_segments[ $time_interval ]['segments'][ $segment_id ]['subtotals'] = array_merge($result_segments[ $time_interval ]['segments'][ $segment_id ]['subtotals'], $segment_data);
+            $result_segments[$time_interval]['segments'][$segment_id]['subtotals'] = array_merge($result_segments[$time_interval]['segments'][$segment_id]['subtotals'], $segment_data);
         }
         return $result_segments;
     }
-
     /**
      * Update row-level db result for segments in 'intervals' section to the format used for output.
      *
@@ -283,38 +238,28 @@ class Segmenter
     protected function reformat_intervals_segments($segments_db_result, $segment_dimension): array
     {
         $aggregated_segment_result = [];
-
         if (strpos($segment_dimension, '.')) {
             $segment_dimension = substr(strstr($segment_dimension, '.'), 1);
         }
-
         $segment_labels = $this->get_segment_labels();
-
         foreach ($segments_db_result as $segment_data) {
-            $segment_id = $segment_data[ $segment_dimension ];
-            if (! isset($segment_labels[ $segment_id ])) {
+            $segment_id = $segment_data[$segment_dimension];
+            if (!isset($segment_labels[$segment_id])) {
                 continue;
             }
-
             $time_interval = $segment_data['time_interval'];
-            if (! isset($aggregated_segment_result[ $time_interval ])) {
-                $aggregated_segment_result[ $time_interval ]             = [];
-                $aggregated_segment_result[ $time_interval ]['segments'] = [];
+            if (!isset($aggregated_segment_result[$time_interval])) {
+                $aggregated_segment_result[$time_interval] = [];
+                $aggregated_segment_result[$time_interval]['segments'] = [];
             }
             unset($segment_data['time_interval']);
             unset($segment_data['datetime_anchor']);
-            unset($segment_data[ $segment_dimension ]);
-            $segment_datum = [
-                'segment_label' => $segment_labels[ $segment_id ],
-                'segment_id'    => $segment_id,
-                'subtotals'     => $segment_data,
-            ];
-            $aggregated_segment_result[ $time_interval ]['segments'][ $segment_id ] = $segment_datum;
+            unset($segment_data[$segment_dimension]);
+            $segment_datum = ['segment_label' => $segment_labels[$segment_id], 'segment_id' => $segment_id, 'subtotals' => $segment_data];
+            $aggregated_segment_result[$time_interval]['segments'][$segment_id] = $segment_datum;
         }
-
         return $aggregated_segment_result;
     }
-
     /**
      * Fetches all segment ids from db and stores it for later use.
      *
@@ -323,129 +268,97 @@ class Segmenter
     protected function set_all_segments()
     {
         global $wpdb;
-
-        if (! isset($this->query_args['segmentby']) || '' === $this->query_args['segmentby']) {
+        if (!isset($this->query_args['segmentby']) || '' === $this->query_args['segmentby']) {
             $this->all_segment_ids = [];
             return;
         }
-
-        $segments       = [];
+        $segments = [];
         $segment_labels = [];
-
         if ('product' === $this->query_args['segmentby']) {
-            $args = [
-                'return' => 'objects',
-                'limit'  => -1,
-            ];
-
+            $args = ['return' => 'objects', 'limit' => -1];
             if (isset($this->query_args['product_includes'])) {
                 $args['include'] = $this->query_args['product_includes'];
             }
-
             if (isset($this->query_args['category_includes'])) {
-                $categories       = $this->query_args['category_includes'];
+                $categories = $this->query_args['category_includes'];
                 $args['category'] = [];
                 foreach ($categories as $category_id) {
-                    $terms              = get_term_by('id', $category_id, 'product_cat');
+                    $terms = get_term_by('id', $category_id, 'product_cat');
                     $args['category'][] = $terms->slug;
                 }
             }
-
             $segment_objects = wc_get_products($args);
             foreach ($segment_objects as $segment) {
-                $id                    = $segment->get_id();
-                $segments[]            = $id;
-                $segment_labels[ $id ] = $segment->get_name();
+                $id = $segment->get_id();
+                $segments[] = $id;
+                $segment_labels[$id] = $segment->get_name();
             }
         } elseif ('variation' === $this->query_args['segmentby']) {
-            $args = [
-                'return' => 'objects',
-                'limit'  => -1,
-                'type'   => ProductType::VARIATION,
-            ];
-
-            if (
-                isset($this->query_args['product_includes']) &&
-                is_array($this->query_args['product_includes']) &&
-                count($this->query_args['product_includes']) === 1
-            ) {
+            $args = ['return' => 'objects', 'limit' => -1, 'type' => Product_Type::VARIATION];
+            if (isset($this->query_args['product_includes']) && is_array($this->query_args['product_includes']) && count($this->query_args['product_includes']) === 1) {
                 $args['parent'] = $this->query_args['product_includes'][0];
             }
-
             if (isset($this->query_args['variation_includes'])) {
                 $args['include'] = $this->query_args['variation_includes'];
             }
-
             $segment_objects = wc_get_products($args);
-
             foreach ($segment_objects as $segment) {
-                $id           = $segment->get_id();
-                $segments[]   = $id;
+                $id = $segment->get_id();
+                $segments[] = $id;
                 $product_name = $segment->get_name();
-                $separator    = apply_filters('woocommerce_product_variation_title_attributes_separator', ' - ', $segment);
-                $attributes   = wc_get_formatted_variation($segment, true, false);
-
-                $segment_labels[ $id ] = $product_name . $separator . $attributes;
+                $separator = apply_filters('woocommerce_product_variation_title_attributes_separator', ' - ', $segment);
+                $attributes = wc_get_formatted_variation($segment, true, false);
+                $segment_labels[$id] = $product_name . $separator . $attributes;
             }
-
             // If no variations were specified, add a segment for the parent product (variation = 0).
             // This is to catch simple products with prior sales converted into variable products.
             // See: https://github.com/woocommerce/woocommerce-admin/issues/2719.
             if (isset($args['parent']) && empty($args['include'])) {
-                $parent_object     = wc_get_product($args['parent']);
-                $segments[]        = 0;
+                $parent_object = wc_get_product($args['parent']);
+                $segments[] = 0;
                 $segment_labels[0] = $parent_object->get_name();
             }
         } elseif ('category' === $this->query_args['segmentby']) {
-            $args = [
-                'taxonomy' => 'product_cat',
-            ];
-
+            $args = ['taxonomy' => 'product_cat'];
             if (isset($this->query_args['category_includes'])) {
                 $args['include'] = $this->query_args['category_includes'];
             }
-
             // @todo: Look into `wc_get_products` or data store methods and not directly touching the database or post types.
             $categories = get_categories($args);
-
-            $segments       = wp_list_pluck($categories, 'cat_ID');
+            $segments = wp_list_pluck($categories, 'cat_ID');
             $segment_labels = wp_list_pluck($categories, 'name', 'cat_ID');
-
         } elseif ('coupon' === $this->query_args['segmentby']) {
             $args = [];
             if (isset($this->query_args['coupons'])) {
                 $args['include'] = $this->query_args['coupons'];
             }
-            $coupons_store  = new CouponsDataStore();
-            $coupons        = $coupons_store->get_coupons($args);
-            $segments       = wp_list_pluck($coupons, 'ID');
+            $coupons_store = new Coupons_Data_Store();
+            $coupons = $coupons_store->get_coupons($args);
+            $segments = wp_list_pluck($coupons, 'ID');
             $segment_labels = wp_list_pluck($coupons, 'post_title', 'ID');
             $segment_labels = array_map(wc_format_coupon_code(...), $segment_labels);
         } elseif ('customer_type' === $this->query_args['segmentby']) {
             // 0 -- new customer
             // 1 -- returning customer
-            $segments = [ 0, 1 ];
+            $segments = [0, 1];
         } elseif ('tax_rate_id' === $this->query_args['segmentby']) {
             $args = [];
             if (isset($this->query_args['taxes'])) {
                 $args['include'] = $this->query_args['taxes'];
             }
-            $taxes = TaxesStatsDataStore::get_taxes($args);
-
+            $taxes = Taxes_Stats_Data_Store::get_taxes($args);
             foreach ($taxes as $tax) {
-                $id                    = $tax['tax_rate_id'];
-                $segments[]            = $id;
-                $segment_labels[ $id ] = \WC_Tax::get_rate_code((object) $tax);
+                $id = $tax['tax_rate_id'];
+                $segments[] = $id;
+                $segment_labels[$id] = \WC_Tax::get_rate_code((object) $tax);
             }
         } else {
             // Catch all default.
             $segments = [];
         }
-
         $this->all_segment_ids = $segments;
-        $this->segment_labels  = $segment_labels;
+        $this->segment_labels = $segment_labels;
     }
-
     /**
      * Return all segment ids for given segmentby query parameter.
      *
@@ -453,13 +366,11 @@ class Segmenter
      */
     protected function get_all_segments()
     {
-        if (! is_array($this->all_segment_ids)) {
+        if (!is_array($this->all_segment_ids)) {
             $this->set_all_segments();
         }
-
         return $this->all_segment_ids;
     }
-
     /**
      * Return all segment labels for given segmentby query parameter.
      *
@@ -467,13 +378,11 @@ class Segmenter
      */
     protected function get_segment_labels()
     {
-        if (! is_array($this->all_segment_ids)) {
+        if (!is_array($this->all_segment_ids)) {
             $this->set_all_segments();
         }
-
         return $this->segment_labels;
     }
-
     /**
      * Compares two report data objects by pre-defined object property and ASC/DESC ordering.
      *
@@ -490,10 +399,9 @@ class Segmenter
             return 1;
         }
         if ($a['segment_id'] < $b['segment_id']) {
-            return - 1;
+            return -1;
         }
     }
-
     /**
      * Adds zeroes for segments not present in the data selection.
      *
@@ -504,36 +412,30 @@ class Segmenter
         $segment_subtotals = [];
         if (isset($this->query_args['fields']) && is_array($this->query_args['fields'])) {
             foreach ($this->query_args['fields'] as $field) {
-                if (isset($this->report_columns[ $field ])) {
-                    $segment_subtotals[ $field ] = 0;
+                if (isset($this->report_columns[$field])) {
+                    $segment_subtotals[$field] = 0;
                 }
             }
         } else {
             foreach ($this->report_columns as $field => $sql_clause) {
-                $segment_subtotals[ $field ] = 0;
+                $segment_subtotals[$field] = 0;
             }
         }
-        if (! is_array($segments)) {
+        if (!is_array($segments)) {
             $segments = [];
         }
         $all_segment_ids = $this->get_all_segments();
-        $segment_labels  = $this->get_segment_labels();
+        $segment_labels = $this->get_segment_labels();
         foreach ($all_segment_ids as $segment_id) {
-            if (! isset($segments[ $segment_id ])) {
-                $segments[ $segment_id ] = [
-                    'segment_id'    => $segment_id,
-                    'segment_label' => $segment_labels[ $segment_id ],
-                    'subtotals'     => $segment_subtotals,
-                ];
+            if (!isset($segments[$segment_id])) {
+                $segments[$segment_id] = ['segment_id' => $segment_id, 'segment_label' => $segment_labels[$segment_id], 'subtotals' => $segment_subtotals];
             }
         }
-
         // Using array_values to remove custom keys, so that it gets later converted to JSON as an array.
         $segments_no_keys = array_values($segments);
         usort($segments_no_keys, $this->segment_cmp(...));
         return $segments_no_keys;
     }
-
     /**
      * Adds missing segments to intervals, modifies $data.
      *
@@ -542,10 +444,9 @@ class Segmenter
     protected function fill_in_missing_interval_segments(&$data)
     {
         foreach ($data->intervals as $order_id => $interval_data) {
-            $data->intervals[ $order_id ]['segments'] = $this->fill_in_missing_segments($data->intervals[ $order_id ]['segments']);
+            $data->intervals[$order_id]['segments'] = $this->fill_in_missing_segments($data->intervals[$order_id]['segments']);
         }
     }
-
     /**
      * Calculate segments for totals where the segmenting property is bound to product (e.g. category, product_id, variation_id).
      *
@@ -562,7 +463,6 @@ class Segmenter
     {
         return [];
     }
-
     /**
      * Calculate segments for intervals where the segmenting property is bound to product (e.g. category, product_id, variation_id).
      *
@@ -579,7 +479,6 @@ class Segmenter
     {
         return [];
     }
-
     /**
      * Calculate segments for totals query where the segmenting property is bound to order (e.g. coupon or customer type).
      *
@@ -594,7 +493,6 @@ class Segmenter
     {
         return [];
     }
-
     /**
      * Calculate segments for intervals query where the segmenting property is bound to order (e.g. coupon or customer type).
      *
@@ -609,7 +507,6 @@ class Segmenter
     {
         return [];
     }
-
     /**
      * Return array of segments formatted for REST response.
      *
@@ -621,7 +518,6 @@ class Segmenter
     {
         return [];
     }
-
     /**
      * Calculate segments for segmenting property bound to product (e.g. category, product_id, variation_id).
      *
@@ -646,7 +542,6 @@ class Segmenter
             return $this->get_product_related_intervals_segments($segmenting_selections, $segmenting_from, $segmenting_where, $segmenting_groupby, $segmenting_dimension_name, $table_name, $query_params, $unique_orders_table);
         }
     }
-
     /**
      * Calculate segments for segmenting property bound to order (e.g. coupon or customer type).
      *
@@ -669,7 +564,6 @@ class Segmenter
             return $this->get_order_related_intervals_segments($segmenting_select, $segmenting_from, $segmenting_where, $segmenting_groupby, $table_name, $query_params);
         }
     }
-
     /**
      * Assign segments to time intervals by updating original $intervals array.
      *
@@ -680,22 +574,20 @@ class Segmenter
     {
         $old_keys = array_keys($intervals);
         foreach ($intervals as $interval) {
-            $intervals[ $interval['time_interval'] ]             = $interval;
-            $intervals[ $interval['time_interval'] ]['segments'] = [];
+            $intervals[$interval['time_interval']] = $interval;
+            $intervals[$interval['time_interval']]['segments'] = [];
         }
         foreach ($old_keys as $key) {
-            unset($intervals[ $key ]);
+            unset($intervals[$key]);
         }
-
         foreach ($intervals_segments as $time_interval => $segment) {
-            if (isset($intervals[ $time_interval ])) {
-                $intervals[ $time_interval ]['segments'] = $segment['segments'];
+            if (isset($intervals[$time_interval])) {
+                $intervals[$time_interval]['segments'] = $segment['segments'];
             }
         }
         // To remove time interval keys (so that REST response is formatted correctly).
         $intervals = array_values($intervals);
     }
-
     /**
      * Returns an array of segments for totals part of REST response.
      *
@@ -707,10 +599,8 @@ class Segmenter
     public function get_totals_segments($query_params, $table_name)
     {
         $segments = $this->get_segments('totals', $query_params, $table_name);
-
         return $this->fill_in_missing_segments($segments);
     }
-
     /**
      * Adds an array of segments to data->intervals object.
      *
@@ -721,7 +611,6 @@ class Segmenter
     public function add_intervals_segments(&$data, $intervals_query, $table_name): void
     {
         $intervals_segments = $this->get_segments('intervals', $intervals_query, $table_name);
-
         $this->assign_segments_to_intervals($data->intervals, $intervals_segments);
         $this->fill_in_missing_interval_segments($data);
     }

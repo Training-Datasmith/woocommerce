@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Templates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Templates;
 
 /**
  * SimpleProductAddToCartWithOptionsTemplate class.
  *
  * @internal
  */
-class SimpleProductAddToCartWithOptionsTemplate extends AbstractTemplatePart
+class Simple_Product_Add_To_Cart_With_Options_Template extends Abstract_Template_Part
 {
     /**
      * The slug of the template.
@@ -17,21 +16,18 @@ class SimpleProductAddToCartWithOptionsTemplate extends AbstractTemplatePart
      * @var string
      */
     public const SLUG = 'simple-product-add-to-cart-with-options';
-
     /**
      * The template part area where the template part belongs.
      *
      * @var string
      */
     public $template_area = 'add-to-cart-with-options';
-
     /**
      * Initialization method.
      */
     public function init()
     {
     }
-
     /**
      * Returns the title of the template.
      *
@@ -41,7 +37,6 @@ class SimpleProductAddToCartWithOptionsTemplate extends AbstractTemplatePart
     {
         return _x('Simple Product Add to Cart + Options', 'Template name', 'woocommerce');
     }
-
     /**
      * Returns the description of the template.
      *

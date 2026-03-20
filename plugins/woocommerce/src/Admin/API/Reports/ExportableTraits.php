@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Reports exportable traits
  *
  * Collection of utility methods for exportable reports.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports;
+namespace Automattic\Woo_Commerce\Admin\API\Reports;
 
 defined('ABSPATH') || exit;
-
 /**
  * ExportableTraits class.
  */
-trait ExportableTraits
+trait Exportable_Traits
 {
     /**
      * Format numbers for CSV using store precision setting.

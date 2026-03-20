@@ -5,20 +5,17 @@
  *
  * @package Automattic\WooCommerce\Internal\CLI\Migrator\Platforms\Shopify
  */
-
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\CLI\Migrator\Platforms\Shopify;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\CLI\Migrator\Platforms\Shopify;
 
 defined('ABSPATH') || exit;
-
 /**
  * ShopifyPlatform class.
  *
  * This class handles the registration of the Shopify platform with the
  * WooCommerce Migrator's platform registry system.
  */
-class ShopifyPlatform
+class Shopify_Platform
 {
     /**
      * Initializes the Shopify platform registration.
@@ -29,7 +26,6 @@ class ShopifyPlatform
     {
         add_filter('woocommerce_migrator_platforms', self::register_platform(...));
     }
-
     /**
      * Registers the Shopify platform with the migrator system.
      *
@@ -39,17 +35,7 @@ class ShopifyPlatform
      */
     public static function register_platform(array $platforms): array
     {
-        $platforms['shopify'] = [
-            'name'        => 'Shopify',
-            'description' => 'Import products and data from Shopify stores',
-            'fetcher'     => ShopifyFetcher::class,
-            'mapper'      => ShopifyMapper::class,
-            'credentials' => [
-                'shop_url'     => 'Enter shop URL (e.g., mystore.myshopify.com):',
-                'access_token' => 'Enter access token:',
-            ],
-        ];
-
+        $platforms['shopify'] = ['name' => 'Shopify', 'description' => 'Import products and data from Shopify stores', 'fetcher' => Shopify_Fetcher::class, 'mapper' => Shopify_Mapper::class, 'credentials' => ['shop_url' => 'Enter shop URL (e.g., mystore.myshopify.com):', 'access_token' => 'Enter access token:']];
         return $platforms;
     }
 }

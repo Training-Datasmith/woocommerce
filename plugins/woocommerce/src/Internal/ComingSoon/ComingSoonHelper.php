@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Coming_Soon;
 
-namespace Automattic\WooCommerce\Internal\ComingSoon;
-
-use Automattic\WooCommerce\Admin\WCAdminHelper;
-
+use Automattic\Woo_Commerce\Admin\Wc_Admin_Helper;
 /**
  * Provides helper methods for coming soon functionality.
  */
-class ComingSoonHelper
+class Coming_Soon_Helper
 {
     /**
      * Returns true when the entire site is live.
@@ -18,7 +16,6 @@ class ComingSoonHelper
     {
         return 'yes' !== get_option('woocommerce_coming_soon');
     }
-
     /**
      * Returns true when the entire site is coming soon mode.
      */
@@ -26,7 +23,6 @@ class ComingSoonHelper
     {
         return 'yes' === get_option('woocommerce_coming_soon') && 'yes' !== get_option('woocommerce_store_pages_only');
     }
-
     /**
      * Returns true when only the store pages are in coming soon mode.
      */
@@ -34,7 +30,6 @@ class ComingSoonHelper
     {
         return 'yes' === get_option('woocommerce_coming_soon') && 'yes' === get_option('woocommerce_store_pages_only');
     }
-
     /**
      * Return true if the current page should be shown in coming soon mode.
      */
@@ -44,16 +39,13 @@ class ComingSoonHelper
         if ($this->is_site_live()) {
             return false;
         }
-
         if ($this->is_site_coming_soon()) {
             return true;
         }
-
         // Check the current page is a store page when in "store coming soon" mode.
-        if ($this->is_store_coming_soon() && WCAdminHelper::is_current_page_store_page()) {
+        if ($this->is_store_coming_soon() && Wc_Admin_Helper::is_current_page_store_page()) {
             return true;
         }
-
         // Default to false.
         return false;
     }

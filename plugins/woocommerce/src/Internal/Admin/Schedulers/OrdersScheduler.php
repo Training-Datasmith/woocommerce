@@ -1,29 +1,26 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Order syncing related functions and actions.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\Schedulers;
+namespace Automattic\Woo_Commerce\Internal\Admin\Schedulers;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\Cache as ReportsCache;
-use Automattic\WooCommerce\Admin\API\Reports\Coupons\DataStore as CouponsDataStore;
-use Automattic\WooCommerce\Admin\API\Reports\Customers\DataStore as CustomersDataStore;
-use Automattic\WooCommerce\Admin\API\Reports\Orders\DataStore as OrderDataStore;
-use Automattic\WooCommerce\Admin\API\Reports\Orders\Stats\DataStore as OrdersStatsDataStore;
-use Automattic\WooCommerce\Admin\API\Reports\Products\DataStore as ProductsDataStore;
-use Automattic\WooCommerce\Admin\API\Reports\Taxes\DataStore as TaxesDataStore;
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore;
-use Automattic\WooCommerce\Utilities\OrderUtil;
-
+use Automattic\Woo_Commerce\Admin\API\Reports\Cache as ReportsCache;
+use Automattic\Woo_Commerce\Admin\API\Reports\Coupons\Data_Store as CouponsDataStore;
+use Automattic\Woo_Commerce\Admin\API\Reports\Customers\Data_Store as CustomersDataStore;
+use Automattic\Woo_Commerce\Admin\API\Reports\Orders\Data_Store as OrderDataStore;
+use Automattic\Woo_Commerce\Admin\API\Reports\Orders\Stats\Data_Store as OrdersStatsDataStore;
+use Automattic\Woo_Commerce\Admin\API\Reports\Products\Data_Store as ProductsDataStore;
+use Automattic\Woo_Commerce\Admin\API\Reports\Taxes\Data_Store as TaxesDataStore;
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Internal\Data_Stores\Orders\Orders_Table_Data_Store;
+use Automattic\Woo_Commerce\Utilities\Order_Util;
 /**
  * OrdersScheduler Class.
  */
-class OrdersScheduler extends ImportScheduler
+class Orders_Scheduler extends Import_Scheduler
 {
     /**
      * Slug to identify the scheduler.
@@ -31,7 +28,6 @@ class OrdersScheduler extends ImportScheduler
      * @var string
      */
     public static $name = 'orders';
-
     /**
      * Option name for storing the last processed order modified date.
      *
@@ -44,7 +40,6 @@ class OrdersScheduler extends ImportScheduler
      * @var string
      */
     public const LAST_PROCESSED_ORDER_DATE_OPTION = 'woocommerce_admin_scheduler_last_processed_order_modified_date';
-
     /**
      * Option name for storing the last processed order ID.
      *
@@ -55,28 +50,24 @@ class OrdersScheduler extends ImportScheduler
      * @var string
      */
     public const LAST_PROCESSED_ORDER_ID_OPTION = 'woocommerce_admin_scheduler_last_processed_order_id';
-
     /**
      * Option name for storing whether to enable scheduled order import.
      *
      * @var string
      */
     public const SCHEDULED_IMPORT_OPTION = 'woocommerce_analytics_scheduled_import';
-
     /**
      * Default value for the scheduled import option.
      *
      * @var string
      */
     public const SCHEDULED_IMPORT_OPTION_DEFAULT_VALUE = 'no';
-
     /**
      * Action name for the order batch import.
      *
      * @var string
      */
     public const PROCESS_PENDING_ORDERS_BATCH_ACTION = 'process_pending_batch';
-
     /**
      * Attach order lookup update hooks.
      *
@@ -85,9 +76,8 @@ class OrdersScheduler extends ImportScheduler
     public static function init(): void
     {
         // Activate WC_Order extension.
-        \Automattic\WooCommerce\Admin\Overrides\Order::add_filters();
-        \Automattic\WooCommerce\Admin\Overrides\OrderRefund::add_filters();
-
+        \Automattic\Woo_Commerce\Admin\Overrides\Order::add_filters();
+        \Automattic\Woo_Commerce\Admin\Overrides\Order_Refund::add_filters();
         if (self::is_scheduled_import_enabled()) {
             // Schedule recurring batch processor.
             add_action('action_scheduler_ensure_recurring_actions', self::schedule_recurring_batch_processor(...));
@@ -98,23 +88,19 @@ class OrdersScheduler extends ImportScheduler
             add_action('woocommerce_refund_created', self::possibly_schedule_import(...));
             add_action('woocommerce_schedule_import', self::possibly_schedule_import(...));
         }
-
         if (Features::is_enabled('analytics-scheduled-import')) {
             // Watch for changes to the scheduled import option.
             add_action('add_option_' . self::SCHEDULED_IMPORT_OPTION, self::handle_scheduled_import_option_added(...), 10, 2);
             add_action('update_option_' . self::SCHEDULED_IMPORT_OPTION, self::handle_scheduled_import_option_change(...), 10, 2);
             add_action('delete_option', self::handle_scheduled_import_option_before_delete(...), 10, 1);
         }
-
-        OrdersStatsDataStore::init();
-        CouponsDataStore::init();
-        ProductsDataStore::init();
-        TaxesDataStore::init();
-        OrderDataStore::init();
-
+        Orders_Stats_Data_Store::init();
+        Coupons_Data_Store::init();
+        Products_Data_Store::init();
+        Taxes_Data_Store::init();
+        Order_Data_Store::init();
         parent::init();
     }
-
     /**
      * Add customer dependencies.
      *
@@ -122,11 +108,8 @@ class OrdersScheduler extends ImportScheduler
      */
     public static function get_dependencies(): array
     {
-        return [
-            'import_batch_init' => \Automattic\WooCommerce\Internal\Admin\Schedulers\CustomersScheduler::get_action('import_batch_init'),
-        ];
+        return ['import_batch_init' => \Automattic\Woo_Commerce\Internal\Admin\Schedulers\Customers_Scheduler::get_action('import_batch_init')];
     }
-
     /**
      * Get all available scheduling actions.
      * Extends parent to add the new batch processor action.
@@ -135,14 +118,8 @@ class OrdersScheduler extends ImportScheduler
      */
     public static function get_scheduler_actions(): array
     {
-        return array_merge(
-            parent::get_scheduler_actions(),
-            [
-                self::PROCESS_PENDING_ORDERS_BATCH_ACTION => 'wc-admin_process_pending_orders_batch',
-            ]
-        );
+        return array_merge(parent::get_scheduler_actions(), [self::PROCESS_PENDING_ORDERS_BATCH_ACTION => 'wc-admin_process_pending_orders_batch']);
     }
-
     /**
      * Get batch sizes for OrdersScheduler actions.
      *
@@ -150,14 +127,8 @@ class OrdersScheduler extends ImportScheduler
      */
     public static function get_batch_sizes(): array
     {
-        return array_merge(
-            parent::get_batch_sizes(),
-            [
-                self::PROCESS_PENDING_ORDERS_BATCH_ACTION => 100,
-            ]
-        );
+        return array_merge(parent::get_batch_sizes(), [self::PROCESS_PENDING_ORDERS_BATCH_ACTION => 100]);
     }
-
     /**
      * Get the order/refund IDs and total count that need to be synced.
      *
@@ -169,12 +140,11 @@ class OrdersScheduler extends ImportScheduler
      */
     public static function get_items($limit = 10, $page = 1, $days = false, $skip_existing = false)
     {
-        if (OrderUtil::custom_orders_table_usage_is_enabled()) {
+        if (Order_Util::custom_orders_table_usage_is_enabled()) {
             return self::get_items_from_orders_table($limit, $page, $days, $skip_existing);
         }
         return self::get_items_from_posts_table($limit, $page, $days, $skip_existing);
     }
-
     /**
      * Helper method to ger order/refund IDS and total count that needs to be synced.
      *
@@ -190,47 +160,19 @@ class OrdersScheduler extends ImportScheduler
     {
         global $wpdb;
         $where_clause = '';
-        $offset       = $page > 1 ? ($page - 1) * $limit : 0;
-
+        $offset = $page > 1 ? ($page - 1) * $limit : 0;
         if (is_int($days)) {
-            $days_ago      = gmdate('Y-m-d 00:00:00', time() - (DAY_IN_SECONDS * $days));
+            $days_ago = gmdate('Y-m-d 00:00:00', time() - DAY_IN_SECONDS * $days);
             $where_clause .= " AND post_date_gmt >= '{$days_ago}'";
         }
-
         if ($skip_existing) {
-            $where_clause .= " AND NOT EXISTS (
-				SELECT 1 FROM {$wpdb->prefix}wc_order_stats
-				WHERE {$wpdb->prefix}wc_order_stats.order_id = {$wpdb->posts}.ID
-			)";
+            $where_clause .= " AND NOT EXISTS (\n\t\t\t\tSELECT 1 FROM {$wpdb->prefix}wc_order_stats\n\t\t\t\tWHERE {$wpdb->prefix}wc_order_stats.order_id = {$wpdb->posts}.ID\n\t\t\t)";
         }
-
-        $count = $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$wpdb->posts}
-			WHERE post_type IN ( 'shop_order', 'shop_order_refund' )
-			AND post_status NOT IN ( 'wc-auto-draft', 'auto-draft', 'trash' )
-			{$where_clause}" // phpcs:ignore unprepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared SQL ok.
-        );
-
-        $order_ids = absint($count) > 0 ? $wpdb->get_col(
-            $wpdb->prepare(
-                "SELECT ID FROM {$wpdb->posts}
-				WHERE post_type IN ( 'shop_order', 'shop_order_refund' )
-				AND post_status NOT IN ( 'wc-auto-draft', 'auto-draft', 'trash' )
-				{$where_clause}
-				ORDER BY post_date_gmt ASC
-				LIMIT %d
-				OFFSET %d",
-                $limit,
-                $offset
-            )
-        ) : []; // phpcs:ignore unprepared SQL ok.
-
-        return (object) [
-            'total' => absint($count),
-            'ids'   => $order_ids,
-        ];
+        $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts}\n\t\t\tWHERE post_type IN ( 'shop_order', 'shop_order_refund' )\n\t\t\tAND post_status NOT IN ( 'wc-auto-draft', 'auto-draft', 'trash' )\n\t\t\t{$where_clause}");
+        $order_ids = absint($count) > 0 ? $wpdb->get_col($wpdb->prepare("SELECT ID FROM {$wpdb->posts}\n\t\t\t\tWHERE post_type IN ( 'shop_order', 'shop_order_refund' )\n\t\t\t\tAND post_status NOT IN ( 'wc-auto-draft', 'auto-draft', 'trash' )\n\t\t\t\t{$where_clause}\n\t\t\t\tORDER BY post_date_gmt ASC\n\t\t\t\tLIMIT %d\n\t\t\t\tOFFSET %d", $limit, $offset)) : [];
+        // phpcs:ignore unprepared SQL ok.
+        return (object) ['total' => absint($count), 'ids' => $order_ids];
     }
-
     /**
      * Helper method to ger order/refund IDS and total count that needs to be synced from HPOS.
      *
@@ -246,51 +188,21 @@ class OrdersScheduler extends ImportScheduler
     {
         global $wpdb;
         $where_clause = '';
-        $offset       = $page > 1 ? ($page - 1) * $limit : 0;
-        $order_table  = OrdersTableDataStore::get_orders_table_name();
-
+        $offset = $page > 1 ? ($page - 1) * $limit : 0;
+        $order_table = Orders_Table_Data_Store::get_orders_table_name();
         if (is_int($days)) {
-            $days_ago      = gmdate('Y-m-d 00:00:00', time() - (DAY_IN_SECONDS * $days));
+            $days_ago = gmdate('Y-m-d 00:00:00', time() - DAY_IN_SECONDS * $days);
             $where_clause .= " AND orders.date_created_gmt >= '{$days_ago}'";
         }
-
         if ($skip_existing) {
-            $where_clause .= "AND NOT EXiSTS (
-					SELECT 1 FROM {$wpdb->prefix}wc_order_stats
-					WHERE {$wpdb->prefix}wc_order_stats.order_id = orders.id
-					)
-				";
+            $where_clause .= "AND NOT EXiSTS (\n\t\t\t\t\tSELECT 1 FROM {$wpdb->prefix}wc_order_stats\n\t\t\t\t\tWHERE {$wpdb->prefix}wc_order_stats.order_id = orders.id\n\t\t\t\t\t)\n\t\t\t\t";
         }
-
-        $count = $wpdb->get_var(
-            "
-SELECT COUNT(*) FROM {$order_table} AS orders
-WHERE type in ( 'shop_order', 'shop_order_refund' )
-AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
-{$where_clause}
-"
-        ); // phpcs:ignore unprepared SQL ok.
-
-        $order_ids = absint($count) > 0 ? $wpdb->get_col(
-            $wpdb->prepare(
-                "SELECT id FROM {$order_table} AS orders
-				WHERE type IN ( 'shop_order', 'shop_order_refund' )
-				AND status NOT IN ( 'wc-auto-draft', 'auto-draft', 'trash' )
-				{$where_clause}
-				ORDER BY date_created_gmt ASC
-				LIMIT %d
-				OFFSET %d",
-                $limit,
-                $offset
-            )
-        ) : []; // phpcs:ignore unprepared SQL ok.
-
-        return (object) [
-            'total' => absint($count),
-            'ids'   => $order_ids,
-        ];
+        $count = $wpdb->get_var("\nSELECT COUNT(*) FROM {$order_table} AS orders\nWHERE type in ( 'shop_order', 'shop_order_refund' )\nAND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )\n{$where_clause}\n");
+        // phpcs:ignore unprepared SQL ok.
+        $order_ids = absint($count) > 0 ? $wpdb->get_col($wpdb->prepare("SELECT id FROM {$order_table} AS orders\n\t\t\t\tWHERE type IN ( 'shop_order', 'shop_order_refund' )\n\t\t\t\tAND status NOT IN ( 'wc-auto-draft', 'auto-draft', 'trash' )\n\t\t\t\t{$where_clause}\n\t\t\t\tORDER BY date_created_gmt ASC\n\t\t\t\tLIMIT %d\n\t\t\t\tOFFSET %d", $limit, $offset)) : [];
+        // phpcs:ignore unprepared SQL ok.
+        return (object) ['total' => absint($count), 'ids' => $order_ids];
     }
-
     /**
      * Get total number of rows imported.
      *
@@ -301,7 +213,6 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
         global $wpdb;
         return $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wc_order_stats");
     }
-
     /**
      * Schedule this import if the post is an order or refund.
      * Note: This method is only called when scheduled import is disabled
@@ -317,15 +228,12 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
         if (self::is_scheduled_import_enabled()) {
             return $order_id;
         }
-
-        if (! OrderUtil::is_order($order_id, [ 'shop_order' ]) && 'woocommerce_refund_created' !== current_filter() && 'woocommerce_schedule_import' !== current_filter()) {
+        if (!Order_Util::is_order($order_id, ['shop_order']) && 'woocommerce_refund_created' !== current_filter() && 'woocommerce_schedule_import' !== current_filter()) {
             return $order_id;
         }
-
-        self::schedule_action('import', [ $order_id ]);
+        self::schedule_action('import', [$order_id]);
         return $order_id;
     }
-
     /**
      * Imports a single order or refund to update lookup tables for.
      * If an error is encountered in one of the updates, a retry action is scheduled.
@@ -336,42 +244,27 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
     public static function import($order_id): void
     {
         $order = wc_get_order($order_id);
-
         // If the order isn't found for some reason, skip the sync.
-        if (! $order) {
+        if (!$order) {
             return;
         }
-
         $type = $order->get_type();
-
         // If the order isn't the right type, skip sync.
         if ('shop_order' !== $type && 'shop_order_refund' !== $type) {
             return;
         }
-
         // If the order has no id or date created, skip sync.
-        if (! $order->get_id() || ! $order->get_date_created()) {
+        if (!$order->get_id() || !$order->get_date_created()) {
             return;
         }
-
-        [
-            OrdersStatsDataStore::sync_order($order_id),
-        ProductsDataStore::sync_order_products($order_id),
-        CouponsDataStore::sync_order_coupons($order_id),
-        TaxesDataStore::sync_order_taxes($order_id),
-        CustomersDataStore::sync_order_customer($order_id),
-        ];
-
+        [Orders_Stats_Data_Store::sync_order($order_id), Products_Data_Store::sync_order_products($order_id), Coupons_Data_Store::sync_order_coupons($order_id), Taxes_Data_Store::sync_order_taxes($order_id), Customers_Data_Store::sync_order_customer($order_id)];
         if ('shop_order' === $type) {
             $order_refunds = $order->get_refunds();
-
             foreach ($order_refunds as $refund) {
-                OrdersStatsDataStore::sync_order($refund->get_id());
+                Orders_Stats_Data_Store::sync_order($refund->get_id());
             }
         }
-
-        ReportsCache::invalidate();
-
+        Reports_Cache::invalidate();
         /**
          * Fires after an order or refund has been imported into Analytics lookup tables
          * and the reports cache has been invalidated.
@@ -381,7 +274,6 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
          */
         do_action('woocommerce_order_scheduler_after_import_order', $order_id);
     }
-
     /**
      * Schedule recurring batch processor for order imports.
      *
@@ -399,12 +291,9 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
         if (call_user_func($has_scheduled_action, $action_hook)) {
             return;
         }
-
         $interval = self::get_import_interval();
-
         as_schedule_recurring_action(time(), $interval, $action_hook, [], static::$group ?? '', true);
     }
-
     /**
      * Handle changes to the scheduled import option.
      *
@@ -427,21 +316,18 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
             if (null !== $action_hook) {
                 as_unschedule_all_actions($action_hook, [], static::$group ?? '');
             }
-
             // Schedule an immediate catchup batch to process all orders up to now.
             // This ensures no orders are missed during the transition.
-            self::schedule_action(self::PROCESS_PENDING_ORDERS_BATCH_ACTION, [ null, null ]);
+            self::schedule_action(self::PROCESS_PENDING_ORDERS_BATCH_ACTION, [null, null]);
         } elseif ('no' === $old_value && 'yes' === $new_value) {
             // Switching from immediate to scheduled import.
             // Set the last processed order date to now with 1 minute buffer to ensure no orders are missed.
             update_option(self::LAST_PROCESSED_ORDER_DATE_OPTION, gmdate('Y-m-d H:i:s', time() - MINUTE_IN_SECONDS));
             update_option(self::LAST_PROCESSED_ORDER_ID_OPTION, 0);
-
             // Schedule the recurring batch processor.
             self::schedule_recurring_batch_processor();
         }
     }
-
     /**
      * Handle addition of the scheduled import option.
      *
@@ -454,10 +340,8 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
         if (self::SCHEDULED_IMPORT_OPTION !== $option_name) {
             return;
         }
-
         self::handle_scheduled_import_option_change(self::SCHEDULED_IMPORT_OPTION_DEFAULT_VALUE, $value);
     }
-
     /**
      * Handle deletion of the scheduled import option.
      *
@@ -469,13 +353,8 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
         if (self::SCHEDULED_IMPORT_OPTION !== $option_name) {
             return;
         }
-
-        self::handle_scheduled_import_option_change(
-            get_option(self::SCHEDULED_IMPORT_OPTION, self::SCHEDULED_IMPORT_OPTION_DEFAULT_VALUE),
-            self::SCHEDULED_IMPORT_OPTION_DEFAULT_VALUE,
-        );
+        self::handle_scheduled_import_option_change(get_option(self::SCHEDULED_IMPORT_OPTION, self::SCHEDULED_IMPORT_OPTION_DEFAULT_VALUE), self::SCHEDULED_IMPORT_OPTION_DEFAULT_VALUE);
     }
-
     /**
      * Process pending orders in batch.
      *
@@ -488,39 +367,28 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
      */
     public static function process_pending_batch($cursor_date = null, $cursor_id = null): void
     {
-        $logger  = wc_get_logger();
-        $context = [ 'source' => 'wc-analytics-order-import' ];
-
+        $logger = wc_get_logger();
+        $context = ['source' => 'wc-analytics-order-import'];
         if (self::is_importing()) {
             // No need to process if an import is already in progress.
             $logger->info('Import is already in progress, skipping batch import.', $context);
             return;
         }
-
         // Load cursor position from options if not provided.
         // If the cursor date is not provided, use the last 24 hours as the default since `action_scheduler_ensure_recurring_actions` runs daily so 24 hours is enough.
         $default_cursor_date = gmdate('Y-m-d H:i:s', strtotime('-24 hours'));
         $cursor_date ??= get_option(self::LAST_PROCESSED_ORDER_DATE_OPTION, $default_cursor_date);
         $cursor_id ??= (int) get_option(self::LAST_PROCESSED_ORDER_ID_OPTION, 0);
-
         // Validate cursor date.
-        if (! $cursor_date || ! strtotime($cursor_date)) {
+        if (!$cursor_date || !strtotime($cursor_date)) {
             $logger->error('Invalid cursor date: ' . $cursor_date, $context);
             $cursor_date = $default_cursor_date;
         }
-
         $batch_size = self::get_batch_size(self::PROCESS_PENDING_ORDERS_BATCH_ACTION);
-
-        $logger->info(
-            sprintf('Starting batch import. Cursor: %s (ID: %d), batch size: %d', $cursor_date, $cursor_id, $batch_size),
-            $context
-        );
-
+        $logger->info(sprintf('Starting batch import. Cursor: %s (ID: %d), batch size: %d', $cursor_date, $cursor_id, $batch_size), $context);
         $start_time = microtime(true);
-
         // Get orders updated since the cursor position.
         $orders = self::get_orders_since($cursor_date, $cursor_id, $batch_size);
-
         if (empty($orders)) {
             $logger->info('No orders to process', $context);
             // Update the cursor position to the start time of the batch so that the next batch will start from that point.
@@ -528,54 +396,33 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
             update_option(self::LAST_PROCESSED_ORDER_ID_OPTION, 0, false);
             return;
         }
-
         $processed_count = 0;
         foreach ($orders as $order) {
             try {
                 self::import($order->id);
                 ++$processed_count;
-
                 // Advance cursor after each successful import. Since orders are sorted by
                 // date ASC, id ASC, we can simply overwrite with the current order's values.
                 // If an error occurs, we break and save the last successful position.
                 $cursor_date = $order->date_updated_gmt;
-                $cursor_id   = $order->id;
+                $cursor_id = $order->id;
             } catch (\Exception $e) {
-                $logger->error(
-                    sprintf('Failed to import order %d: %s', $order->id, $e->getMessage()),
-                    $context
-                );
+                $logger->error(sprintf('Failed to import order %d: %s', $order->id, $e->get_message()), $context);
                 break;
             }
         }
-
         // Save the updated cursor position.
         update_option(self::LAST_PROCESSED_ORDER_DATE_OPTION, $cursor_date, false);
         update_option(self::LAST_PROCESSED_ORDER_ID_OPTION, $cursor_id, false);
-
         $elapsed_time = microtime(true) - $start_time;
-        $logger->info(
-            sprintf(
-                'Batch import completed. Processed: %d orders in %.2f seconds. Cursor: %s (ID: %d)',
-                $processed_count,
-                $elapsed_time,
-                $cursor_date,
-                $cursor_id
-            ),
-            $context
-        );
-
+        $logger->info(sprintf('Batch import completed. Processed: %d orders in %.2f seconds. Cursor: %s (ID: %d)', $processed_count, $elapsed_time, $cursor_date, $cursor_id), $context);
         // If we got a full batch, there might be more orders to process.
         // Schedule immediate next batch.
         if ($processed_count === $batch_size) {
             $logger->info('Full batch processed, scheduling next batch', $context);
-            self::schedule_action(
-                'process_pending_batch',
-                [ $cursor_date, $cursor_id ]
-            );
+            self::schedule_action('process_pending_batch', [$cursor_date, $cursor_id]);
         }
     }
-
     /**
      * Get the import interval.
      *
@@ -592,7 +439,6 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
          */
         return apply_filters('woocommerce_analytics_import_interval', 12 * HOUR_IN_SECONDS);
     }
-
     /**
      * Get orders updated since the specified cursor position.
      *
@@ -608,12 +454,11 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
      */
     private static function get_orders_since($cursor_date, $cursor_id, $limit)
     {
-        if (OrderUtil::custom_orders_table_usage_is_enabled()) {
+        if (Order_Util::custom_orders_table_usage_is_enabled()) {
             return self::get_orders_since_from_orders_table($cursor_date, $cursor_id, $limit);
         }
         return self::get_orders_since_from_posts_table($cursor_date, $cursor_id, $limit);
     }
-
     /**
      * Get orders from HPOS orders table updated since the specified cursor position.
      *
@@ -634,30 +479,11 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
     private static function get_orders_since_from_orders_table($cursor_date, $cursor_id, $limit)
     {
         global $wpdb;
-        $orders_table = OrdersTableDataStore::get_orders_table_name();
-
+        $orders_table = Orders_Table_Data_Store::get_orders_table_name();
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        return $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT id, date_updated_gmt
-				FROM {$orders_table}
-				WHERE type IN ('shop_order', 'shop_order_refund')
-				AND status NOT IN ('wc-auto-draft', 'auto-draft', 'trash')
-				AND (
-					date_updated_gmt > %s
-					OR (date_updated_gmt = %s AND id > %d)
-				)
-				ORDER BY date_updated_gmt ASC, id ASC
-				LIMIT %d",
-                $cursor_date,
-                $cursor_date,
-                $cursor_id,
-                $limit
-            )
-        );
+        return $wpdb->get_results($wpdb->prepare("SELECT id, date_updated_gmt\n\t\t\t\tFROM {$orders_table}\n\t\t\t\tWHERE type IN ('shop_order', 'shop_order_refund')\n\t\t\t\tAND status NOT IN ('wc-auto-draft', 'auto-draft', 'trash')\n\t\t\t\tAND (\n\t\t\t\t\tdate_updated_gmt > %s\n\t\t\t\t\tOR (date_updated_gmt = %s AND id > %d)\n\t\t\t\t)\n\t\t\t\tORDER BY date_updated_gmt ASC, id ASC\n\t\t\t\tLIMIT %d", $cursor_date, $cursor_date, $cursor_id, $limit));
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
     }
-
     /**
      * Get orders from posts table updated since the specified cursor position.
      *
@@ -673,27 +499,8 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
     private static function get_orders_since_from_posts_table($cursor_date, $cursor_id, $limit)
     {
         global $wpdb;
-
-        return $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT ID as id, post_modified_gmt as date_updated_gmt
-				FROM {$wpdb->posts}
-				WHERE post_type IN ('shop_order', 'shop_order_refund')
-				AND post_status NOT IN ('wc-auto-draft', 'auto-draft', 'trash')
-				AND (
-					post_modified_gmt > %s
-					OR (post_modified_gmt = %s AND ID > %d)
-				)
-				ORDER BY post_modified_gmt ASC, ID ASC
-				LIMIT %d",
-                $cursor_date,
-                $cursor_date,
-                $cursor_id,
-                $limit
-            )
-        );
+        return $wpdb->get_results($wpdb->prepare("SELECT ID as id, post_modified_gmt as date_updated_gmt\n\t\t\t\tFROM {$wpdb->posts}\n\t\t\t\tWHERE post_type IN ('shop_order', 'shop_order_refund')\n\t\t\t\tAND post_status NOT IN ('wc-auto-draft', 'auto-draft', 'trash')\n\t\t\t\tAND (\n\t\t\t\t\tpost_modified_gmt > %s\n\t\t\t\t\tOR (post_modified_gmt = %s AND ID > %d)\n\t\t\t\t)\n\t\t\t\tORDER BY post_modified_gmt ASC, ID ASC\n\t\t\t\tLIMIT %d", $cursor_date, $cursor_date, $cursor_id, $limit));
     }
-
     /**
      * Delete a batch of orders.
      *
@@ -703,19 +510,11 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
     public static function delete($batch_size): void
     {
         global $wpdb;
-
-        $order_ids = $wpdb->get_col(
-            $wpdb->prepare(
-                "SELECT order_id FROM {$wpdb->prefix}wc_order_stats ORDER BY order_id ASC LIMIT %d",
-                $batch_size
-            )
-        );
-
+        $order_ids = $wpdb->get_col($wpdb->prepare("SELECT order_id FROM {$wpdb->prefix}wc_order_stats ORDER BY order_id ASC LIMIT %d", $batch_size));
         foreach ($order_ids as $order_id) {
-            OrdersStatsDataStore::delete_order($order_id);
+            Orders_Stats_Data_Store::delete_order($order_id);
         }
     }
-
     /**
      * Check whether scheduled import is enabled.
      *
@@ -726,11 +525,10 @@ AND status NOT IN ( 'wc-auto-draft', 'trash', 'auto-draft' )
      */
     private static function is_scheduled_import_enabled(): bool
     {
-        if (! Features::is_enabled('analytics-scheduled-import')) {
+        if (!Features::is_enabled('analytics-scheduled-import')) {
             // If the feature is disabled, only immediate import is supported.
             return false;
         }
-
         return 'yes' === get_option(self::SCHEDULED_IMPORT_OPTION, self::SCHEDULED_IMPORT_OPTION_DEFAULT_VALUE);
     }
 }

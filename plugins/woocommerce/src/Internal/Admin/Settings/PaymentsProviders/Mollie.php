@@ -1,21 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
 
-namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
-
-use Automattic\WooCommerce\Internal\Logging\SafeGlobalFunctionProxy;
+use Automattic\Woo_Commerce\Internal\Logging\Safe_Global_Function_Proxy;
 use Throwable;
 use WC_Payment_Gateway;
-
 defined('ABSPATH') || exit;
-
 /**
  * Mollie payment gateway provider class.
  *
  * This class handles all the custom logic for the Mollie payment gateway provider.
  */
-class Mollie extends PaymentGateway
+class Mollie extends Payment_Gateway
 {
     /**
      * Get the settings URL for a payment gateway.
@@ -30,11 +27,9 @@ class Mollie extends PaymentGateway
         if ('mollie_stand_in' === $payment_gateway->id) {
             return $this->get_custom_settings_url();
         }
-
         // Target the payment methods section when the gateway is connected.
         return $this->get_custom_settings_url('mollie_payment_methods');
     }
-
     /**
      * Check if the payment gateway has a payments processor account connected.
      *
@@ -50,28 +45,19 @@ class Mollie extends PaymentGateway
             // Let null results bubble up to the parent class.
             if (true === $sandbox_mode) {
                 // If Mollie is in sandbox mode, we consider the account connected if the test API key is set.
-                return ! empty(get_option('mollie-payments-for-woocommerce_test_api_key', ''));
+                return !empty(get_option('mollie-payments-for-woocommerce_test_api_key', ''));
             }
             // Let null results bubble up to the parent class.
             if (false === $sandbox_mode) {
                 // In production mode, we check the live API key.
-                return ! empty(get_option('mollie-payments-for-woocommerce_live_api_key', ''));
+                return !empty(get_option('mollie-payments-for-woocommerce_live_api_key', ''));
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway has an account connected: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway has an account connected: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         return parent::is_account_connected($payment_gateway);
     }
-
     /**
      * Determine if the payment gateway is in test mode.
      *
@@ -83,7 +69,6 @@ class Mollie extends PaymentGateway
     {
         return $this->is_mollie_in_sandbox_mode($payment_gateway) ?? parent::is_in_test_mode($payment_gateway);
     }
-
     /**
      * Try to determine if the payment gateway is in test mode onboarding (aka sandbox or test-drive).
      *
@@ -98,7 +83,6 @@ class Mollie extends PaymentGateway
     {
         return $this->is_mollie_in_sandbox_mode($payment_gateway) ?? parent::is_in_test_mode_onboarding($payment_gateway);
     }
-
     /**
      * Determine if at least a Mollie gateway is registered.
      *
@@ -108,14 +92,9 @@ class Mollie extends PaymentGateway
      */
     public function is_gateway_registered(array $payment_gateways): bool
     {
-        $mollie_gateways = array_filter(
-            $payment_gateways,
-            fn ($gateway) => str_starts_with((string) $gateway->id, 'mollie_wc_gateway_')
-        );
-
-        return ! empty($mollie_gateways);
+        $mollie_gateways = array_filter($payment_gateways, fn($gateway) => str_starts_with((string) $gateway->id, 'mollie_wc_gateway_'));
+        return !empty($mollie_gateways);
     }
-
     /**
      * Get the pseudo Mollie gateway object.
      *
@@ -123,30 +102,13 @@ class Mollie extends PaymentGateway
      *
      * @return PseudoWCPaymentGateway The pseudo gateway object.
      */
-    public function get_pseudo_gateway(array $suggestion): PseudoWCPaymentGateway
+    public function get_pseudo_gateway(array $suggestion): Pseudo_Wc_Payment_Gateway
     {
         // We will generate a generic gateway to represent Mollie in the settings page.
         // The generic gateway's state will be not enabled, not connected, and not onboarded.
         // The presentational details will be minimal, letting the suggestion provide most of the information.
-        return new PseudoWCPaymentGateway(
-            'mollie_stand_in',
-            [
-                'method_title'         => $suggestion['title'],
-                'method_description'   => $suggestion['description'],
-                'enabled'              => false,
-                'needs_setup'          => true,
-                'test_mode'            => false,
-                'dev_mode'             => false,
-                'account_connected'    => false,
-                'onboarding_started'   => false,
-                'onboarding_completed' => false,
-                'settings_url'         => $this->get_custom_settings_url(),
-                'plugin_slug'          => $suggestion['plugin']['slug'],
-                'plugin_file'          => $suggestion['plugin']['file'],
-            ],
-        );
+        return new Pseudo_Wc_Payment_Gateway('mollie_stand_in', ['method_title' => $suggestion['title'], 'method_description' => $suggestion['description'], 'enabled' => false, 'needs_setup' => true, 'test_mode' => false, 'dev_mode' => false, 'account_connected' => false, 'onboarding_started' => false, 'onboarding_completed' => false, 'settings_url' => $this->get_custom_settings_url(), 'plugin_slug' => $suggestion['plugin']['slug'], 'plugin_file' => $suggestion['plugin']['file']]);
     }
-
     /**
      * Get the URL to the custom settings page for Mollie.
      *
@@ -157,14 +119,11 @@ class Mollie extends PaymentGateway
     private function get_custom_settings_url(string $section = ''): string
     {
         $settings_url = admin_url('admin.php?page=wc-settings&tab=mollie_settings');
-
-        if (! empty($section)) {
+        if (!empty($section)) {
             return add_query_arg('section', $section, $settings_url);
         }
-
         return $settings_url;
     }
-
     /**
      * Check if the Mollie payment gateway is in sandbox mode.
      *
@@ -180,16 +139,8 @@ class Mollie extends PaymentGateway
             return filter_var(get_option('mollie-payments-for-woocommerce_test_mode_enabled', 'yes'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         } catch (\Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway is in sandbox mode: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway is in sandbox mode: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         // Let the caller know that we couldn't determine the environment.
         return null;
     }

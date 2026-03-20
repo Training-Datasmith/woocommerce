@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Product Form Factory
  *
  * @package Woocommerce ProductForm
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\ProductForm;
+namespace Automattic\Woo_Commerce\Internal\Admin\Product_Form;
 
 use WP_Error;
-
 /**
  * Factory that contains logic for the WooCommerce Product Form.
  */
-class FormFactory
+class Form_Factory
 {
     /**
      * Class instance.
@@ -22,53 +20,46 @@ class FormFactory
      * @var Form instance
      */
     protected static $instance;
-
     /**
      * Store form fields.
      *
      * @var array
      */
     protected static $form_fields = [];
-
     /**
      * Store form cards.
      *
      * @var array
      */
     protected static $form_subsections = [];
-
     /**
      * Store form sections.
      *
      * @var array
      */
     protected static $form_sections = [];
-
     /**
      * Store form tabs.
      *
      * @var array
      */
     protected static $form_tabs = [];
-
     /**
      * Get class instance.
      */
     final public static function instance()
     {
-        if (! static::$instance) {
+        if (!static::$instance) {
             static::$instance = new static();
         }
         return static::$instance;
     }
-
     /**
      * Init.
      */
     public function init()
     {
     }
-
     /**
      * Adds a field to the product form.
      *
@@ -90,10 +81,9 @@ class FormFactory
         if (is_wp_error($new_field)) {
             return $new_field;
         }
-        self::$form_fields[ $id ] = $new_field;
+        self::$form_fields[$id] = $new_field;
         return $new_field;
     }
-
     /**
      * Adds a Subsection to the product form.
      *
@@ -108,10 +98,9 @@ class FormFactory
         if (is_wp_error($new_subsection)) {
             return $new_subsection;
         }
-        self::$form_subsections[ $id ] = $new_subsection;
+        self::$form_subsections[$id] = $new_subsection;
         return $new_subsection;
     }
-
     /**
      * Adds a section to the product form.
      *
@@ -126,10 +115,9 @@ class FormFactory
         if (is_wp_error($new_section)) {
             return $new_section;
         }
-        self::$form_sections[ $id ] = $new_section;
+        self::$form_sections[$id] = $new_section;
         return $new_section;
     }
-
     /**
      * Adds a tab to the product form.
      *
@@ -144,66 +132,49 @@ class FormFactory
         if (is_wp_error($new_tab)) {
             return $new_tab;
         }
-        self::$form_tabs[ $id ] = $new_tab;
+        self::$form_tabs[$id] = $new_tab;
         return $new_tab;
     }
-
     /**
      * Returns list of registered fields.
      *
      * @param array $sort_by key and order to sort by.
      * @return array list of registered fields.
      */
-    public static function get_fields($sort_by = [
-        'key'   => 'order',
-        'order' => 'asc',
-    ])
+    public static function get_fields($sort_by = ['key' => 'order', 'order' => 'asc'])
     {
         return self::get_items('field', 'Field', $sort_by);
     }
-
     /**
      * Returns list of registered cards.
      *
      * @param array $sort_by key and order to sort by.
      * @return array list of registered cards.
      */
-    public static function get_subsections($sort_by = [
-        'key'   => 'order',
-        'order' => 'asc',
-    ])
+    public static function get_subsections($sort_by = ['key' => 'order', 'order' => 'asc'])
     {
         return self::get_items('subsection', 'Subsection', $sort_by);
     }
-
     /**
      * Returns list of registered sections.
      *
      * @param array $sort_by key and order to sort by.
      * @return array list of registered sections.
      */
-    public static function get_sections($sort_by = [
-        'key'   => 'order',
-        'order' => 'asc',
-    ])
+    public static function get_sections($sort_by = ['key' => 'order', 'order' => 'asc'])
     {
         return self::get_items('section', 'Section', $sort_by);
     }
-
     /**
      * Returns list of registered tabs.
      *
      * @param array $sort_by key and order to sort by.
      * @return array list of registered tabs.
      */
-    public static function get_tabs($sort_by = [
-        'key'   => 'order',
-        'order' => 'asc',
-    ])
+    public static function get_tabs($sort_by = ['key' => 'order', 'order' => 'asc'])
     {
         return self::get_items('tab', 'Tab', $sort_by);
     }
-
     /**
      * Returns list of registered items.
      *
@@ -212,18 +183,12 @@ class FormFactory
      */
     private static function get_item_list($type): array
     {
-        $mapping = [
-            'field'      => self::$form_fields,
-            'subsection' => self::$form_subsections,
-            'section'    => self::$form_sections,
-            'tab'        => self::$form_tabs,
-        ];
+        $mapping = ['field' => self::$form_fields, 'subsection' => self::$form_subsections, 'section' => self::$form_sections, 'tab' => self::$form_tabs];
         if (array_key_exists($type, $mapping)) {
-            return $mapping[ $type ];
+            return $mapping[$type];
         }
         return [];
     }
-
     /**
      * Returns list of registered items.
      *
@@ -232,23 +197,16 @@ class FormFactory
      * @param array        $sort_by key and order to sort by.
      * @return array       list of registered items.
      */
-    private static function get_items(string $type, string $class_name, $sort_by = [
-        'key'   => 'order',
-        'order' => 'asc',
-    ]): array
+    private static function get_items(string $type, string $class_name, $sort_by = ['key' => 'order', 'order' => 'asc']): array
     {
         $item_list = self::get_item_list($type);
-        $class     = 'Automattic\\WooCommerce\\Internal\\Admin\\ProductForm\\' . $class_name;
-        $items     = array_values($item_list);
+        $class = 'Automattic\WooCommerce\Internal\Admin\ProductForm\\' . $class_name;
+        $items = array_values($item_list);
         if (class_exists($class) && method_exists($class, 'sort')) {
-            usort(
-                $items,
-                fn ($a, $b) => $class::sort($a, $b, $sort_by)
-            );
+            usort($items, fn($a, $b) => $class::sort($a, $b, $sort_by));
         }
         return $items;
     }
-
     /**
      * Creates a new item.
      *
@@ -262,42 +220,28 @@ class FormFactory
     private static function create_item(string $type, string $class_name, $id, $plugin_id, $args)
     {
         $item_list = self::get_item_list($type);
-        $class     = 'Automattic\\WooCommerce\\Internal\\Admin\\ProductForm\\' . $class_name;
-        if (! class_exists($class)) {
-            return new WP_Error(
-                'wc_product_form_' . $type . '_missing_form_class',
-                sprintf(
-                    /* translators: 1: missing class name. */
-                    esc_html__('%1$s class does not exist.', 'woocommerce'),
-                    $class
-                )
-            );
+        $class = 'Automattic\WooCommerce\Internal\Admin\ProductForm\\' . $class_name;
+        if (!class_exists($class)) {
+            return new WP_Error('wc_product_form_' . $type . '_missing_form_class', sprintf(
+                /* translators: 1: missing class name. */
+                esc_html__('%1$s class does not exist.', 'woocommerce'),
+                $class
+            ));
         }
-        if (isset($item_list[ $id ])) {
-            return new WP_Error(
-                'wc_product_form_' . $type . '_duplicate_field_id',
-                sprintf(
-                    /* translators: 1: Item type 2: Duplicate registered item id. */
-                    esc_html__('You have attempted to register a duplicate form %1$s with WooCommerce Form: %2$s', 'woocommerce'),
-                    $type,
-                    '`' . $id . '`'
-                )
-            );
+        if (isset($item_list[$id])) {
+            return new WP_Error('wc_product_form_' . $type . '_duplicate_field_id', sprintf(
+                /* translators: 1: Item type 2: Duplicate registered item id. */
+                esc_html__('You have attempted to register a duplicate form %1$s with WooCommerce Form: %2$s', 'woocommerce'),
+                $type,
+                '`' . $id . '`'
+            ));
         }
-
-        $defaults = [
-            'order' => 20,
-        ];
-
+        $defaults = ['order' => 20];
         $item_arguments = wp_parse_args($args, $defaults);
-
         try {
             return new $class($id, $plugin_id, $item_arguments);
         } catch (\Exception $e) {
-            return new WP_Error(
-                'wc_product_form_' . $type . '_class_creation',
-                $e->getMessage()
-            );
+            return new WP_Error('wc_product_form_' . $type . '_class_creation', $e->get_message());
         }
     }
 }

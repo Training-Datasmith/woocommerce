@@ -1,20 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor for sending after a specified date/time.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\DateTimeProvider\CurrentDateTimeProvider;
-
+use Automattic\Woo_Commerce\Admin\Date_Time_Provider\Current_Date_Time_Provider;
 /**
  * Rule processor for sending after a specified date/time.
  */
-class PublishAfterTimeRuleProcessor implements RuleProcessorInterface
+class Publish_After_Time_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * The DateTime provider.
@@ -22,7 +19,6 @@ class PublishAfterTimeRuleProcessor implements RuleProcessorInterface
      * @var DateTimeProviderInterface
      */
     protected $date_time_provider;
-
     /**
      * Constructor.
      *
@@ -30,9 +26,8 @@ class PublishAfterTimeRuleProcessor implements RuleProcessorInterface
      */
     public function __construct($date_time_provider = null)
     {
-        $this->date_time_provider = $date_time_provider ?? new CurrentDateTimeProvider();
+        $this->date_time_provider = $date_time_provider ?? new Current_Date_Time_Provider();
     }
-
     /**
      * Process the rule.
      *
@@ -45,7 +40,6 @@ class PublishAfterTimeRuleProcessor implements RuleProcessorInterface
     {
         return $this->date_time_provider->get_now() >= new \DateTime($rule->publish_after);
     }
-
     /**
      * Validates the rule.
      *
@@ -55,16 +49,14 @@ class PublishAfterTimeRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->publish_after)) {
+        if (!isset($rule->publish_after)) {
             return false;
         }
-
         try {
             new \DateTime($rule->publish_after);
         } catch (\Throwable) {
             return false;
         }
-
         return true;
     }
 }

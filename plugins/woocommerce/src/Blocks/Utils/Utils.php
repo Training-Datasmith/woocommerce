@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Utils;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Utils;
 
 /**
  * Utils class
@@ -25,11 +24,9 @@ class Utils
         if (preg_match('/^([0-9]+\.[0-9]+)/', $current_wp_version, $matches)) {
             $current_wp_version = (float) $matches[1];
         }
-
         // Replace non-alphanumeric characters with a dot.
         $current_wp_version = preg_replace('/[^0-9a-zA-Z\.]+/i', '.', $current_wp_version);
-        $version            = preg_replace('/[^0-9a-zA-Z\.]+/i', '.', $version);
-
+        $version = preg_replace('/[^0-9a-zA-Z\.]+/i', '.', $version);
         return version_compare($current_wp_version, $version, $operator);
     }
 }

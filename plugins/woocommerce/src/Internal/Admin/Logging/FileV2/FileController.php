@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Logging\File_V2;
 
-namespace Automattic\WooCommerce\Internal\Admin\Logging\FileV2;
-
-use Automattic\WooCommerce\Internal\Admin\Logging\Settings;
-use PclZip;
+use Automattic\Woo_Commerce\Internal\Admin\Logging\Settings;
+use Pcl_Zip;
 use WC_Cache_Helper;
 use WP_Error;
-
 /**
  * FileController class.
  */
-class FileController
+class File_Controller
 {
     /**
      * The maximum number of rotations for a file before they start getting overwritten.
@@ -22,68 +20,48 @@ class FileController
      * const int
      */
     private const MAX_FILE_ROTATIONS = 10;
-
     /**
      * Default values for arguments for the get_files method.
      *
      * @const array
      */
-    public const DEFAULTS_GET_FILES = [
-        'date_end'    => 0,
-        'date_filter' => '',
-        'date_start'  => 0,
-        'offset'      => 0,
-        'order'       => 'desc',
-        'orderby'     => 'modified',
-        'per_page'    => 20,
-        'source'      => '',
-    ];
-
+    public const DEFAULTS_GET_FILES = ['date_end' => 0, 'date_filter' => '', 'date_start' => 0, 'offset' => 0, 'order' => 'desc', 'orderby' => 'modified', 'per_page' => 20, 'source' => ''];
     /**
      * Default values for arguments for the search_within_files method.
      *
      * @const array
      */
-    public const DEFAULTS_SEARCH_WITHIN_FILES = [
-        'offset'   => 0,
-        'per_page' => 50,
-    ];
-
+    public const DEFAULTS_SEARCH_WITHIN_FILES = ['offset' => 0, 'per_page' => 50];
     /**
      * The maximum number of files that can be searched at one time.
      *
      * @const int
      */
     public const SEARCH_MAX_FILES = 100;
-
     /**
      * The maximum number of search results that can be returned at one time.
      *
      * @const int
      */
     public const SEARCH_MAX_RESULTS = 200;
-
     /**
      * The cache group name to use for caching operations.
      *
      * @const string
      */
     private const CACHE_GROUP = 'log-files';
-
     /**
      * A cache key for storing and retrieving the results of the last logs search.
      *
      * @const string
      */
     private const SEARCH_CACHE_KEY = 'logs_previous_search';
-
     /**
      * Get the file size limit that determines when to rotate a file.
      */
     private function get_file_size_limit(): int
     {
         $default = 5 * MB_IN_BYTES;
-
         /**
          * Filter the threshold size of a log file at which point it will get rotated.
          *
@@ -92,14 +70,11 @@ class FileController
          * @param int $file_size_limit The file size limit in bytes.
          */
         $file_size_limit = apply_filters('woocommerce_log_file_size_limit', $default);
-
-        if (! is_int($file_size_limit) || $file_size_limit < 1) {
+        if (!is_int($file_size_limit) || $file_size_limit < 1) {
             return $default;
         }
-
         return $file_size_limit;
     }
-
     /**
      * Write a log entry to the appropriate file, after rotating the file if necessary.
      *
@@ -114,28 +89,22 @@ class FileController
         if (is_null($time)) {
             $time = time();
         }
-
         $file_id = File::generate_file_id($source, null, $time);
-        $file    = $this->get_file_by_id($file_id);
-
+        $file = $this->get_file_by_id($file_id);
         if ($file instanceof File && $file->get_file_size() >= $this->get_file_size_limit()) {
             $rotated = $this->rotate_file($file->get_file_id());
-
             if ($rotated) {
                 $file = null;
             } else {
                 return false;
             }
         }
-
-        if (! $file instanceof File) {
+        if (!$file instanceof File) {
             $new_path = Settings::get_log_directory() . $this->generate_filename($source, $time);
-            $file     = new File($new_path);
+            $file = new File($new_path);
         }
-
         return $file->write($text);
     }
-
     /**
      * Generate the full name of a file based on source and date values.
      *
@@ -145,11 +114,9 @@ class FileController
     private function generate_filename(string $source, int $time): string
     {
         $file_id = File::generate_file_id($source, null, $time);
-        $hash    = File::generate_hash($file_id);
-
-        return "$file_id-$hash.log";
+        $hash = File::generate_hash($file_id);
+        return "{$file_id}-{$hash}.log";
     }
-
     /**
      * Get all the rotations of a file and increment them, so that they overwrite the previous file with that rotation.
      *
@@ -160,28 +127,22 @@ class FileController
     private function rotate_file(string $file_id): bool
     {
         $rotations = $this->get_file_rotations($file_id);
-
-        if (is_wp_error($rotations) || ! isset($rotations['current'])) {
+        if (is_wp_error($rotations) || !isset($rotations['current'])) {
             return false;
         }
-
         $max_rotation_marker = self::MAX_FILE_ROTATIONS - 1;
-
         // Don't rotate a file with the maximum rotation.
-        unset($rotations[ $max_rotation_marker ]);
-
+        unset($rotations[$max_rotation_marker]);
         $results = [];
         // Rotate starting with oldest first and working backwards.
         for ($i = $max_rotation_marker; $i >= 0; $i--) {
-            if (isset($rotations[ $i ])) {
-                $results[] = $rotations[ $i ]->rotate();
+            if (isset($rotations[$i])) {
+                $results[] = $rotations[$i]->rotate();
             }
         }
         $results[] = $rotations['current']->rotate();
-
-        return ! in_array(false, $results, true);
+        return !in_array(false, $results, true);
     }
-
     /**
      * Get an array of log files.
      *
@@ -204,115 +165,74 @@ class FileController
     public function get_files(array $args = [], bool $count_only = false): \WP_Error|int|array
     {
         $args = wp_parse_args($args, self::DEFAULTS_GET_FILES);
-
         $pattern = $args['source'] . '*.log';
-        $paths   = glob(Settings::get_log_directory() . $pattern);
-
+        $paths = glob(Settings::get_log_directory() . $pattern);
         if (false === $paths) {
-            return new WP_Error(
-                'wc_log_directory_error',
-                __('Could not access the log file directory.', 'woocommerce')
-            );
+            return new WP_Error('wc_log_directory_error', __('Could not access the log file directory.', 'woocommerce'));
         }
-
         $files = $this->convert_paths_to_objects($paths);
-
         if ($args['date_filter'] && $args['date_start'] && $args['date_end']) {
             switch ($args['date_filter']) {
                 case 'created':
-                    $files = array_filter(
-                        $files,
-                        fn (\Automattic\WooCommerce\Internal\Admin\Logging\FileV2\File $file): bool => $file->get_created_timestamp() >= $args['date_start']
-                            && $file->get_created_timestamp() <= $args['date_end']
-                    );
+                    $files = array_filter($files, fn(\Automattic\Woo_Commerce\Internal\Admin\Logging\File_V2\File $file): bool => $file->get_created_timestamp() >= $args['date_start'] && $file->get_created_timestamp() <= $args['date_end']);
                     break;
                 case 'modified':
-                    $files = array_filter(
-                        $files,
-                        fn (\Automattic\WooCommerce\Internal\Admin\Logging\FileV2\File $file): bool => $file->get_modified_timestamp() >= $args['date_start']
-                            && $file->get_modified_timestamp() <= $args['date_end']
-                    );
+                    $files = array_filter($files, fn(\Automattic\Woo_Commerce\Internal\Admin\Logging\File_V2\File $file): bool => $file->get_modified_timestamp() >= $args['date_start'] && $file->get_modified_timestamp() <= $args['date_end']);
                     break;
             }
         }
-
         if (true === $count_only) {
             return count($files);
         }
-
         $multi_sorter = function ($sort_sets, $order_sets): int {
             $comparison = 0;
-
-            while (! empty($sort_sets)) {
-                $set   = array_shift($sort_sets);
+            while (!empty($sort_sets)) {
+                $set = array_shift($sort_sets);
                 $order = array_shift($order_sets);
-
                 if ('desc' === $order) {
                     $comparison = $set[1] <=> $set[0];
                 } else {
                     $comparison = $set[0] <=> $set[1];
                 }
-
                 if (0 !== $comparison) {
                     break;
                 }
             }
-
             return $comparison;
         };
-
         switch ($args['orderby']) {
             case 'created':
                 $sort_callback = function ($a, $b) use ($args, $multi_sorter): int {
-                    $sort_sets  = [
-                        [ $a->get_created_timestamp(), $b->get_created_timestamp() ],
-                        [ $a->get_source(), $b->get_source() ],
-                        [ $a->get_rotation() || -1, $b->get_rotation() || -1 ],
-                    ];
-                    $order_sets = [ $args['order'], 'asc', 'asc' ];
+                    $sort_sets = [[$a->get_created_timestamp(), $b->get_created_timestamp()], [$a->get_source(), $b->get_source()], [$a->get_rotation() || -1, $b->get_rotation() || -1]];
+                    $order_sets = [$args['order'], 'asc', 'asc'];
                     return $multi_sorter($sort_sets, $order_sets);
                 };
                 break;
             case 'modified':
                 $sort_callback = function ($a, $b) use ($args, $multi_sorter): int {
-                    $sort_sets  = [
-                        [ $a->get_modified_timestamp(), $b->get_modified_timestamp() ],
-                        [ $a->get_source(), $b->get_source() ],
-                        [ $a->get_rotation() || -1, $b->get_rotation() || -1 ],
-                    ];
-                    $order_sets = [ $args['order'], 'asc', 'asc' ];
+                    $sort_sets = [[$a->get_modified_timestamp(), $b->get_modified_timestamp()], [$a->get_source(), $b->get_source()], [$a->get_rotation() || -1, $b->get_rotation() || -1]];
+                    $order_sets = [$args['order'], 'asc', 'asc'];
                     return $multi_sorter($sort_sets, $order_sets);
                 };
                 break;
             case 'source':
                 $sort_callback = function ($a, $b) use ($args, $multi_sorter): int {
-                    $sort_sets  = [
-                        [ $a->get_source(), $b->get_source() ],
-                        [ $a->get_created_timestamp(), $b->get_created_timestamp() ],
-                        [ $a->get_rotation() || -1, $b->get_rotation() || -1 ],
-                    ];
-                    $order_sets = [ $args['order'], 'desc', 'asc' ];
+                    $sort_sets = [[$a->get_source(), $b->get_source()], [$a->get_created_timestamp(), $b->get_created_timestamp()], [$a->get_rotation() || -1, $b->get_rotation() || -1]];
+                    $order_sets = [$args['order'], 'desc', 'asc'];
                     return $multi_sorter($sort_sets, $order_sets);
                 };
                 break;
             case 'size':
                 $sort_callback = function ($a, $b) use ($args, $multi_sorter): int {
-                    $sort_sets  = [
-                        [ $a->get_file_size(), $b->get_file_size() ],
-                        [ $a->get_source(), $b->get_source() ],
-                        [ $a->get_rotation() || -1, $b->get_rotation() || -1 ],
-                    ];
-                    $order_sets = [ $args['order'], 'asc', 'asc' ];
+                    $sort_sets = [[$a->get_file_size(), $b->get_file_size()], [$a->get_source(), $b->get_source()], [$a->get_rotation() || -1, $b->get_rotation() || -1]];
+                    $order_sets = [$args['order'], 'asc', 'asc'];
                     return $multi_sorter($sort_sets, $order_sets);
                 };
                 break;
         }
-
         usort($files, $sort_callback);
-
         return array_slice($files, $args['offset'], $args['per_page']);
     }
-
     /**
      * Get one or more File instances from an array of file IDs.
      *
@@ -323,50 +243,35 @@ class FileController
     public function get_files_by_id(array $file_ids): array
     {
         $log_directory = Settings::get_log_directory();
-        $paths         = [];
-
+        $paths = [];
         foreach ($file_ids as $file_id) {
             // Look for the standard filename format first, which includes a hash.
             $glob = glob($log_directory . $file_id . '-*.log');
-
-            if (! $glob) {
+            if (!$glob) {
                 $glob = glob($log_directory . $file_id . '.log');
             }
-
             if (is_array($glob)) {
                 $paths = array_merge($paths, $glob);
             }
         }
-
         return $this->convert_paths_to_objects(array_unique($paths));
     }
-
     /**
      * Get a File instance from a file ID.
      *
      * @param string $file_id A file ID (file basename without the hash).
      */
-    public function get_file_by_id(string $file_id): \WP_Error|\Automattic\WooCommerce\Internal\Admin\Logging\FileV2\File
+    public function get_file_by_id(string $file_id): \WP_Error|\Automattic\Woo_Commerce\Internal\Admin\Logging\File_V2\File
     {
-        $result = $this->get_files_by_id([ $file_id ]);
-
+        $result = $this->get_files_by_id([$file_id]);
         if (count($result) < 1) {
-            return new WP_Error(
-                'wc_log_file_error',
-                esc_html__('This file does not exist.', 'woocommerce')
-            );
+            return new WP_Error('wc_log_file_error', esc_html__('This file does not exist.', 'woocommerce'));
         }
-
         if (count($result) > 1) {
-            return new WP_Error(
-                'wc_log_file_error',
-                esc_html__('Multiple files match this ID.', 'woocommerce')
-            );
+            return new WP_Error('wc_log_file_error', esc_html__('Multiple files match this ID.', 'woocommerce'));
         }
-
         return reset($result);
     }
-
     /**
      * Get File instances for a given file ID and all of its related rotations.
      *
@@ -378,54 +283,38 @@ class FileController
     public function get_file_rotations(string $file_id)
     {
         $file = $this->get_file_by_id($file_id);
-
         if (is_wp_error($file)) {
             return $file;
         }
-
-        $current   = [];
+        $current = [];
         $rotations = [];
-
-        $source  = $file->get_source();
+        $source = $file->get_source();
         $created = 0;
         if ($file->has_standard_filename()) {
             $created = $file->get_created_timestamp();
         }
-
         if (is_null($file->get_rotation())) {
             $current['current'] = $file;
         } else {
             $current_file_id = File::generate_file_id($source, null, $created);
-            $result          = $this->get_file_by_id($current_file_id);
-            if (! is_wp_error($result)) {
+            $result = $this->get_file_by_id($current_file_id);
+            if (!is_wp_error($result)) {
                 $current['current'] = $result;
             }
         }
-
-        $rotations_pattern = sprintf(
-            '.[%s]',
-            implode(
-                '',
-                range(0, self::MAX_FILE_ROTATIONS - 1)
-            )
-        );
-
+        $rotations_pattern = sprintf('.[%s]', implode('', range(0, self::MAX_FILE_ROTATIONS - 1)));
         $created_pattern = $created ? '-' . gmdate('Y-m-d', $created) . '-' : '';
-
         $rotation_pattern = Settings::get_log_directory() . $source . $rotations_pattern . $created_pattern . '*.log';
-        $rotation_paths   = glob($rotation_pattern);
-        $rotation_files   = $this->convert_paths_to_objects($rotation_paths);
+        $rotation_paths = glob($rotation_pattern);
+        $rotation_files = $this->convert_paths_to_objects($rotation_paths);
         foreach ($rotation_files as $rotation_file) {
             if ($rotation_file->is_readable()) {
-                $rotations[ $rotation_file->get_rotation() ] = $rotation_file;
+                $rotations[$rotation_file->get_rotation()] = $rotation_file;
             }
         }
-
         ksort($rotations);
-
         return array_merge($current, $rotations);
     }
-
     /**
      * Helper method to get an array of File instances.
      *
@@ -435,17 +324,12 @@ class FileController
      */
     private function convert_paths_to_objects(array $paths): array
     {
-        $files = array_map(
-            function ($path): ?\Automattic\WooCommerce\Internal\Admin\Logging\FileV2\File {
-                $file = new File($path);
-                return $file->is_readable() ? $file : null;
-            },
-            $paths
-        );
-
+        $files = array_map(function ($path): ?\Automattic\Woo_Commerce\Internal\Admin\Logging\File_V2\File {
+            $file = new File($path);
+            return $file->is_readable() ? $file : null;
+        }, $paths);
         return array_filter($files);
     }
-
     /**
      * Get a list of sources for existing log files.
      */
@@ -453,23 +337,14 @@ class FileController
     {
         $paths = glob(Settings::get_log_directory() . '*.log');
         if (false === $paths) {
-            return new WP_Error(
-                'wc_log_directory_error',
-                __('Could not access the log file directory.', 'woocommerce')
-            );
+            return new WP_Error('wc_log_directory_error', __('Could not access the log file directory.', 'woocommerce'));
         }
-
-        $all_sources = array_map(
-            function (string $path): ?string {
-                $file = new File($path);
-                return $file->is_readable() ? $file->get_source() : null;
-            },
-            $paths
-        );
-
+        $all_sources = array_map(function (string $path): ?string {
+            $file = new File($path);
+            return $file->is_readable() ? $file->get_source() : null;
+        }, $paths);
         return array_unique(array_filter($all_sources));
     }
-
     /**
      * Delete one or more files from the filesystem.
      *
@@ -480,23 +355,18 @@ class FileController
     public function delete_files(array $file_ids): int
     {
         $deleted = 0;
-
         $files = $this->get_files_by_id($file_ids);
         foreach ($files as $file) {
             $result = $file->delete();
-
             if (true === $result) {
                 $deleted++;
             }
         }
-
         if ($deleted > 0) {
             $this->invalidate_cache();
         }
-
         return $deleted;
     }
-
     /**
      * Stream a single file to the browser without zipping it first.
      *
@@ -507,17 +377,13 @@ class FileController
     public function export_single_file(string $file_id)
     {
         $file = $this->get_file_by_id($file_id);
-
         if (is_wp_error($file)) {
             return $file;
         }
-
         $file_name = $file->get_file_id() . '.log';
-        $exporter  = new FileExporter($file->get_path(), $file_name);
-
+        $exporter = new File_Exporter($file->get_path(), $file_name);
         return $exporter->emit_file();
     }
-
     /**
      * Create a zip archive of log files and stream it to the browser.
      *
@@ -528,39 +394,21 @@ class FileController
     public function export_multiple_files(array $file_ids)
     {
         $files = $this->get_files_by_id($file_ids);
-
         if (count($files) < 1) {
-            return new WP_Error(
-                'wc_logs_invalid_file',
-                __('Could not access the specified files.', 'woocommerce')
-            );
+            return new WP_Error('wc_logs_invalid_file', __('Could not access the specified files.', 'woocommerce'));
         }
-
         $temp_dir = get_temp_dir();
-
-        if (! is_dir($temp_dir) || ! wp_is_writable($temp_dir)) {
-            return new WP_Error(
-                'wc_logs_invalid_directory',
-                __('Could not write to the temp directory. Try downloading files one at a time instead.', 'woocommerce')
-            );
+        if (!is_dir($temp_dir) || !wp_is_writable($temp_dir)) {
+            return new WP_Error('wc_logs_invalid_directory', __('Could not write to the temp directory. Try downloading files one at a time instead.', 'woocommerce'));
         }
-
         require_once ABSPATH . 'wp-admin/includes/class-pclzip.php';
-
-        $path       = trailingslashit($temp_dir) . 'woocommerce_logs_' . gmdate('Y-m-d_H-i-s') . '.zip';
-        $file_paths = array_map(
-            fn ($file): string => $file->get_path(),
-            $files
-        );
-        $archive    = new PclZip($path);
-
+        $path = trailingslashit($temp_dir) . 'woocommerce_logs_' . gmdate('Y-m-d_H-i-s') . '.zip';
+        $file_paths = array_map(fn($file): string => $file->get_path(), $files);
+        $archive = new Pcl_Zip($path);
         $archive->create($file_paths, PCLZIP_OPT_REMOVE_ALL_PATH);
-
-        $exporter = new FileExporter($path);
-
+        $exporter = new File_Exporter($path);
         return $exporter->emit_file();
     }
-
     /**
      * Search within a set of log files for a particular string.
      *
@@ -577,24 +425,13 @@ class FileController
         if ('' === $search) {
             return $count_only ? 0 : [];
         }
-
         $search = esc_html($search);
-
         $args = wp_parse_args($args, self::DEFAULTS_SEARCH_WITHIN_FILES);
-
-        $file_args = array_merge(
-            $file_args,
-            [
-                'offset'   => 0,
-                'per_page' => self::SEARCH_MAX_FILES,
-            ]
-        );
-
+        $file_args = array_merge($file_args, ['offset' => 0, 'per_page' => self::SEARCH_MAX_FILES]);
         $cache_key = WC_Cache_Helper::get_prefixed_key(self::SEARCH_CACHE_KEY, self::CACHE_GROUP);
-        $query     = wp_json_encode([ $search, $args, $file_args ]);
-        $cache     = wp_cache_get($cache_key);
+        $query = wp_json_encode([$search, $args, $file_args]);
+        $cache = wp_cache_get($cache_key);
         $is_cached = isset($cache['query'], $cache['results']) && $query === $cache['query'];
-
         if (true === $is_cached) {
             $matched_lines = $cache['results'];
         } else {
@@ -602,77 +439,54 @@ class FileController
             if (is_wp_error($files)) {
                 return $files;
             }
-
             // Max string size * SEARCH_MAX_RESULTS = ~1MB largest possible cache entry.
             $max_string_size = 5 * KB_IN_BYTES;
-
             $matched_lines = [];
-
             foreach ($files as $file) {
-                $stream      = $file->get_stream();
+                $stream = $file->get_stream();
                 $line_number = 1;
-
-                while (! feof($stream)) {
+                while (!feof($stream)) {
                     $line = fgets($stream, $max_string_size);
-                    if (! is_string($line)) {
+                    if (!is_string($line)) {
                         continue;
                     }
-
                     $sanitized_line = esc_html(trim($line));
                     if (false !== stripos($sanitized_line, $search)) {
-                        $matched_lines[] = [
-                            'file_id'     => $file->get_file_id(),
-                            'line_number' => $line_number,
-                            'line'        => $sanitized_line,
-                        ];
+                        $matched_lines[] = ['file_id' => $file->get_file_id(), 'line_number' => $line_number, 'line' => $sanitized_line];
                     }
-
                     if (count($matched_lines) >= self::SEARCH_MAX_RESULTS) {
                         $file->close_stream();
                         break 2;
                     }
-
                     if (str_contains($line, PHP_EOL)) {
                         $line_number++;
                     }
                 }
-
                 $file->close_stream();
             }
-
-            $to_cache = [
-                'query'   => $query,
-                'results' => $matched_lines,
-            ];
+            $to_cache = ['query' => $query, 'results' => $matched_lines];
             wp_cache_set($cache_key, $to_cache, self::CACHE_GROUP, DAY_IN_SECONDS);
         }
-
         if (true === $count_only) {
             return count($matched_lines);
         }
-
         return array_slice($matched_lines, $args['offset'], $args['per_page']);
     }
-
     /**
      * Calculate the size, in bytes, of the log directory.
      */
     public function get_log_directory_size(): int
     {
         $bytes = 0;
-        $path  = realpath(Settings::get_log_directory(false));
-
+        $path = realpath(Settings::get_log_directory(false));
         if (wp_is_writable($path)) {
-            $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CATCH_GET_CHILD);
-
+            $iterator = new \Recursive_Iterator_Iterator(new \Recursive_Directory_Iterator($path, \Filesystem_Iterator::SKIP_DOTS), \Recursive_Iterator_Iterator::CATCH_GET_CHILD);
             foreach ($iterator as $file) {
-                $bytes += $file->getSize();
+                $bytes += $file->get_size();
             }
         }
-
         return $bytes;
     }
-
     /**
      * Invalidate the cache group related to log file data.
      *

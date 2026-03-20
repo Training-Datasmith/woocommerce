@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 /**
  * Evaluates `overrides` property in the spec and returns the evaluated spec.
  */
-class EvaluateOverrides
+class Evaluate_Overrides
 {
     /**
      * Evaluates the spec and returns a status.
@@ -19,21 +18,20 @@ class EvaluateOverrides
      */
     public function evaluate(array $spec, array $context = []): array
     {
-        $rule_evaluator = new RuleEvaluator(new GetRuleProcessorForContext($context));
-
+        $rule_evaluator = new Rule_Evaluator(new Get_Rule_Processor_For_Context($context));
         foreach ($spec as $spec_item) {
             if (isset($spec_item->overrides) && is_array($spec_item->overrides)) {
                 foreach ($spec_item->overrides as $override) {
-                    if (! isset($override->rules)) {
+                    if (!isset($override->rules)) {
                         continue;
                     }
-                    if (! is_array($override->rules)) {
+                    if (!is_array($override->rules)) {
                         continue;
                     }
-                    if (! isset($override->field)) {
+                    if (!isset($override->field)) {
                         continue;
                     }
-                    if (! isset($override->value)) {
+                    if (!isset($override->value)) {
                         continue;
                     }
                     if ($rule_evaluator->evaluate($override->rules)) {
@@ -48,10 +46,8 @@ class EvaluateOverrides
                 }
             }
         }
-
         return $spec;
     }
-
     /**
      * Set a new value to $data with dot notation.
      *
@@ -65,31 +61,28 @@ class EvaluateOverrides
      */
     public function set_value_with_dot_notation(&$data, $path, $new_value)
     {
-        $keys     = explode('.', $path);
+        $keys = explode('.', $path);
         $last_key = array_pop($keys);
-
         foreach ($keys as $key) {
             if (is_numeric($key)) {
                 $key = (int) $key;
-                if (! isset($data[ $key ]) || ! is_object($data[ $key ])) {
-                    $data[ $key ] = new \stdClass();
+                if (!isset($data[$key]) || !is_object($data[$key])) {
+                    $data[$key] = new \stdClass();
                 }
-                $data = &$data[ $key ];
+                $data =& $data[$key];
             } else {
-                if (! isset($data->$key) || (! is_array($data->$key) && ! is_object($data->$key))) {
-                    $data->$key = new \stdClass();
+                if (!isset($data->{$key}) || !is_array($data->{$key}) && !is_object($data->{$key})) {
+                    $data->{$key} = new \stdClass();
                 }
-                $data = &$data->$key;
+                $data =& $data->{$key};
             }
         }
-
         // Assign the new value.
         if (is_numeric($last_key)) {
-            $data[ (int) $last_key ] = $new_value;
+            $data[(int) $last_key] = $new_value;
         } else {
-            $data->$last_key = $new_value;
+            $data->{$last_key} = $new_value;
         }
-
         return $data;
     }
 }

@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * ActiveFilters class.
  */
-class ActiveFilters extends AbstractBlock
+class Active_Filters extends Abstract_Block
 {
     /**
      * Block name.

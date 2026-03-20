@@ -1,28 +1,24 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Handle product stock reservation during checkout.
  */
+namespace Automattic\Woo_Commerce\Checkout\Helpers;
 
-namespace Automattic\WooCommerce\Checkout\Helpers;
-
-use Automattic\WooCommerce\Enums\OrderInternalStatus;
-use Automattic\WooCommerce\Internal\Orders\OrderNoteGroup;
-use Automattic\WooCommerce\Utilities\OrderUtil;
-
+use Automattic\Woo_Commerce\Enums\Order_Internal_Status;
+use Automattic\Woo_Commerce\Internal\Orders\Order_Note_Group;
+use Automattic\Woo_Commerce\Utilities\Order_Util;
 defined('ABSPATH') || exit;
-
 /**
  * Stock Reservation class.
  */
-final readonly class ReserveStock
+final readonly class Reserve_Stock
 {
     /**
      * Is stock reservation enabled?
      */
     private bool $enabled;
-
     /**
      * Constructor
      */
@@ -31,7 +27,6 @@ final readonly class ReserveStock
         // Table needed for this feature are added in 4.3.
         $this->enabled = get_option('woocommerce_schema_version', 0) >= 430;
     }
-
     /**
      * Is stock reservation enabled?
      *
@@ -41,7 +36,6 @@ final readonly class ReserveStock
     {
         return $this->enabled;
     }
-
     /**
      * Query for any existing holds on stock for this item.
      *
@@ -53,17 +47,14 @@ final readonly class ReserveStock
     public function get_reserved_stock($product, $exclude_order_id = 0)
     {
         global $wpdb;
-
-        if (! $this->is_enabled()) {
+        if (!$this->is_enabled()) {
             return 0;
         }
-
         return wc_stock_amount(
             // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
             $wpdb->get_var($this->get_query_for_reserved_stock($product->get_stock_managed_by_id(), $exclude_order_id))
         );
     }
-
     /**
      * Put a temporary hold on stock for an order if enough is available.
      *
@@ -86,44 +77,30 @@ final readonly class ReserveStock
          * @param \WC_Order $order Order object.
          */
         $minutes = (int) apply_filters('woocommerce_order_hold_stock_minutes', $minutes, $order);
-
-        if (! $minutes || ! $this->is_enabled()) {
+        if (!$minutes || !$this->is_enabled()) {
             return;
         }
-
         $held_stock_notes = [];
-
         try {
-            $items = array_filter(
-                $order->get_items(),
-                fn (\WC_Order_Item $item) => $item->is_type('line_item') && $item->get_product() instanceof \WC_Product && $item->get_quantity() > 0
-            );
-            $rows  = [];
-
+            $items = array_filter($order->get_items(), fn(\WC_Order_Item $item) => $item->is_type('line_item') && $item->get_product() instanceof \WC_Product && $item->get_quantity() > 0);
+            $rows = [];
             foreach ($items as $item) {
                 $product = $item->get_product();
-
-                if (! $product->is_in_stock()) {
-                    throw new ReserveStockException(
-                        'woocommerce_product_out_of_stock',
-                        sprintf(
-                            /* translators: %s: product name */
-                            __('&quot;%s&quot; is out of stock and cannot be purchased.', 'woocommerce'),
-                            $product->get_name()
-                        ),
-                        403
-                    );
+                if (!$product->is_in_stock()) {
+                    throw new Reserve_Stock_Exception('woocommerce_product_out_of_stock', sprintf(
+                        /* translators: %s: product name */
+                        __('&quot;%s&quot; is out of stock and cannot be purchased.', 'woocommerce'),
+                        $product->get_name()
+                    ), 403);
                 }
                 // If stock management is off, no need to reserve any stock here.
-                if (! $product->managing_stock()) {
+                if (!$product->managing_stock()) {
                     continue;
                 }
                 if ($product->backorders_allowed()) {
                     continue;
                 }
-
                 $managed_by_id = $product->get_stock_managed_by_id();
-
                 /**
                  * Filter order item quantity.
                  *
@@ -132,25 +109,21 @@ final readonly class ReserveStock
                  * @param WC_Order_Item_Product $item Order item data.
                  */
                 $item_quantity = apply_filters('woocommerce_order_item_quantity', $item->get_quantity(), $order, $item);
-
-                $rows[ $managed_by_id ] = isset($rows[ $managed_by_id ]) ? $rows[ $managed_by_id ] + $item_quantity : $item_quantity;
-
+                $rows[$managed_by_id] = isset($rows[$managed_by_id]) ? $rows[$managed_by_id] + $item_quantity : $item_quantity;
                 if (count($held_stock_notes) < 5) {
                     // translators: %1$s is a product's formatted name, %2$d: is the quantity of said product to which the stock hold applied.
-                    $held_stock_notes[] = sprintf(_x('- %1$s &times; %2$d', 'held stock note', 'woocommerce'), $product->get_formatted_name(), $rows[ $managed_by_id ]);
+                    $held_stock_notes[] = sprintf(_x('- %1$s &times; %2$d', 'held stock note', 'woocommerce'), $product->get_formatted_name(), $rows[$managed_by_id]);
                 }
             }
-
             foreach ($rows as $product_id => $quantity) {
                 $this->reserve_stock_for_product($product_id, $quantity, $order, $minutes);
             }
-        } catch (ReserveStockException $e) {
+        } catch (Reserve_Stock_Exception $e) {
             $this->release_stock_for_order($order);
             throw $e;
         }
-
         // Add order note after successfully holding the stock.
-        if (! empty($held_stock_notes)) {
+        if (!empty($held_stock_notes)) {
             $remaining_count = count($rows) - count($held_stock_notes);
             if ($remaining_count > 0) {
                 $held_stock_notes[] = sprintf(
@@ -159,23 +132,14 @@ final readonly class ReserveStock
                     $remaining_count
                 );
             }
-
-            $order->add_order_note(
-                sprintf(
-                    // translators: %1$s is a time in minutes, %2$s is a list of products and quantities.
-                    _x('Stock hold of %1$s minutes applied to: %2$s', 'held stock note', 'woocommerce'),
-                    $minutes,
-                    '<br>' . implode('<br>', $held_stock_notes)
-                ),
-                false,
-                false,
-                [
-                    'note_group' => OrderNoteGroup::PRODUCT_STOCK,
-                ]
-            );
+            $order->add_order_note(sprintf(
+                // translators: %1$s is a time in minutes, %2$s is a list of products and quantities.
+                _x('Stock hold of %1$s minutes applied to: %2$s', 'held stock note', 'woocommerce'),
+                $minutes,
+                '<br>' . implode('<br>', $held_stock_notes)
+            ), false, false, ['note_group' => Order_Note_Group::PRODUCT_STOCK]);
         }
     }
-
     /**
      * Release a temporary hold on stock for an order.
      *
@@ -184,19 +148,11 @@ final readonly class ReserveStock
     public function release_stock_for_order($order): void
     {
         global $wpdb;
-
-        if (! $this->is_enabled()) {
+        if (!$this->is_enabled()) {
             return;
         }
-
-        $wpdb->delete(
-            $wpdb->wc_reserved_stock,
-            [
-                'order_id' => $order->get_id(),
-            ]
-        );
+        $wpdb->delete($wpdb->wc_reserved_stock, ['order_id' => $order->get_id()]);
     }
-
     /**
      * Reserve stock for a product by inserting rows into the DB.
      *
@@ -210,43 +166,21 @@ final readonly class ReserveStock
     private function reserve_stock_for_product(int|string $product_id, $stock_quantity, $order, int $minutes): void
     {
         global $wpdb;
-
-        $product_data_store       = \WC_Data_Store::load('product');
-        $query_for_stock          = $product_data_store->get_query_for_stock($product_id);
+        $product_data_store = \WC_Data_Store::load('product');
+        $query_for_stock = $product_data_store->get_query_for_stock($product_id);
         $query_for_reserved_stock = $this->get_query_for_reserved_stock($product_id, $order->get_id());
-
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
-        $result = $wpdb->query(
-            $wpdb->prepare(
-                "
-				INSERT INTO {$wpdb->wc_reserved_stock} ( `order_id`, `product_id`, `stock_quantity`, `timestamp`, `expires` )
-				SELECT %d, %d, %d, NOW(), ( NOW() + INTERVAL %d MINUTE ) FROM DUAL
-				WHERE ( $query_for_stock FOR UPDATE ) - ( $query_for_reserved_stock FOR UPDATE ) >= %d
-				ON DUPLICATE KEY UPDATE `expires` = VALUES( `expires` ), `stock_quantity` = VALUES( `stock_quantity` )
-				",
-                $order->get_id(),
-                $product_id,
-                $stock_quantity,
-                $minutes,
-                $stock_quantity
-            )
-        );
+        $result = $wpdb->query($wpdb->prepare("\n\t\t\t\tINSERT INTO {$wpdb->wc_reserved_stock} ( `order_id`, `product_id`, `stock_quantity`, `timestamp`, `expires` )\n\t\t\t\tSELECT %d, %d, %d, NOW(), ( NOW() + INTERVAL %d MINUTE ) FROM DUAL\n\t\t\t\tWHERE ( {$query_for_stock} FOR UPDATE ) - ( {$query_for_reserved_stock} FOR UPDATE ) >= %d\n\t\t\t\tON DUPLICATE KEY UPDATE `expires` = VALUES( `expires` ), `stock_quantity` = VALUES( `stock_quantity` )\n\t\t\t\t", $order->get_id(), $product_id, $stock_quantity, $minutes, $stock_quantity));
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
-
-        if (! $result) {
+        if (!$result) {
             $product = wc_get_product($product_id);
-            throw new ReserveStockException(
-                'woocommerce_product_not_enough_stock',
-                sprintf(
-                    /* translators: %s: product name */
-                    __('Not enough units of %s are available in stock to fulfil this order.', 'woocommerce'),
-                    $product ? $product->get_name() : '#' . $product_id
-                ),
-                403
-            );
+            throw new Reserve_Stock_Exception('woocommerce_product_not_enough_stock', sprintf(
+                /* translators: %s: product name */
+                __('Not enough units of %s are available in stock to fulfil this order.', 'woocommerce'),
+                $product ? $product->get_name() : '#' . $product_id
+            ), 403);
         }
     }
-
     /**
      * Returns query statement for getting reserved stock of a product.
      *
@@ -257,29 +191,15 @@ final readonly class ReserveStock
     private function get_query_for_reserved_stock($product_id, $exclude_order_id = 0)
     {
         global $wpdb;
-
-        $join         = "$wpdb->posts posts ON stock_table.`order_id` = posts.ID";
-        $where_status = "posts.post_status IN ( 'wc-checkout-draft', '" . OrderInternalStatus::PENDING . "' )";
-        if (OrderUtil::custom_orders_table_usage_is_enabled()) {
-            $join         = "{$wpdb->prefix}wc_orders orders ON stock_table.`order_id` = orders.id";
-            $where_status = "orders.status IN ( 'wc-checkout-draft', '" . OrderInternalStatus::PENDING . "' )";
+        $join = "{$wpdb->posts} posts ON stock_table.`order_id` = posts.ID";
+        $where_status = "posts.post_status IN ( 'wc-checkout-draft', '" . Order_Internal_Status::PENDING . "' )";
+        if (Order_Util::custom_orders_table_usage_is_enabled()) {
+            $join = "{$wpdb->prefix}wc_orders orders ON stock_table.`order_id` = orders.id";
+            $where_status = "orders.status IN ( 'wc-checkout-draft', '" . Order_Internal_Status::PENDING . "' )";
         }
-
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $query = $wpdb->prepare(
-            "
-			SELECT COALESCE( SUM( stock_table.`stock_quantity` ), 0 ) FROM $wpdb->wc_reserved_stock stock_table
-			LEFT JOIN $join
-			WHERE $where_status
-			AND stock_table.`expires` > NOW()
-			AND stock_table.`product_id` = %d
-			AND stock_table.`order_id` != %d
-			",
-            $product_id,
-            $exclude_order_id
-        );
+        $query = $wpdb->prepare("\n\t\t\tSELECT COALESCE( SUM( stock_table.`stock_quantity` ), 0 ) FROM {$wpdb->wc_reserved_stock} stock_table\n\t\t\tLEFT JOIN {$join}\n\t\t\tWHERE {$where_status}\n\t\t\tAND stock_table.`expires` > NOW()\n\t\t\tAND stock_table.`product_id` = %d\n\t\t\tAND stock_table.`order_id` != %d\n\t\t\t", $product_id, $exclude_order_id);
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-
         /**
          * Filter: woocommerce_query_for_reserved_stock
          * Allows to filter the query for getting reserved stock of a product.

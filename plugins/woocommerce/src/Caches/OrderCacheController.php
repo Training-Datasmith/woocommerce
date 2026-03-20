@@ -1,31 +1,27 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Caches;
 
-namespace Automattic\WooCommerce\Caches;
-
-use Automattic\WooCommerce\Utilities\OrderUtil;
-
+use Automattic\Woo_Commerce\Utilities\Order_Util;
 /**
  * A class to control the usage of the orders cache.
  */
-class OrderCacheController
+class Order_Cache_Controller
 {
     /**
      * The backup value of the cache usage enable status, stored while the cache is temporarily disabled.
      */
     private ?bool $orders_cache_usage_backup = null;
-
     /**
      * Class initialization, invoked by the DI container.
      *
      * @internal
      * @param OrderCache $order_cache The order cache engine to use.
      */
-    final public function init(OrderCache $order_cache)
+    final public function init(Order_Cache $order_cache)
     {
     }
-
     /**
      * Whether order cache usage is enabled. Currently, linked to custom orders' table usage.
      *
@@ -33,9 +29,8 @@ class OrderCacheController
      */
     public function orders_cache_usage_is_enabled(): bool
     {
-        return OrderUtil::custom_orders_table_usage_is_enabled();
+        return Order_Util::custom_orders_table_usage_is_enabled();
     }
-
     /**
      * Temporarily disable the order cache if it's enabled.
      *
@@ -49,10 +44,8 @@ class OrderCacheController
         if ($this->orders_cache_usage_is_temporarly_disabled()) {
             return;
         }
-
         $this->orders_cache_usage_backup = $this->orders_cache_usage_is_enabled();
     }
-
     /**
      * Check if the order cache has been temporarily disabled.
      *
@@ -62,7 +55,6 @@ class OrderCacheController
     {
         return null !== $this->orders_cache_usage_backup;
     }
-
     /**
      * Restore the order cache usage that had been temporarily disabled.
      */

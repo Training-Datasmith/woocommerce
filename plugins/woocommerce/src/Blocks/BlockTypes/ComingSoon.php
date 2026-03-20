@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 use Automattic\Jetpack\Constants;
-
 /**
  * ComingSoon class.
  */
-class ComingSoon extends AbstractBlock
+class Coming_Soon extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,16 +15,14 @@ class ComingSoon extends AbstractBlock
      * @var string
      */
     protected $block_name = 'coming-soon';
-
     /**
      * It is necessary to register and enqueue assets during the render phase because we want to load assets only if the block has the content.
      */
     protected function register_block_type_assets()
     {
         parent::register_block_type_assets();
-        $this->register_chunk_translations([ $this->block_name ]);
+        $this->register_chunk_translations([$this->block_name]);
     }
-
     /**
      * Initialize.
      */
@@ -35,7 +31,6 @@ class ComingSoon extends AbstractBlock
         parent::initialize();
         add_filter('enqueue_block_assets', $this->enqueue_block_assets(...), 10, 2);
     }
-
     /**
      * Enqueue frontend assets for this block, just in time for rendering.
      *
@@ -49,47 +44,32 @@ class ComingSoon extends AbstractBlock
     protected function enqueue_assets(array $attributes, $content, $block)
     {
         parent::enqueue_assets($attributes, $content, $block);
-
         if (isset($attributes['style']['color']['background'])) {
-            wp_add_inline_style(
-                'wc-blocks-style',
-                ':root{--woocommerce-coming-soon-color: ' . esc_html($attributes['style']['color']['background']) . '}'
-            );
+            wp_add_inline_style('wc-blocks-style', ':root{--woocommerce-coming-soon-color: ' . esc_html($attributes['style']['color']['background']) . '}');
         } elseif (isset($attributes['color'])) {
             // Deprecated: To support coming soon templates created before WooCommerce 9.8.0.
-            wp_add_inline_style(
-                'wc-blocks-style',
-                ':root{--woocommerce-coming-soon-color: ' . esc_html($attributes['color']) . '}'
-            );
-            wp_enqueue_style(
-                'woocommerce-coming-soon',
-                WC()->plugin_url() . '/assets/css/coming-soon-entire-site-deprecated' . (is_rtl() ? '-rtl' : '') . '.css',
-                [],
-                Constants::get_constant('WC_VERSION')
-            );
+            wp_add_inline_style('wc-blocks-style', ':root{--woocommerce-coming-soon-color: ' . esc_html($attributes['color']) . '}');
+            wp_enqueue_style('woocommerce-coming-soon', WC()->plugin_url() . '/assets/css/coming-soon-entire-site-deprecated' . (is_rtl() ? '-rtl' : '') . '.css', [], Constants::get_constant('WC_VERSION'));
         }
     }
-
     /**
      * Enqueue coming soon deprecated styles in site editor to support
      * coming soon templates created before WooCommerce 9.8.0.
      */
     public function enqueue_block_assets(): void
     {
-        if (! is_admin()) {
+        if (!is_admin()) {
             return;
         }
-
         $current_screen = get_current_screen();
         if ($current_screen instanceof \WP_Screen && 'site-editor' !== $current_screen->base) {
             return;
         }
-
-        $post_id = isset($_REQUEST['postId']) ? wc_clean(wp_unslash($_REQUEST['postId'])) : null; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $post_id = isset($_REQUEST['postId']) ? wc_clean(wp_unslash($_REQUEST['postId'])) : null;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         if ('woocommerce/woocommerce//coming-soon' !== $post_id) {
             return;
         }
-
         $block_template = get_block_template($post_id);
         if ($block_template) {
             $parsed_blocks = parse_blocks($block_template->content);
@@ -106,17 +86,11 @@ class ComingSoon extends AbstractBlock
                 if (empty($block['attrs']['color'])) {
                     continue;
                 }
-                wp_enqueue_style(
-                    'woocommerce-coming-soon',
-                    WC()->plugin_url() . '/assets/css/coming-soon-entire-site-deprecated' . (is_rtl() ? '-rtl' : '') . '.css',
-                    [],
-                    Constants::get_constant('WC_VERSION')
-                );
+                wp_enqueue_style('woocommerce-coming-soon', WC()->plugin_url() . '/assets/css/coming-soon-entire-site-deprecated' . (is_rtl() ? '-rtl' : '') . '.css', [], Constants::get_constant('WC_VERSION'));
                 break;
             }
         }
     }
-
     /**
      * Get the frontend script handle for this block type.
      *

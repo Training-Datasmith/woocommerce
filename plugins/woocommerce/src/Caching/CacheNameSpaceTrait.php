@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Caching;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Caching;
 
 /**
  * Implements namespacing algorithm to simulate grouping and namespacing for wp_cache, memcache and other caching engines that don't support grouping natively.
@@ -14,7 +13,7 @@ namespace Automattic\WooCommerce\Caching;
  * 2. Before setting cache, prefix the cache key by using the `get_cache_prefix`.
  * 3. Use `invalidate_cache_group` function to invalidate all caches in entire group at once.
  */
-trait CacheNameSpaceTrait
+trait Cache_Name_Space_Trait
 {
     /**
      * Get prefix for use with wp_cache_set. Allows all cache in a group to be invalidated at once.
@@ -26,15 +25,12 @@ trait CacheNameSpaceTrait
     {
         // Get cache key - uses cache key wc_orders_cache_prefix to invalidate when needed.
         $prefix = wp_cache_get('wc_' . $group . '_cache_prefix', $group);
-
         if (false === $prefix) {
             $prefix = microtime();
             wp_cache_set('wc_' . $group . '_cache_prefix', $prefix, $group);
         }
-
         return 'wc_cache_' . $prefix . '_';
     }
-
     /**
      * Increment group cache prefix (invalidates cache).
      *
@@ -45,7 +41,6 @@ trait CacheNameSpaceTrait
         wc_deprecated_function('WC_Cache_Helper::incr_cache_prefix', '3.9.0', 'WC_Cache_Helper::invalidate_cache_group');
         self::invalidate_cache_group($group);
     }
-
     /**
      * Invalidate cache group.
      *
@@ -56,7 +51,6 @@ trait CacheNameSpaceTrait
     {
         return wp_cache_set('wc_' . $group . '_cache_prefix', microtime(), $group);
     }
-
     /**
      * Helper method to get prefixed key.
      *

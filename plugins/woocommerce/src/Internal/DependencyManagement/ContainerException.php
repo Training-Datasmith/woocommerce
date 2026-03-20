@@ -1,17 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * ContainerException class file.
  */
-
-namespace Automattic\WooCommerce\Internal\DependencyManagement;
+namespace Automattic\Woo_Commerce\Internal\Dependency_Management;
 
 /**
  * Class ContainerException.
  * Used to signal error conditions related to the dependency injection container.
  */
-class ContainerException extends \Exception
+class Container_Exception extends \Exception
 {
     /**
      * Create a new instance of the class.

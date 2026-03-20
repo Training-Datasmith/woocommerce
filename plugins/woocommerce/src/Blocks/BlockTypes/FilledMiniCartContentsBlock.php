@@ -1,14 +1,13 @@
 <?php
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Blocks\Utils\BlocksSharedState;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Blocks\Utils\Blocks_Shared_State;
 /**
  * FilledMiniCartContentsBlock class.
  */
-class FilledMiniCartContentsBlock extends AbstractInnerBlock
+class Filled_Mini_Cart_Contents_Block extends Abstract_Inner_Block
 {
     /**
      * Block name.
@@ -16,7 +15,6 @@ class FilledMiniCartContentsBlock extends AbstractInnerBlock
      * @var string
      */
     protected $block_name = 'filled-mini-cart-contents-block';
-
     /**
      * Render the markup for the Filled Mini-Cart Contents block.
      *
@@ -30,10 +28,8 @@ class FilledMiniCartContentsBlock extends AbstractInnerBlock
         if (Features::is_enabled('experimental-iapi-mini-cart')) {
             return $this->render_experimental_filled_mini_cart_contents($attributes, $content, $block);
         }
-
         return $content;
     }
-
     /**
      * Render the experimental interactivity API powered Filled Mini-Cart Contents block.
      *
@@ -45,32 +41,16 @@ class FilledMiniCartContentsBlock extends AbstractInnerBlock
     protected function render_experimental_filled_mini_cart_contents($attributes, $content, $block): string|false
     {
         $consent = 'I acknowledge that using private APIs means my theme or plugin will inevitably break in the next version of WooCommerce';
-        $notices = BlocksSharedState::get_cart_error_notices($consent);
-
-        $context = wp_json_encode(
-            [
-                'notices' => $notices,
-            ],
-            JSON_NUMERIC_CHECK
-                | JSON_HEX_TAG
-                | JSON_HEX_APOS
-                | JSON_HEX_QUOT
-                | JSON_HEX_AMP
-        );
-
-        $wrapper_attributes = get_block_wrapper_attributes(
-            [
-                'data-wp-interactive'  => 'woocommerce/mini-cart',
-                'data-wp-context'      => 'woocommerce/store-notices::' . $context,
-                'data-wp-bind--hidden' => 'state.cartIsEmpty',
-            ]
-        );
-
+        $notices = Blocks_Shared_State::get_cart_error_notices($consent);
+        $context = wp_json_encode(['notices' => $notices], JSON_NUMERIC_CHECK | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+        $wrapper_attributes = get_block_wrapper_attributes(['data-wp-interactive' => 'woocommerce/mini-cart', 'data-wp-context' => 'woocommerce/store-notices::' . $context, 'data-wp-bind--hidden' => 'state.cartIsEmpty']);
         $dismiss_aria_label = __('Dismiss this notice', 'woocommerce');
-
         ob_start();
         ?>
-		<div <?php echo $wrapper_attributes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>>
+		<div <?php 
+        echo $wrapper_attributes;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>>
 			<div
 				class="wc-block-components-notices"
 				data-wp-interactive="woocommerce/store-notices"
@@ -93,7 +73,9 @@ class FilledMiniCartContentsBlock extends AbstractInnerBlock
 						<button
 							data-wp-bind--hidden="!context.notice.dismissible"
 							class="wc-block-components-button wp-element-button wc-block-components-notice-banner__dismiss contained"
-							aria-label="<?php echo esc_attr($dismiss_aria_label); ?>"
+							aria-label="<?php 
+        echo esc_attr($dismiss_aria_label);
+        ?>"
 							data-wp-on--click="actions.removeNotice"
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -103,12 +85,12 @@ class FilledMiniCartContentsBlock extends AbstractInnerBlock
 					</div>
 				</template>
 			</div>
-			<?php
-                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                echo $content;
+			<?php 
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo $content;
         ?>
 		</div>
-		<?php
+		<?php 
         return ob_get_clean();
     }
 }

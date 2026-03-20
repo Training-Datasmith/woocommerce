@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Reviews;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\Reviews;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AbstractBlock;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Abstract_Block;
 /**
  * ProductReviewContent class.
  */
-class ProductReviewContent extends AbstractBlock
+class Product_Review_Content extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,7 +15,6 @@ class ProductReviewContent extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-review-content';
-
     /**
      * Render the block.
      *
@@ -28,30 +25,26 @@ class ProductReviewContent extends AbstractBlock
      */
     protected function render($attributes, $content, $block): string
     {
-        if (! isset($block->context['commentId'])) {
+        if (!isset($block->context['commentId'])) {
             return '';
         }
-
-        $comment            = get_comment($block->context['commentId']);
-        $commenter          = wp_get_current_commenter();
+        $comment = get_comment($block->context['commentId']);
+        $commenter = wp_get_current_commenter();
         $show_pending_links = isset($commenter['comment_author']) && $commenter['comment_author'];
         if (empty($comment)) {
             return '';
         }
-
-        $args         = [];
+        $args = [];
         $comment_text = get_comment_text($comment, $args);
-        if (! $comment_text) {
+        if (!$comment_text) {
             return '';
         }
-
         /**
          * This filter is documented in wp-includes/comment-template.php
          *
          * @since 1.2.0
          */
         $comment_text = apply_filters('comment_text', $comment_text, $comment, $args);
-
         $moderation_note = '';
         if ('0' === $comment->comment_approved) {
             if ($commenter['comment_author_email']) {
@@ -60,11 +53,10 @@ class ProductReviewContent extends AbstractBlock
                 $moderation_note = __('Your review is awaiting moderation. This is a preview; your review will be visible after it has been approved.', 'woocommerce');
             }
             $moderation_note = '<p><em class="review-awaiting-moderation">' . esc_html($moderation_note) . '</em></p>';
-            if (! $show_pending_links) {
+            if (!$show_pending_links) {
                 $comment_text = wp_kses($comment_text, []);
             }
         }
-
         $classes = [];
         if (isset($attributes['textAlign'])) {
             $classes[] = 'has-text-align-' . $attributes['textAlign'];
@@ -72,17 +64,9 @@ class ProductReviewContent extends AbstractBlock
         if (isset($attributes['style']['elements']['link']['color']['text'])) {
             $classes[] = 'has-link-color';
         }
-
-        $wrapper_attributes = get_block_wrapper_attributes([ 'class' => implode(' ', $classes) ]);
-
-        return sprintf(
-            '<div %1$s>%2$s%3$s</div>',
-            $wrapper_attributes,
-            $moderation_note,
-            $comment_text
-        );
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => implode(' ', $classes)]);
+        return sprintf('<div %1$s>%2$s%3$s</div>', $wrapper_attributes, $moderation_note, $comment_text);
     }
-
     /**
      * Get the frontend script handle for this block type.
      *

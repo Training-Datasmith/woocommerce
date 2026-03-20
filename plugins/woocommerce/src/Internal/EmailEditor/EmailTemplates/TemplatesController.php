@@ -1,27 +1,23 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Email_Editor\Email_Templates;
 
-namespace Automattic\WooCommerce\Internal\EmailEditor\EmailTemplates;
-
-use Automattic\WooCommerce\EmailEditor\Engine\Templates\Template;
-use Automattic\WooCommerce\EmailEditor\Engine\Templates\Templates_Registry;
-use Automattic\WooCommerce\Internal\EmailEditor\Integration;
-
+use Automattic\Woo_Commerce\Email_Editor\Engine\Templates\Template;
+use Automattic\Woo_Commerce\Email_Editor\Engine\Templates\Templates_Registry;
+use Automattic\Woo_Commerce\Internal\Email_Editor\Integration;
 defined('ABSPATH') || exit;
-
 /**
  * Controller for managing WooCommerce email templates.
  *
  * @internal
  */
-class TemplatesController
+class Templates_Controller
 {
     /**
      * Prefix used for template identification.
      */
     private string $template_prefix = 'woocommerce';
-
     /**
      * Initialize the controller by registering hooks.
      *
@@ -33,7 +29,6 @@ class TemplatesController
         // Priority 100 ensures this runs last to remove email templates from the Site Editor.
         add_filter('get_block_templates', $this->filter_email_templates(...), 100, 1);
     }
-
     /**
      * Filters out email templates from the block templates list in the Site Editor.
      *
@@ -52,22 +47,15 @@ class TemplatesController
         if (defined('REST_REQUEST') && REST_REQUEST) {
             return $templates;
         }
-
-        if (! is_admin() || ! function_exists('get_current_screen')) {
+        if (!is_admin() || !function_exists('get_current_screen')) {
             return $templates;
         }
-
         $current_screen = get_current_screen();
         if ($current_screen && 'site-editor' === $current_screen->id) {
-            return array_filter(
-                $templates,
-                fn ($template) => WooEmailTemplate::TEMPLATE_SLUG !== $template->slug
-            );
+            return array_filter($templates, fn($template) => Woo_Email_Template::TEMPLATE_SLUG !== $template->slug);
         }
-
         return $templates;
     }
-
     /**
      * Register WooCommerce email templates with the template registry.
      *
@@ -75,21 +63,12 @@ class TemplatesController
      */
     public function register_templates(Templates_Registry $templates_registry): Templates_Registry
     {
-        $templates   = [];
-        $templates[] = new WooEmailTemplate();
-
+        $templates = [];
+        $templates[] = new Woo_Email_Template();
         foreach ($templates as $template) {
-            $the_template = new Template(
-                $this->template_prefix,
-                $template->get_slug(),
-                $template->get_title(),
-                $template->get_description(),
-                $template->get_content(),
-                [ Integration::EMAIL_POST_TYPE ]
-            );
+            $the_template = new Template($this->template_prefix, $template->get_slug(), $template->get_title(), $template->get_description(), $template->get_content(), [Integration::EMAIL_POST_TYPE]);
             $templates_registry->register($the_template);
         }
-
         return $templates_registry;
     }
 }

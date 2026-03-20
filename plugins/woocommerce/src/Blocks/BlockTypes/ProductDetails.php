@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 use WP_Block;
 use WP_HTML_Tag_Processor;
-
 /**
  * ProductDetails class.
  */
-class ProductDetails extends AbstractBlock
+class Product_Details extends Abstract_Block
 {
     /**
      * Block name.
@@ -19,7 +17,6 @@ class ProductDetails extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-details';
-
     /**
      * Initialize the block type.
      *
@@ -28,7 +25,6 @@ class ProductDetails extends AbstractBlock
     protected function initialize()
     {
         parent::initialize();
-
         /**
          * Filter the blocks that are hooked into the Product Details block.
          *
@@ -39,12 +35,10 @@ class ProductDetails extends AbstractBlock
          * @return {array} The blocks that are hooked into the Product Details block.
          */
         $hooked_blocks = apply_filters('woocommerce_product_details_hooked_blocks', []);
-
         foreach ($this->validate_hooked_blocks($hooked_blocks) as $slug => $block) {
             $this->register_hooked_block($slug, $block);
         }
     }
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -56,7 +50,6 @@ class ProductDetails extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Render the block.
      *
@@ -71,33 +64,20 @@ class ProductDetails extends AbstractBlock
         if (empty($block->parsed_block['innerBlocks'])) {
             return $this->render_legacy_block($attributes, $content, $block);
         }
-
         $parsed_block = $block->parsed_block;
         $parsed_block = $this->hide_empty_accordion_items($parsed_block, $block->context);
-
         /**
          * Filter to disable the compatibility layer for the blockified templates.
          *
          * @see AddToCartWithOptions::render() for full documentation.
          * @since 7.6.0
          */
-        if (! apply_filters('woocommerce_disable_compatibility_layer', false)) {
+        if (!apply_filters('woocommerce_disable_compatibility_layer', false)) {
             $parsed_block = $this->inject_compatible_tabs($parsed_block);
         }
-
-        $inner_content = array_reduce(
-            $parsed_block['innerBlocks'],
-            fn (string $carry, $parsed_inner_block): string => $carry . (new \WP_Block($parsed_inner_block, $block->context))->render(),
-            ''
-        );
-
-        return sprintf(
-            '<div %1$s>%2$s</div>',
-            get_block_wrapper_attributes(),
-            $inner_content
-        );
+        $inner_content = array_reduce($parsed_block['innerBlocks'], fn(string $carry, $parsed_inner_block): string => $carry . (new \WP_Block($parsed_inner_block, $block->context))->render(), '');
+        return sprintf('<div %1$s>%2$s</div>', get_block_wrapper_attributes(), $inner_content);
     }
-
     /**
      * Inject compatible tabs.
      *
@@ -107,59 +87,32 @@ class ProductDetails extends AbstractBlock
      */
     private function inject_compatible_tabs($parsed_block)
     {
-        if (! $this->has_accordion($parsed_block)) {
+        if (!$this->has_accordion($parsed_block)) {
             return $parsed_block;
         }
-
         /**
          * Filter the product tabs in the product details block.
          *
          * @since 3.3.0
          * @param array $tabs Array of product tabs.
          */
-        $product_tabs = apply_filters(
-            'woocommerce_product_tabs',
-            []
-        );
-
-        $default_tabs_callbacks = [
-            'woocommerce_product_description_tab',
-            'woocommerce_product_additional_information_tab',
-            'comments_template',
-        ];
-
-        $product_tabs = array_filter(
-            $product_tabs,
-            fn (array $tab) => ! in_array($tab['callback'], $default_tabs_callbacks, true)
-        );
-
-        usort(
-            $product_tabs,
-            fn (array $a, array $b) => $a['priority'] <=> $b['priority']
-        );
-
+        $product_tabs = apply_filters('woocommerce_product_tabs', []);
+        $default_tabs_callbacks = ['woocommerce_product_description_tab', 'woocommerce_product_additional_information_tab', 'comments_template'];
+        $product_tabs = array_filter($product_tabs, fn(array $tab) => !in_array($tab['callback'], $default_tabs_callbacks, true));
+        usort($product_tabs, fn(array $a, array $b) => $a['priority'] <=> $b['priority']);
         $accordion_blocks = [];
-
         $accordion_anchor_block = $this->get_accordion_anchor_block($parsed_block);
-
-        if (! $accordion_anchor_block) {
+        if (!$accordion_anchor_block) {
             return $parsed_block;
         }
-
         foreach ($product_tabs as $key => $tab) {
             ob_start();
             call_user_func($tab['callback'], $key, $tab);
-            $tab_content        = ob_get_clean();
-            $accordion_blocks[] = $this->create_accordion_item_block(
-                $tab['title'],
-                '<!-- wp:html -->' . $tab_content . '<!-- /wp:html -->',
-                $accordion_anchor_block
-            );
+            $tab_content = ob_get_clean();
+            $accordion_blocks[] = $this->create_accordion_item_block($tab['title'], '<!-- wp:html -->' . $tab_content . '<!-- /wp:html -->', $accordion_anchor_block);
         }
-
         return $this->inject_parsed_accordion_blocks($parsed_block, $accordion_blocks);
     }
-
     /**
      * Create an accordion item block.
      *
@@ -208,10 +161,8 @@ class ProductDetails extends AbstractBlock
 				<!-- /wp:woocommerce/accordion-panel --></div>
 				<!-- /wp:woocommerce/accordion-item -->';
         }
-
         return parse_blocks(sprintf($template, $title, $content))[0];
     }
-
     /**
      * Inject parsed accordion blocks.
      *
@@ -223,25 +174,18 @@ class ProductDetails extends AbstractBlock
     private function inject_parsed_accordion_blocks(array $parsed_block, $accordion_blocks): array
     {
         if ('core/accordion' === $parsed_block['blockName'] || 'woocommerce/accordion-group' === $parsed_block['blockName']) {
-            $parsed_block['innerBlocks']  = array_merge($parsed_block['innerBlocks'], $accordion_blocks);
-            $parsed_block['innerBlocks']  = array_values(array_filter($parsed_block['innerBlocks']));
-            $opening_tag                  = reset($parsed_block['innerContent']);
-            $closing_tag                  = end($parsed_block['innerContent']);
-            $parsed_block['innerContent'] = array_merge(
-                [ $opening_tag ],
-                array_fill(0, count($parsed_block['innerBlocks']), null),
-                [ $closing_tag ]
-            );
+            $parsed_block['innerBlocks'] = array_merge($parsed_block['innerBlocks'], $accordion_blocks);
+            $parsed_block['innerBlocks'] = array_values(array_filter($parsed_block['innerBlocks']));
+            $opening_tag = reset($parsed_block['innerContent']);
+            $closing_tag = end($parsed_block['innerContent']);
+            $parsed_block['innerContent'] = array_merge([$opening_tag], array_fill(0, count($parsed_block['innerBlocks']), null), [$closing_tag]);
             return $parsed_block;
         }
-
         foreach ($parsed_block['innerBlocks'] as $key => $inner_block) {
-            $parsed_block['innerBlocks'][ $key ] = $this->inject_parsed_accordion_blocks($inner_block, $accordion_blocks);
+            $parsed_block['innerBlocks'][$key] = $this->inject_parsed_accordion_blocks($inner_block, $accordion_blocks);
         }
-
         return $parsed_block;
     }
-
     /**
      * Hide empty accordion items.
      *
@@ -252,32 +196,24 @@ class ProductDetails extends AbstractBlock
      */
     private function hide_empty_accordion_items(array $parsed_block, $context): array
     {
-        if (! $this->has_accordion($parsed_block)) {
+        if (!$this->has_accordion($parsed_block)) {
             return $parsed_block;
         }
-
         if ('core/accordion' === $parsed_block['blockName'] || 'woocommerce/accordion-group' === $parsed_block['blockName']) {
             foreach ($parsed_block['innerBlocks'] as $key => $inner_block) {
-                $parsed_block['innerBlocks'][ $key ] = $this->mark_accordion_item_hidden($inner_block, $context);
+                $parsed_block['innerBlocks'][$key] = $this->mark_accordion_item_hidden($inner_block, $context);
             }
-            $parsed_block['innerBlocks']  = array_values(array_filter($parsed_block['innerBlocks']));
-            $opening_tag                  = reset($parsed_block['innerContent']);
-            $closing_tag                  = end($parsed_block['innerContent']);
-            $parsed_block['innerContent'] = array_merge(
-                [ $opening_tag ],
-                array_fill(0, count($parsed_block['innerBlocks']), null),
-                [ $closing_tag ]
-            );
+            $parsed_block['innerBlocks'] = array_values(array_filter($parsed_block['innerBlocks']));
+            $opening_tag = reset($parsed_block['innerContent']);
+            $closing_tag = end($parsed_block['innerContent']);
+            $parsed_block['innerContent'] = array_merge([$opening_tag], array_fill(0, count($parsed_block['innerBlocks']), null), [$closing_tag]);
             return $parsed_block;
         }
-
         foreach ($parsed_block['innerBlocks'] as $key => $inner_block) {
-            $parsed_block['innerBlocks'][ $key ] = $this->hide_empty_accordion_items($inner_block, $context);
+            $parsed_block['innerBlocks'][$key] = $this->hide_empty_accordion_items($inner_block, $context);
         }
-
         return $parsed_block;
     }
-
     /**
      * Mark an accordion item as hidden if it has no content.
      *
@@ -288,23 +224,15 @@ class ProductDetails extends AbstractBlock
      */
     private function mark_accordion_item_hidden(array $item, $context): array
     {
-        $content_block          = end($item['innerBlocks']);
+        $content_block = end($item['innerBlocks']);
         $rendered_content_block = (new WP_Block($content_block, $context))->render();
-        $p                      = new WP_HTML_Tag_Processor($rendered_content_block);
-
-        $has_content = $p->next_tag() ||
-            $p->next_tag() ||
-            $p->next_tag() ||
-            $p->next_tag() ||
-            ! empty(wp_strip_all_tags($rendered_content_block, true));
-
-        if (! $has_content) {
+        $p = new WP_HTML_Tag_Processor($rendered_content_block);
+        $has_content = $p->next_tag() || $p->next_tag() || $p->next_tag() || $p->next_tag() || !empty(wp_strip_all_tags($rendered_content_block, true));
+        if (!$has_content) {
             return [];
         }
-
         return $item;
     }
-
     /**
      * Check if a parsed block has an accordion.
      *
@@ -317,16 +245,13 @@ class ProductDetails extends AbstractBlock
         if ('core/accordion' === $parsed_block['blockName'] || 'woocommerce/accordion-group' === $parsed_block['blockName']) {
             return true;
         }
-
         foreach ($parsed_block['innerBlocks'] as $inner_block) {
             if ($this->has_accordion($inner_block)) {
                 return true;
             }
         }
-
         return false;
     }
-
     /**
      * Get the first accordion anchor block in a parsed block.
      *
@@ -339,17 +264,14 @@ class ProductDetails extends AbstractBlock
         if ('core/accordion' === $parsed_block['blockName'] || 'woocommerce/accordion-group' === $parsed_block['blockName']) {
             return $parsed_block;
         }
-
         foreach ($parsed_block['innerBlocks'] as $inner_block) {
             $anchor_block = $this->get_accordion_anchor_block($inner_block);
             if ($anchor_block) {
                 return $anchor_block;
             }
         }
-
         return null;
     }
-
     /**
      * Validate hooked blocks data. Remove duplicated entries with the same title
      * and invalid entries with invalid content. Log errors to the WC logger.
@@ -363,50 +285,37 @@ class ProductDetails extends AbstractBlock
      */
     private function validate_hooked_blocks($hooked_blocks): array
     {
-        $logger                  = wc_get_logger();
+        $logger = wc_get_logger();
         $validated_hooked_blocks = [];
-
         foreach ($hooked_blocks as $block) {
-            $invalid = ! is_array($block) ||
-                ! isset($block['title']) ||
-                ! isset($block['content']) ||
-                ! is_string($block['title']) ||
-                ! is_string($block['content']);
-
-            if (! $invalid) {
+            $invalid = !is_array($block) || !isset($block['title']) || !isset($block['content']) || !is_string($block['title']) || !is_string($block['content']);
+            if (!$invalid) {
                 $parsed_content = parse_blocks($block['content']);
-
                 foreach ($parsed_content as $content_block) {
-                    if (! isset($content_block['blockName'])) {
+                    if (!isset($content_block['blockName'])) {
                         $invalid = true;
                         break;
                     }
                 }
             }
-
             if ($invalid) {
                 $logger->error('Invalid hooked block data. Expected array with `title` and `content` keys with string values. Content must be valid block markup.', $block);
                 continue;
             }
-
             $slug = sanitize_title($block['title']);
-
             /**
              * If the block is already registered, replace the block. We use the
              * last registered block for the same slug. This makes overriding
              * hooked block easier.
              */
-            if (isset($validated_hooked_blocks[ $slug ])) {
-                $validated_hooked_blocks[ $slug ] = $block;
+            if (isset($validated_hooked_blocks[$slug])) {
+                $validated_hooked_blocks[$slug] = $block;
                 continue;
             }
-
-            $validated_hooked_blocks[ $slug ] = $block;
+            $validated_hooked_blocks[$slug] = $block;
         }
-
         return $validated_hooked_blocks;
     }
-
     /**
      * Register a product details item using Block Hooks API.
      *
@@ -415,41 +324,19 @@ class ProductDetails extends AbstractBlock
      */
     private function register_hooked_block($slug, $block): void
     {
-        add_filter(
-            'hooked_block_types',
-            function ($hooked_block_types, $relative_position, $anchor_block_type) use ($slug) {
-                if (
-                    ('core/accordion' === $anchor_block_type || 'woocommerce/accordion-group' === $anchor_block_type) &&
-                    'last_child' === $relative_position &&
-                    ! in_array($slug, $hooked_block_types, true)
-                ) {
-                    $hooked_block_types[] = $slug;
-                }
-                return $hooked_block_types;
-            },
-            10,
-            3
-        );
-
-        add_filter(
-            "hooked_block_{$slug}",
-            function ($parsed_hooked_block, $hooked_block_type, $relative_position, array $parsed_anchor_block) use ($block) {
-                if (
-                    is_null($parsed_hooked_block) ||
-                    ('core/accordion' !== $parsed_anchor_block['blockName'] && 'woocommerce/accordion-group' !== $parsed_anchor_block['blockName']) ||
-                    'last_child' !== $relative_position ||
-                    empty($parsed_anchor_block['attrs']['metadata']['isDescendantOfProductDetails'])
-                ) {
-                    return null;
-                }
-
-                return $this->create_accordion_item_block($block['title'], $block['content'], $parsed_anchor_block);
-            },
-            10,
-            4
-        );
+        add_filter('hooked_block_types', function ($hooked_block_types, $relative_position, $anchor_block_type) use ($slug) {
+            if (('core/accordion' === $anchor_block_type || 'woocommerce/accordion-group' === $anchor_block_type) && 'last_child' === $relative_position && !in_array($slug, $hooked_block_types, true)) {
+                $hooked_block_types[] = $slug;
+            }
+            return $hooked_block_types;
+        }, 10, 3);
+        add_filter("hooked_block_{$slug}", function ($parsed_hooked_block, $hooked_block_type, $relative_position, array $parsed_anchor_block) use ($block) {
+            if (is_null($parsed_hooked_block) || 'core/accordion' !== $parsed_anchor_block['blockName'] && 'woocommerce/accordion-group' !== $parsed_anchor_block['blockName'] || 'last_child' !== $relative_position || empty($parsed_anchor_block['attrs']['metadata']['isDescendantOfProductDetails'])) {
+                return null;
+            }
+            return $this->create_accordion_item_block($block['title'], $block['content'], $parsed_anchor_block);
+        }, 10, 4);
     }
-
     /**
      * Enqueue legacy assets when this block is used as we don't enqueue them for block themes anymore.
      *
@@ -459,7 +346,6 @@ class ProductDetails extends AbstractBlock
     {
         wp_enqueue_script('wc-single-product');
     }
-
     /**
      * Previously, the Product Details block was a standalone block. It doesn't
      * have any inner blocks and it rendered the tabs directly like the classic
@@ -477,27 +363,21 @@ class ProductDetails extends AbstractBlock
      */
     protected function render_legacy_block(array $attributes, $content, $block)
     {
-        if (! is_singular('product')) {
+        if (!is_singular('product')) {
             return $content;
         }
-
         add_action('wp_enqueue_scripts', $this->enqueue_legacy_assets(...), 20);
-
         $hide_tab_title = $attributes['hideTabTitle'] ?? false;
-
         if ($hide_tab_title) {
             add_filter('woocommerce_product_description_heading', '__return_empty_string');
             add_filter('woocommerce_product_additional_information_heading', '__return_empty_string');
             add_filter('woocommerce_reviews_title', '__return_empty_string');
         }
-
         $tabs = $this->render_tabs();
-
         if ($hide_tab_title) {
             remove_filter('woocommerce_product_description_heading', '__return_empty_string');
             remove_filter('woocommerce_product_additional_information_heading', '__return_empty_string');
             remove_filter('woocommerce_reviews_title', '__return_empty_string');
-
             // Remove the first `h2` of every `.wc-tab`. This is required for the Reviews tabs when there are no reviews and for plugin tabs.
             $tabs_html = new WP_HTML_Tag_Processor($tabs);
             while ($tabs_html->next_tag()) {
@@ -507,21 +387,13 @@ class ProductDetails extends AbstractBlock
             }
             $tabs = $tabs_html->get_updated_html();
         }
-
-        $classes_and_styles = StyleAttributesUtils::get_classes_and_styles_by_attributes($attributes);
-
-        return sprintf(
-            '<div class="wp-block-woocommerce-product-details %1$s">
+        $classes_and_styles = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes);
+        return sprintf('<div class="wp-block-woocommerce-product-details %1$s">
 				<div style="%2$s">
 					%3$s
 				</div>
-			</div>',
-            esc_attr($classes_and_styles['classes']),
-            esc_attr($classes_and_styles['styles']),
-            $tabs
-        );
+			</div>', esc_attr($classes_and_styles['classes']), esc_attr($classes_and_styles['styles']), $tabs);
     }
-
     /**
      * Gets the tabs with their content to be rendered by the block.
      *
@@ -535,7 +407,6 @@ class ProductDetails extends AbstractBlock
             the_post();
             woocommerce_output_product_data_tabs();
         }
-
         return ob_get_clean();
     }
 }

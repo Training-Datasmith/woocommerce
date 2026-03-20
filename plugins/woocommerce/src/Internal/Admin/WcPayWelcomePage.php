@@ -1,54 +1,46 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin;
 
-namespace Automattic\WooCommerce\Internal\Admin;
-
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\TaskLists;
-use Automattic\WooCommerce\Internal\Admin\Suggestions\PaymentsExtensionSuggestionIncentives;
-use Automattic\WooCommerce\Internal\Admin\Suggestions\PaymentsExtensionSuggestions;
-
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task;
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task_Lists;
+use Automattic\Woo_Commerce\Internal\Admin\Suggestions\Payments_Extension_Suggestion_Incentives;
+use Automattic\Woo_Commerce\Internal\Admin\Suggestions\Payments_Extension_Suggestions;
 /**
  * Class WCPayWelcomePage
  *
  * @deprecated 9.9.0 The WooPayments welcome page is deprecated and will be removed in a future version of WooCommerce.
  */
-class WcPayWelcomePage
+class Wc_Pay_Welcome_Page
 {
     /**
      * The incentive type for the WooPayments welcome page.
      */
     public const INCENTIVE_TYPE = 'welcome_page';
-
     /**
      * The suggestion incentives instance.
      */
-    private readonly PaymentsExtensionSuggestionIncentives $suggestion_incentives;
-
+    private readonly Payments_Extension_Suggestion_Incentives $suggestion_incentives;
     /**
      * Class instance.
      */
-    protected static ?WcPayWelcomePage $instance = null;
-
+    protected static ?Wc_Pay_Welcome_Page $instance = null;
     /**
      * Get class instance.
      */
-    public static function instance(): ?WcPayWelcomePage
+    public static function instance(): ?Wc_Pay_Welcome_Page
     {
         self::$instance = is_null(self::$instance) ? new self() : self::$instance;
-
         return self::$instance;
     }
-
     /**
      * WCPayWelcomePage constructor.
      */
     public function __construct()
     {
-        $this->suggestion_incentives = wc_get_container()->get(PaymentsExtensionSuggestionIncentives::class);
+        $this->suggestion_incentives = wc_get_container()->get(Payments_Extension_Suggestion_Incentives::class);
     }
-
     /**
      * Check if we have an incentive available to show.
      *
@@ -59,15 +51,13 @@ class WcPayWelcomePage
     public function has_incentive(bool $skip_wcpay_active = false): bool
     {
         // The WooPayments plugin must not be active.
-        if (! $skip_wcpay_active && $this->is_wcpay_active()) {
+        if (!$skip_wcpay_active && $this->is_wcpay_active()) {
             return false;
         }
-
         // Suggestions not disabled via a setting.
         if (get_option('woocommerce_show_marketplace_suggestions', 'yes') === 'no') {
             return false;
         }
-
         /**
          * Filter allow marketplace suggestions.
          *
@@ -75,27 +65,18 @@ class WcPayWelcomePage
          *
          * @since 3.6.0
          */
-        if (! apply_filters('woocommerce_allow_marketplace_suggestions', true)) {
+        if (!apply_filters('woocommerce_allow_marketplace_suggestions', true)) {
             return false;
         }
-
         $incentive = $this->get_incentive();
         if (empty($incentive)) {
             return false;
         }
-
         if ($this->is_incentive_dismissed($incentive)) {
             return false;
         }
-
-        return $this->suggestion_incentives->is_incentive_visible(
-            $incentive['id'],
-            PaymentsExtensionSuggestions::WOOPAYMENTS,
-            WC()->countries->get_base_country(),
-            $skip_wcpay_active
-        );
+        return $this->suggestion_incentives->is_incentive_visible($incentive['id'], Payments_Extension_Suggestions::WOOPAYMENTS, WC()->countries->get_base_country(), $skip_wcpay_active);
     }
-
     /**
      * Get the WooPayments incentive details, if available.
      *
@@ -103,14 +84,8 @@ class WcPayWelcomePage
      */
     private function get_incentive(): ?array
     {
-        return $this->suggestion_incentives->get_incentive(
-            PaymentsExtensionSuggestions::WOOPAYMENTS,
-            WC()->countries->get_base_country(),
-            self::INCENTIVE_TYPE,
-            true
-        );
+        return $this->suggestion_incentives->get_incentive(Payments_Extension_Suggestions::WOOPAYMENTS, WC()->countries->get_base_country(), self::INCENTIVE_TYPE, true);
     }
-
     /**
      * Check if the WooPayments plugin is active.
      */
@@ -118,7 +93,6 @@ class WcPayWelcomePage
     {
         return class_exists('\WC_Payments');
     }
-
     /**
      * Check if the current incentive has been manually dismissed.
      *
@@ -134,27 +108,17 @@ class WcPayWelcomePage
             /*
              * Second, use the new logic.
              */
-            return $this->suggestion_incentives->is_incentive_dismissed(
-                $incentive['id'],
-                PaymentsExtensionSuggestions::WOOPAYMENTS,
-                'wc_payments_task'
-            );
+            return $this->suggestion_incentives->is_incentive_dismissed($incentive['id'], Payments_Extension_Suggestions::WOOPAYMENTS, 'wc_payments_task');
         }
         // Search the incentive ID in the dismissed incentives list.
         if (in_array($incentive['id'], $dismissed_incentives, true)) {
             return true;
         }
-
         /*
          * Second, use the new logic.
          */
-        return $this->suggestion_incentives->is_incentive_dismissed(
-            $incentive['id'],
-            PaymentsExtensionSuggestions::WOOPAYMENTS,
-            'wc_payments_task'
-        );
+        return $this->suggestion_incentives->is_incentive_dismissed($incentive['id'], Payments_Extension_Suggestions::WOOPAYMENTS, 'wc_payments_task');
     }
-
     /**
      * Get the WooCommerce setup task list Payments task instance.
      *
@@ -162,16 +126,14 @@ class WcPayWelcomePage
      */
     private function get_payments_task(): ?Task
     {
-        $task_list = TaskLists::get_list('setup');
+        $task_list = Task_Lists::get_list('setup');
         if (empty($task_list)) {
             return null;
         }
-
         $payments_task = $task_list->get_task('payments');
         if (empty($payments_task)) {
             return null;
         }
-
         return $payments_task;
     }
 }

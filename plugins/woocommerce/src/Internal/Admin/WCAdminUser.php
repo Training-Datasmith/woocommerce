@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Admin;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin;
 
 /**
  * WCAdminUser Class.
  */
-class WCAdminUser
+class Wc_Admin_User
 {
     /**
      * Class instance.
@@ -15,7 +14,6 @@ class WCAdminUser
      * @var WCAdminUser instance
      */
     protected static $instance;
-
     /**
      * Constructor.
      */
@@ -23,7 +21,6 @@ class WCAdminUser
     {
         add_action('rest_api_init', $this->register_user_data(...));
     }
-
     /**
      * Get class instance.
      *
@@ -36,37 +33,19 @@ class WCAdminUser
         }
         return self::$instance;
     }
-
     /**
      * Registers WooCommerce specific user data to the WordPress user API.
      */
     public function register_user_data(): void
     {
-        register_rest_field(
-            'user',
-            'is_super_admin',
-            [
-                'get_callback' => function (array $user) {
-                    if (! isset($user['id']) || 0 === $user['id']) {
-                        return false;
-                    }
-
-                    return is_super_admin($user['id']);
-                },
-                'schema'       => null,
-            ]
-        );
-        register_rest_field(
-            'user',
-            'woocommerce_meta',
-            [
-                'get_callback'    => $this->get_user_data_values(...),
-                'update_callback' => $this->update_user_data_values(...),
-                'schema'          => null,
-            ]
-        );
+        register_rest_field('user', 'is_super_admin', ['get_callback' => function (array $user) {
+            if (!isset($user['id']) || 0 === $user['id']) {
+                return false;
+            }
+            return is_super_admin($user['id']);
+        }, 'schema' => null]);
+        register_rest_field('user', 'woocommerce_meta', ['get_callback' => $this->get_user_data_values(...), 'update_callback' => $this->update_user_data_values(...), 'schema' => null]);
     }
-
     /**
      * For all the registered user data fields (  Loader::get_user_data_fields ), fetch the data
      * for returning via the REST API.
@@ -78,11 +57,10 @@ class WCAdminUser
     {
         $values = [];
         foreach ($this->get_user_data_fields() as $field) {
-            $values[ $field ] = self::get_user_data_field($user['id'], $field);
+            $values[$field] = self::get_user_data_field($user['id'], $field);
         }
         return $values;
     }
-
     /**
      * For all the registered user data fields ( Loader::get_user_data_fields ), update the data
      * for the REST API.
@@ -93,20 +71,19 @@ class WCAdminUser
      */
     public function update_user_data_values($values, $user, $field_id)
     {
-        if (empty($values) || ! is_array($values) || 'woocommerce_meta' !== $field_id) {
+        if (empty($values) || !is_array($values) || 'woocommerce_meta' !== $field_id) {
             return;
         }
-        $fields  = $this->get_user_data_fields();
+        $fields = $this->get_user_data_fields();
         $updates = [];
         foreach ($values as $field => $value) {
             if (in_array($field, $fields, true)) {
-                $updates[ $field ] = $value;
+                $updates[$field] = $value;
                 self::update_user_data_field($user->ID, $field, $value);
             }
         }
         return $updates;
     }
-
     /**
      * We store some WooCommerce specific user meta attached to users endpoint,
      * so that we can track certain preferences or values such as the inbox activity panel last open time.
@@ -122,9 +99,8 @@ class WCAdminUser
          * @since 4.0.0
          * @param array $fields Array of fields to expose over the WP user endpoint.
          */
-        return apply_filters('woocommerce_admin_get_user_data_fields', [ 'variable_product_tour_shown' ]);
+        return apply_filters('woocommerce_admin_get_user_data_fields', ['variable_product_tour_shown']);
     }
-
     /**
      * Helper to update user data fields.
      *
@@ -136,7 +112,6 @@ class WCAdminUser
     {
         update_user_meta($user_id, 'woocommerce_admin_' . $field, $value);
     }
-
     /**
      * Helper to retrieve user data fields.
      *
@@ -149,22 +124,17 @@ class WCAdminUser
     public static function get_user_data_field($user_id, string $field)
     {
         $meta_value = get_user_meta($user_id, 'woocommerce_admin_' . $field, true);
-
         // Migrate old meta values (prefix changed from `wc_admin_` to `woocommerce_admin_`).
         if ('' === $meta_value) {
             $old_meta_value = get_user_meta($user_id, 'wc_admin_' . $field, true);
-
             if ('' !== $old_meta_value) {
                 self::update_user_data_field($user_id, $field, $old_meta_value);
                 delete_user_meta($user_id, 'wc_admin_' . $field);
-
                 $meta_value = $old_meta_value;
             }
         }
-
         return $meta_value;
     }
-
     /**
      * Get the current user data.
      *
@@ -173,14 +143,12 @@ class WCAdminUser
     public static function get_user_data()
     {
         $user_controller = new \WP_REST_Users_Controller();
-        $request         = new \WP_REST_Request();
-        $request->set_query_params([ 'context' => 'edit' ]);
-        $user_response     = $user_controller->get_current_item($request);
+        $request = new \WP_REST_Request();
+        $request->set_query_params(['context' => 'edit']);
+        $user_response = $user_controller->get_current_item($request);
         $current_user_data = is_wp_error($user_response) ? (object) [] : $user_response->get_data();
-
         return self::filter_user_capabilities($current_user_data);
     }
-
     /**
      * Filter user capabilities to respect file modification restrictions.
      *
@@ -189,15 +157,13 @@ class WCAdminUser
      */
     private static function filter_user_capabilities($user_data)
     {
-        if (! is_array($user_data) || ! isset($user_data['capabilities'])) {
+        if (!is_array($user_data) || !isset($user_data['capabilities'])) {
             return $user_data;
         }
-
         // If the user has install_plugins capability, check if file modifications are allowed.
         if (isset($user_data['capabilities']->install_plugins) && $user_data['capabilities']->install_plugins) {
             $user_data['capabilities']->install_plugins = wp_is_file_mod_allowed('woocommerce');
         }
-
         return $user_data;
     }
 }

@@ -1,25 +1,22 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Blueprint\Exporters;
 
-namespace Automattic\WooCommerce\Admin\Features\Blueprint\Exporters;
-
-use Automattic\WooCommerce\Blueprint\Exporters\StepExporter;
-use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
-use Automattic\WooCommerce\Blueprint\Steps\Step;
-
+use Automattic\Woo_Commerce\Blueprint\Exporters\Step_Exporter;
+use Automattic\Woo_Commerce\Blueprint\Steps\Set_Site_Options;
+use Automattic\Woo_Commerce\Blueprint\Steps\Step;
 /**
  * ExportWCPaymentGateways class
  */
-class ExportWCPaymentGateways implements StepExporter
+class Export_Wc_Payment_Gateways implements Step_Exporter
 {
     /**
      * Payment gateway IDs to exclude from export
      *
      * @var array|string[] Payment gateway IDs to exclude from export
      */
-    protected array $exclude_ids = [ 'pre_install_woocommerce_payments_promotion' ];
-
+    protected array $exclude_ids = ['pre_install_woocommerce_payments_promotion'];
     /**
      * Export the step
      */
@@ -31,13 +28,10 @@ class ExportWCPaymentGateways implements StepExporter
             if (in_array($id, $this->exclude_ids, true)) {
                 continue;
             }
-
-            $options[ 'woocommerce_' . $id . '_settings' ] = $payment_gateway->settings;
+            $options['woocommerce_' . $id . '_settings'] = $payment_gateway->settings;
         }
-
-        return new SetSiteOptions($options);
+        return new Set_Site_Options($options);
     }
-
     /**
      * Return the payment gateways resgietered in WooCommerce
      *
@@ -47,7 +41,6 @@ class ExportWCPaymentGateways implements StepExporter
     {
         return WC()->payment_gateways->payment_gateways();
     }
-
     /**
      * Get the step name
      */
@@ -55,7 +48,6 @@ class ExportWCPaymentGateways implements StepExporter
     {
         return 'wcPaymentGateways';
     }
-
     /**
      * Maybe hide WooCommerce Payments gateways
      *
@@ -67,7 +59,6 @@ class ExportWCPaymentGateways implements StepExporter
             \WC_Payments::hide_gateways_on_settings_page();
         }
     }
-
     /**
      * Return label used in the frontend.
      *
@@ -77,7 +68,6 @@ class ExportWCPaymentGateways implements StepExporter
     {
         return __('Payments', 'woocommerce');
     }
-
     /**
      * Return description used in the frontend.
      *
@@ -87,7 +77,6 @@ class ExportWCPaymentGateways implements StepExporter
     {
         return __('Includes all settings in WooCommerce | Settings | Payments.', 'woocommerce');
     }
-
     /**
      * Check if the current user has the required capabilities for this step.
      *

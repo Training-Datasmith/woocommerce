@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Product_Collection;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\ProductCollection;
-
-use Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils;
+use Automattic\Woo_Commerce\Blocks\Utils\Cart_Checkout_Utils;
 use InvalidArgumentException;
-
 /**
  * HandlerRegistry class.
  * Manages collection handlers.
  */
-class HandlerRegistry
+class Handler_Registry
 {
     /**
      * Associative array of collection handlers.
@@ -19,7 +17,6 @@ class HandlerRegistry
      * @var array
      */
     protected $collection_handler_store = [];
-
     /**
      * Register handlers for a collection.
      *
@@ -33,331 +30,198 @@ class HandlerRegistry
      */
     public function register_collection_handlers($collection_name, $build_query, $frontend_args = null, $editor_args = null, $preview_query = null)
     {
-        if (isset($this->collection_handler_store[ $collection_name ])) {
+        if (isset($this->collection_handler_store[$collection_name])) {
             throw new InvalidArgumentException('Collection handlers already registered for ' . esc_html($collection_name));
         }
-
-        $this->collection_handler_store[ $collection_name ] = [
-            'build_query'   => $build_query,
-            'frontend_args' => $frontend_args,
-            'editor_args'   => $editor_args,
-            'preview_query' => $preview_query,
-        ];
-
-        return $this->collection_handler_store[ $collection_name ];
+        $this->collection_handler_store[$collection_name] = ['build_query' => $build_query, 'frontend_args' => $frontend_args, 'editor_args' => $editor_args, 'preview_query' => $preview_query];
+        return $this->collection_handler_store[$collection_name];
     }
-
     /**
      * Register core collection handlers.
      */
     public function register_core_collections()
     {
-        $this->register_collection_handlers(
-            'woocommerce/product-collection/hand-picked',
-            function ($collection_args, $common_query_values, array $query) {
-                // For Hand-Picked collection, if no products are selected, we should return an empty result set.
-                // This ensures that the collection doesn't display any products until the user explicitly chooses them.
-                if (empty($query['handpicked_products'])) {
-                    return [
-                        'post__in' => [ -1 ],
-                    ];
+        $this->register_collection_handlers('woocommerce/product-collection/hand-picked', function ($collection_args, $common_query_values, array $query) {
+            // For Hand-Picked collection, if no products are selected, we should return an empty result set.
+            // This ensures that the collection doesn't display any products until the user explicitly chooses them.
+            if (empty($query['handpicked_products'])) {
+                return ['post__in' => [-1]];
+            }
+        });
+        $this->register_collection_handlers('woocommerce/product-collection/by-category', function ($collection_args, $common_query_values, array $query) {
+            // For Products by Category collection, if no category is selected, we should return an empty result set.
+            if (empty($query['taxonomies_query'])) {
+                return ['post__in' => [-1]];
+            }
+        });
+        $this->register_collection_handlers('woocommerce/product-collection/by-tag', function ($collection_args, $common_query_values, array $query) {
+            // For Products by Tag collection, if no tag is selected, we should return an empty result set.
+            if (empty($query['taxonomies_query'])) {
+                return ['post__in' => [-1]];
+            }
+        });
+        $this->register_collection_handlers('woocommerce/product-collection/by-brand', function ($collection_args, $common_query_values, array $query) {
+            // For Products by Brand collection, if no brand is selected, we should return an empty result set.
+            if (empty($query['taxonomies_query'])) {
+                return ['post__in' => [-1]];
+            }
+        });
+        $this->register_collection_handlers('woocommerce/product-collection/related', function (array $collection_args): array {
+            // No products should be shown if no related product reference is set.
+            if (empty($collection_args['relatedProductReference'])) {
+                return ['post__in' => [-1]];
+            }
+            $category_callback = fn() => $collection_args['relatedBy']['categories'];
+            $tag_callback = fn() => $collection_args['relatedBy']['tags'];
+            add_filter('woocommerce_product_related_posts_relate_by_category', $category_callback, PHP_INT_MAX);
+            add_filter('woocommerce_product_related_posts_relate_by_tag', $tag_callback, PHP_INT_MAX);
+            $related_products = wc_get_related_products(
+                $collection_args['relatedProductReference'],
+                // Use a higher limit so that the result set contains enough products for the collection to subsequently filter.
+                100,
+                [],
+                $collection_args['relatedBy']
+            );
+            remove_filter('woocommerce_product_related_posts_relate_by_category', $category_callback, PHP_INT_MAX);
+            remove_filter('woocommerce_product_related_posts_relate_by_tag', $tag_callback, PHP_INT_MAX);
+            if (empty($related_products)) {
+                return ['post__in' => [-1]];
+            }
+            // Have it filter the results to products related to the one provided.
+            return ['post__in' => $related_products];
+        }, function (array $collection_args, array $query): array {
+            $product_reference = $query['productReference'] ?? null;
+            // Infer the product reference from the location if an explicit product is not set.
+            if (empty($product_reference)) {
+                $location = $collection_args['productCollectionLocation'];
+                if (isset($location['type']) && 'product' === $location['type']) {
+                    $product_reference = $location['sourceData']['productId'];
                 }
             }
-        );
-
-        $this->register_collection_handlers(
-            'woocommerce/product-collection/by-category',
-            function ($collection_args, $common_query_values, array $query) {
-                // For Products by Category collection, if no category is selected, we should return an empty result set.
-                if (empty($query['taxonomies_query'])) {
-                    return [
-                        'post__in' => [ -1 ],
-                    ];
+            $collection_args['relatedProductReference'] = $product_reference;
+            $collection_args['relatedBy'] = !isset($query['relatedBy']) ? ['categories' => true, 'tags' => true] : ['categories' => isset($query['relatedBy']['categories']) && true === $query['relatedBy']['categories'], 'tags' => isset($query['relatedBy']['tags']) && true === $query['relatedBy']['tags']];
+            return $collection_args;
+        }, function (array $collection_args, $query, $request): array {
+            $product_reference = $request->get_param('productReference');
+            // In some cases the editor will send along block location context that we can infer the product reference from.
+            if (empty($product_reference)) {
+                $location = $collection_args['productCollectionLocation'];
+                if (isset($location['type']) && 'product' === $location['type']) {
+                    $product_reference = $location['sourceData']['productId'];
                 }
             }
-        );
-
-        $this->register_collection_handlers(
-            'woocommerce/product-collection/by-tag',
-            function ($collection_args, $common_query_values, array $query) {
-                // For Products by Tag collection, if no tag is selected, we should return an empty result set.
-                if (empty($query['taxonomies_query'])) {
-                    return [
-                        'post__in' => [ -1 ],
-                    ];
+            $collection_args['relatedProductReference'] = $product_reference;
+            $related_by = $request->get_param('relatedBy');
+            $collection_args['relatedBy'] = !isset($related_by) ? ['categories' => true, 'tags' => true] : ['categories' => rest_sanitize_boolean($related_by['categories'] ?? false), 'tags' => rest_sanitize_boolean($related_by['tags'] ?? false)];
+            return $collection_args;
+        });
+        $this->register_collection_handlers('woocommerce/product-collection/upsells', function (array $collection_args): array {
+            $product_reference = $collection_args['upsellsProductReferences'] ?? null;
+            // No products should be shown if no upsells product reference is set.
+            if (empty($product_reference)) {
+                return ['post__in' => [-1]];
+            }
+            $products = array_map(wc_get_product(...), $product_reference);
+            if (empty($products)) {
+                return ['post__in' => [-1]];
+            }
+            $all_upsells = array_reduce($products, fn(array $acc, $product) => array_merge($acc, $product->get_upsell_ids()), []);
+            // Remove duplicates and product references. We don't want to display
+            // what's already in cart.
+            $unique_upsells = array_unique($all_upsells);
+            $upsells = array_diff($unique_upsells, $product_reference);
+            return ['post__in' => empty($upsells) ? [-1] : $upsells];
+        }, function (array $collection_args, array $query): array {
+            $product_references = isset($query['productReference']) ? [$query['productReference']] : null;
+            // Infer the product reference from the location if an explicit product is not set.
+            if (empty($product_references)) {
+                $location = $collection_args['productCollectionLocation'];
+                if (isset($location['type']) && 'product' === $location['type']) {
+                    $product_references = [$location['sourceData']['productId']];
+                }
+                if (isset($location['type']) && 'cart' === $location['type']) {
+                    $product_references = $location['sourceData']['productIds'];
+                }
+                if (isset($location['type']) && 'order' === $location['type']) {
+                    $product_references = $this->get_product_ids_from_order($location['sourceData']['orderId'] ?? 0);
                 }
             }
-        );
-
-        $this->register_collection_handlers(
-            'woocommerce/product-collection/by-brand',
-            function ($collection_args, $common_query_values, array $query) {
-                // For Products by Brand collection, if no brand is selected, we should return an empty result set.
-                if (empty($query['taxonomies_query'])) {
-                    return [
-                        'post__in' => [ -1 ],
-                    ];
+            $collection_args['upsellsProductReferences'] = $product_references;
+            return $collection_args;
+        }, function (array $collection_args, $query, $request): array {
+            $product_reference = $request->get_param('productReference');
+            // In some cases the editor will send along block location context that we can infer the product reference from.
+            if (empty($product_reference)) {
+                $location = $collection_args['productCollectionLocation'];
+                if (isset($location['type']) && 'product' === $location['type']) {
+                    $product_reference = $location['sourceData']['productId'];
                 }
             }
-        );
-
-        $this->register_collection_handlers(
-            'woocommerce/product-collection/related',
-            function (array $collection_args): array {
-                // No products should be shown if no related product reference is set.
-                if (empty($collection_args['relatedProductReference'])) {
-                    return [
-                        'post__in' => [ -1 ],
-                    ];
-                }
-
-                $category_callback = (fn () => $collection_args['relatedBy']['categories']);
-
-                $tag_callback = (fn () => $collection_args['relatedBy']['tags']);
-
-                add_filter('woocommerce_product_related_posts_relate_by_category', $category_callback, PHP_INT_MAX);
-                add_filter('woocommerce_product_related_posts_relate_by_tag', $tag_callback, PHP_INT_MAX);
-
-                $related_products = wc_get_related_products(
-                    $collection_args['relatedProductReference'],
-                    // Use a higher limit so that the result set contains enough products for the collection to subsequently filter.
-                    100,
-                    [],
-                    $collection_args['relatedBy']
-                );
-
-                remove_filter('woocommerce_product_related_posts_relate_by_category', $category_callback, PHP_INT_MAX);
-                remove_filter('woocommerce_product_related_posts_relate_by_tag', $tag_callback, PHP_INT_MAX);
-
-                if (empty($related_products)) {
-                    return [
-                        'post__in' => [ -1 ],
-                    ];
-                }
-
-                // Have it filter the results to products related to the one provided.
-                return [
-                    'post__in' => $related_products,
-                ];
-            },
-            function (array $collection_args, array $query): array {
-                $product_reference = $query['productReference'] ?? null;
-                // Infer the product reference from the location if an explicit product is not set.
-                if (empty($product_reference)) {
-                    $location = $collection_args['productCollectionLocation'];
-                    if (isset($location['type']) && 'product' === $location['type']) {
-                        $product_reference = $location['sourceData']['productId'];
-                    }
-                }
-
-                $collection_args['relatedProductReference'] = $product_reference;
-                $collection_args['relatedBy']               = ! isset($query['relatedBy']) ? [
-                    'categories' => true,
-                    'tags'       => true,
-                ] : [
-                    'categories' => isset($query['relatedBy']['categories']) && true === $query['relatedBy']['categories'],
-                    'tags'       => isset($query['relatedBy']['tags']) && true === $query['relatedBy']['tags'],
-                ];
-
-                return $collection_args;
-            },
-            function (array $collection_args, $query, $request): array {
-                $product_reference = $request->get_param('productReference');
-                // In some cases the editor will send along block location context that we can infer the product reference from.
-                if (empty($product_reference)) {
-                    $location = $collection_args['productCollectionLocation'];
-                    if (isset($location['type']) && 'product' === $location['type']) {
-                        $product_reference = $location['sourceData']['productId'];
-                    }
-                }
-
-                $collection_args['relatedProductReference'] = $product_reference;
-
-                $related_by                   = $request->get_param('relatedBy');
-                $collection_args['relatedBy'] = ! isset($related_by) ? [
-                    'categories' => true,
-                    'tags'       => true,
-                ] : [
-                    'categories' => rest_sanitize_boolean($related_by['categories'] ?? false),
-                    'tags'       => rest_sanitize_boolean($related_by['tags'] ?? false),
-                ];
-
-                return $collection_args;
+            $collection_args['upsellsProductReferences'] = [$product_reference];
+            return $collection_args;
+        });
+        $this->register_collection_handlers('woocommerce/product-collection/cross-sells', function (array $collection_args): array {
+            $product_reference = $collection_args['crossSellsProductReferences'] ?? null;
+            // No products should be shown if no cross-sells product reference is set.
+            if (empty($product_reference)) {
+                return ['post__in' => [-1]];
             }
-        );
-
-        $this->register_collection_handlers(
-            'woocommerce/product-collection/upsells',
-            function (array $collection_args): array {
-                $product_reference = $collection_args['upsellsProductReferences'] ?? null;
-                // No products should be shown if no upsells product reference is set.
-                if (empty($product_reference)) {
-                    return [
-                        'post__in' => [ -1 ],
-                    ];
-                }
-
-                $products = array_map(wc_get_product(...), $product_reference);
-
-                if (empty($products)) {
-                    return [
-                        'post__in' => [ -1 ],
-                    ];
-                }
-
-                $all_upsells = array_reduce(
-                    $products,
-                    fn (array $acc, $product) => array_merge(
-                        $acc,
-                        $product->get_upsell_ids()
-                    ),
-                    []
-                );
-
-                // Remove duplicates and product references. We don't want to display
-                // what's already in cart.
-                $unique_upsells = array_unique($all_upsells);
-                $upsells        = array_diff($unique_upsells, $product_reference);
-
-                return [
-                    'post__in' => empty($upsells) ? [ -1 ] : $upsells,
-                ];
-            },
-            function (array $collection_args, array $query): array {
-                $product_references = isset($query['productReference']) ? [ $query['productReference'] ] : null;
-                // Infer the product reference from the location if an explicit product is not set.
-                if (empty($product_references)) {
-                    $location = $collection_args['productCollectionLocation'];
-                    if (isset($location['type']) && 'product' === $location['type']) {
-                        $product_references = [ $location['sourceData']['productId'] ];
-                    }
-
-                    if (isset($location['type']) && 'cart' === $location['type']) {
-                        $product_references = $location['sourceData']['productIds'];
-                    }
-
-                    if (isset($location['type']) && 'order' === $location['type']) {
-                        $product_references = $this->get_product_ids_from_order($location['sourceData']['orderId'] ?? 0);
-                    }
-                }
-
-                $collection_args['upsellsProductReferences'] = $product_references;
-                return $collection_args;
-            },
-            function (array $collection_args, $query, $request): array {
-                $product_reference = $request->get_param('productReference');
-                // In some cases the editor will send along block location context that we can infer the product reference from.
-                if (empty($product_reference)) {
-                    $location = $collection_args['productCollectionLocation'];
-                    if (isset($location['type']) && 'product' === $location['type']) {
-                        $product_reference = $location['sourceData']['productId'];
-                    }
-                }
-
-                $collection_args['upsellsProductReferences'] = [ $product_reference ];
-                return $collection_args;
+            $products = array_filter(array_map(wc_get_product(...), $product_reference));
+            if (empty($products)) {
+                return ['post__in' => [-1]];
             }
-        );
-
-        $this->register_collection_handlers(
-            'woocommerce/product-collection/cross-sells',
-            function (array $collection_args): array {
-                $product_reference = $collection_args['crossSellsProductReferences'] ?? null;
-                // No products should be shown if no cross-sells product reference is set.
-                if (empty($product_reference)) {
-                    return [
-                        'post__in' => [ -1 ],
-                    ];
+            $product_ids = array_map(fn($product) => $product->get_id(), $products);
+            $all_cross_sells = array_reduce($products, fn(array $acc, $product) => array_merge($acc, $product->get_cross_sell_ids()), []);
+            // Remove duplicates and product references. We don't want to display
+            // what's already in cart.
+            $unique_cross_sells = array_unique($all_cross_sells);
+            $cross_sells = array_diff($unique_cross_sells, $product_ids);
+            return ['post__in' => empty($cross_sells) ? [-1] : $cross_sells];
+        }, function (array $collection_args, array $query): array {
+            $product_references = isset($query['productReference']) ? [$query['productReference']] : null;
+            // Infer the product reference from the location if an explicit product is not set.
+            if (empty($product_references)) {
+                $location = $collection_args['productCollectionLocation'];
+                if (isset($location['type']) && 'product' === $location['type']) {
+                    $product_references = [$location['sourceData']['productId']];
                 }
-
-                $products = array_filter(array_map(wc_get_product(...), $product_reference));
-
-                if (empty($products)) {
-                    return [
-                        'post__in' => [ -1 ],
-                    ];
+                if (isset($location['type']) && 'cart' === $location['type']) {
+                    $product_references = $location['sourceData']['productIds'];
                 }
-
-                $product_ids = array_map(
-                    fn ($product) => $product->get_id(),
-                    $products
-                );
-
-                $all_cross_sells = array_reduce(
-                    $products,
-                    fn (array $acc, $product) => array_merge(
-                        $acc,
-                        $product->get_cross_sell_ids()
-                    ),
-                    []
-                );
-
-                // Remove duplicates and product references. We don't want to display
-                // what's already in cart.
-                $unique_cross_sells = array_unique($all_cross_sells);
-                $cross_sells        = array_diff($unique_cross_sells, $product_ids);
-
-                return [
-                    'post__in' => empty($cross_sells) ? [ -1 ] : $cross_sells,
-                ];
-            },
-            function (array $collection_args, array $query): array {
-                $product_references = isset($query['productReference']) ? [ $query['productReference'] ] : null;
-                // Infer the product reference from the location if an explicit product is not set.
-                if (empty($product_references)) {
-                    $location = $collection_args['productCollectionLocation'];
-                    if (isset($location['type']) && 'product' === $location['type']) {
-                        $product_references = [ $location['sourceData']['productId'] ];
-                    }
-
-                    if (isset($location['type']) && 'cart' === $location['type']) {
-                        $product_references = $location['sourceData']['productIds'];
-                    }
-
-                    if (isset($location['type']) && 'order' === $location['type']) {
-                        $product_references = $this->get_product_ids_from_order($location['sourceData']['orderId'] ?? 0);
-                    }
+                if (isset($location['type']) && 'order' === $location['type']) {
+                    $product_references = $this->get_product_ids_from_order($location['sourceData']['orderId'] ?? 0);
                 }
-
-                $collection_args['crossSellsProductReferences'] = $product_references;
-                return $collection_args;
-            },
-            function (array $collection_args, $query, $request): array {
-                $product_reference = $request->get_param('productReference');
-                // In some cases the editor will send along block location context that we can infer the product reference from.
-                if (empty($product_reference)) {
-                    $location = $collection_args['productCollectionLocation'];
-                    if (isset($location['type']) && 'product' === $location['type']) {
-                        $product_reference = $location['sourceData']['productId'];
-                    }
-                }
-
-                $collection_args['crossSellsProductReferences'] = [ $product_reference ];
-                return $collection_args;
             }
-        );
-
-        $this->register_collection_handlers(
-            'woocommerce/product-collection/cart-contents',
-            function (array $collection_args): array {
-                $cart_product_ids = $collection_args['cartProductIds'] ?? null;
-                if (empty($cart_product_ids)) {
-                    return [ 'post__in' => [ -1 ] ];
+            $collection_args['crossSellsProductReferences'] = $product_references;
+            return $collection_args;
+        }, function (array $collection_args, $query, $request): array {
+            $product_reference = $request->get_param('productReference');
+            // In some cases the editor will send along block location context that we can infer the product reference from.
+            if (empty($product_reference)) {
+                $location = $collection_args['productCollectionLocation'];
+                if (isset($location['type']) && 'product' === $location['type']) {
+                    $product_reference = $location['sourceData']['productId'];
                 }
-                return [ 'post__in' => $cart_product_ids ];
-            },
-            function (array $collection_args, $query): array { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
-                $collection_args['cartProductIds'] = $this->get_cart_product_ids($collection_args);
-                return $collection_args;
-            },
-            function (array $collection_args, $query, $request): array {
-                $collection_args['cartProductIds'] = $this->get_cart_product_ids($collection_args, $request);
-                return $collection_args;
             }
-        );
+            $collection_args['crossSellsProductReferences'] = [$product_reference];
+            return $collection_args;
+        });
+        $this->register_collection_handlers('woocommerce/product-collection/cart-contents', function (array $collection_args): array {
+            $cart_product_ids = $collection_args['cartProductIds'] ?? null;
+            if (empty($cart_product_ids)) {
+                return ['post__in' => [-1]];
+            }
+            return ['post__in' => $cart_product_ids];
+        }, function (array $collection_args, $query): array {
+            // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+            $collection_args['cartProductIds'] = $this->get_cart_product_ids($collection_args);
+            return $collection_args;
+        }, function (array $collection_args, $query, $request): array {
+            $collection_args['cartProductIds'] = $this->get_cart_product_ids($collection_args, $request);
+            return $collection_args;
+        });
         return $this->collection_handler_store;
     }
-
     /**
      * Get collection handler by name.
      *
@@ -366,9 +230,8 @@ class HandlerRegistry
      */
     public function get_collection_handler($name)
     {
-        return $this->collection_handler_store[ $name ] ?? null;
+        return $this->collection_handler_store[$name] ?? null;
     }
-
     /**
      * Removes any custom collection handlers for the given collection.
      *
@@ -376,9 +239,8 @@ class HandlerRegistry
      */
     public function unregister_collection_handlers($collection_name): void
     {
-        unset($this->collection_handler_store[ $collection_name ]);
+        unset($this->collection_handler_store[$collection_name]);
     }
-
     /**
      * Get product IDs from an order.
      *
@@ -391,19 +253,12 @@ class HandlerRegistry
         if (empty($order_id)) {
             return $product_references;
         }
-
         $order = wc_get_order($order_id);
         if ($order) {
-            return array_filter(
-                array_map(
-                    fn (\WC_Order_Item $item) => $item->get_product_id(),
-                    $order->get_items('line_item')
-                )
-            );
+            return array_filter(array_map(fn(\WC_Order_Item $item) => $item->get_product_id(), $order->get_items('line_item')));
         }
         return $product_references;
     }
-
     /**
      * Get cart product IDs from various sources.
      * Handles loading cart products from location context or request params.
@@ -415,37 +270,26 @@ class HandlerRegistry
     private function get_cart_product_ids(array $collection_args, $request = null)
     {
         $location = $collection_args['productCollectionLocation'] ?? [];
-
         if ($request) {
-            $user_id    = $request->get_param('userId') ? absint($request->get_param('userId')) : null;
+            $user_id = $request->get_param('userId') ? absint($request->get_param('userId')) : null;
             $user_email = $request->get_param('userEmail') ? sanitize_email($request->get_param('userEmail')) : null;
             if ($user_id || $user_email) {
-                $cart_ids = CartCheckoutUtils::get_cart_product_ids_for_user($user_id, $user_email);
-                if (! empty($cart_ids)) {
+                $cart_ids = Cart_Checkout_Utils::get_cart_product_ids_for_user($user_id, $user_email);
+                if (!empty($cart_ids)) {
                     return $cart_ids;
                 }
             }
             // In editor context (REST request), show sample products for preview when cart is empty.
-            $recent_product_ids = wc_get_products(
-                [
-                    'status'  => 'publish',
-                    'orderby' => 'date',
-                    'order'   => 'DESC',
-                    'limit'   => 3,
-                    'return'  => 'ids',
-                ]
-            );
-            return ! empty($recent_product_ids) ? $recent_product_ids : [];
+            $recent_product_ids = wc_get_products(['status' => 'publish', 'orderby' => 'date', 'order' => 'DESC', 'limit' => 3, 'return' => 'ids']);
+            return !empty($recent_product_ids) ? $recent_product_ids : [];
         }
-
         if (isset($location['type']) && 'cart' === $location['type']) {
-            $user_id    = isset($location['sourceData']['userId']) ? absint($location['sourceData']['userId']) : null;
+            $user_id = isset($location['sourceData']['userId']) ? absint($location['sourceData']['userId']) : null;
             $user_email = isset($location['sourceData']['userEmail']) ? sanitize_email($location['sourceData']['userEmail']) : null;
             if ($user_id || $user_email) {
-                return CartCheckoutUtils::get_cart_product_ids_for_user($user_id, $user_email);
+                return Cart_Checkout_Utils::get_cart_product_ids_for_user($user_id, $user_email);
             }
         }
-
         // In frontend/email context, return empty array when no cart is found.
         return [];
     }

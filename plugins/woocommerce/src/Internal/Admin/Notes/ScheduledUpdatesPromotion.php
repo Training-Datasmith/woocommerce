@@ -5,39 +5,32 @@
  *
  * Adds a note to the merchant's inbox promoting scheduled updates for analytics.
  */
-
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Admin\Notes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Notes;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Admin\Notes\Note;
-use Automattic\WooCommerce\Admin\Notes\NoteTraits;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Admin\Notes\Note;
+use Automattic\Woo_Commerce\Admin\Notes\Note_Traits;
 /**
  * ScheduledUpdatesPromotion
  *
  * @since 10.5.0
  */
-class ScheduledUpdatesPromotion
+class Scheduled_Updates_Promotion
 {
     /**
      * Note traits.
      */
-    use NoteTraits;
-
+    use Note_Traits;
     /**
      * Name of the note for use in the database.
      */
     public const NOTE_NAME = 'wc-admin-scheduled-updates-promotion';
-
     /**
      * Name of the option to check.
      */
     public const OPTION_NAME = 'woocommerce_analytics_scheduled_import';
-
     /**
      * Constructor - attach action hooks.
      */
@@ -45,60 +38,43 @@ class ScheduledUpdatesPromotion
     {
         add_action('woocommerce_note_action_scheduled-updates-enable', $this->enable_scheduled_updates(...));
     }
-
     /**
      * Should this note exist?
      */
     public static function is_applicable(): bool
     {
-        if (! Features::is_enabled('analytics-scheduled-import')) {
+        if (!Features::is_enabled('analytics-scheduled-import')) {
             return false;
         }
-
         // Get the current option value.
         // Note: get_option() returns false when option doesn't exist.
         $immediate_import = get_option(self::OPTION_NAME, false);
-
         // Only show to existing sites (false/not set) that haven't migrated yet.
         // New sites have the option set during onboarding, so they won't see this.
         if (false !== $immediate_import) {
             return false;
         }
-
         return true;
     }
-
     /**
      * Get the note.
      */
-    public static function get_note(): ?\Automattic\WooCommerce\Admin\Notes\Note
+    public static function get_note(): ?\Automattic\Woo_Commerce\Admin\Notes\Note
     {
-        if (! self::is_applicable()) {
+        if (!self::is_applicable()) {
             return null;
         }
-
         $note = new Note();
-
         $note->set_title(__('Analytics now supports scheduled updates', 'woocommerce'));
         $note->set_content(__('This provides improved performance to your store, enable it in Analytics > Settings.', 'woocommerce'));
         $note->set_content_data((object) []);
         $note->set_type(Note::E_WC_ADMIN_NOTE_INFORMATIONAL);
         $note->set_name(self::NOTE_NAME);
         $note->set_source('woocommerce-admin');
-
         // Add "Enable" action with custom handler.
-        $note->add_action(
-            'scheduled-updates-enable',
-            __('Enable', 'woocommerce'),
-            wc_admin_url(),
-            Note::E_WC_ADMIN_NOTE_ACTIONED,
-            true,
-            __('Scheduled updates enabled', 'woocommerce')
-        );
-
+        $note->add_action('scheduled-updates-enable', __('Enable', 'woocommerce'), wc_admin_url(), Note::E_WC_ADMIN_NOTE_ACTIONED, true, __('Scheduled updates enabled', 'woocommerce'));
         return $note;
     }
-
     /**
      * Enable scheduled updates when the action is triggered.
      *
@@ -110,7 +86,6 @@ class ScheduledUpdatesPromotion
         if (self::NOTE_NAME !== $note->get_name()) {
             return;
         }
-
         // Update the option to enable scheduled mode.
         update_option(self::OPTION_NAME, 'yes');
     }

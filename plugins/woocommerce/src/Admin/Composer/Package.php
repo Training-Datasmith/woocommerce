@@ -1,21 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Returns information about the package and handles init.
  */
-
 /**
  * This namespace isn't compatible with the PSR-4
  * which ensures that the copy in the standalone plugin will not be autoloaded.
  */
-
-namespace Automattic\WooCommerce\Admin\Composer;
+namespace Automattic\Woo_Commerce\Admin\Composer;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Internal\Admin\FeaturePlugin;
-
+use Automattic\Woo_Commerce\Internal\Admin\Feature_Plugin;
 /**
  * Main package class.
  */
@@ -27,19 +23,16 @@ class Package
      * @var string
      */
     public const VERSION = '3.3.0';
-
     /**
      * Package active.
      */
     private static bool $package_active = false;
-
     /**
      * Active version
      *
      * @var bool
      */
     private static $active_version;
-
     /**
      * Init the package.
      *
@@ -52,22 +45,17 @@ class Package
             self::$active_version = WC_ADMIN_VERSION_NUMBER;
             return;
         }
-
-        $feature_plugin_instance = FeaturePlugin::instance();
-
+        $feature_plugin_instance = Feature_Plugin::instance();
         // Indicate to the feature plugin that the core package exists.
-        if (! defined('WC_ADMIN_PACKAGE_EXISTS')) {
+        if (!defined('WC_ADMIN_PACKAGE_EXISTS')) {
             define('WC_ADMIN_PACKAGE_EXISTS', true);
         }
-
         self::$package_active = true;
         self::$active_version = self::VERSION;
         $feature_plugin_instance->init();
-
         // Unhook the custom Action Scheduler data store class in active older versions of WC Admin.
-        remove_filter('action_scheduler_store_class', [ $feature_plugin_instance, 'replace_actionscheduler_store_class' ]);
+        remove_filter('action_scheduler_store_class', [$feature_plugin_instance, 'replace_actionscheduler_store_class']);
     }
-
     /**
      * Return the version of the package.
      */
@@ -75,7 +63,6 @@ class Package
     {
         return self::VERSION;
     }
-
     /**
      * Return the active version of WC Admin.
      *
@@ -85,7 +72,6 @@ class Package
     {
         return self::$active_version;
     }
-
     /**
      * Return whether the package is active.
      *
@@ -95,7 +81,6 @@ class Package
     {
         return self::$package_active;
     }
-
     /**
      * Return the path to the package.
      */

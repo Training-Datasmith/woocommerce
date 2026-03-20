@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Blueprint\Exporters;
 
-namespace Automattic\WooCommerce\Admin\Features\Blueprint\Exporters;
-
-use Automattic\WooCommerce\Blueprint\Exporters\HasAlias;
-use Automattic\WooCommerce\Blueprint\Exporters\StepExporter;
-use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
-use Automattic\WooCommerce\Blueprint\UseWPFunctions;
-
+use Automattic\Woo_Commerce\Blueprint\Exporters\Has_Alias;
+use Automattic\Woo_Commerce\Blueprint\Exporters\Step_Exporter;
+use Automattic\Woo_Commerce\Blueprint\Steps\Set_Site_Options;
+use Automattic\Woo_Commerce\Blueprint\Use_Wp_Functions;
 /**
  * Class ExportWCTaskOptions
  *
@@ -16,23 +14,16 @@ use Automattic\WooCommerce\Blueprint\UseWPFunctions;
  *
  * @package Automattic\WooCommerce\Admin\Features\Blueprint\Exporters
  */
-class ExportWCTaskOptions implements StepExporter, HasAlias
+class Export_Wc_Task_Options implements Step_Exporter, Has_Alias
 {
-    use UseWPFunctions;
-
+    use Use_Wp_Functions;
     /**
      * Export WooCommerce task options.
      */
-    public function export(): \Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions
+    public function export(): \Automattic\Woo_Commerce\Blueprint\Steps\Set_Site_Options
     {
-        return new SetSiteOptions(
-            [
-                'woocommerce_admin_customize_store_completed' => $this->wp_get_option('woocommerce_admin_customize_store_completed', 'no'),
-                'woocommerce_task_list_tracked_completed_actions' => $this->wp_get_option('woocommerce_task_list_tracked_completed_actions', []),
-            ]
-        );
+        return new Set_Site_Options(['woocommerce_admin_customize_store_completed' => $this->wp_get_option('woocommerce_admin_customize_store_completed', 'no'), 'woocommerce_task_list_tracked_completed_actions' => $this->wp_get_option('woocommerce_task_list_tracked_completed_actions', [])]);
     }
-
     /**
      * Get the name of the step.
      */
@@ -40,7 +31,6 @@ class ExportWCTaskOptions implements StepExporter, HasAlias
     {
         return 'setOptions';
     }
-
     /**
      * Get the alias for this exporter.
      */
@@ -48,7 +38,6 @@ class ExportWCTaskOptions implements StepExporter, HasAlias
     {
         return 'setWCTaskOptions';
     }
-
     /**
      * Return label used in the frontend.
      *
@@ -58,7 +47,6 @@ class ExportWCTaskOptions implements StepExporter, HasAlias
     {
         return __('Task Configurations', 'woocommerce');
     }
-
     /**
      * Return description used in the frontend.
      *
@@ -68,7 +56,6 @@ class ExportWCTaskOptions implements StepExporter, HasAlias
     {
         return __('Includes the task configurations for WooCommerce.', 'woocommerce');
     }
-
     /**
      * Check if the current user has the required capabilities for this step.
      *

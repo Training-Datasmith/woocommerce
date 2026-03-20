@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Payments\Integrations;
 
-namespace Automattic\WooCommerce\Blocks\Payments\Integrations;
-
-use Automattic\WooCommerce\Blocks\Assets\Api;
+use Automattic\Woo_Commerce\Blocks\Assets\Api;
 use WC_Gateway_COD;
-
 /**
  * Cash on Delivery (COD) payment method integration
  *
  * @since 3.0.0
  */
-final class CashOnDelivery extends AbstractPaymentMethodType
+final class Cash_On_Delivery extends Abstract_Payment_Method_Type
 {
     /**
      * Payment method name/id/slug (matches id in WC_Gateway_COD in core).
@@ -20,7 +18,6 @@ final class CashOnDelivery extends AbstractPaymentMethodType
      * @var string
      */
     protected $name = WC_Gateway_COD::ID;
-
     /**
      * Constructor
      *
@@ -31,9 +28,9 @@ final class CashOnDelivery extends AbstractPaymentMethodType
          * An instance of the Asset Api
          */
         private readonly Api $asset_api
-    ) {
+    )
+    {
     }
-
     /**
      * Initializes the payment method type.
      */
@@ -41,7 +38,6 @@ final class CashOnDelivery extends AbstractPaymentMethodType
     {
         $this->settings = get_option('woocommerce_cod_settings', []);
     }
-
     /**
      * Returns if this payment method should be active. If false, the scripts will not be enqueued.
      */
@@ -49,7 +45,6 @@ final class CashOnDelivery extends AbstractPaymentMethodType
     {
         return filter_var($this->get_setting('enabled', false), FILTER_VALIDATE_BOOLEAN);
     }
-
     /**
      * Return enable_for_virtual option.
      *
@@ -59,7 +54,6 @@ final class CashOnDelivery extends AbstractPaymentMethodType
     {
         return filter_var($this->get_setting('enable_for_virtual', false), FILTER_VALIDATE_BOOLEAN);
     }
-
     /**
      * Return enable_for_methods option.
      *
@@ -73,30 +67,19 @@ final class CashOnDelivery extends AbstractPaymentMethodType
         }
         return $enable_for_methods;
     }
-
     /**
      * Returns an array of scripts/handles to be registered for this payment method.
      */
     public function get_payment_method_script_handles(): array
     {
-        $this->asset_api->register_script(
-            'wc-payment-method-cod',
-            'assets/client/blocks/wc-payment-method-cod.js'
-        );
-        return [ 'wc-payment-method-cod' ];
+        $this->asset_api->register_script('wc-payment-method-cod', 'assets/client/blocks/wc-payment-method-cod.js');
+        return ['wc-payment-method-cod'];
     }
-
     /**
      * Returns an array of key=>value pairs of data made available to the payment methods script.
      */
     public function get_payment_method_data(): array
     {
-        return [
-            'title'                    => $this->get_setting('title'),
-            'description'              => $this->get_setting('description'),
-            'enableForVirtual'         => $this->get_enable_for_virtual(),
-            'enableForShippingMethods' => $this->get_enable_for_methods(),
-            'supports'                 => $this->get_supported_features(),
-        ];
+        return ['title' => $this->get_setting('title'), 'description' => $this->get_setting('description'), 'enableForVirtual' => $this->get_enable_for_virtual(), 'enableForShippingMethods' => $this->get_enable_for_methods(), 'supports' => $this->get_supported_features()];
     }
 }

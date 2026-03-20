@@ -1,43 +1,36 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
 
-namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
-
-use Automattic\WooCommerce\Admin\PluginsHelper;
-use Automattic\WooCommerce\Internal\Admin\Settings\Payments;
-use Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
-use Automattic\WooCommerce\Internal\Admin\Settings\Utils;
-use Automattic\WooCommerce\Internal\Logging\SafeGlobalFunctionProxy;
-use Automattic\WooCommerce\Proxies\LegacyProxy;
+use Automattic\Woo_Commerce\Admin\Plugins_Helper;
+use Automattic\Woo_Commerce\Internal\Admin\Settings\Payments;
+use Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
+use Automattic\Woo_Commerce\Internal\Admin\Settings\Utils;
+use Automattic\Woo_Commerce\Internal\Logging\Safe_Global_Function_Proxy;
+use Automattic\Woo_Commerce\Proxies\Legacy_Proxy;
 use Throwable;
 use WC_HTTPS;
 use WC_Payment_Gateway;
-
 defined('ABSPATH') || exit;
-
 /**
  * The payment gateway provider class to handle all payment gateways that don't have a dedicated class.
  *
  * Extend this class for introducing gateway-specific behavior.
  */
-class PaymentGateway
+class Payment_Gateway
 {
     // This is the default onboarding type for all gateways.
     // It means that the payment extension will handle the onboarding.
     public const ONBOARDING_TYPE_EXTERNAL = 'external';
-
     // This is the onboarding type for gateways that have a WooCommerce-tailored onboarding flow.
     // This might mean just having the payment methods select step in the WooCommerce settings.
     public const ONBOARDING_TYPE_NATIVE = 'native';
-
     // This is the onboarding type for gateways that have a WooCommerce in-context onboarding flow.
     public const ONBOARDING_TYPE_NATIVE_IN_CONTEXT = 'native_in_context';
-
     // Payment method categories to inform the UI about grouping or the emphasis of payment methods.
-    public const PAYMENT_METHOD_CATEGORY_PRIMARY   = 'primary';
+    public const PAYMENT_METHOD_CATEGORY_PRIMARY = 'primary';
     public const PAYMENT_METHOD_CATEGORY_SECONDARY = 'secondary';
-
     /**
      * Constructor.
      *
@@ -47,10 +40,10 @@ class PaymentGateway
         /**
          * The LegacyProxy instance.
          */
-        protected LegacyProxy $proxy
-    ) {
+        protected Legacy_Proxy $proxy
+    )
+    {
     }
-
     /**
      * Extract the payment gateway provider details from the object.
      *
@@ -64,52 +57,10 @@ class PaymentGateway
      */
     public function get_details(WC_Payment_Gateway $gateway, int $order = 0, string $country_code = ''): array
     {
-        $onboarding_supported = $this->is_onboarding_supported($gateway, $country_code) ?? true; // Assume supported if unknown.
-
-        return [
-            'id'          => $gateway->id,
-            '_order'      => $order,
-            'title'       => $this->get_title($gateway),
-            'description' => $this->get_description($gateway),
-            'icon'        => $this->get_icon($gateway),
-            'supports'    => $this->get_supports_list($gateway),
-            'links'       => $this->get_provider_links($gateway, $country_code),
-            'state'       => [
-                'enabled'           => $this->is_enabled($gateway),
-                'account_connected' => $this->is_account_connected($gateway),
-                'needs_setup'       => $this->needs_setup($gateway),
-                'test_mode'         => $this->is_in_test_mode($gateway),
-                'dev_mode'          => $this->is_in_dev_mode($gateway),
-            ],
-            'management'  => [
-                '_links' => [
-                    'settings' => [
-                        'href' => $this->get_settings_url($gateway),
-                    ],
-                ],
-            ],
-            'onboarding'  => [
-                'type'                        => self::ONBOARDING_TYPE_EXTERNAL,
-                'state'                       => [
-                    'supported' => $onboarding_supported,
-                    'started'   => $this->is_onboarding_started($gateway),
-                    'completed' => $this->is_onboarding_completed($gateway),
-                    'test_mode' => $this->is_in_test_mode_onboarding($gateway),
-                ],
-                'messages'                    => [
-                    'not_supported' => ! $onboarding_supported ? $this->get_onboarding_not_supported_message($gateway, $country_code) : null,
-                ],
-                '_links'                      => [
-                    'onboard' => [
-                        'href' => $this->get_onboarding_url($gateway),
-                    ],
-                ],
-                'recommended_payment_methods' => $this->get_recommended_payment_methods($gateway, $country_code),
-            ],
-            'plugin'      => $this->get_plugin_details($gateway),
-        ];
+        $onboarding_supported = $this->is_onboarding_supported($gateway, $country_code) ?? true;
+        // Assume supported if unknown.
+        return ['id' => $gateway->id, '_order' => $order, 'title' => $this->get_title($gateway), 'description' => $this->get_description($gateway), 'icon' => $this->get_icon($gateway), 'supports' => $this->get_supports_list($gateway), 'links' => $this->get_provider_links($gateway, $country_code), 'state' => ['enabled' => $this->is_enabled($gateway), 'account_connected' => $this->is_account_connected($gateway), 'needs_setup' => $this->needs_setup($gateway), 'test_mode' => $this->is_in_test_mode($gateway), 'dev_mode' => $this->is_in_dev_mode($gateway)], 'management' => ['_links' => ['settings' => ['href' => $this->get_settings_url($gateway)]]], 'onboarding' => ['type' => self::ONBOARDING_TYPE_EXTERNAL, 'state' => ['supported' => $onboarding_supported, 'started' => $this->is_onboarding_started($gateway), 'completed' => $this->is_onboarding_completed($gateway), 'test_mode' => $this->is_in_test_mode_onboarding($gateway)], 'messages' => ['not_supported' => !$onboarding_supported ? $this->get_onboarding_not_supported_message($gateway, $country_code) : null], '_links' => ['onboard' => ['href' => $this->get_onboarding_url($gateway)]], 'recommended_payment_methods' => $this->get_recommended_payment_methods($gateway, $country_code)], 'plugin' => $this->get_plugin_details($gateway)];
     }
-
     /**
      * Enhance this provider's payment extension suggestion with additional information.
      *
@@ -121,17 +72,14 @@ class PaymentGateway
      */
     public function enhance_extension_suggestion(array $extension_suggestion): array
     {
-        if (empty($extension_suggestion['onboarding']) || ! is_array($extension_suggestion['onboarding'])) {
+        if (empty($extension_suggestion['onboarding']) || !is_array($extension_suggestion['onboarding'])) {
             $extension_suggestion['onboarding'] = [];
         }
-
-        if (! isset($extension_suggestion['onboarding']['type'])) {
+        if (!isset($extension_suggestion['onboarding']['type'])) {
             $extension_suggestion['onboarding']['type'] = self::ONBOARDING_TYPE_EXTERNAL;
         }
-
         return $extension_suggestion;
     }
-
     /**
      * Get the provider title of the payment gateway.
      *
@@ -147,21 +95,18 @@ class PaymentGateway
     {
         $title = $payment_gateway->get_method_title();
         // If we still couldn't get the WC admin title, fall back to the main title.
-        if (! is_string($title) || empty($title)) {
+        if (!is_string($title) || empty($title)) {
             $title = $payment_gateway->get_title();
         }
         // If we still couldn't get the title, return a default value.
-        if (! is_string($title) || empty($title)) {
+        if (!is_string($title) || empty($title)) {
             return esc_html__('Unknown', 'woocommerce');
         }
-
         // No HTML tags allowed in the title.
         $title = wp_strip_all_tags(html_entity_decode($title, ENT_QUOTES | ENT_SUBSTITUTE), true);
-
         // Truncate the title.
         return Utils::truncate_with_words($title, 75);
     }
-
     /**
      * Get the provider description of the payment gateway.
      *
@@ -177,21 +122,18 @@ class PaymentGateway
     {
         $description = $payment_gateway->get_method_description();
         // If we couldn't get the WC admin description, fall back to the main description.
-        if (! is_string($description) || empty($description)) {
+        if (!is_string($description) || empty($description)) {
             $description = $payment_gateway->get_description();
         }
         // If we still couldn't get the description, use an empty string since the description is not critical.
-        if (! is_string($description) || empty($description)) {
+        if (!is_string($description) || empty($description)) {
             return '';
         }
-
         // No HTML tags allowed in the description.
         $description = wp_strip_all_tags(html_entity_decode($description, ENT_QUOTES | ENT_SUBSTITUTE), true);
-
         // Truncate the description.
         return Utils::truncate_with_words($description, 130, '…');
     }
-
     /**
      * Get the provider icon URL of the payment gateway.
      *
@@ -205,21 +147,17 @@ class PaymentGateway
     public function get_icon(WC_Payment_Gateway $payment_gateway): string
     {
         $icon_url = $payment_gateway->icon ?? '';
-        if (! is_string($icon_url) || empty($icon_url)) {
+        if (!is_string($icon_url) || empty($icon_url)) {
             $icon_url = '';
         }
-
         $icon_url = trim($icon_url);
-
         // Test if it actually is a URL as some gateways put an <img> tag or a list of them.
-        if (! wc_is_valid_url($icon_url)) {
+        if (!wc_is_valid_url($icon_url)) {
             // Fall back to the default payments icon.
             return plugins_url('assets/images/icons/default-payments.svg', WC_PLUGIN_FILE);
         }
-
         return WC_HTTPS::force_https_url($icon_url);
     }
-
     /**
      * Get the provider supports list of the payment gateway.
      *
@@ -230,24 +168,20 @@ class PaymentGateway
     public function get_supports_list(WC_Payment_Gateway $payment_gateway): array
     {
         $supports_list = $payment_gateway->supports ?? [];
-        if (! is_array($supports_list)) {
+        if (!is_array($supports_list)) {
             return [];
         }
-
         // Sanitize the list to ensure it only contains a list of key-like strings.
         $sanitized_list = [];
         foreach ($supports_list as $support) {
-            if (! is_string($support)) {
+            if (!is_string($support)) {
                 continue;
             }
-
             $sanitized_list[] = sanitize_key($support);
         }
-
         // Ensure the list contains unique values and re-indexed.
         return array_values(array_unique($sanitized_list));
     }
-
     /**
      * Get the provider links list.
      *
@@ -282,100 +216,59 @@ class PaymentGateway
         $country_code = strtoupper(sanitize_text_field($country_code));
         // Validate the country code format - expect ISO 3166-1 alpha-2.
         // Empty country code is valid (parameter is optional), so only validate non-empty values.
-        if ('' !== $country_code && (strlen($country_code) !== 2 || ! ctype_upper($country_code))) {
+        if ('' !== $country_code && (strlen($country_code) !== 2 || !ctype_upper($country_code))) {
             // Log so we can investigate non-empty invalid country codes.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Received invalid country code when getting provider links. Ignoring it.',
-                [
-                    'gateway' => $payment_gateway->id,
-                    'source'  => 'settings-payments',
-                    'country' => $country_code,
-                ]
-            );
-
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Received invalid country code when getting provider links. Ignoring it.', ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'country' => $country_code]);
             $country_code = '';
         }
-
         $provider_links = [];
-
         try {
             // Try to get the links list from the payment gateway if it provides such method.
-            if (method_exists($payment_gateway, 'get_provider_links') &&
-                is_callable([ $payment_gateway, 'get_provider_links' ])) {
-
-                $provider_links = call_user_func(
-                    [ $payment_gateway, 'get_provider_links' ],
-                    $country_code
-                );
-
+            if (method_exists($payment_gateway, 'get_provider_links') && is_callable([$payment_gateway, 'get_provider_links'])) {
+                $provider_links = call_user_func([$payment_gateway, 'get_provider_links'], $country_code);
                 // Validate and normalize the links list.
-                $accepted_types  = [
-                    PaymentsProviders::LINK_TYPE_ABOUT,
-                    PaymentsProviders::LINK_TYPE_DOCS,
-                    PaymentsProviders::LINK_TYPE_SUPPORT,
-                    PaymentsProviders::LINK_TYPE_PRICING,
-                    PaymentsProviders::LINK_TYPE_TERMS,
-                ];
+                $accepted_types = [Payments_Providers::LINK_TYPE_ABOUT, Payments_Providers::LINK_TYPE_DOCS, Payments_Providers::LINK_TYPE_SUPPORT, Payments_Providers::LINK_TYPE_PRICING, Payments_Providers::LINK_TYPE_TERMS];
                 $validated_links = [];
                 if (is_array($provider_links)) {
                     foreach ($provider_links as $link) {
-                        if (! is_array($link)) {
+                        if (!is_array($link)) {
                             continue;
                         }
-
-                        $type = (isset($link['_type']) && is_scalar($link['_type'])) ? sanitize_key((string) $link['_type']) : '';
+                        $type = isset($link['_type']) && is_scalar($link['_type']) ? sanitize_key((string) $link['_type']) : '';
                         if (empty($type)) {
                             continue;
                         }
-                        if (! in_array($type, $accepted_types, true)) {
+                        if (!in_array($type, $accepted_types, true)) {
                             continue;
                         }
                         if (empty($link['url'])) {
                             continue;
                         }
-                        if (! is_string($link['url'])) {
+                        if (!is_string($link['url'])) {
                             continue;
                         }
-                        if (! wc_is_valid_url($link['url'])) {
+                        if (!wc_is_valid_url($link['url'])) {
                             continue;
                         }
-
                         $url = sanitize_url($link['url']);
-
                         // Create a unique key for deduplication (type + URL).
                         $link_key = $type . '|' . $url;
-
                         // Skip if we already have this exact link.
-                        if (isset($validated_links[ $link_key ])) {
+                        if (isset($validated_links[$link_key])) {
                             continue;
                         }
-
-                        $validated_links[ $link_key ] = [
-                            '_type' => $type,
-                            'url'   => $url,
-                        ];
+                        $validated_links[$link_key] = ['_type' => $type, 'url' => $url];
                     }
                 }
-
                 $provider_links = array_values($validated_links);
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to get provider links: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
-
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to get provider links: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
             return [];
         }
-
         return $provider_links;
     }
-
     /**
      * Check if the payment gateway is enabled.
      *
@@ -389,20 +282,11 @@ class PaymentGateway
             return wc_string_to_bool($payment_gateway->enabled ?? 'no');
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway is enabled: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway is enabled: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         // If we reach here, just assume that the gateway is not enabled.
         return false;
     }
-
     /**
      * Check if the payment gateway needs setup.
      *
@@ -420,27 +304,17 @@ class PaymentGateway
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway needs setup: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway needs setup: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         // If we get a false value, it might mean that it doesn't need setup,
         // but it can also mean that the gateway does not provide the information and just falls back to the default.
         // Check if there is a connected account, as that is the most common indicator of a setup.
-        if (! $this->is_account_connected($payment_gateway)) {
+        if (!$this->is_account_connected($payment_gateway)) {
             return true;
         }
-
         // If we reach here, just assume that the gateway does not need setup.
         return false;
     }
-
     /**
      * Try to determine if the payment gateway is in test mode.
      *
@@ -455,13 +329,12 @@ class PaymentGateway
     {
         try {
             // Try various gateway methods to check if the payment gateway is in test mode.
-            if (is_callable([ $payment_gateway, 'is_test_mode' ])) {
+            if (is_callable([$payment_gateway, 'is_test_mode'])) {
                 return wc_string_to_bool($payment_gateway->is_test_mode());
             }
-            if (is_callable([ $payment_gateway, 'is_in_test_mode' ])) {
+            if (is_callable([$payment_gateway, 'is_in_test_mode'])) {
                 return wc_string_to_bool($payment_gateway->is_in_test_mode());
             }
-
             // Try various gateway public properties to check if the payment gateway is in test mode.
             if (isset($payment_gateway->testmode)) {
                 return wc_string_to_bool($payment_gateway->testmode);
@@ -469,42 +342,30 @@ class PaymentGateway
             if (isset($payment_gateway->test_mode)) {
                 return wc_string_to_bool($payment_gateway->test_mode);
             }
-
             // Try various gateway option entries to check if the payment gateway is in test mode.
             if (is_callable($payment_gateway->get_option(...))) {
                 $test_mode = filter_var($payment_gateway->get_option('test_mode', 'not_found'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-                if (! is_null($test_mode)) {
+                if (!is_null($test_mode)) {
                     return $test_mode;
                 }
-
                 $test_mode = filter_var($payment_gateway->get_option('testmode', 'not_found'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-                if (! is_null($test_mode)) {
+                if (!is_null($test_mode)) {
                     return $test_mode;
                 }
-
                 $mode = strtolower((string) $payment_gateway->get_option('mode', 'not_found'));
-                if (in_array($mode, [ 'test', 'sandbox', 'dev' ], true)) {
+                if (in_array($mode, ['test', 'sandbox', 'dev'], true)) {
                     return true;
                 }
-                if (in_array($mode, [ 'live', 'production', 'prod' ], true)) {
+                if (in_array($mode, ['live', 'production', 'prod'], true)) {
                     return false;
                 }
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway is in test mode: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway is in test mode: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         return false;
     }
-
     /**
      * Try to determine if the payment gateway is in dev mode.
      *
@@ -519,27 +380,18 @@ class PaymentGateway
     {
         try {
             // Try various gateway methods to check if the payment gateway is in dev mode.
-            if (is_callable([ $payment_gateway, 'is_dev_mode' ])) {
+            if (is_callable([$payment_gateway, 'is_dev_mode'])) {
                 return wc_string_to_bool($payment_gateway->is_dev_mode());
             }
-            if (is_callable([ $payment_gateway, 'is_in_dev_mode' ])) {
+            if (is_callable([$payment_gateway, 'is_in_dev_mode'])) {
                 return wc_string_to_bool($payment_gateway->is_in_dev_mode());
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway is in dev mode: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway is in dev mode: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         return false;
     }
-
     /**
      * Check if the payment gateway has a payments processor account connected.
      *
@@ -553,29 +405,19 @@ class PaymentGateway
     public function is_account_connected(WC_Payment_Gateway $payment_gateway): bool
     {
         try {
-            if (method_exists($payment_gateway, 'is_account_connected') && is_callable([ $payment_gateway, 'is_account_connected' ])) {
+            if (method_exists($payment_gateway, 'is_account_connected') && is_callable([$payment_gateway, 'is_account_connected'])) {
                 return wc_string_to_bool($payment_gateway->is_account_connected());
             }
-
-            if (method_exists($payment_gateway, 'is_connected') && is_callable([ $payment_gateway, 'is_connected' ])) {
+            if (method_exists($payment_gateway, 'is_connected') && is_callable([$payment_gateway, 'is_connected'])) {
                 return wc_string_to_bool($payment_gateway->is_connected());
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway account is connected: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway account is connected: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         // Fall back to assuming that it is connected. This is the safest option.
         return true;
     }
-
     /**
      * Check if the payment gateway supports the current store state for onboarding.
      *
@@ -593,11 +435,9 @@ class PaymentGateway
     public function is_onboarding_supported(WC_Payment_Gateway $payment_gateway, string $country_code = ''): ?bool
     {
         try {
-            if (method_exists($payment_gateway, 'is_onboarding_supported') &&
-                is_callable([ $payment_gateway, 'is_onboarding_supported' ])) {
-
+            if (method_exists($payment_gateway, 'is_onboarding_supported') && is_callable([$payment_gateway, 'is_onboarding_supported'])) {
                 // Call with positional argument; normalize to bool|null.
-                $result = call_user_func([ $payment_gateway, 'is_onboarding_supported' ], $country_code);
+                $result = call_user_func([$payment_gateway, 'is_onboarding_supported'], $country_code);
                 // Preserve null to indicate "unknown" state.
                 if (is_null($result)) {
                     return null;
@@ -609,21 +449,11 @@ class PaymentGateway
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway supports onboarding: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'country'   => $country_code,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway supports onboarding: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'country' => $country_code, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         // If we reach here, just assume that we don't know if the gateway supports onboarding.
         return null;
     }
-
     /**
      * Get the message to show when the payment gateway does not support onboarding.
      *
@@ -639,31 +469,19 @@ class PaymentGateway
     public function get_onboarding_not_supported_message(WC_Payment_Gateway $payment_gateway, string $country_code = ''): ?string
     {
         try {
-            if (method_exists($payment_gateway, 'get_onboarding_not_supported_message') &&
-                is_callable([ $payment_gateway, 'get_onboarding_not_supported_message' ])) {
-
-                $message = call_user_func([ $payment_gateway, 'get_onboarding_not_supported_message' ], $country_code, );
-                if (is_string($message) && ! empty($message)) {
+            if (method_exists($payment_gateway, 'get_onboarding_not_supported_message') && is_callable([$payment_gateway, 'get_onboarding_not_supported_message'])) {
+                $message = call_user_func([$payment_gateway, 'get_onboarding_not_supported_message'], $country_code);
+                if (is_string($message) && !empty($message)) {
                     return sanitize_textarea_field(trim($message));
                 }
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine the gateway onboarding not supported message: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'country'   => $country_code,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine the gateway onboarding not supported message: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'country' => $country_code, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         // If we reach here, just assume that no specific message should be provided.
         return null;
     }
-
     /**
      * Check if the payment gateway has started the onboarding process.
      *
@@ -676,25 +494,16 @@ class PaymentGateway
     public function is_onboarding_started(WC_Payment_Gateway $payment_gateway): bool
     {
         try {
-            if (method_exists($payment_gateway, 'is_onboarding_started') && is_callable([ $payment_gateway, 'is_onboarding_started' ])) {
+            if (method_exists($payment_gateway, 'is_onboarding_started') && is_callable([$payment_gateway, 'is_onboarding_started'])) {
                 return wc_string_to_bool($payment_gateway->is_onboarding_started());
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway onboarding started: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway onboarding started: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         // Fall back to inferring this from having a connected account.
         return $this->is_account_connected($payment_gateway);
     }
-
     /**
      * Check if the payment gateway has completed the onboarding process.
      *
@@ -707,35 +516,24 @@ class PaymentGateway
     public function is_onboarding_completed(WC_Payment_Gateway $payment_gateway): bool
     {
         // Sanity check: If the onboarding has not started, it cannot be completed.
-        if (! $this->is_onboarding_started($payment_gateway)) {
+        if (!$this->is_onboarding_started($payment_gateway)) {
             return false;
         }
-
         try {
-            if (method_exists($payment_gateway, 'is_onboarding_completed') && is_callable([ $payment_gateway, 'is_onboarding_completed' ])) {
+            if (method_exists($payment_gateway, 'is_onboarding_completed') && is_callable([$payment_gateway, 'is_onboarding_completed'])) {
                 return wc_string_to_bool($payment_gateway->is_onboarding_completed());
             }
-
             // Note: This is what WooPayments provides, but it should become standard.
-            if (method_exists($payment_gateway, 'is_account_partially_onboarded') && is_callable([ $payment_gateway, 'is_account_partially_onboarded' ])) {
-                return ! wc_string_to_bool($payment_gateway->is_account_partially_onboarded());
+            if (method_exists($payment_gateway, 'is_account_partially_onboarded') && is_callable([$payment_gateway, 'is_account_partially_onboarded'])) {
+                return !wc_string_to_bool($payment_gateway->is_account_partially_onboarded());
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway onboarding is completed: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway onboarding is completed: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         // Fall back to inferring this from having a connected account.
         return $this->is_account_connected($payment_gateway);
     }
-
     /**
      * Try to determine if the payment gateway is in test mode onboarding (aka sandbox).
      *
@@ -750,27 +548,18 @@ class PaymentGateway
     {
         try {
             // Try various gateway methods to check if the payment gateway is in test mode onboarding.
-            if (method_exists($payment_gateway, 'is_test_mode_onboarding') && is_callable([ $payment_gateway, 'is_test_mode_onboarding' ])) {
+            if (method_exists($payment_gateway, 'is_test_mode_onboarding') && is_callable([$payment_gateway, 'is_test_mode_onboarding'])) {
                 return wc_string_to_bool($payment_gateway->is_test_mode_onboarding());
             }
-            if (method_exists($payment_gateway, 'is_in_test_mode_onboarding') && is_callable([ $payment_gateway, 'is_in_test_mode_onboarding' ])) {
+            if (method_exists($payment_gateway, 'is_in_test_mode_onboarding') && is_callable([$payment_gateway, 'is_in_test_mode_onboarding'])) {
                 return wc_string_to_bool($payment_gateway->is_in_test_mode_onboarding());
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway is in test mode onboarding: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway is in test mode onboarding: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         return false;
     }
-
     /**
      * Get the settings URL for a payment gateway.
      *
@@ -781,9 +570,9 @@ class PaymentGateway
     public function get_settings_url(WC_Payment_Gateway $payment_gateway): string
     {
         try {
-            if (method_exists($payment_gateway, 'get_settings_url') && is_callable([ $payment_gateway, 'get_settings_url' ])) {
+            if (method_exists($payment_gateway, 'get_settings_url') && is_callable([$payment_gateway, 'get_settings_url'])) {
                 $url = trim((string) $payment_gateway->get_settings_url());
-                if (! empty($url) && ! wc_is_valid_url($url)) {
+                if (!empty($url) && !wc_is_valid_url($url)) {
                     // Back-compat: normalize common relative admin URLs.
                     $url = ltrim($url, '/');
                     // Remove the '/wp-admin/' prefix if it exists.
@@ -794,37 +583,17 @@ class PaymentGateway
                         $url = admin_url(ltrim($url, '/'));
                     }
                 }
-                if (! empty($url) && wc_is_valid_url($url)) {
-                    return add_query_arg(
-                        [
-                            'from' => Payments::FROM_PAYMENTS_SETTINGS,
-                        ],
-                        $url
-                    );
+                if (!empty($url) && wc_is_valid_url($url)) {
+                    return add_query_arg(['from' => Payments::FROM_PAYMENTS_SETTINGS], $url);
                 }
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to get gateway settings URL: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to get gateway settings URL: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         // If we couldn't get a valid settings URL from the gateway, fall back to a general gateway settings URL.
-        return Utils::wc_payments_settings_url(
-            null,
-            [
-                'section' => strtolower($payment_gateway->id),
-                'from'    => Payments::FROM_PAYMENTS_SETTINGS,
-            ]
-        );
+        return Utils::wc_payments_settings_url(null, ['section' => strtolower($payment_gateway->id), 'from' => Payments::FROM_PAYMENTS_SETTINGS]);
     }
-
     /**
      * Get the onboarding URL for the payment gateway.
      *
@@ -839,28 +608,18 @@ class PaymentGateway
     public function get_onboarding_url(WC_Payment_Gateway $payment_gateway, string $return_url = ''): string
     {
         try {
-            if (method_exists($payment_gateway, 'get_connection_url') && is_callable([ $payment_gateway, 'get_connection_url' ])) {
+            if (method_exists($payment_gateway, 'get_connection_url') && is_callable([$payment_gateway, 'get_connection_url'])) {
                 // If we received no return URL, we will set the WC Payments Settings page as the return URL.
-                $return_url = ! empty($return_url) ? $return_url : admin_url('admin.php?page=wc-settings&tab=checkout&from=' . Payments::FROM_PROVIDER_ONBOARDING);
-
+                $return_url = !empty($return_url) ? $return_url : admin_url('admin.php?page=wc-settings&tab=checkout&from=' . Payments::FROM_PROVIDER_ONBOARDING);
                 return (string) $payment_gateway->get_connection_url($return_url);
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to get gateway connection URL: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to get gateway connection URL: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         // Fall back to pointing users to the payment gateway settings page to handle onboarding.
         return $this->get_settings_url($payment_gateway);
     }
-
     /**
      * Get the plugin details for a payment gateway.
      *
@@ -871,18 +630,16 @@ class PaymentGateway
     public function get_plugin_details(WC_Payment_Gateway $payment_gateway): array
     {
         $entity_type = $this->get_containing_entity_type($payment_gateway);
-
         return [
-            '_type'  => $entity_type,
-            'slug'   => $this->get_plugin_slug($payment_gateway),
+            '_type' => $entity_type,
+            'slug' => $this->get_plugin_slug($payment_gateway),
             // Only include the plugin file if the entity type is a regular plugin.
             // We don't want to try to change the state of must-use plugins or themes.
-            'file'   => PaymentsProviders::EXTENSION_TYPE_WPORG === $entity_type ? $this->get_plugin_file($payment_gateway) : '',
+            'file' => Payments_Providers::EXTENSION_TYPE_WPORG === $entity_type ? $this->get_plugin_file($payment_gateway) : '',
             // The gateway's underlying plugin is obviously active (aka the code is running).
-            'status' => PaymentsProviders::EXTENSION_ACTIVE,
+            'status' => Payments_Providers::EXTENSION_ACTIVE,
         ];
     }
-
     /**
      * Get the source plugin slug of a payment gateway instance.
      *
@@ -897,26 +654,22 @@ class PaymentGateway
     public function get_plugin_slug(WC_Payment_Gateway $payment_gateway): string
     {
         global $wp_theme_directories;
-
         // If the payment gateway object has a `plugin_slug` property, use it.
         // This is useful for testing.
         if (isset($payment_gateway->plugin_slug)) {
             return (string) $payment_gateway->plugin_slug;
         }
-
         $gateway_class_filename = $this->get_class_filename($payment_gateway);
         // Bail if we couldn't get the gateway class filename.
-        if (! is_string($gateway_class_filename)) {
+        if (!is_string($gateway_class_filename)) {
             return '';
         }
-
         $entity_type = $this->get_containing_entity_type($payment_gateway);
         // Bail if we couldn't determine the entity type.
-        if (PaymentsProviders::EXTENSION_TYPE_UNKNOWN === $entity_type) {
+        if (Payments_Providers::EXTENSION_TYPE_UNKNOWN === $entity_type) {
             return '';
         }
-
-        if (PaymentsProviders::EXTENSION_TYPE_THEME === $entity_type) {
+        if (Payments_Providers::EXTENSION_TYPE_THEME === $entity_type) {
             // Find the theme directory it is part of and extract the slug.
             // This accounts for both parent and child themes.
             if (is_array($wp_theme_directories)) {
@@ -926,19 +679,15 @@ class PaymentGateway
                     }
                 }
             }
-
             // Bail if we couldn't find a match.
             return '';
         }
-
         // By this point, we know that the payment gateway is part of a plugin.
         // Extract the relative path of the class file to the plugins directory.
         // We account for both regular and must-use plugins.
         $gateway_class_plugins_path = trim(plugin_basename($gateway_class_filename), DIRECTORY_SEPARATOR);
-
         return $this->extract_slug_from_path($gateway_class_plugins_path);
     }
-
     /**
      * Get the corresponding plugin file of the payment gateway, without the .php extension.
      *
@@ -958,32 +707,27 @@ class PaymentGateway
         if (isset($payment_gateway->plugin_file)) {
             $plugin_file = $payment_gateway->plugin_file;
             // Sanity check.
-            if (! is_string($plugin_file)) {
+            if (!is_string($plugin_file)) {
                 return '';
             }
             // Remove the .php extension from the file path. The WP API expects it without it.
             return Utils::trim_php_file_extension($plugin_file);
         }
-
         if (empty($plugin_slug)) {
             $plugin_slug = $this->get_plugin_slug($payment_gateway);
         }
-
         // Bail if we couldn't determine the plugin slug.
         if (empty($plugin_slug)) {
             return '';
         }
-
-        $plugin_file = PluginsHelper::get_plugin_path_from_slug($plugin_slug);
+        $plugin_file = Plugins_Helper::get_plugin_path_from_slug($plugin_slug);
         // Bail if we couldn't determine the plugin file.
-        if (! is_string($plugin_file) || empty($plugin_file)) {
+        if (!is_string($plugin_file) || empty($plugin_file)) {
             return '';
         }
-
         // Remove the .php extension from the file path. The WP API expects it without it.
         return Utils::trim_php_file_extension($plugin_file);
     }
-
     /**
      * Try and determine a list of recommended payment methods for a payment gateway.
      *
@@ -1002,53 +746,33 @@ class PaymentGateway
     public function get_recommended_payment_methods(WC_Payment_Gateway $payment_gateway, string $country_code = ''): array
     {
         // Bail if the payment gateway does not implement the method.
-        if (! method_exists($payment_gateway, 'get_recommended_payment_methods') ||
-            ! is_callable([ $payment_gateway, 'get_recommended_payment_methods' ])) {
-
+        if (!method_exists($payment_gateway, 'get_recommended_payment_methods') || !is_callable([$payment_gateway, 'get_recommended_payment_methods'])) {
             return [];
         }
-
         try {
             // Get the "raw" recommended payment methods from the payment gateway.
-            $recommended_pms = call_user_func([ $payment_gateway, 'get_recommended_payment_methods' ], $country_code);
-            if (! is_array($recommended_pms)) {
+            $recommended_pms = call_user_func([$payment_gateway, 'get_recommended_payment_methods'], $country_code);
+            if (!is_array($recommended_pms)) {
                 // Bail if the recommended payment methods are not an array.
                 return [];
             }
         } catch (Throwable $e) {
             // Log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to get recommended payment methods: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'country'   => $country_code,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
-
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to get recommended payment methods: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'country' => $country_code, 'source' => 'settings-payments', 'exception' => $e]);
             return [];
         }
-
         // Validate the received list items.
-        $recommended_pms = array_filter(
-            $recommended_pms,
-            $this->validate_recommended_payment_method(...)
-        );
-
+        $recommended_pms = array_filter($recommended_pms, $this->validate_recommended_payment_method(...));
         // Sort the list.
         $recommended_pms = $this->sort_recommended_payment_methods($recommended_pms);
-
         // Extract, standardize, and sanitize the details for each recommended payment method.
         $standardized_pms = [];
         foreach ($recommended_pms as $index => $recommended_pm) {
             // Use the index as the order since we sorted (and normalized) the list earlier.
             $standardized_pms[] = $this->standardize_recommended_payment_method($recommended_pm, $index);
         }
-
         return $standardized_pms;
     }
-
     /**
      * Validate a recommended payment method entry.
      *
@@ -1059,11 +783,8 @@ class PaymentGateway
     protected function validate_recommended_payment_method($recommended_pm): bool
     {
         // We require at least `id` and `title`.
-        return is_array($recommended_pm) &&
-                ! empty($recommended_pm['id']) &&
-                ! empty($recommended_pm['title']);
+        return is_array($recommended_pm) && !empty($recommended_pm['id']) && !empty($recommended_pm['title']);
     }
-
     /**
      * Sort the recommended payment methods.
      *
@@ -1077,15 +798,12 @@ class PaymentGateway
         // Sort the recommended payment methods by order/priority, if available.
         usort(
             $recommended_pms,
-
             // `order` takes precedence over `priority`.
             // Entries that don't have the order/priority are placed at the end.
-            fn (array $a, array $b) => [ ($a['order'] ?? PHP_INT_MAX), ($a['priority'] ?? PHP_INT_MAX) ] <=> [ ($b['order'] ?? PHP_INT_MAX), ($b['priority'] ?? PHP_INT_MAX) ]
+            fn(array $a, array $b) => [$a['order'] ?? PHP_INT_MAX, $a['priority'] ?? PHP_INT_MAX] <=> [$b['order'] ?? PHP_INT_MAX, $b['priority'] ?? PHP_INT_MAX]
         );
-
         return array_values($recommended_pms);
     }
-
     /**
      * Standardize a recommended payment method entry.
      *
@@ -1098,53 +816,38 @@ class PaymentGateway
     protected function standardize_recommended_payment_method(array $recommended_pm, int $order = 0): array
     {
         $standard_details = [
-            'id'          => sanitize_key($recommended_pm['id']),
-            '_order'      => $order,
+            'id' => sanitize_key($recommended_pm['id']),
+            '_order' => $order,
             // Default to enabled if not explicit.
-            'enabled'     => wc_string_to_bool($recommended_pm['enabled'] ?? true),
+            'enabled' => wc_string_to_bool($recommended_pm['enabled'] ?? true),
             // Default to not required if not explicit.
-            'required'    => wc_string_to_bool($recommended_pm['required'] ?? false),
-            'title'       => sanitize_text_field($recommended_pm['title']),
+            'required' => wc_string_to_bool($recommended_pm['required'] ?? false),
+            'title' => sanitize_text_field($recommended_pm['title']),
             'description' => '',
-            'icon'        => '',
-            'category'    => self::PAYMENT_METHOD_CATEGORY_PRIMARY, // Default to primary.
+            'icon' => '',
+            'category' => self::PAYMENT_METHOD_CATEGORY_PRIMARY,
         ];
-
         // If the payment method has a description, sanitize it before use.
-        if (! empty($recommended_pm['description'])) {
+        if (!empty($recommended_pm['description'])) {
             $standard_details['description'] = (string) $recommended_pm['description'];
             // Make sure that if we have HTML tags, we only allow stylistic tags and anchors.
             if (preg_match('/<[^>]+>/', $standard_details['description'])) {
                 // Only allow stylistic tags with a few modifications.
                 $allowed_tags = wp_kses_allowed_html('data');
-                $allowed_tags = array_merge(
-                    $allowed_tags,
-                    [
-                        'a' => [
-                            'href'   => true,
-                            'target' => true,
-                        ],
-                    ]
-                );
-
+                $allowed_tags = array_merge($allowed_tags, ['a' => ['href' => true, 'target' => true]]);
                 $standard_details['description'] = wp_kses($standard_details['description'], $allowed_tags);
             }
         }
-
         // If the payment method has an icon, try to use it.
-        if (! empty($recommended_pm['icon']) && wc_is_valid_url($recommended_pm['icon'])) {
+        if (!empty($recommended_pm['icon']) && wc_is_valid_url($recommended_pm['icon'])) {
             $standard_details['icon'] = sanitize_url($recommended_pm['icon']);
         }
-
         // If the payment method has a category, use it if it's one of the known categories.
-        if (! empty($recommended_pm['category']) &&
-            in_array($recommended_pm['category'], [ self::PAYMENT_METHOD_CATEGORY_PRIMARY, self::PAYMENT_METHOD_CATEGORY_SECONDARY ], true)) {
+        if (!empty($recommended_pm['category']) && in_array($recommended_pm['category'], [self::PAYMENT_METHOD_CATEGORY_PRIMARY, self::PAYMENT_METHOD_CATEGORY_SECONDARY], true)) {
             $standard_details['category'] = $recommended_pm['category'];
         }
-
         return $standard_details;
     }
-
     /**
      * Get the filename of the payment gateway class.
      *
@@ -1156,34 +859,24 @@ class PaymentGateway
     {
         // If the payment gateway object has a `class_filename` property, use it.
         // It is only used in development environments (including when running tests).
-        if (isset($payment_gateway->class_filename) && in_array(wp_get_environment_type(), [ 'local', 'development' ], true)) {
+        if (isset($payment_gateway->class_filename) && in_array(wp_get_environment_type(), ['local', 'development'], true)) {
             $class_filename = $payment_gateway->class_filename;
         } else {
             try {
-                $reflector      = new \ReflectionClass($payment_gateway::class);
-                $class_filename = $reflector->getFileName();
+                $reflector = new \ReflectionClass($payment_gateway::class);
+                $class_filename = $reflector->get_file_name();
             } catch (Throwable $e) {
                 // Bail but log so we can investigate.
-                SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                    'Failed to get gateway class filename: ' . $e->getMessage(),
-                    [
-                        'gateway'   => $payment_gateway->id,
-                        'source'    => 'settings-payments',
-                        'exception' => $e,
-                    ]
-                );
+                Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to get gateway class filename: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
                 return null;
             }
         }
-
         // Bail if we couldn't get the gateway class filename.
-        if (! is_string($class_filename)) {
+        if (!is_string($class_filename)) {
             return null;
         }
-
         return $class_filename;
     }
-
     /**
      * Get the type of entity the payment gateway class is contained in.
      *
@@ -1194,36 +887,23 @@ class PaymentGateway
     private function get_containing_entity_type(WC_Payment_Gateway $payment_gateway): string
     {
         global $wp_plugin_paths, $wp_theme_directories;
-
         // If the payment gateway object has a `extension_type` property, use it.
         // This is useful for testing.
         if (isset($payment_gateway->extension_type)) {
             // Validate the extension type.
-            if (! in_array(
-                $payment_gateway->extension_type,
-                [
-                    PaymentsProviders::EXTENSION_TYPE_WPORG,
-                    PaymentsProviders::EXTENSION_TYPE_MU_PLUGIN,
-                    PaymentsProviders::EXTENSION_TYPE_THEME,
-                ],
-                true
-            )) {
-                return PaymentsProviders::EXTENSION_TYPE_UNKNOWN;
+            if (!in_array($payment_gateway->extension_type, [Payments_Providers::EXTENSION_TYPE_WPORG, Payments_Providers::EXTENSION_TYPE_MU_PLUGIN, Payments_Providers::EXTENSION_TYPE_THEME], true)) {
+                return Payments_Providers::EXTENSION_TYPE_UNKNOWN;
             }
-
             return $payment_gateway->extension_type;
         }
-
         $gateway_class_filename = $this->get_class_filename($payment_gateway);
         // Bail if we couldn't get the gateway class filename.
-        if (! is_string($gateway_class_filename)) {
-            return PaymentsProviders::EXTENSION_TYPE_UNKNOWN;
+        if (!is_string($gateway_class_filename)) {
+            return Payments_Providers::EXTENSION_TYPE_UNKNOWN;
         }
-
         // Plugin paths logic closely matches the one in plugin_basename().
         // $wp_plugin_paths contains normalized paths.
         $file = wp_normalize_path($gateway_class_filename);
-
         arsort($wp_plugin_paths);
         // Account for symlinks in the plugin paths.
         foreach ($wp_plugin_paths as $dir => $realdir) {
@@ -1231,32 +911,27 @@ class PaymentGateway
                 $gateway_class_filename = $dir . substr($gateway_class_filename, strlen((string) $realdir));
             }
         }
-
         // Test for regular plugins.
         if (str_starts_with($gateway_class_filename, wp_normalize_path(WP_PLUGIN_DIR))) {
             // For now, all plugins are considered WordPress.org plugins.
-            return PaymentsProviders::EXTENSION_TYPE_WPORG;
+            return Payments_Providers::EXTENSION_TYPE_WPORG;
         }
-
         // Test for must-use plugins.
         if (str_starts_with($gateway_class_filename, wp_normalize_path(WPMU_PLUGIN_DIR))) {
-            return PaymentsProviders::EXTENSION_TYPE_MU_PLUGIN;
+            return Payments_Providers::EXTENSION_TYPE_MU_PLUGIN;
         }
-
         // Check if it is part of a theme.
         if (is_array($wp_theme_directories)) {
             foreach ($wp_theme_directories as $dir) {
                 // Check if the class file is in a theme directory.
                 if (str_starts_with($gateway_class_filename, (string) $dir)) {
-                    return PaymentsProviders::EXTENSION_TYPE_THEME;
+                    return Payments_Providers::EXTENSION_TYPE_THEME;
                 }
             }
         }
-
         // Default to an unknown type.
-        return PaymentsProviders::EXTENSION_TYPE_UNKNOWN;
+        return Payments_Providers::EXTENSION_TYPE_UNKNOWN;
     }
-
     /**
      * Extract the slug from a given path.
      *
@@ -1271,18 +946,15 @@ class PaymentGateway
     {
         $path = trim($path);
         $path = trim($path, DIRECTORY_SEPARATOR);
-
         // If the path is just a file name, use it as the slug.
         if (!str_contains($path, DIRECTORY_SEPARATOR)) {
             return Utils::trim_php_file_extension($path);
         }
-
         $parts = explode(DIRECTORY_SEPARATOR, $path);
         // Bail if we couldn't get the parts.
-        if (! is_array($parts)) {
+        if (!is_array($parts)) {
             return '';
         }
-
         return reset($parts);
     }
 }

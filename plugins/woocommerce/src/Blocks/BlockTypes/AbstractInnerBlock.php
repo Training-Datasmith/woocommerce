@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * AbstractInnerBlock class.
  */
-abstract class AbstractInnerBlock extends AbstractBlock
+abstract class Abstract_Inner_Block extends Abstract_Block
 {
     /**
      * Is this inner block lazy loaded? this helps us know if we should load its frontend script ot not.
@@ -15,7 +14,6 @@ abstract class AbstractInnerBlock extends AbstractBlock
      * @var boolean
      */
     protected $is_lazy_loaded = true;
-
     /**
      * Registers the block type with WordPress using the metadata file.
      *
@@ -24,24 +22,14 @@ abstract class AbstractInnerBlock extends AbstractBlock
      */
     protected function register_block_type()
     {
-        $block_settings = [
-            'render_callback' => $this->get_block_type_render_callback(),
-            'editor_style'    => $this->get_block_type_editor_style(),
-            'style'           => $this->get_block_type_style(),
-        ];
-
+        $block_settings = ['render_callback' => $this->get_block_type_render_callback(), 'editor_style' => $this->get_block_type_editor_style(), 'style' => $this->get_block_type_style()];
         if (isset($this->api_version)) {
             $block_settings['api_version'] = intval($this->api_version);
         }
-
         $metadata_path = $this->asset_api->get_block_metadata_path($this->block_name, 'inner-blocks/');
         // Prefer to register with metadata if the path is set in the block's class.
-        register_block_type_from_metadata(
-            $metadata_path,
-            $block_settings
-        );
+        register_block_type_from_metadata($metadata_path, $block_settings);
     }
-
     /**
      * For lazy loaded inner blocks, we don't want to enqueue the script but rather leave it for webpack to do that.
      *
@@ -51,14 +39,11 @@ abstract class AbstractInnerBlock extends AbstractBlock
      */
     protected function get_block_type_script($key = null)
     {
-
         if ($this->is_lazy_loaded) {
             return null;
         }
-
         return parent::get_block_type_script($key);
     }
-
     /**
      * Get the frontend style handle for this block type.
      */

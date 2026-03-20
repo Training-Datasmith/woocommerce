@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Reviews;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\Reviews;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AbstractBlock;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Abstract_Block;
 use WP_Block;
 use WP_Comment;
 use WP_Comment_Query;
-
 /**
  * ProductReviewTemplate class.
  */
-class ProductReviewTemplate extends AbstractBlock
+class Product_Review_Template extends Abstract_Block
 {
     /**
      * Block name.
@@ -20,7 +18,6 @@ class ProductReviewTemplate extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-review-template';
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -32,7 +29,6 @@ class ProductReviewTemplate extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Function that recursively renders a list of nested reviews.
      *
@@ -44,18 +40,15 @@ class ProductReviewTemplate extends AbstractBlock
     protected function block_product_review_template_render_comments(array $comments, WP_Block $block): string
     {
         $content = '';
-
         foreach ($comments as $comment) {
-            if (! $comment instanceof WP_Comment) {
+            if (!$comment instanceof WP_Comment) {
                 continue;
             }
-
-            $comment_id           = $comment->comment_ID;
+            $comment_id = $comment->comment_ID;
             $filter_block_context = static function (array $context) use ($comment_id): array {
                 $context['commentId'] = $comment_id;
                 return $context;
             };
-
             /*
              * We set commentId context through the `render_block_context` filter so
              * that dynamically inserted blocks (at `render_block` filter stage)
@@ -65,48 +58,32 @@ class ProductReviewTemplate extends AbstractBlock
              * have access to the values.
              */
             add_filter('render_block_context', $filter_block_context, 1);
-
             /*
              * We construct a new WP_Block instance from the parsed block so that
              * it'll receive any changes made by the `render_block_data` filter.
              */
-            $block_content = (new WP_Block($block->parsed_block))->render([ 'dynamic' => false ]);
-
+            $block_content = (new WP_Block($block->parsed_block))->render(['dynamic' => false]);
             remove_filter('render_block_context', $filter_block_context, 1);
-
             $children = $comment->get_children();
-
             /*
-            * We need to create the CSS classes BEFORE recursing into the children.
-            * This is because comment_class() uses globals like `$comment_alt`
-            * and `$comment_thread_alt` which are order-sensitive.
-            *
-            * The `false` parameter at the end means that we do NOT want the function
-            * to `echo` the output but to return a string.
-            * See https://developer.wordpress.org/reference/functions/comment_class/#parameters.
-            */
-            $comment_classes = comment_class(
-                '',
-                (int) $comment->comment_ID,
-                (int) $comment->comment_post_ID,
-                false
-            );
-
+             * We need to create the CSS classes BEFORE recursing into the children.
+             * This is because comment_class() uses globals like `$comment_alt`
+             * and `$comment_thread_alt` which are order-sensitive.
+             *
+             * The `false` parameter at the end means that we do NOT want the function
+             * to `echo` the output but to return a string.
+             * See https://developer.wordpress.org/reference/functions/comment_class/#parameters.
+             */
+            $comment_classes = comment_class('', (int) $comment->comment_ID, (int) $comment->comment_post_ID, false);
             // If the comment has children, recurse to create the HTML for the nested comments.
-            if (! empty($children)) {
-                $inner_content  = $this->block_product_review_template_render_comments(
-                    $children,
-                    $block,
-                );
+            if (!empty($children)) {
+                $inner_content = $this->block_product_review_template_render_comments($children, $block);
                 $block_content .= sprintf('<ol>%1$s</ol>', $inner_content);
             }
-
             $content .= sprintf('<li id="comment-%1$s" %2$s>%3$s</li>', $comment->comment_ID, $comment_classes, $block_content);
         }
-
         return $content;
     }
-
     /**
      * Render the block.
      *
@@ -120,33 +97,20 @@ class ProductReviewTemplate extends AbstractBlock
         if (empty($block->context['postId'])) {
             return '';
         }
-
         if (post_password_required($block->context['postId'])) {
             return;
         }
-
-        $comment_query = new WP_Comment_Query(
-            build_comment_query_vars_from_block($block)
-        );
-
+        $comment_query = new WP_Comment_Query(build_comment_query_vars_from_block($block));
         // Get an array of comments for the current post.
         $comments = $comment_query->get_comments();
         if (count($comments) === 0) {
             return '';
         }
-
         $comment_order = get_option('comment_order');
-
         if ('desc' === $comment_order) {
             $comments = array_reverse($comments);
         }
-
         $wrapper_attributes = get_block_wrapper_attributes();
-
-        return sprintf(
-            '<ol %1$s>%2$s</ol>',
-            $wrapper_attributes,
-            $this->block_product_review_template_render_comments($comments, $block)
-        );
+        return sprintf('<ol %1$s>%2$s</ol>', $wrapper_attributes, $this->block_product_review_template_render_comments($comments, $block));
     }
 }

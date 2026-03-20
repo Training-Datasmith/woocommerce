@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Blueprint\Exporters;
 
-namespace Automattic\WooCommerce\Admin\Features\Blueprint\Exporters;
-
-use Automattic\WooCommerce\Blueprint\Exporters\HasAlias;
-use Automattic\WooCommerce\Blueprint\Exporters\StepExporter;
-use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
-use Automattic\WooCommerce\Blueprint\UseWPFunctions;
-
+use Automattic\Woo_Commerce\Blueprint\Exporters\Has_Alias;
+use Automattic\Woo_Commerce\Blueprint\Exporters\Step_Exporter;
+use Automattic\Woo_Commerce\Blueprint\Steps\Set_Site_Options;
+use Automattic\Woo_Commerce\Blueprint\Use_Wp_Functions;
 /**
  * Class ExportWCSettingsSiteVisibility
  *
@@ -16,23 +14,16 @@ use Automattic\WooCommerce\Blueprint\UseWPFunctions;
  *
  * @package Automattic\WooCommerce\Admin\Features\Blueprint\Exporters
  */
-class ExportWCSettingsSiteVisibility implements StepExporter, HasAlias
+class Export_Wc_Settings_Site_Visibility implements Step_Exporter, Has_Alias
 {
-    use UseWPFunctions;
-
+    use Use_Wp_Functions;
     /**
      * Export Site Visibility settings.
      */
-    public function export(): \Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions
+    public function export(): \Automattic\Woo_Commerce\Blueprint\Steps\Set_Site_Options
     {
-        return new SetSiteOptions(
-            [
-                'woocommerce_coming_soon'      => $this->wp_get_option('woocommerce_coming_soon'),
-                'woocommerce_store_pages_only' => $this->wp_get_option('woocommerce_store_pages_only'),
-            ]
-        );
+        return new Set_Site_Options(['woocommerce_coming_soon' => $this->wp_get_option('woocommerce_coming_soon'), 'woocommerce_store_pages_only' => $this->wp_get_option('woocommerce_store_pages_only')]);
     }
-
     /**
      * Get the alias for this exporter.
      */
@@ -40,7 +31,6 @@ class ExportWCSettingsSiteVisibility implements StepExporter, HasAlias
     {
         return 'setWCSettingsSiteVisibility';
     }
-
     /**
      * Return label used in the frontend.
      *
@@ -50,7 +40,6 @@ class ExportWCSettingsSiteVisibility implements StepExporter, HasAlias
     {
         return __('Site Visibility', 'woocommerce');
     }
-
     /**
      * Return description used in the frontend.
      *
@@ -60,7 +49,6 @@ class ExportWCSettingsSiteVisibility implements StepExporter, HasAlias
     {
         return __('Includes all settings in WooCommerce | Settings | Visibility.', 'woocommerce');
     }
-
     /**
      * Get the name of the step.
      */
@@ -68,7 +56,6 @@ class ExportWCSettingsSiteVisibility implements StepExporter, HasAlias
     {
         return 'setSiteOptions';
     }
-
     /**
      * Check if the current user has the required capabilities for this step.
      *

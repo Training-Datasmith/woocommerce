@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Experiment Controller
  *
  * Handles requests to /experiment
  */
-
-namespace Automattic\WooCommerce\Admin\API;
+namespace Automattic\Woo_Commerce\Admin\API;
 
 defined('ABSPATH') || exit;
-
 /**
  * Data controller.
  *
@@ -24,33 +22,19 @@ class Experiments extends \WC_REST_Data_Controller
      * @var string
      */
     protected $namespace = 'wc-admin';
-
     /**
      * Route base.
      *
      * @var string
      */
     protected $rest_base = 'experiments';
-
     /**
      * Register routes.
      */
     public function register_routes(): void
     {
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/assignment',
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_assignment(...),
-                    'permission_callback' => $this->get_item_permissions_check(...),
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/assignment', [['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_assignment(...), 'permission_callback' => $this->get_item_permissions_check(...)], 'schema' => [$this, 'get_public_item_schema']]);
     }
-
     /**
      * Forward the experiment request to WP.com and return the WP.com response.
      *
@@ -61,28 +45,21 @@ class Experiments extends \WC_REST_Data_Controller
     public function get_assignment($request)
     {
         $args = $request->get_query_params();
-
-        if (! isset($args['experiment_name'])) {
-            return new \WP_Error(
-                'woocommerce_rest_experiment_name_required',
-                __('Sorry, experiment_name is required.', 'woocommerce'),
-                [ 'status' => 400 ]
-            );
+        if (!isset($args['experiment_name'])) {
+            return new \WP_Error('woocommerce_rest_experiment_name_required', __('Sorry, experiment_name is required.', 'woocommerce'), ['status' => 400]);
         }
-
         unset($args['rest_route']);
-
-        $abtest   = new \WooCommerce\Admin\Experimental_Abtest(
+        $abtest = new \Woo_Commerce\Admin\Experimental_Abtest(
             $request->get_param('anon_id') ?? '',
             'woocommerce',
-            true, // set consent to true here since frontend has checked it already.
-            true  // set true to send request as auth user.
+            true,
+            // set consent to true here since frontend has checked it already.
+            true
         );
         $response = $abtest->request_assignment($args);
         if (is_wp_error($response)) {
             return $response;
         }
-
         return json_decode((string) $response['body'], true);
     }
 }

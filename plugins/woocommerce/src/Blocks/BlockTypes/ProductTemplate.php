@@ -1,26 +1,22 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\ProductCollection\Utils as ProductCollectionUtils;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Product_Collection\Utils as ProductCollectionUtils;
 use WP_Block;
-
 /**
  * ProductTemplate class.
  */
-class ProductTemplate extends AbstractBlock
+class Product_Template extends Abstract_Block
 {
-    use EnableBlockJsonAssetsTrait;
-
+    use Enable_Block_Json_Assets_Trait;
     /**
      * Block name.
      *
      * @var string
      */
     protected $block_name = 'product-template';
-
     /**
      * Initialize this block type.
      *
@@ -33,7 +29,6 @@ class ProductTemplate extends AbstractBlock
         add_filter('block_type_metadata_settings', $this->add_block_type_metadata_settings(...), 10, 2);
         parent::initialize();
     }
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -43,7 +38,6 @@ class ProductTemplate extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Render the block.
      *
@@ -55,20 +49,16 @@ class ProductTemplate extends AbstractBlock
      */
     protected function render($attributes, $content, $block): string
     {
-        $query = ProductCollectionUtils::prepare_and_execute_query($block);
-
-        if (! $query->have_posts()) {
+        $query = Product_Collection_Utils::prepare_and_execute_query($block);
+        if (!$query->have_posts()) {
             return '';
         }
-
         if ($this->block_core_post_template_uses_featured_image($block->inner_blocks)) {
             update_post_thumbnail_cache($query);
         }
-
         $classnames = '';
         if (isset($block->context['displayLayout']) && isset($block->context['query'])) {
             $classnames = 'is-product-collection-layout-' . $block->context['displayLayout']['type'] . ' ';
-
             if (isset($block->context['displayLayout']['type']) && 'flex' === $block->context['displayLayout']['type']) {
                 if (isset($block->context['displayLayout']['shrinkColumns']) && $block->context['displayLayout']['shrinkColumns']) {
                     $classnames = "wc-block-product-template__responsive columns-{$block->context['displayLayout']['columns']}";
@@ -77,91 +67,47 @@ class ProductTemplate extends AbstractBlock
                 }
             }
         }
-
         if (isset($attributes['style']['elements']['link']['color']['text'])) {
             $classnames .= ' has-link-color';
         }
-
         $classnames .= ' wc-block-product-template';
-
-        $wrapper_attributes = get_block_wrapper_attributes(
-            [
-                'class'              => trim($classnames),
-                'data-wp-on--scroll' => 'actions.watchScroll',
-                'data-wp-init'       => 'callbacks.initResizeObserver',
-            ]
-        );
-
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => trim($classnames), 'data-wp-on--scroll' => 'actions.watchScroll', 'data-wp-init' => 'callbacks.initResizeObserver']);
         $content = '';
         while ($query->have_posts()) {
             $query->the_post();
-
             // Get an instance of the current Post Template block.
             $block_instance = $block->parsed_block;
-            $product_id     = get_the_ID();
-
+            $product_id = get_the_ID();
             // Set the block name to one that does not correspond to an existing registered block.
             // This ensures that for the inner instances of the Post Template block, we do not render any block supports.
             $block_instance['blockName'] = 'core/null';
-
             // Relay the block context to the inner blocks.
-            $available_context = array_merge(
-                (array) $block->context,
-                [
-                    'postType' => get_post_type(),
-                    'postId'   => $product_id,
-                ]
-            );
-
+            $available_context = array_merge((array) $block->context, ['postType' => get_post_type(), 'postId' => $product_id]);
             // Render the inner blocks of the Post Template block with `dynamic` set to `false` to prevent calling
             // `render_callback` and ensure that no wrapper markup is included.
-            $block_content = (
-                new WP_Block(
-                    $block_instance,
-                    $available_context
-                )
-            )->render([ 'dynamic' => false ]);
-
-            $context = [
-                'productId' => $product_id,
-            ];
-
+            $block_content = (new WP_Block($block_instance, $available_context))->render(['dynamic' => false]);
+            $context = ['productId' => $product_id];
             $li_directives = '
 				data-wp-interactive="woocommerce/product-collection"
 				data-wp-context=\'' . wp_json_encode($context, JSON_NUMERIC_CHECK | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) . '\'
 				data-wp-key="product-item-' . $product_id . '"
 			';
-
             // Wrap the render inner blocks in a `li` element with the appropriate post classes.
             $post_classes = implode(' ', get_post_class('wc-block-product'));
-            $content     .= strtr(
-                '<li class="{classes}"
+            $content .= strtr('<li class="{classes}"
 					{li_directives}
 				>
 					{content}
-				</li>',
-                [
-                    '{classes}'       => esc_attr($post_classes),
-                    '{li_directives}' => $li_directives,
-                    '{content}'       => $block_content,
-                ]
-            );
+				</li>', ['{classes}' => esc_attr($post_classes), '{li_directives}' => $li_directives, '{content}' => $block_content]);
         }
-
         /*
-        * Use this function to restore the context of the template tags
-        * from a secondary query loop back to the main query loop.
-        * Since we use two custom loops, it's safest to always restore.
-        */
+         * Use this function to restore the context of the template tags
+         * from a secondary query loop back to the main query loop.
+         * Since we use two custom loops, it's safest to always restore.
+         */
         wp_reset_postdata();
-
-        return sprintf(
-            '<ul %1$s>%2$s</ul>',
-            $wrapper_attributes,
-            $content
-        );
+        return sprintf('<ul %1$s>%2$s</ul>', $wrapper_attributes, $content);
     }
-
     /**
      * Determines whether a block list contains a block that uses the featured image.
      *
@@ -175,20 +121,15 @@ class ProductTemplate extends AbstractBlock
             if ('core/post-featured-image' === $block->name) {
                 return true;
             }
-            if (
-                'core/cover' === $block->name &&
-                ! empty($block->attributes['useFeaturedImage'])
-            ) {
+            if ('core/cover' === $block->name && !empty($block->attributes['useFeaturedImage'])) {
                 return true;
             }
             if ($block->inner_blocks && block_core_post_template_uses_featured_image($block->inner_blocks)) {
                 return true;
             }
         }
-
         return false;
     }
-
     /**
      * Product Template renders inner blocks manually so we need to skip default
      * rendering routine for its inner blocks
@@ -198,7 +139,7 @@ class ProductTemplate extends AbstractBlock
      */
     public function add_block_type_metadata_settings(array $settings, array $metadata): array
     {
-        if (! empty($metadata['name']) && 'woocommerce/product-template' === $metadata['name']) {
+        if (!empty($metadata['name']) && 'woocommerce/product-template' === $metadata['name']) {
             $settings['skip_inner_blocks'] = true;
         }
         return $settings;

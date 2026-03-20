@@ -1,23 +1,20 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Runs a single spec.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteInboxNotifications;
+namespace Automattic\Woo_Commerce\Admin\Remote_Inbox_Notifications;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\Notes\Note;
-use Automattic\WooCommerce\Admin\Notes\Notes;
-use Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\EvaluateAndGetStatus;
-use Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\RuleEvaluator;
-
+use Automattic\Woo_Commerce\Admin\Notes\Note;
+use Automattic\Woo_Commerce\Admin\Notes\Notes;
+use Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors\Evaluate_And_Get_Status;
+use Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors\Rule_Evaluator;
 /**
  * Runs a single spec.
  */
-class SpecRunner
+class Spec_Runner
 {
     /**
      * Run the spec.
@@ -28,10 +25,9 @@ class SpecRunner
     public static function run_spec($spec, $stored_state)
     {
         $data_store = Notes::load_data_store();
-
         // Create or update the note.
         $existing_note_ids = $data_store->get_notes_with_name($spec->slug);
-        if (! is_countable($existing_note_ids) || count($existing_note_ids) === 0) {
+        if (!is_countable($existing_note_ids) || count($existing_note_ids) === 0) {
             $note = new Note();
             $note->set_status(Note::E_WC_ADMIN_NOTE_PENDING);
         } else {
@@ -40,32 +36,22 @@ class SpecRunner
                 return;
             }
         }
-
         // Evaluate the spec and get the new note status.
         $previous_status = $note->get_status();
         try {
-            $status = EvaluateAndGetStatus::evaluate(
-                $spec,
-                $previous_status,
-                $stored_state,
-                new RuleEvaluator()
-            );
+            $status = Evaluate_And_Get_Status::evaluate($spec, $previous_status, $stored_state, new Rule_Evaluator());
         } catch (\Throwable $e) {
             return $e;
         }
-
         // If the status is changing, update the created date to now.
         if ($previous_status !== $status) {
             $note->set_date_created(time());
         }
-
         // Get the matching locale or fall back to en-US.
         $locale = self::get_locale($spec->locales);
-
         if ($locale === null) {
             return;
         }
-
         // Set up the note.
         $note->set_title($locale->title);
         $note->set_content($locale->content);
@@ -79,13 +65,10 @@ class SpecRunner
         if (isset($spec->layout)) {
             $note->set_layout($spec->layout);
         }
-
         // Recreate actions.
         $note->set_actions(self::get_actions($spec));
-
         $note->save();
     }
-
     /**
      * Get the URL for an action.
      *
@@ -95,20 +78,17 @@ class SpecRunner
      */
     private static function get_url($action)
     {
-        if (! isset($action->url)) {
+        if (!isset($action->url)) {
             return '';
         }
-
         if (isset($action->url_is_admin_query) && $action->url_is_admin_query) {
             if (str_starts_with($action->url, '&path')) {
                 return wc_admin_url($action->url);
             }
             return admin_url($action->url);
         }
-
         return $action->url;
     }
-
     /**
      * Get the locale for the WordPress locale, or fall back to the en_US
      * locale.
@@ -119,33 +99,18 @@ class SpecRunner
      */
     public static function get_locale($locales)
     {
-        $wp_locale           = get_user_locale();
-        $matching_wp_locales = array_values(
-            array_filter(
-                $locales,
-                fn ($l) => $wp_locale === $l->locale
-            )
-        );
-
+        $wp_locale = get_user_locale();
+        $matching_wp_locales = array_values(array_filter($locales, fn($l) => $wp_locale === $l->locale));
         if (count($matching_wp_locales) !== 0) {
             return $matching_wp_locales[0];
         }
-
         // Fall back to en_US locale.
-        $en_us_locales = array_values(
-            array_filter(
-                $locales,
-                fn ($l) => $l->locale === 'en_US'
-            )
-        );
-
+        $en_us_locales = array_values(array_filter($locales, fn($l) => $l->locale === 'en_US'));
         if (count($en_us_locales) !== 0) {
             return $en_us_locales[0];
         }
-
         return null;
     }
-
     /**
      * Get the action locale that matches the note locale, or fall back to the
      * en_US locale.
@@ -156,33 +121,18 @@ class SpecRunner
      */
     public static function get_action_locale($action_locales)
     {
-        $wp_locale           = get_user_locale();
-        $matching_wp_locales = array_values(
-            array_filter(
-                $action_locales,
-                fn ($l) => $wp_locale === $l->locale
-            )
-        );
-
+        $wp_locale = get_user_locale();
+        $matching_wp_locales = array_values(array_filter($action_locales, fn($l) => $wp_locale === $l->locale));
         if (count($matching_wp_locales) !== 0) {
             return $matching_wp_locales[0];
         }
-
         // Fall back to en_US locale.
-        $en_us_locales = array_values(
-            array_filter(
-                $action_locales,
-                fn ($l) => $l->locale === 'en_US'
-            )
-        );
-
+        $en_us_locales = array_values(array_filter($action_locales, fn($l) => $l->locale === 'en_US'));
         if (count($en_us_locales) !== 0) {
             return $en_us_locales[0];
         }
-
         return null;
     }
-
     /**
      * Get the actions for a note.
      *
@@ -192,21 +142,12 @@ class SpecRunner
      */
     public static function get_actions($spec)
     {
-        $note    = new Note();
+        $note = new Note();
         $actions = $spec->actions ?? [];
         foreach ($actions as $action) {
             $action_locale = self::get_action_locale($action->locales);
-
             $url = self::get_url($action);
-
-            $note->add_action(
-                $action->name,
-                ($action_locale === null || ! isset($action_locale->label))
-                    ? ''
-                    : $action_locale->label,
-                $url,
-                $action->status
-            );
+            $note->add_action($action->name, $action_locale === null || !isset($action_locale->label) ? '' : $action_locale->label, $url, $action->status);
         }
         return $note->get_actions();
     }

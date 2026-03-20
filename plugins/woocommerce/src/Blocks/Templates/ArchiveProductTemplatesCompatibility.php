@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Templates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Templates;
 
 /**
  * ArchiveProductTemplatesCompatibility class.
@@ -11,13 +10,12 @@ namespace Automattic\WooCommerce\Blocks\Templates;
  *
  * @internal
  */
-class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
+class Archive_Product_Templates_Compatibility extends Abstract_Template_Compatibility
 {
     /**
      * The custom ID of the loop item block as the replacement of the core/null block.
      */
     public const LOOP_ITEM_ID = 'product-loop-item';
-
     /**
      * The data of supported hooks, containing the hook name, the block name,
      * position, and the callbacks.
@@ -25,7 +23,6 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
      * @var array $hook_data The hook data.
      */
     protected $hook_data;
-
     /**
      * Update the render block data to inject our custom attribute needed to
      * determine which blocks belong to an inherited Products block.
@@ -38,11 +35,9 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
      */
     public function update_render_block_data($parsed_block, $source_block, $parent_block)
     {
-
-        if (! $this->is_archive_template()) {
+        if (!$this->is_archive_template()) {
             return $parsed_block;
         }
-
         /**
          * Custom data can be injected to top level block only, as Gutenberg
          * will use this data to render the blocks and its nested blocks.
@@ -50,12 +45,9 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
         if ($parent_block) {
             return $parsed_block;
         }
-
         $this->inner_blocks_walker($parsed_block);
-
         return $parsed_block;
     }
-
     /**
      * Inject hooks to rendered content of corresponding blocks.
      *
@@ -65,7 +57,7 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
      */
     public function inject_hooks($block_content, $block)
     {
-        if (! $this->is_archive_template()) {
+        if (!$this->is_archive_template()) {
             return $block_content;
         }
         /**
@@ -74,48 +66,24 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
         if (empty($block['attrs']['isInherited'])) {
             return $block_content;
         }
-
         $block_name = $block['blockName'];
-
         if ($this->is_null_post_template($block)) {
             $block_name = self::LOOP_ITEM_ID;
         }
-
-        $block_hooks = array_filter(
-            $this->hook_data,
-            fn (array $hook) => in_array($block_name, $hook['block_names'], true)
-        );
-
+        $block_hooks = array_filter($this->hook_data, fn(array $hook) => in_array($block_name, $hook['block_names'], true));
         // We want to inject hooks to the core/post-template or product template block only when the products exist:
         // https://github.com/woocommerce/woocommerce-blocks/issues/9463.
-        if ($this->is_post_or_product_template($block_name) && ! empty($block_content)) {
+        if ($this->is_post_or_product_template($block_name) && !empty($block_content)) {
             $this->restore_default_hooks();
-            $content = sprintf(
-                '%1$s%2$s%3$s',
-                $this->get_hooks_buffer($block_hooks, 'before'),
-                $block_content,
-                $this->get_hooks_buffer($block_hooks, 'after')
-            );
+            $content = sprintf('%1$s%2$s%3$s', $this->get_hooks_buffer($block_hooks, 'before'), $block_content, $this->get_hooks_buffer($block_hooks, 'after'));
             $this->remove_default_hooks();
             return $content;
         }
-
-        $supported_blocks = array_merge(
-            [],
-            ...array_map(
-                fn (array $hook) => $hook['block_names'],
-                array_values($this->hook_data)
-            )
-        );
-
-        if (! in_array($block_name, $supported_blocks, true)) {
+        $supported_blocks = array_merge([], ...array_map(fn(array $hook) => $hook['block_names'], array_values($this->hook_data)));
+        if (!in_array($block_name, $supported_blocks, true)) {
             return $block_content;
         }
-
-        if (
-            'core/query-no-results' === $block_name
-        ) {
-
+        if ('core/query-no-results' === $block_name) {
             /**
              * `core/query-no-result` is a special case because it can return two
              * different content depending on the context. We need to check if the
@@ -124,33 +92,16 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
             if (empty(trim((string) $block_content))) {
                 return $block_content;
             }
-
             $this->restore_default_hooks();
-
-            $content = sprintf(
-                '%1$s%2$s%3$s',
-                $this->get_hooks_buffer($block_hooks, 'before'),
-                $block_content,
-                $this->get_hooks_buffer($block_hooks, 'after')
-            );
-
+            $content = sprintf('%1$s%2$s%3$s', $this->get_hooks_buffer($block_hooks, 'before'), $block_content, $this->get_hooks_buffer($block_hooks, 'after'));
             $this->remove_default_hooks();
-
             return $content;
         }
-
         if (empty($block_content)) {
             return $block_content;
         }
-
-        return sprintf(
-            '%1$s%2$s%3$s',
-            $this->get_hooks_buffer($block_hooks, 'before'),
-            $block_content,
-            $this->get_hooks_buffer($block_hooks, 'after')
-        );
+        return sprintf('%1$s%2$s%3$s', $this->get_hooks_buffer($block_hooks, 'before'), $block_content, $this->get_hooks_buffer($block_hooks, 'after'));
     }
-
     /**
      * The hook data to inject to the rendered content of blocks. This also
      * contains hooked functions that will be removed by remove_default_hooks.
@@ -180,105 +131,8 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
      */
     protected function set_hook_data()
     {
-        $this->hook_data = [
-            'woocommerce_before_main_content'         => [
-                'block_names' => [ 'core/query', 'woocommerce/product-collection' ],
-                'position'    => 'before',
-                'hooked'      => [
-                    'woocommerce_output_content_wrapper' => 10,
-                    'woocommerce_breadcrumb'             => 20,
-                ],
-            ],
-            'woocommerce_after_main_content'          => [
-                'block_names' => [ 'core/query', 'woocommerce/product-collection' ],
-                'position'    => 'after',
-                'hooked'      => [
-                    'woocommerce_output_content_wrapper_end' => 10,
-                ],
-            ],
-            'woocommerce_before_shop_loop_item_title' => [
-                'block_names' => [ 'core/post-title' ],
-                'position'    => 'before',
-                'hooked'      => [
-                    'woocommerce_show_product_loop_sale_flash' => 10,
-                    'woocommerce_template_loop_product_thumbnail' => 10,
-                ],
-            ],
-            'woocommerce_shop_loop_item_title'        => [
-                'block_names' => [ 'core/post-title' ],
-                'position'    => 'after',
-                'hooked'      => [
-                    'woocommerce_template_loop_product_title' => 10,
-                ],
-            ],
-            'woocommerce_after_shop_loop_item_title'  => [
-                'block_names' => [ 'core/post-title' ],
-                'position'    => 'after',
-                'hooked'      => [
-                    'woocommerce_template_loop_rating' => 5,
-                    'woocommerce_template_loop_price'  => 10,
-                ],
-            ],
-            'woocommerce_before_shop_loop_item'       => [
-                'block_names' => [ self::LOOP_ITEM_ID ],
-                'position'    => 'before',
-                'hooked'      => [
-                    'woocommerce_template_loop_product_link_open' => 10,
-                ],
-            ],
-            'woocommerce_after_shop_loop_item'        => [
-                'block_names' => [ self::LOOP_ITEM_ID ],
-                'position'    => 'after',
-                'hooked'      => [
-                    'woocommerce_template_loop_product_link_close' => 5,
-                    'woocommerce_template_loop_add_to_cart' => 10,
-                ],
-            ],
-            'woocommerce_before_shop_loop'            => [
-                'block_names'                 => [ 'core/post-template', 'woocommerce/product-template' ],
-                'position'                    => 'before',
-                'hooked'                      => [
-                    'woocommerce_output_all_notices' => 10,
-                    'woocommerce_result_count'       => 20,
-                    'woocommerce_catalog_ordering'   => 30,
-                ],
-                'permanently_removed_actions' => [
-                    'woocommerce_output_all_notices',
-                    'woocommerce_result_count',
-                    'woocommerce_catalog_ordering',
-                ],
-            ],
-            'woocommerce_after_shop_loop'             => [
-                'block_names'                 => [ 'core/post-template', 'woocommerce/product-template' ],
-                'position'                    => 'after',
-                'hooked'                      => [
-                    'woocommerce_pagination' => 10,
-                ],
-                'permanently_removed_actions' => [
-                    'woocommerce_pagination',
-                ],
-            ],
-            'woocommerce_no_products_found'           => [
-                'block_names'                 => [ 'core/query-no-results' ],
-                'position'                    => 'before',
-                'hooked'                      => [
-                    'wc_no_products_found' => 10,
-                ],
-                'permanently_removed_actions' => [
-                    'wc_no_products_found',
-                ],
-            ],
-            'woocommerce_archive_description'         => [
-                'block_names' => [ 'core/term-description' ],
-                'position'    => 'before',
-                'hooked'      => [
-                    'woocommerce_taxonomy_archive_description' => 10,
-                    'woocommerce_product_archive_description'  => 10,
-                ],
-            ],
-        ];
+        $this->hook_data = ['woocommerce_before_main_content' => ['block_names' => ['core/query', 'woocommerce/product-collection'], 'position' => 'before', 'hooked' => ['woocommerce_output_content_wrapper' => 10, 'woocommerce_breadcrumb' => 20]], 'woocommerce_after_main_content' => ['block_names' => ['core/query', 'woocommerce/product-collection'], 'position' => 'after', 'hooked' => ['woocommerce_output_content_wrapper_end' => 10]], 'woocommerce_before_shop_loop_item_title' => ['block_names' => ['core/post-title'], 'position' => 'before', 'hooked' => ['woocommerce_show_product_loop_sale_flash' => 10, 'woocommerce_template_loop_product_thumbnail' => 10]], 'woocommerce_shop_loop_item_title' => ['block_names' => ['core/post-title'], 'position' => 'after', 'hooked' => ['woocommerce_template_loop_product_title' => 10]], 'woocommerce_after_shop_loop_item_title' => ['block_names' => ['core/post-title'], 'position' => 'after', 'hooked' => ['woocommerce_template_loop_rating' => 5, 'woocommerce_template_loop_price' => 10]], 'woocommerce_before_shop_loop_item' => ['block_names' => [self::LOOP_ITEM_ID], 'position' => 'before', 'hooked' => ['woocommerce_template_loop_product_link_open' => 10]], 'woocommerce_after_shop_loop_item' => ['block_names' => [self::LOOP_ITEM_ID], 'position' => 'after', 'hooked' => ['woocommerce_template_loop_product_link_close' => 5, 'woocommerce_template_loop_add_to_cart' => 10]], 'woocommerce_before_shop_loop' => ['block_names' => ['core/post-template', 'woocommerce/product-template'], 'position' => 'before', 'hooked' => ['woocommerce_output_all_notices' => 10, 'woocommerce_result_count' => 20, 'woocommerce_catalog_ordering' => 30], 'permanently_removed_actions' => ['woocommerce_output_all_notices', 'woocommerce_result_count', 'woocommerce_catalog_ordering']], 'woocommerce_after_shop_loop' => ['block_names' => ['core/post-template', 'woocommerce/product-template'], 'position' => 'after', 'hooked' => ['woocommerce_pagination' => 10], 'permanently_removed_actions' => ['woocommerce_pagination']], 'woocommerce_no_products_found' => ['block_names' => ['core/query-no-results'], 'position' => 'before', 'hooked' => ['wc_no_products_found' => 10], 'permanently_removed_actions' => ['wc_no_products_found']], 'woocommerce_archive_description' => ['block_names' => ['core/term-description'], 'position' => 'before', 'hooked' => ['woocommerce_taxonomy_archive_description' => 10, 'woocommerce_product_archive_description' => 10]]];
     }
-
     /**
      * Check if current page is a product archive template.
      */
@@ -286,7 +140,6 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
     {
         return is_shop() || is_product_taxonomy();
     }
-
     /**
      * Loop through inner blocks recursively to find the Products blocks that
      * inherits query from template.
@@ -295,35 +148,30 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
      */
     private function inner_blocks_walker(array &$block): void
     {
-        if (
-            $this->is_products_block_with_inherit_query($block) || $this->is_product_collection_block_with_inherit_query($block)
-        ) {
+        if ($this->is_products_block_with_inherit_query($block) || $this->is_product_collection_block_with_inherit_query($block)) {
             $this->inject_attribute($block);
             $this->remove_default_hooks();
         }
-
-        if (! empty($block['innerBlocks'])) {
+        if (!empty($block['innerBlocks'])) {
             array_walk($block['innerBlocks'], $this->inner_blocks_walker(...));
         }
     }
-
     /**
      * Restore default hooks except the ones that are not supposed to be re-added.
      */
     private function restore_default_hooks(): void
     {
         foreach ($this->hook_data as $hook => $data) {
-            if (! isset($data['hooked'])) {
+            if (!isset($data['hooked'])) {
                 continue;
             }
             foreach ($data['hooked'] as $callback => $priority) {
-                if (! in_array($callback, $data['permanently_removed_actions'] ?? [], true)) {
+                if (!in_array($callback, $data['permanently_removed_actions'] ?? [], true)) {
                     add_action($hook, $callback, $priority);
                 }
             }
         }
     }
-
     /**
      * Check whether block is within the product-query namespace.
      *
@@ -332,10 +180,8 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
     private function is_block_within_namespace(array $block): bool
     {
         $attributes = $block['attrs'];
-
         return isset($attributes['__woocommerceNamespace']) && 'woocommerce/product-query/product-template' === $attributes['__woocommerceNamespace'];
     }
-
     /**
      * Check whether block has isInherited attribute assigned.
      *
@@ -344,10 +190,8 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
     private function is_block_inherited(array $block): bool
     {
         $attributes = $block['attrs'];
-
         return isset($attributes['isInherited']) && 1 === $attributes['isInherited'];
     }
-
     /**
      * The core/post-template has two different block names:
      * - core/post-template when the wrapper is rendered.
@@ -358,10 +202,8 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
     private function is_null_post_template(array $block): bool
     {
         $block_name = $block['blockName'];
-
         return 'core/null' === $block_name && ($this->is_block_inherited($block) || $this->is_block_within_namespace($block));
     }
-
     /**
      * Check whether block is a Post template.
      *
@@ -371,7 +213,6 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
     {
         return 'core/post-template' === $block_name;
     }
-
     /**
      * Check whether block is a Product Template.
      *
@@ -381,7 +222,6 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
     {
         return 'woocommerce/product-template' === $block_name;
     }
-
     /**
      * Check if block is either a Post template or a Product Template
      *
@@ -394,7 +234,6 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
         }
         return (bool) $this->is_product_template($block_name);
     }
-
     /**
      * Check if the block is a Products block that inherits query from template.
      *
@@ -402,13 +241,8 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
      */
     private function is_products_block_with_inherit_query(array $block): bool
     {
-        return 'core/query' === $block['blockName'] &&
-        isset($block['attrs']['namespace']) &&
-        'woocommerce/product-query' === $block['attrs']['namespace'] &&
-        isset($block['attrs']['query']['inherit']) &&
-        $block['attrs']['query']['inherit'];
+        return 'core/query' === $block['blockName'] && isset($block['attrs']['namespace']) && 'woocommerce/product-query' === $block['attrs']['namespace'] && isset($block['attrs']['query']['inherit']) && $block['attrs']['query']['inherit'];
     }
-
     /**
      * Check if the block is a Product Collection block that inherits query from template.
      *
@@ -416,11 +250,8 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
      */
     private function is_product_collection_block_with_inherit_query(array $block): bool
     {
-        return 'woocommerce/product-collection' === $block['blockName'] &&
-        isset($block['attrs']['query']['inherit']) &&
-        $block['attrs']['query']['inherit'];
+        return 'woocommerce/product-collection' === $block['blockName'] && isset($block['attrs']['query']['inherit']) && $block['attrs']['query']['inherit'];
     }
-
     /**
      * Recursively inject the custom attribute to all nested blocks.
      *
@@ -429,8 +260,7 @@ class ArchiveProductTemplatesCompatibility extends AbstractTemplateCompatibility
     private function inject_attribute(array &$block): void
     {
         $block['attrs']['isInherited'] = 1;
-
-        if (! empty($block['innerBlocks'])) {
+        if (!empty($block['innerBlocks'])) {
             array_walk($block['innerBlocks'], $this->inject_attribute(...));
         }
     }

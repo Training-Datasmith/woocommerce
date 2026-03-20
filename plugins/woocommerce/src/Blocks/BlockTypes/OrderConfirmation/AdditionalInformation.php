@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes\OrderConfirmation;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Order_Confirmation;
 
 /**
  * AdditionalInformation class.
  */
-class AdditionalInformation extends AbstractOrderConfirmationBlock
+class Additional_Information extends Abstract_Order_Confirmation_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class AdditionalInformation extends AbstractOrderConfirmationBlock
      * @var string
      */
     protected $block_name = 'order-confirmation-additional-information';
-
     /**
      * This renders the content of the block within the wrapper.
      *
@@ -27,18 +25,15 @@ class AdditionalInformation extends AbstractOrderConfirmationBlock
      */
     protected function render_content($order, $permission = false, $attributes = [], $content = '')
     {
-        if (! $permission) {
+        if (!$permission) {
             return $content;
         }
-
         $this->remove_core_hooks();
-        $content .= $this->get_hook_content('woocommerce_thankyou_' . $order->get_payment_method(), [ $order->get_id() ]);
-        $content .= $this->get_hook_content('woocommerce_thankyou', [ $order->get_id() ]);
+        $content .= $this->get_hook_content('woocommerce_thankyou_' . $order->get_payment_method(), [$order->get_id()]);
+        $content .= $this->get_hook_content('woocommerce_thankyou', [$order->get_id()]);
         $this->restore_core_hooks();
-
         return $content;
     }
-
     /**
      * Remove core hooks from the thankyou page.
      */
@@ -46,7 +41,6 @@ class AdditionalInformation extends AbstractOrderConfirmationBlock
     {
         remove_action('woocommerce_thankyou', 'woocommerce_order_details_table', 10);
     }
-
     /**
      * Restore core hooks from the thankyou page.
      */

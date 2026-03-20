@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * CartOrderSummaryTotalsBlock class.
  */
-class CartOrderSummaryTotalsBlock extends AbstractInnerBlock
+class Cart_Order_Summary_Totals_Block extends Abstract_Inner_Block
 {
     /**
      * Block name.

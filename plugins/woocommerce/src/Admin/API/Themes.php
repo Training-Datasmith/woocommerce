@@ -1,19 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Themes Controller
  *
  * Handles requests to /themes
  */
-
-namespace Automattic\WooCommerce\Admin\API;
+namespace Automattic\Woo_Commerce\Admin\API;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\Overrides\ThemeUpgrader;
-use Automattic\WooCommerce\Admin\Overrides\ThemeUpgraderSkin;
-
+use Automattic\Woo_Commerce\Admin\Overrides\Theme_Upgrader;
+use Automattic\Woo_Commerce\Admin\Overrides\Theme_Upgrader_Skin;
 /**
  * Themes controller.
  *
@@ -28,34 +25,19 @@ class Themes extends \WC_REST_Data_Controller
      * @var string
      */
     protected $namespace = 'wc-admin';
-
     /**
      * Route base.
      *
      * @var string
      */
     protected $rest_base = 'themes';
-
     /**
      * Register routes.
      */
     public function register_routes(): void
     {
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base,
-            [
-                [
-                    'methods'             => \WP_REST_Server::EDITABLE,
-                    'callback'            => $this->upload_theme(...),
-                    'permission_callback' => $this->upload_theme_permissions_check(...),
-                    'args'                => $this->get_collection_params(),
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
+        register_rest_route($this->namespace, '/' . $this->rest_base, [['methods' => \WP_REST_Server::EDITABLE, 'callback' => $this->upload_theme(...), 'permission_callback' => $this->upload_theme_permissions_check(...), 'args' => $this->get_collection_params()], 'schema' => [$this, 'get_public_item_schema']]);
     }
-
     /**
      * Check whether a given request has permission to edit upload plugins/themes.
      *
@@ -64,13 +46,11 @@ class Themes extends \WC_REST_Data_Controller
      */
     public function upload_theme_permissions_check($request)
     {
-        if (! current_user_can('upload_themes')) {
-            return new \WP_Error('woocommerce_rest_cannot_view', __('Sorry, you are not allowed to install themes on this site.', 'woocommerce'), [ 'status' => rest_authorization_required_code() ]);
+        if (!current_user_can('upload_themes')) {
+            return new \WP_Error('woocommerce_rest_cannot_view', __('Sorry, you are not allowed to install themes on this site.', 'woocommerce'), ['status' => rest_authorization_required_code()]);
         }
-
         return true;
     }
-
     /**
      * Upload and install a theme.
      *
@@ -79,35 +59,26 @@ class Themes extends \WC_REST_Data_Controller
      */
     public function upload_theme($request)
     {
-        if (
-            ! isset($_FILES['pluginzip']) || ! isset($_FILES['pluginzip']['tmp_name']) || ! is_uploaded_file($_FILES['pluginzip']['tmp_name']) || ! is_file($_FILES['pluginzip']['tmp_name'])) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash,  WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if (!isset($_FILES['pluginzip']) || !isset($_FILES['pluginzip']['tmp_name']) || !is_uploaded_file($_FILES['pluginzip']['tmp_name']) || !is_file($_FILES['pluginzip']['tmp_name'])) {
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash,  WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             return new \WP_Error('woocommerce_rest_invalid_file', __('Specified file failed upload test.', 'woocommerce'));
         }
-
         include_once ABSPATH . 'wp-admin/includes/file.php';
         include_once ABSPATH . '/wp-admin/includes/admin.php';
         include_once ABSPATH . '/wp-admin/includes/theme-install.php';
         include_once ABSPATH . '/wp-admin/includes/theme.php';
         include_once ABSPATH . '/wp-admin/includes/class-wp-upgrader.php';
         include_once ABSPATH . '/wp-admin/includes/class-theme-upgrader.php';
-
         $_GET['package'] = true;
-        $file_upload     = new \File_Upload_Upgrader('pluginzip', 'package');
-        $upgrader        = new ThemeUpgrader(new ThemeUpgraderSkin());
-        $install         = $upgrader->install($file_upload->package);
-
+        $file_upload = new \File_Upload_Upgrader('pluginzip', 'package');
+        $upgrader = new Theme_Upgrader(new Theme_Upgrader_Skin());
+        $install = $upgrader->install($file_upload->package);
         if ($install || is_wp_error($install)) {
             $file_upload->cleanup();
         }
-
-        if (! is_wp_error($install) && isset($install['destination_name'])) {
-            $theme  = $install['destination_name'];
-            $result = [
-                'status'  => 'success',
-                'message' => $upgrader->strings['process_success'],
-                'theme'   => $theme,
-            ];
-
+        if (!is_wp_error($install) && isset($install['destination_name'])) {
+            $theme = $install['destination_name'];
+            $result = ['status' => 'success', 'message' => $upgrader->strings['process_success'], 'theme' => $theme];
             /**
              * Fires when a theme is successfully installed.
              *
@@ -116,23 +87,16 @@ class Themes extends \WC_REST_Data_Controller
             do_action('woocommerce_theme_installed', $theme);
         } else {
             if (is_wp_error($install) && $install->get_error_code()) {
-                $error_message = $upgrader->strings[ $install->get_error_code() ] ?? $install->get_error_data();
+                $error_message = $upgrader->strings[$install->get_error_code()] ?? $install->get_error_data();
             } else {
                 $error_message = $upgrader->strings['process_failed'];
             }
-
-            $result = [
-                'status'  => 'error',
-                'message' => $error_message,
-            ];
+            $result = ['status' => 'error', 'message' => $error_message];
         }
-
         $response = $this->prepare_item_for_response($result, $request);
-        $data     = $this->prepare_response_for_collection($response);
-
+        $data = $this->prepare_response_for_collection($response);
         return rest_ensure_response($data);
     }
-
     /**
      * Prepare the data object for response.
      *
@@ -142,10 +106,9 @@ class Themes extends \WC_REST_Data_Controller
      */
     public function prepare_item_for_response($item, $request)
     {
-        $data     = $this->add_additional_fields_to_object($item, $request);
-        $data     = $this->filter_response_by_context($data, 'view');
+        $data = $this->add_additional_fields_to_object($item, $request);
+        $data = $this->filter_response_by_context($data, 'view');
         $response = rest_ensure_response($data);
-
         /**
          * Filter the list returned from the API.
          *
@@ -155,7 +118,6 @@ class Themes extends \WC_REST_Data_Controller
          */
         return apply_filters('woocommerce_rest_prepare_themes', $response, $item, $request);
     }
-
     /**
      * Get the schema, conforming to JSON Schema.
      *
@@ -163,35 +125,9 @@ class Themes extends \WC_REST_Data_Controller
      */
     public function get_item_schema()
     {
-        $schema = [
-            '$schema'    => 'http://json-schema.org/draft-04/schema#',
-            'title'      => 'upload_theme',
-            'type'       => 'object',
-            'properties' => [
-                'status'  => [
-                    'description' => __('Theme installation status.', 'woocommerce'),
-                    'type'        => 'string',
-                    'context'     => [ 'view', 'edit' ],
-                    'readonly'    => true,
-                ],
-                'message' => [
-                    'description' => __('Theme installation message.', 'woocommerce'),
-                    'type'        => 'string',
-                    'context'     => [ 'view', 'edit' ],
-                    'readonly'    => true,
-                ],
-                'theme'   => [
-                    'description' => __('Uploaded theme.', 'woocommerce'),
-                    'type'        => 'object',
-                    'context'     => [ 'view', 'edit' ],
-                    'readonly'    => true,
-                ],
-            ],
-        ];
-
+        $schema = ['$schema' => 'http://json-schema.org/draft-04/schema#', 'title' => 'upload_theme', 'type' => 'object', 'properties' => ['status' => ['description' => __('Theme installation status.', 'woocommerce'), 'type' => 'string', 'context' => ['view', 'edit'], 'readonly' => true], 'message' => ['description' => __('Theme installation message.', 'woocommerce'), 'type' => 'string', 'context' => ['view', 'edit'], 'readonly' => true], 'theme' => ['description' => __('Uploaded theme.', 'woocommerce'), 'type' => 'object', 'context' => ['view', 'edit'], 'readonly' => true]]];
         return $this->add_additional_fields_schema($schema);
     }
-
     /**
      * Get the query params for collections.
      *
@@ -199,13 +135,8 @@ class Themes extends \WC_REST_Data_Controller
      */
     public function get_collection_params()
     {
-        $params              = [ 'context' => $this->get_context_param([ 'default' => 'view' ]) ];
-        $params['pluginzip'] = [
-            'description'       => __('A zip file of the theme to be uploaded.', 'woocommerce'),
-            'type'              => 'file',
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-
+        $params = ['context' => $this->get_context_param(['default' => 'view'])];
+        $params['pluginzip'] = ['description' => __('A zip file of the theme to be uploaded.', 'woocommerce'), 'type' => 'file', 'validate_callback' => 'rest_validate_request_arg'];
         return apply_filters('woocommerce_rest_themes_collection_params', $params);
     }
 }

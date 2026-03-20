@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Import_Export;
 
-namespace Automattic\WooCommerce\Internal\Admin\ImportExport;
-
-use Automattic\WooCommerce\Internal\Utilities\FilesystemUtil;
-
+use Automattic\Woo_Commerce\Internal\Utilities\Filesystem_Util;
 /**
  * Helper for CSV import functionality.
  *
  * @since 9.3.0
  */
-class CSVUploadHelper
+class Csv_Upload_Helper
 {
     /**
      * Name (inside the uploads folder) to use for the CSV import directory.
@@ -20,7 +18,6 @@ class CSVUploadHelper
     {
         return 'wc-imports';
     }
-
     /**
      * Returns the full path to the CSV import directory within the uploads folder.
      * It will attempt to create the directory if it doesn't exist.
@@ -34,14 +31,12 @@ class CSVUploadHelper
         if ($wp_upload_dir['error']) {
             throw new \Exception(esc_html($wp_upload_dir['error']));
         }
-
         $upload_dir = trailingslashit($wp_upload_dir['basedir']) . $this->get_import_subdir_name();
         if ($create) {
-            FilesystemUtil::mkdir_p_not_indexable($upload_dir);
+            Filesystem_Util::mkdir_p_not_indexable($upload_dir);
         }
         return $upload_dir;
     }
-
     /**
      * Handles a CSV file upload.
      *
@@ -60,74 +55,59 @@ class CSVUploadHelper
     public function handle_csv_upload(string $import_type, string $files_index = 'import', ?array $allowed_mime_types = null): array
     {
         $import_type = sanitize_key($import_type);
-        if (! $import_type) {
+        if (!$import_type) {
             throw new \Exception('Import type is invalid.');
         }
-
-        if (! $allowed_mime_types) {
-            $allowed_mime_types = [
-                'csv' => 'text/csv',
-                'txt' => 'text/plain',
-            ];
+        if (!$allowed_mime_types) {
+            $allowed_mime_types = ['csv' => 'text/csv', 'txt' => 'text/plain'];
         }
-
-        $file = $_FILES[ $files_index ] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Missing
-        if (! isset($file['tmp_name']) || ! is_uploaded_file($file['tmp_name'])) {
+        $file = $_FILES[$files_index] ?? null;
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Missing
+        if (!isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
             throw new \Exception(esc_html__('File is empty. Please upload something more substantial. This error could also be caused by uploads being disabled in your php.ini or by post_max_size being defined as smaller than upload_max_filesize in php.ini.', 'woocommerce'));
         }
-
-        if (! function_exists('wp_import_handle_upload')) {
+        if (!function_exists('wp_import_handle_upload')) {
             require_once ABSPATH . 'wp-admin/includes/import.php';
         }
-
         // Make sure upload dir exists.
         $this->get_import_dir();
-
         // Add prefix.
         $file['name'] = $import_type . '-' . $file['name'];
-
         $overrides_callback = function (array $overrides_) use ($allowed_mime_types): array {
             $overrides_['test_form'] = false;
             $overrides_['test_type'] = true;
-            $overrides_['mimes']     = $allowed_mime_types;
+            $overrides_['mimes'] = $allowed_mime_types;
             return $overrides_;
         };
-
         add_filter('upload_dir', $this->override_upload_dir(...));
         add_filter('wp_unique_filename', $this->override_unique_filename(...), 0, 2);
         add_filter('wp_handle_upload_overrides', $overrides_callback, 999);
         add_filter('wp_handle_upload_prefilter', $this->remove_txt_from_uploaded_file(...), 0);
         add_filter('wp_check_filetype_and_ext', $this->filter_woocommerce_check_filetype_for_csv(...), 10, 5);
-
-        $orig_files_import = $_FILES['import'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Missing
-        $_FILES['import']  = $file;  // wp_import_handle_upload() expects the file to be in 'import'.
-
+        $orig_files_import = $_FILES['import'] ?? null;
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Missing
+        $_FILES['import'] = $file;
+        // wp_import_handle_upload() expects the file to be in 'import'.
         $upload = wp_import_handle_upload();
-
         remove_filter('upload_dir', $this->override_upload_dir(...));
         remove_filter('wp_unique_filename', $this->override_unique_filename(...), 0);
         remove_filter('wp_handle_upload_overrides', $overrides_callback, 999);
         remove_filter('wp_handle_upload_prefilter', $this->remove_txt_from_uploaded_file(...), 0);
         remove_filter('wp_check_filetype_and_ext', $this->filter_woocommerce_check_filetype_for_csv(...), 10);
-
         if ($orig_files_import) {
             $_FILES['import'] = $orig_files_import;
         } else {
             unset($_FILES['import']);
         }
-
-        if (! empty($upload['error'])) {
+        if (!empty($upload['error'])) {
             throw new \Exception(esc_html($upload['error']));
         }
-
-        if (! wc_is_file_valid_csv($upload['file'], false)) {
+        if (!wc_is_file_valid_csv($upload['file'], false)) {
             wp_delete_attachment($file['id'], true);
             throw new \Exception(esc_html__('Invalid file type for a CSV import.', 'woocommerce'));
         }
-
         return $upload;
     }
-
     /**
      * Hooked onto 'upload_dir' to override the default upload directory for a CSV upload.
      *
@@ -138,14 +118,11 @@ class CSVUploadHelper
     public function override_upload_dir(array $uploads): array
     {
         $new_subdir = '/' . $this->get_import_subdir_name();
-
-        $uploads['path']   = $uploads['basedir'] . $new_subdir;
-        $uploads['url']    = $uploads['baseurl'] . $new_subdir;
+        $uploads['path'] = $uploads['basedir'] . $new_subdir;
+        $uploads['url'] = $uploads['baseurl'] . $new_subdir;
         $uploads['subdir'] = $new_subdir;
-
         return $uploads;
     }
-
     /**
      * Adds a random string to the name of an uploaded CSV file to make it less discoverable. Hooked onto 'wp_unique_filename'.
      *
@@ -158,13 +135,11 @@ class CSVUploadHelper
     {
         $length = min(10, 255 - strlen($filename) - 1);
         if (1 < $length) {
-            $suffix   = strtolower(wp_generate_password($length, false, false));
+            $suffix = strtolower(wp_generate_password($length, false, false));
             $filename = substr($filename, 0, strlen($filename) - strlen($ext)) . '-' . $suffix . $ext;
         }
-
         return $filename;
     }
-
     /**
      * `wp_import_handle_upload()` appends .txt to any file name. This function is hooked onto 'wp_handle_upload_prefilter'
      * to remove those extra characters.
@@ -179,7 +154,6 @@ class CSVUploadHelper
         $file['name'] = substr((string) $file['name'], 0, -4);
         return $file;
     }
-
     /**
      * Filters the WordPress determination of a file's type and extension, specifically to correct
      * CSV files that are misidentified as 'text/html'.
@@ -198,16 +172,13 @@ class CSVUploadHelper
             // Determine the expected file type based on the filename extension.
             // $mimes here is the context-specific list of mimes for the current upload.
             $filename_check = wp_check_filetype($filename, $mimes);
-
-            $file_ext  = $filename_check['ext'];
+            $file_ext = $filename_check['ext'];
             $file_type = $filename_check['type'];
-
-            if (('csv' === $file_ext && 'text/csv' === $file_type)) {
-                $data['ext']  = 'csv';
+            if ('csv' === $file_ext && 'text/csv' === $file_type) {
+                $data['ext'] = 'csv';
                 $data['type'] = 'text/csv';
             }
         }
-
         return $data;
     }
 }

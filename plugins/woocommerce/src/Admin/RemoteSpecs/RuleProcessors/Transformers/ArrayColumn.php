@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors\Transformers;
 
 use InvalidArgumentException;
 use stdClass;
-
 /**
  * Search array value by one of its key.
  *
  * @package Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers
  */
-class ArrayColumn implements TransformerInterface
+class Array_Column implements Transformer_Interface
 {
     /**
      * Search array value by one of its key.
@@ -27,13 +25,11 @@ class ArrayColumn implements TransformerInterface
      */
     public function transform($value, ?stdClass $arguments = null, $default_value = [])
     {
-        if (! is_array($value)) {
+        if (!is_array($value)) {
             return $default_value;
         }
-
         return array_column($value, $arguments->key);
     }
-
     /**
      * Validate Transformer arguments.
      *
@@ -41,18 +37,12 @@ class ArrayColumn implements TransformerInterface
      */
     public function validate(?stdClass $arguments = null): bool
     {
-        if (! isset($arguments->key)) {
+        if (!isset($arguments->key)) {
             return false;
         }
-
-        if (
-            null !== $arguments->key &&
-            ! is_string($arguments->key) &&
-            ! is_int($arguments->key)
-        ) {
+        if (null !== $arguments->key && !is_string($arguments->key) && !is_int($arguments->key)) {
             return false;
         }
-
         return true;
     }
 }

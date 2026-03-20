@@ -1,20 +1,19 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Represents a marketing campaign type supported by a marketing channel.
  *
  * Marketing channels (implementing MarketingChannelInterface) can use this class to define what kind of campaigns they support.
  */
-
-namespace Automattic\WooCommerce\Admin\Marketing;
+namespace Automattic\Woo_Commerce\Admin\Marketing;
 
 /**
  * MarketingCampaignType class
  *
  * @since x.x.x
  */
-class MarketingCampaignType
+class Marketing_Campaign_Type
 {
     /**
      * MarketingCampaignType constructor.
@@ -26,10 +25,9 @@ class MarketingCampaignType
      * @param string                    $create_url  The URL to the create campaign page.
      * @param string                    $icon_url    The URL to an image/icon for the campaign type.
      */
-    public function __construct(protected string $id, protected \Automattic\WooCommerce\Admin\Marketing\MarketingChannelInterface $channel, protected string $name, protected string $description, protected string $create_url, protected string $icon_url)
+    public function __construct(protected string $id, protected \Automattic\Woo_Commerce\Admin\Marketing\Marketing_Channel_Interface $channel, protected string $name, protected string $description, protected string $create_url, protected string $icon_url)
     {
     }
-
     /**
      * Returns the marketing campaign's unique identifier.
      */
@@ -37,15 +35,13 @@ class MarketingCampaignType
     {
         return $this->id;
     }
-
     /**
      * Returns the marketing channel that this campaign type belongs to.
      */
-    public function get_channel(): MarketingChannelInterface
+    public function get_channel(): Marketing_Channel_Interface
     {
         return $this->channel;
     }
-
     /**
      * Returns the name of the marketing campaign type.
      */
@@ -53,7 +49,6 @@ class MarketingCampaignType
     {
         return $this->name;
     }
-
     /**
      * Returns the description of the marketing campaign type.
      */
@@ -61,7 +56,6 @@ class MarketingCampaignType
     {
         return $this->description;
     }
-
     /**
      * Returns the URL to the create campaign page.
      */
@@ -69,7 +63,6 @@ class MarketingCampaignType
     {
         return $this->create_url;
     }
-
     /**
      * Returns the URL to an image/icon for the campaign type.
      */

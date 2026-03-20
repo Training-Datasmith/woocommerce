@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Templates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Templates;
 
 /**
  * CheckoutTemplate class.
  *
  * @internal
  */
-class CheckoutTemplate extends AbstractPageTemplate
+class Checkout_Template extends Abstract_Page_Template
 {
     /**
      * The slug of the template.
@@ -17,7 +16,6 @@ class CheckoutTemplate extends AbstractPageTemplate
      * @var string
      */
     public const SLUG = 'page-checkout';
-
     /**
      * Returns the title of the template.
      *
@@ -27,7 +25,6 @@ class CheckoutTemplate extends AbstractPageTemplate
     {
         return _x('Page: Checkout', 'Template name', 'woocommerce');
     }
-
     /**
      * Returns the description of the template.
      *
@@ -37,7 +34,6 @@ class CheckoutTemplate extends AbstractPageTemplate
     {
         return __('The Checkout template guides users through the final steps of the purchase process. It enables users to enter shipping and billing information, select a payment method, and review order details.', 'woocommerce');
     }
-
     /**
      * Returns the page object assigned to this template/page.
      *
@@ -48,7 +44,6 @@ class CheckoutTemplate extends AbstractPageTemplate
         $page_id = wc_get_page_id('checkout');
         return $page_id ? get_post($page_id) : null;
     }
-
     /**
      * True when viewing the checkout page or checkout endpoint.
      */
@@ -58,7 +53,6 @@ class CheckoutTemplate extends AbstractPageTemplate
         $placeholder = $this->get_placeholder_page();
         return null !== $placeholder && $post instanceof \WP_Post && $placeholder->post_name === $post->post_name;
     }
-
     /**
      * When the page should be displaying the template, add it to the hierarchy.
      *

@@ -1,23 +1,21 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * AttributeFilter class.
  */
-class AttributeFilter extends AbstractBlock
+class Attribute_Filter extends Abstract_Block
 {
     /**
      * Block name.
      *
      * @var string
      */
-    protected $block_name             = 'attribute-filter';
-    public const FILTER_QUERY_VAR_PREFIX     = 'filter_';
+    protected $block_name = 'attribute-filter';
+    public const FILTER_QUERY_VAR_PREFIX = 'filter_';
     public const QUERY_TYPE_QUERY_VAR_PREFIX = 'query_type_';
-
     /**
      * Extra data passed through from server to client for block.
      *
@@ -29,21 +27,17 @@ class AttributeFilter extends AbstractBlock
     {
         parent::enqueue_data($attributes);
         $this->asset_data_registry->add('attributes', array_values(wc_get_attribute_taxonomies()));
-
         // Enqueue any `queryState` that the UI will need to be aware of
         // (Ex: the category id if we're on a category page, the tag id if we're on a tag page/etc).
         $query_state = [];
-
         if (is_product_category()) {
             $query_state['category'] = get_queried_object_id();
         }
         if (is_product_tag()) {
             $query_state['tag'] = get_queried_object()->term_id;
         }
-
         $this->asset_data_registry->add('queryState', $query_state);
     }
-
     /**
      * Get the frontend style handle for this block type.
      *
@@ -51,6 +45,6 @@ class AttributeFilter extends AbstractBlock
      */
     protected function get_block_type_style(): array
     {
-        return array_merge(parent::get_block_type_style(), [ 'wc-blocks-packages-style' ]);
+        return array_merge(parent::get_block_type_style(), ['wc-blocks-packages-style']);
     }
 }

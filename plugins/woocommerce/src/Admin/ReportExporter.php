@@ -1,27 +1,24 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Handles reports CSV export.
  */
+namespace Automattic\Woo_Commerce\Admin;
 
-namespace Automattic\WooCommerce\Admin;
-
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit;
 }
-
-use Automattic\WooCommerce\Admin\Schedulers\SchedulerTraits;
-
+use Automattic\Woo_Commerce\Admin\Schedulers\Scheduler_Traits;
 /**
  * ReportExporter Class.
  */
-class ReportExporter
+class Report_Exporter
 {
     /**
      * Scheduler traits.
      */
-    use SchedulerTraits {
+    use Scheduler_Traits {
         init as scheduler_init;
     }
     /**
@@ -30,39 +27,29 @@ class ReportExporter
      * @var string
      */
     public static $name = 'report_exporter';
-
     /**
      * Export status option name.
      */
     public const EXPORT_STATUS_OPTION = 'woocommerce_admin_report_export_status';
-
     /**
      * Export file download action.
      */
     public const DOWNLOAD_EXPORT_ACTION = 'woocommerce_admin_download_report_csv';
-
     /**
      * Get all available scheduling actions.
      * Used to determine action hook names and clear events.
      */
     public static function get_scheduler_actions(): array
     {
-        return [
-            'export_report'              => 'woocommerce_admin_report_export',
-            'email_report_download_link' => 'woocommerce_admin_email_report_download_link',
-        ];
+        return ['export_report' => 'woocommerce_admin_report_export', 'email_report_download_link' => 'woocommerce_admin_email_report_download_link'];
     }
-
     /**
      * Add action dependencies.
      */
     public static function get_dependencies(): array
     {
-        return [
-            'email_report_download_link' => self::get_action('export_report'),
-        ];
+        return ['email_report_download_link' => self::get_action('export_report')];
     }
-
     /**
      * Hook in action methods.
      */
@@ -70,11 +57,9 @@ class ReportExporter
     {
         // Initialize scheduled action handlers.
         self::scheduler_init();
-
         // Report download handler.
         add_action('admin_init', self::download_export_file(...));
     }
-
     /**
      * Queue up actions for a full report export.
      *
@@ -86,28 +71,22 @@ class ReportExporter
      */
     public static function queue_report_export($export_id, $report_type, $report_args = [], $send_email = false)
     {
-        $exporter = new ReportCSVExporter($report_type, $report_args);
+        $exporter = new Report_Csv_Exporter($report_type, $report_args);
         $exporter->prepare_data_to_export();
-
-        $total_rows  = $exporter->get_total_rows();
-        $batch_size  = $exporter->get_limit();
+        $total_rows = $exporter->get_total_rows();
+        $batch_size = $exporter->get_limit();
         $num_batches = (int) ceil($total_rows / $batch_size);
-
         // Create batches, like initial import.
-        $report_batch_args = [ $export_id, $report_type, $report_args ];
-
+        $report_batch_args = [$export_id, $report_type, $report_args];
         if (0 < $num_batches) {
             self::queue_batches(1, $num_batches, 'export_report', $report_batch_args);
-
             if ($send_email) {
-                $email_action_args = [ get_current_user_id(), $export_id, $report_type ];
+                $email_action_args = [get_current_user_id(), $export_id, $report_type];
                 self::schedule_action('email_report_download_link', $email_action_args);
             }
         }
-
         return $total_rows;
     }
-
     /**
      * Process a report export action.
      *
@@ -119,14 +98,11 @@ class ReportExporter
     public static function export_report($page_number, $export_id, $report_type, array $report_args): void
     {
         $report_args['page'] = $page_number;
-
-        $exporter = new ReportCSVExporter($report_type, $report_args);
+        $exporter = new Report_Csv_Exporter($report_type, $report_args);
         $exporter->set_filename("wc-{$report_type}-report-export-{$export_id}");
         $exporter->generate_file();
-
         self::update_export_percentage_complete($report_type, $export_id, $exporter->get_percent_complete());
     }
-
     /**
      * Generate a key to reference an export status.
      *
@@ -138,7 +114,6 @@ class ReportExporter
     {
         return $report_type . ':' . $export_id;
     }
-
     /**
      * Update the completion percentage of a report export.
      *
@@ -149,13 +124,10 @@ class ReportExporter
     public static function update_export_percentage_complete($report_type, $export_id, $percentage): void
     {
         $exports_status = get_option(self::EXPORT_STATUS_OPTION, []);
-        $status_key     = self::get_status_key($report_type, $export_id);
-
-        $exports_status[ $status_key ] = $percentage;
-
+        $status_key = self::get_status_key($report_type, $export_id);
+        $exports_status[$status_key] = $percentage;
         update_option(self::EXPORT_STATUS_OPTION, $exports_status);
     }
-
     /**
      * Get the completion percentage of a report export.
      *
@@ -166,29 +138,22 @@ class ReportExporter
     public static function get_export_percentage_complete($report_type, $export_id)
     {
         $exports_status = get_option(self::EXPORT_STATUS_OPTION, []);
-        $status_key     = self::get_status_key($report_type, $export_id);
-
-        return $exports_status[ $status_key ] ?? false;
+        $status_key = self::get_status_key($report_type, $export_id);
+        return $exports_status[$status_key] ?? false;
     }
-
     /**
      * Serve the export file.
      */
     public static function download_export_file(): void
     {
         // @todo - add nonce? (nonces are good for 24 hours)
-        if (
-            isset($_GET['action']) &&
-            ! empty($_GET['filename']) &&
-            self::DOWNLOAD_EXPORT_ACTION === wp_unslash($_GET['action']) && // WPCS: input var ok, sanitization ok.
-            current_user_can('view_woocommerce_reports')
-        ) {
-            $exporter = new ReportCSVExporter();
-            $exporter->set_filename(wp_unslash($_GET['filename'])); // WPCS: input var ok, sanitization ok.
+        if (isset($_GET['action']) && !empty($_GET['filename']) && self::DOWNLOAD_EXPORT_ACTION === wp_unslash($_GET['action']) && current_user_can('view_woocommerce_reports')) {
+            $exporter = new Report_Csv_Exporter();
+            $exporter->set_filename(wp_unslash($_GET['filename']));
+            // WPCS: input var ok, sanitization ok.
             $exporter->export();
         }
     }
-
     /**
      * Process a report export email action.
      *
@@ -199,16 +164,11 @@ class ReportExporter
     public static function email_report_download_link($user_id, $export_id, $report_type): void
     {
         $percent_complete = self::get_export_percentage_complete($report_type, $export_id);
-
         if (100 === $percent_complete) {
-            $query_args   = [
-                'action'   => self::DOWNLOAD_EXPORT_ACTION,
-                'filename' => "wc-{$report_type}-report-export-{$export_id}",
-            ];
+            $query_args = ['action' => self::DOWNLOAD_EXPORT_ACTION, 'filename' => "wc-{$report_type}-report-export-{$export_id}"];
             $download_url = add_query_arg($query_args, admin_url());
-
             \WC_Emails::instance();
-            $email = new ReportCSVEmail();
+            $email = new Report_Csv_Email();
             $email->trigger($user_id, $report_type, $download_url);
         }
     }

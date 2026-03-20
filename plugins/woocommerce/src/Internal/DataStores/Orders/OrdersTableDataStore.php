@@ -1,165 +1,95 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * OrdersTableDataStore class file.
  */
-
-namespace Automattic\WooCommerce\Internal\DataStores\Orders;
+namespace Automattic\Woo_Commerce\Internal\Data_Stores\Orders;
 
 use Automattic\Jetpack\Constants;
-use Automattic\WooCommerce\Admin\Features\Fulfillments\FulfillmentUtils;
-use Automattic\WooCommerce\Caches\OrderCache;
-use Automattic\WooCommerce\Caching\WPCacheEngine;
-use Automattic\WooCommerce\Enums\OrderInternalStatus;
-use Automattic\WooCommerce\Internal\Admin\Orders\EditLock;
-use Automattic\WooCommerce\Internal\CostOfGoodsSold\CogsAwareTrait;
-use Automattic\WooCommerce\Internal\Utilities\DatabaseUtil;
-use Automattic\WooCommerce\Proxies\LegacyProxy;
-use Automattic\WooCommerce\Utilities\ArrayUtil;
-use Automattic\WooCommerce\Utilities\OrderUtil;
+use Automattic\Woo_Commerce\Admin\Features\Fulfillments\Fulfillment_Utils;
+use Automattic\Woo_Commerce\Caches\Order_Cache;
+use Automattic\Woo_Commerce\Caching\Wp_Cache_Engine;
+use Automattic\Woo_Commerce\Enums\Order_Internal_Status;
+use Automattic\Woo_Commerce\Internal\Admin\Orders\Edit_Lock;
+use Automattic\Woo_Commerce\Internal\Cost_Of_Goods_Sold\Cogs_Aware_Trait;
+use Automattic\Woo_Commerce\Internal\Utilities\Database_Util;
+use Automattic\Woo_Commerce\Proxies\Legacy_Proxy;
+use Automattic\Woo_Commerce\Utilities\Array_Util;
+use Automattic\Woo_Commerce\Utilities\Order_Util;
 use Exception;
 use WC_Abstract_Order;
 use WC_Data;
 use WC_Order;
-
 defined('ABSPATH') || exit;
-
 /**
  * This class is the standard data store to be used when the custom orders table is in use.
  */
-class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements \WC_Object_Data_Store_Interface, \WC_Order_Data_Store_Interface
+class Orders_Table_Data_Store extends \Abstract_WC_Order_Data_Store_CPT implements \WC_Object_Data_Store_Interface, \WC_Order_Data_Store_Interface
 {
-    use CogsAwareTrait;
-
+    use Cogs_Aware_Trait;
     /**
      * Order IDs for which we are checking sync on read in the current request. In WooCommerce, using wc_get_order is a very common pattern, to avoid performance issues, we only sync on read once per request per order. This works because we consider out of sync orders to be an anomaly, so we don't recommend running HPOS with incompatible plugins.
      *
      * @var array
      */
     private static $reading_order_ids = [];
-
     /**
      * Keep track of order IDs that are actively being backfilled. We use this to prevent further read on sync from add_|update_|delete_postmeta etc hooks. If we allow this, then we would end up syncing the same order multiple times as it is being backfilled.
      */
     private static array $backfilling_order_ids = [];
-
     /**
      * Keep track of order IDs (as keys) that are being synced on read. This is used to prevent backfilling to posts of an order being updated
      * from posts.
      */
     private static array $sync_on_read_order_ids = [];
-
     /**
      * Data stored in meta keys, but not considered "meta" for an order.
      *
      * @since 7.0.0
      * @var array
      */
-    protected $internal_meta_keys = [
-        '_customer_user',
-        '_order_key',
-        '_order_currency',
-        '_billing_first_name',
-        '_billing_last_name',
-        '_billing_company',
-        '_billing_address_1',
-        '_billing_address_2',
-        '_billing_city',
-        '_billing_state',
-        '_billing_postcode',
-        '_billing_country',
-        '_billing_email',
-        '_billing_phone',
-        '_shipping_first_name',
-        '_shipping_last_name',
-        '_shipping_company',
-        '_shipping_address_1',
-        '_shipping_address_2',
-        '_shipping_city',
-        '_shipping_state',
-        '_shipping_postcode',
-        '_shipping_country',
-        '_shipping_phone',
-        '_completed_date',
-        '_paid_date',
-        '_edit_last',
-        '_cart_discount',
-        '_cart_discount_tax',
-        '_order_shipping',
-        '_order_shipping_tax',
-        '_order_tax',
-        '_order_total',
-        '_payment_method',
-        '_payment_method_title',
-        '_transaction_id',
-        '_customer_ip_address',
-        '_customer_user_agent',
-        '_created_via',
-        '_order_version',
-        '_prices_include_tax',
-        '_date_completed',
-        '_date_paid',
-        '_payment_tokens',
-        '_billing_address_index',
-        '_shipping_address_index',
-        '_recorded_sales',
-        '_recorded_coupon_usage_counts',
-        '_download_permissions_granted',
-        '_order_stock_reduced',
-        '_new_order_email_sent',
-        '_cogs_total_value',
-    ];
-
+    protected $internal_meta_keys = ['_customer_user', '_order_key', '_order_currency', '_billing_first_name', '_billing_last_name', '_billing_company', '_billing_address_1', '_billing_address_2', '_billing_city', '_billing_state', '_billing_postcode', '_billing_country', '_billing_email', '_billing_phone', '_shipping_first_name', '_shipping_last_name', '_shipping_company', '_shipping_address_1', '_shipping_address_2', '_shipping_city', '_shipping_state', '_shipping_postcode', '_shipping_country', '_shipping_phone', '_completed_date', '_paid_date', '_edit_last', '_cart_discount', '_cart_discount_tax', '_order_shipping', '_order_shipping_tax', '_order_tax', '_order_total', '_payment_method', '_payment_method_title', '_transaction_id', '_customer_ip_address', '_customer_user_agent', '_created_via', '_order_version', '_prices_include_tax', '_date_completed', '_date_paid', '_payment_tokens', '_billing_address_index', '_shipping_address_index', '_recorded_sales', '_recorded_coupon_usage_counts', '_download_permissions_granted', '_order_stock_reduced', '_new_order_email_sent', '_cogs_total_value'];
     /**
      * Meta keys that are considered ephemeral and do not trigger a full save (updating modified date) when changed.
      *
      * @var string[]
      */
-    protected $ephemeral_meta_keys = [
-        EditLock::META_KEY_NAME,
-    ];
-
+    protected $ephemeral_meta_keys = [Edit_Lock::META_KEY_NAME];
     /**
      * Handles custom metadata in the wc_orders_meta table.
      *
      * @var OrdersTableDataStoreMeta
      */
     protected $data_store_meta;
-
     /**
      * The database util object to use.
      *
      * @var DatabaseUtil
      */
     protected $database_util;
-
     /**
      * The posts data store object to use.
      *
      * @var \WC_Order_Data_Store_CPT
      */
     private $cpt_data_store;
-
     /**
      * Logger object to be used to log events.
      *
      * @var \WC_Logger
      */
     private $error_logger;
-
     /**
      * The name of the main orders table.
      *
      * @var string
      */
     private $orders_table_name;
-
     /**
      * The instance of the LegacyProxy object to use.
      */
-    private ?\Automattic\WooCommerce\Proxies\LegacyProxy $legacy_proxy = null;
-
+    private ?\Automattic\Woo_Commerce\Proxies\Legacy_Proxy $legacy_proxy = null;
     /**
      * Initialize the object.
      *
@@ -168,17 +98,15 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
      * @param DatabaseUtil             $database_util   The database util instance to use.
      * @param LegacyProxy              $legacy_proxy    The legacy proxy instance to use.
      */
-    final public function init(OrdersTableDataStoreMeta $data_store_meta, DatabaseUtil $database_util, LegacyProxy $legacy_proxy): void
+    final public function init(Orders_Table_Data_Store_Meta $data_store_meta, Database_Util $database_util, Legacy_Proxy $legacy_proxy): void
     {
-        $this->data_store_meta    = $data_store_meta;
-        $this->database_util      = $database_util;
-        $this->legacy_proxy       = $legacy_proxy;
-        $this->error_logger       = $legacy_proxy->call_function('wc_get_logger');
+        $this->data_store_meta = $data_store_meta;
+        $this->database_util = $database_util;
+        $this->legacy_proxy = $legacy_proxy;
+        $this->error_logger = $legacy_proxy->call_function('wc_get_logger');
         $this->internal_meta_keys = $this->get_internal_meta_keys();
-
         $this->orders_table_name = self::get_orders_table_name();
     }
-
     /**
      * Get the custom orders table name.
      *
@@ -187,10 +115,8 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     public static function get_orders_table_name(): string
     {
         global $wpdb;
-
         return $wpdb->prefix . 'wc_orders';
     }
-
     /**
      * Get the order addresses table name.
      *
@@ -199,10 +125,8 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     public static function get_addresses_table_name(): string
     {
         global $wpdb;
-
         return $wpdb->prefix . 'wc_order_addresses';
     }
-
     /**
      * Get the orders operational data table name.
      *
@@ -211,10 +135,8 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     public static function get_operational_data_table_name(): string
     {
         global $wpdb;
-
         return $wpdb->prefix . 'wc_order_operational_data';
     }
-
     /**
      * Get the orders meta data table name.
      *
@@ -223,10 +145,8 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     public static function get_meta_table_name(): string
     {
         global $wpdb;
-
         return $wpdb->prefix . 'wc_orders_meta';
     }
-
     /**
      * Get the names of all the tables involved in the custom orders table feature.
      *
@@ -236,14 +156,8 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
      */
     public function get_all_table_names(): array
     {
-        return [
-            static::get_orders_table_name(),
-            static::get_addresses_table_name(),
-            static::get_operational_data_table_name(),
-            static::get_meta_table_name(),
-        ];
+        return [static::get_orders_table_name(), static::get_addresses_table_name(), static::get_operational_data_table_name(), static::get_meta_table_name()];
     }
-
     /**
      * Similar to get_all_table_names, but also returns the table name along with the items table.
      *
@@ -252,279 +166,38 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     public static function get_all_table_names_with_id(): array
     {
         global $wpdb;
-        return [
-            'orders'           => self::get_orders_table_name(),
-            'addresses'        => self::get_addresses_table_name(),
-            'operational_data' => self::get_operational_data_table_name(),
-            'meta'             => self::get_meta_table_name(),
-            'items'            => $wpdb->prefix . 'woocommerce_order_items',
-        ];
+        return ['orders' => self::get_orders_table_name(), 'addresses' => self::get_addresses_table_name(), 'operational_data' => self::get_operational_data_table_name(), 'meta' => self::get_meta_table_name(), 'items' => $wpdb->prefix . 'woocommerce_order_items'];
     }
-
     /**
      * Table column to WC_Order mapping for wc_orders table.
      *
      * @var \string[][]
      */
-    protected $order_column_mapping = [
-        'id'                   => [
-            'type' => 'int',
-            'name' => 'id',
-        ],
-        'status'               => [
-            'type' => 'string',
-            'name' => 'status',
-        ],
-        'type'                 => [
-            'type' => 'string',
-            'name' => 'type',
-        ],
-        'currency'             => [
-            'type' => 'string',
-            'name' => 'currency',
-        ],
-        'tax_amount'           => [
-            'type' => 'decimal',
-            'name' => 'cart_tax',
-        ],
-        'total_amount'         => [
-            'type' => 'decimal',
-            'name' => 'total',
-        ],
-        'customer_id'          => [
-            'type' => 'int',
-            'name' => 'customer_id',
-        ],
-        'billing_email'        => [
-            'type' => 'string',
-            'name' => 'billing_email',
-        ],
-        'date_created_gmt'     => [
-            'type' => 'date',
-            'name' => 'date_created',
-        ],
-        'date_updated_gmt'     => [
-            'type' => 'date',
-            'name' => 'date_modified',
-        ],
-        'parent_order_id'      => [
-            'type' => 'int',
-            'name' => 'parent_id',
-        ],
-        'payment_method'       => [
-            'type' => 'string',
-            'name' => 'payment_method',
-        ],
-        'payment_method_title' => [
-            'type' => 'string',
-            'name' => 'payment_method_title',
-        ],
-        'ip_address'           => [
-            'type' => 'string',
-            'name' => 'customer_ip_address',
-        ],
-        'transaction_id'       => [
-            'type' => 'string',
-            'name' => 'transaction_id',
-        ],
-        'user_agent'           => [
-            'type' => 'string',
-            'name' => 'customer_user_agent',
-        ],
-        'customer_note'        => [
-            'type' => 'string',
-            'name' => 'customer_note',
-        ],
-    ];
-
+    protected $order_column_mapping = ['id' => ['type' => 'int', 'name' => 'id'], 'status' => ['type' => 'string', 'name' => 'status'], 'type' => ['type' => 'string', 'name' => 'type'], 'currency' => ['type' => 'string', 'name' => 'currency'], 'tax_amount' => ['type' => 'decimal', 'name' => 'cart_tax'], 'total_amount' => ['type' => 'decimal', 'name' => 'total'], 'customer_id' => ['type' => 'int', 'name' => 'customer_id'], 'billing_email' => ['type' => 'string', 'name' => 'billing_email'], 'date_created_gmt' => ['type' => 'date', 'name' => 'date_created'], 'date_updated_gmt' => ['type' => 'date', 'name' => 'date_modified'], 'parent_order_id' => ['type' => 'int', 'name' => 'parent_id'], 'payment_method' => ['type' => 'string', 'name' => 'payment_method'], 'payment_method_title' => ['type' => 'string', 'name' => 'payment_method_title'], 'ip_address' => ['type' => 'string', 'name' => 'customer_ip_address'], 'transaction_id' => ['type' => 'string', 'name' => 'transaction_id'], 'user_agent' => ['type' => 'string', 'name' => 'customer_user_agent'], 'customer_note' => ['type' => 'string', 'name' => 'customer_note']];
     /**
      * Table column to WC_Order mapping for billing addresses in wc_address table.
      *
      * @var \string[][]
      */
-    protected $billing_address_column_mapping = [
-        'id'           => [ 'type' => 'int' ],
-        'order_id'     => [ 'type' => 'int' ],
-        'address_type' => [ 'type' => 'string' ],
-        'first_name'   => [
-            'type' => 'string',
-            'name' => 'billing_first_name',
-        ],
-        'last_name'    => [
-            'type' => 'string',
-            'name' => 'billing_last_name',
-        ],
-        'company'      => [
-            'type' => 'string',
-            'name' => 'billing_company',
-        ],
-        'address_1'    => [
-            'type' => 'string',
-            'name' => 'billing_address_1',
-        ],
-        'address_2'    => [
-            'type' => 'string',
-            'name' => 'billing_address_2',
-        ],
-        'city'         => [
-            'type' => 'string',
-            'name' => 'billing_city',
-        ],
-        'state'        => [
-            'type' => 'string',
-            'name' => 'billing_state',
-        ],
-        'postcode'     => [
-            'type' => 'string',
-            'name' => 'billing_postcode',
-        ],
-        'country'      => [
-            'type' => 'string',
-            'name' => 'billing_country',
-        ],
-        'email'        => [
-            'type' => 'string',
-            'name' => 'billing_email',
-        ],
-        'phone'        => [
-            'type' => 'string',
-            'name' => 'billing_phone',
-        ],
-    ];
-
+    protected $billing_address_column_mapping = ['id' => ['type' => 'int'], 'order_id' => ['type' => 'int'], 'address_type' => ['type' => 'string'], 'first_name' => ['type' => 'string', 'name' => 'billing_first_name'], 'last_name' => ['type' => 'string', 'name' => 'billing_last_name'], 'company' => ['type' => 'string', 'name' => 'billing_company'], 'address_1' => ['type' => 'string', 'name' => 'billing_address_1'], 'address_2' => ['type' => 'string', 'name' => 'billing_address_2'], 'city' => ['type' => 'string', 'name' => 'billing_city'], 'state' => ['type' => 'string', 'name' => 'billing_state'], 'postcode' => ['type' => 'string', 'name' => 'billing_postcode'], 'country' => ['type' => 'string', 'name' => 'billing_country'], 'email' => ['type' => 'string', 'name' => 'billing_email'], 'phone' => ['type' => 'string', 'name' => 'billing_phone']];
     /**
      * Table column to WC_Order mapping for shipping addresses in wc_address table.
      *
      * @var \string[][]
      */
-    protected $shipping_address_column_mapping = [
-        'id'           => [ 'type' => 'int' ],
-        'order_id'     => [ 'type' => 'int' ],
-        'address_type' => [ 'type' => 'string' ],
-        'first_name'   => [
-            'type' => 'string',
-            'name' => 'shipping_first_name',
-        ],
-        'last_name'    => [
-            'type' => 'string',
-            'name' => 'shipping_last_name',
-        ],
-        'company'      => [
-            'type' => 'string',
-            'name' => 'shipping_company',
-        ],
-        'address_1'    => [
-            'type' => 'string',
-            'name' => 'shipping_address_1',
-        ],
-        'address_2'    => [
-            'type' => 'string',
-            'name' => 'shipping_address_2',
-        ],
-        'city'         => [
-            'type' => 'string',
-            'name' => 'shipping_city',
-        ],
-        'state'        => [
-            'type' => 'string',
-            'name' => 'shipping_state',
-        ],
-        'postcode'     => [
-            'type' => 'string',
-            'name' => 'shipping_postcode',
-        ],
-        'country'      => [
-            'type' => 'string',
-            'name' => 'shipping_country',
-        ],
-        'email'        => [ 'type' => 'string' ],
-        'phone'        => [
-            'type' => 'string',
-            'name' => 'shipping_phone',
-        ],
-    ];
-
+    protected $shipping_address_column_mapping = ['id' => ['type' => 'int'], 'order_id' => ['type' => 'int'], 'address_type' => ['type' => 'string'], 'first_name' => ['type' => 'string', 'name' => 'shipping_first_name'], 'last_name' => ['type' => 'string', 'name' => 'shipping_last_name'], 'company' => ['type' => 'string', 'name' => 'shipping_company'], 'address_1' => ['type' => 'string', 'name' => 'shipping_address_1'], 'address_2' => ['type' => 'string', 'name' => 'shipping_address_2'], 'city' => ['type' => 'string', 'name' => 'shipping_city'], 'state' => ['type' => 'string', 'name' => 'shipping_state'], 'postcode' => ['type' => 'string', 'name' => 'shipping_postcode'], 'country' => ['type' => 'string', 'name' => 'shipping_country'], 'email' => ['type' => 'string'], 'phone' => ['type' => 'string', 'name' => 'shipping_phone']];
     /**
      * Table column to WC_Order mapping for wc_operational_data table.
      *
      * @var \string[][]
      */
-    protected $operational_data_column_mapping = [
-        'id'                          => [ 'type' => 'int' ],
-        'order_id'                    => [ 'type' => 'int' ],
-        'created_via'                 => [
-            'type' => 'string',
-            'name' => 'created_via',
-        ],
-        'woocommerce_version'         => [
-            'type' => 'string',
-            'name' => 'version',
-        ],
-        'prices_include_tax'          => [
-            'type' => 'bool',
-            'name' => 'prices_include_tax',
-        ],
-        'coupon_usages_are_counted'   => [
-            'type' => 'bool',
-            'name' => 'recorded_coupon_usage_counts',
-        ],
-        'download_permission_granted' => [
-            'type' => 'bool',
-            'name' => 'download_permissions_granted',
-        ],
-        'cart_hash'                   => [
-            'type' => 'string',
-            'name' => 'cart_hash',
-        ],
-        'new_order_email_sent'        => [
-            'type' => 'bool',
-            'name' => 'new_order_email_sent',
-        ],
-        'order_key'                   => [
-            'type' => 'string',
-            'name' => 'order_key',
-        ],
-        'order_stock_reduced'         => [
-            'type' => 'bool',
-            'name' => 'order_stock_reduced',
-        ],
-        'date_paid_gmt'               => [
-            'type' => 'date',
-            'name' => 'date_paid',
-        ],
-        'date_completed_gmt'          => [
-            'type' => 'date',
-            'name' => 'date_completed',
-        ],
-        'shipping_tax_amount'         => [
-            'type' => 'decimal',
-            'name' => 'shipping_tax',
-        ],
-        'shipping_total_amount'       => [
-            'type' => 'decimal',
-            'name' => 'shipping_total',
-        ],
-        'discount_tax_amount'         => [
-            'type' => 'decimal',
-            'name' => 'discount_tax',
-        ],
-        'discount_total_amount'       => [
-            'type' => 'decimal',
-            'name' => 'discount_total',
-        ],
-        'recorded_sales'              => [
-            'type' => 'bool',
-            'name' => 'recorded_sales',
-        ],
-    ];
-
+    protected $operational_data_column_mapping = ['id' => ['type' => 'int'], 'order_id' => ['type' => 'int'], 'created_via' => ['type' => 'string', 'name' => 'created_via'], 'woocommerce_version' => ['type' => 'string', 'name' => 'version'], 'prices_include_tax' => ['type' => 'bool', 'name' => 'prices_include_tax'], 'coupon_usages_are_counted' => ['type' => 'bool', 'name' => 'recorded_coupon_usage_counts'], 'download_permission_granted' => ['type' => 'bool', 'name' => 'download_permissions_granted'], 'cart_hash' => ['type' => 'string', 'name' => 'cart_hash'], 'new_order_email_sent' => ['type' => 'bool', 'name' => 'new_order_email_sent'], 'order_key' => ['type' => 'string', 'name' => 'order_key'], 'order_stock_reduced' => ['type' => 'bool', 'name' => 'order_stock_reduced'], 'date_paid_gmt' => ['type' => 'date', 'name' => 'date_paid'], 'date_completed_gmt' => ['type' => 'date', 'name' => 'date_completed'], 'shipping_tax_amount' => ['type' => 'decimal', 'name' => 'shipping_tax'], 'shipping_total_amount' => ['type' => 'decimal', 'name' => 'shipping_total'], 'discount_tax_amount' => ['type' => 'decimal', 'name' => 'discount_tax'], 'discount_total_amount' => ['type' => 'decimal', 'name' => 'discount_total'], 'recorded_sales' => ['type' => 'bool', 'name' => 'recorded_sales']];
     /**
      * Cache variable to store combined mapping.
      *
      * @var array[][][]
      */
     private ?array $all_order_column_mapping = null;
-
     /**
      * Return combined mappings for all order tables.
      *
@@ -532,18 +205,11 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
      */
     public function get_all_order_column_mappings()
     {
-        if (! isset($this->all_order_column_mapping)) {
-            $this->all_order_column_mapping = [
-                'orders'           => $this->order_column_mapping,
-                'billing_address'  => $this->billing_address_column_mapping,
-                'shipping_address' => $this->shipping_address_column_mapping,
-                'operational_data' => $this->operational_data_column_mapping,
-            ];
+        if (!isset($this->all_order_column_mapping)) {
+            $this->all_order_column_mapping = ['orders' => $this->order_column_mapping, 'billing_address' => $this->billing_address_column_mapping, 'shipping_address' => $this->shipping_address_column_mapping, 'operational_data' => $this->operational_data_column_mapping];
         }
-
         return $this->all_order_column_mapping;
     }
-
     /**
      * The group name to use when caching order object data.
      */
@@ -551,7 +217,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     {
         return 'orders_data';
     }
-
     /**
      * Delete cached order data for the given object_ids.
      *
@@ -565,29 +230,24 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
      */
     public function clear_cached_data(array $order_ids): array
     {
-        if (! OrderUtil::custom_orders_table_datastore_cache_enabled()) {
+        if (!Order_Util::custom_orders_table_datastore_cache_enabled()) {
             return array_fill_keys($order_ids, true);
         }
-
-        $cache_engine  = wc_get_container()->get(WPCacheEngine::class);
-        $cache_group   = $this->get_cache_group();
+        $cache_engine = wc_get_container()->get(Wp_Cache_Engine::class);
+        $cache_group = $this->get_cache_group();
         $return_values = [];
-
         foreach ($order_ids as $order_id) {
-            $return_values[ $order_id ] = $cache_engine->delete_cached_object($order_id, $cache_group);
+            $return_values[$order_id] = $cache_engine->delete_cached_object($order_id, $cache_group);
         }
-
         if (is_callable($this->data_store_meta->clear_cached_data(...))) {
             $successfully_deleted_cache_order_ids = array_keys(array_filter($return_values));
-            $cache_deletion_results               = $this->data_store_meta->clear_cached_data($successfully_deleted_cache_order_ids);
+            $cache_deletion_results = $this->data_store_meta->clear_cached_data($successfully_deleted_cache_order_ids);
             foreach ($cache_deletion_results as $order_id => $meta_cache_was_deleted) {
-                $return_values[ $order_id ] = $return_values[ $order_id ] && $meta_cache_was_deleted;
+                $return_values[$order_id] = $return_values[$order_id] && $meta_cache_was_deleted;
             }
         }
-
         return $return_values;
     }
-
     /**
      * Invalidate all the cache used by this data store.
      *
@@ -598,20 +258,17 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
      */
     public function clear_all_cached_data(): bool
     {
-        if (! OrderUtil::custom_orders_table_datastore_cache_enabled()) {
+        if (!Order_Util::custom_orders_table_datastore_cache_enabled()) {
             return true;
         }
-
-        $cache_engine       = wc_get_container()->get(WPCacheEngine::class);
+        $cache_engine = wc_get_container()->get(Wp_Cache_Engine::class);
         $orders_invalidated = $cache_engine->delete_cache_group($this->get_cache_group());
-        $meta_invalidated   = true;
+        $meta_invalidated = true;
         if (is_callable($this->data_store_meta->clear_cached_data(...))) {
             $meta_invalidated = $this->data_store_meta->clear_all_cached_data();
         }
-
         return $orders_invalidated && $meta_invalidated;
     }
-
     /**
      * Helper function to get alias for order table, this is used in select query.
      *
@@ -621,7 +278,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     {
         return 'o';
     }
-
     /**
      * Helper function to get alias for op table, this is used in select query.
      *
@@ -631,7 +287,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     {
         return 'p';
     }
-
     /**
      * Helper function to get alias for address table, this is used in select query.
      *
@@ -643,7 +298,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     {
         return 'billing' === $type ? 'b' : 's';
     }
-
     /**
      * Helper method to get a CPT data store instance to use.
      *
@@ -651,12 +305,11 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
      */
     public function get_cpt_data_store_instance()
     {
-        if (! isset($this->cpt_data_store)) {
+        if (!isset($this->cpt_data_store)) {
             $this->cpt_data_store = $this->get_post_data_store_for_backfill();
         }
         return $this->cpt_data_store;
     }
-
     /**
      * Returns data store object to use backfilling.
      *
@@ -666,7 +319,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     {
         return new \WC_Order_Data_Store_CPT();
     }
-
     /**
      * Backfills order details in to WP_Post DB. Uses WC_Order_Data_store_CPT.
      *
@@ -675,54 +327,34 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     public function backfill_post_record($order): void
     {
         $cpt_data_store = $this->get_post_data_store_for_backfill();
-        if (is_null($cpt_data_store) || ! method_exists($cpt_data_store, 'update_order_from_object')) {
+        if (is_null($cpt_data_store) || !method_exists($cpt_data_store, 'update_order_from_object')) {
             return;
         }
-
         self::$backfilling_order_ids[] = $order->get_id();
-
         // Attempt to create the backup post if missing.
         if ($order->get_id() && is_null(get_post($order->get_id()))) {
-            if (! $this->maybe_create_backup_post($order, 'backfill')) {
+            if (!$this->maybe_create_backup_post($order, 'backfill')) {
                 // translators: %d is an order ID.
                 $this->error_logger->warning(sprintf(__('Unable to create backup post for order %d.', 'woocommerce'), $order->get_id()));
                 return;
             }
         }
-
         $this->update_order_meta_from_object($order);
         $order_class = $order::class;
-        $post_order  = new $order_class();
+        $post_order = new $order_class();
         $post_order->set_id($order->get_id());
-
         if ($cpt_data_store->order_exists($order->get_id())) {
             $cpt_data_store->read($post_order);
         }
-
         // This compares the order data to the post data and set changes array for props that are changed.
         $post_order->set_props($order->get_data());
-
         $cpt_data_store->update_order_from_object($post_order);
-
         foreach ($cpt_data_store->get_internal_data_store_key_getters() as $getter_name) {
-            if (
-                is_callable([ $cpt_data_store, "set_$getter_name" ]) &&
-                is_callable([ $this, "get_$getter_name" ])
-            ) {
-                call_user_func_array(
-                    [
-                        $cpt_data_store,
-                        "set_$getter_name",
-                    ],
-                    [
-                        $order,
-                        $this->{"get_$getter_name"}($order),
-                    ]
-                );
+            if (is_callable([$cpt_data_store, "set_{$getter_name}"]) && is_callable([$this, "get_{$getter_name}"])) {
+                call_user_func_array([$cpt_data_store, "set_{$getter_name}"], [$order, $this->{"get_{$getter_name}"}($order)]);
             }
         }
-        self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [ $order->get_id() ]);
-
+        self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [$order->get_id()]);
         /**
          * Fired when the backing post record for an HPOS order is backfilled after an order update.
          *
@@ -732,7 +364,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
          */
         do_action('woocommerce_hpos_post_record_backfilled', $order);
     }
-
     /**
      * Updates an order (in this datastore) from another order object.
      *
@@ -745,30 +376,24 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
         $hpos_order->set_id($order->get_id());
         $this->read($hpos_order);
         $hpos_order->set_props($order->get_data());
-
         // Meta keys.
         foreach ($hpos_order->get_meta_data() as &$meta) {
             $hpos_order->delete_meta_data($meta->key);
         }
-
         foreach ($order->get_meta_data() as &$meta) {
             $hpos_order->add_meta_data($meta->key, $meta->value);
         }
-
         add_filter('woocommerce_orders_table_datastore_should_save_after_meta_change', '__return_false');
         $hpos_order->save_meta_data();
         remove_filter('woocommerce_orders_table_datastore_should_save_after_meta_change', '__return_false');
-
         $db_rows = $this->get_db_rows_for_order($hpos_order, 'update', true);
         foreach ($db_rows as $db_update) {
             ksort($db_update['data']);
             ksort($db_update['format']);
             $this->persist_db_row($db_update);
         }
-
         return true;
     }
-
     /**
      * Helper method to persist a DB row to database. Uses insert_or_update when possible.
      *
@@ -779,23 +404,12 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     private function persist_db_row(array $update)
     {
         if (isset($update['where'])) {
-            $row_updated = $this->database_util->insert_or_update(
-                $update['table'],
-                $update['data'],
-                $update['where'],
-                $update['format'],
-                $update['where_format']
-            );
+            $row_updated = $this->database_util->insert_or_update($update['table'], $update['data'], $update['where'], $update['format'], $update['where_format']);
             // row_updated can be 0 when there are no changes. So we check for type as well as row count.
             return false !== $row_updated;
         }
-        return $this->database_util->insert_on_duplicate_key_update(
-            $update['table'],
-            $update['data'],
-            array_values($update['format']),
-        );
+        return $this->database_util->insert_on_duplicate_key_update($update['table'], $update['data'], array_values($update['format']));
     }
-
     /**
      * Get information about whether permissions are granted yet.
      *
@@ -806,10 +420,9 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     public function get_download_permissions_granted($order)
     {
         $order_id = is_int($order) ? $order : $order->get_id();
-        $order    = wc_get_order($order_id);
+        $order = wc_get_order($order_id);
         return $order->get_download_permissions_granted();
     }
-
     /**
      * Stores information about whether permissions were generated yet.
      *
@@ -824,7 +437,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
         $order->set_download_permissions_granted($set);
         $order->save();
     }
-
     /**
      * Gets information about whether sales were recorded.
      *
@@ -835,10 +447,9 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     public function get_recorded_sales($order)
     {
         $order_id = is_int($order) ? $order : $order->get_id();
-        $order    = wc_get_order($order_id);
+        $order = wc_get_order($order_id);
         return $order->get_recorded_sales();
     }
-
     /**
      * Stores information about whether sales were recorded.
      *
@@ -853,7 +464,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
         $order->set_recorded_sales($set);
         $order->save();
     }
-
     /**
      * Gets information about whether coupon counts were updated.
      *
@@ -864,10 +474,9 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     public function get_recorded_coupon_usage_counts($order): bool
     {
         $order_id = is_int($order) ? $order : $order->get_id();
-        $order    = wc_get_order($order_id);
+        $order = wc_get_order($order_id);
         return $order && $order->get_recorded_coupon_usage_counts();
     }
-
     /**
      * Stores information about whether coupon counts were updated.
      *
@@ -882,7 +491,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
         $order->set_recorded_coupon_usage_counts($set);
         $order->save();
     }
-
     /**
      * Whether email have been sent for this order.
      *
@@ -893,10 +501,9 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     public function get_email_sent($order)
     {
         $order_id = is_int($order) ? $order : $order->get_id();
-        $order    = wc_get_order($order_id);
+        $order = wc_get_order($order_id);
         return $order->get_new_order_email_sent();
     }
-
     /**
      * Stores information about whether email was sent.
      *
@@ -911,7 +518,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
         $order->set_new_order_email_sent($set);
         $order->save();
     }
-
     /**
      * Helper setter for email_sent.
      *
@@ -923,7 +529,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     {
         return $this->get_email_sent($order);
     }
-
     /**
      * Helper setter for new order email sent.
      *
@@ -938,7 +543,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
         $order->set_new_order_email_sent($set);
         $order->save();
     }
-
     /**
      * Gets information about whether stock was reduced.
      *
@@ -949,10 +553,9 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     public function get_stock_reduced($order)
     {
         $order_id = is_int($order) ? $order : $order->get_id();
-        $order    = wc_get_order($order_id);
+        $order = wc_get_order($order_id);
         return $order->get_order_stock_reduced();
     }
-
     /**
      * Stores information about whether stock was reduced.
      *
@@ -967,7 +570,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
         $order->set_order_stock_reduced($set);
         $order->save();
     }
-
     /**
      * Helper getter for `order_stock_reduced`.
      *
@@ -978,7 +580,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     {
         return $this->get_stock_reduced($order);
     }
-
     /**
      * Helper setter for `order_stock_reduced`.
      *
@@ -989,7 +590,6 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     {
         $this->set_stock_reduced($order, $set);
     }
-
     /**
      * Get token ids for an order.
      *
@@ -1004,13 +604,12 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
         if ($payment_tokens) {
             $payment_tokens = $payment_tokens[0]->meta_value;
         }
-        if (! $payment_tokens && version_compare($order->get_version(), '8.0.0', '<')) {
+        if (!$payment_tokens && version_compare($order->get_version(), '8.0.0', '<')) {
             // Before 8.0 we were incorrectly storing payment_tokens in the order meta. So we need to check there too.
             $payment_tokens = get_post_meta($order->get_id(), '_payment_tokens', true);
         }
         return array_filter((array) $payment_tokens);
     }
-
     /**
      * Update token ids for an order.
      *
@@ -1019,19 +618,18 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
      */
     public function update_payment_token_ids($order, $token_ids): void
     {
-        $meta          = new \WC_Meta_Data();
-        $meta->key     = '_payment_tokens';
-        $meta->value   = $token_ids;
+        $meta = new \WC_Meta_Data();
+        $meta->key = '_payment_tokens';
+        $meta->value = $token_ids;
         $existing_meta = $this->data_store_meta->get_metadata_by_key($order, '_payment_tokens');
         if ($existing_meta) {
             $existing_meta = $existing_meta[0];
-            $meta->id      = $existing_meta->id;
+            $meta->id = $existing_meta->id;
             $this->data_store_meta->update_meta($order, $meta);
         } else {
             $this->data_store_meta->add_meta($order, $meta);
         }
     }
-
     /**
      * Get amount already refunded.
      *
@@ -1043,24 +641,15 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
     {
         global $wpdb;
         $order_table = self::get_orders_table_name();
-        $total       = $wpdb->get_var(
-            $wpdb->prepare(
-                // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order_table is hardcoded.
-                "
-SELECT SUM( total_amount ) FROM $order_table
-WHERE
-    type = %s AND
-    parent_order_id = %d
-;
-",
-                // phpcs:enable
-                'shop_order_refund',
-                $order->get_id()
-            )
-        );
+        $total = $wpdb->get_var($wpdb->prepare(
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order_table is hardcoded.
+            "\nSELECT SUM( total_amount ) FROM {$order_table}\nWHERE\n    type = %s AND\n    parent_order_id = %d\n;\n",
+            // phpcs:enable
+            'shop_order_refund',
+            $order->get_id()
+        ));
         return -1 * ($total ?? 0);
     }
-
     /**
      * Get the total tax refunded.
      *
@@ -1071,26 +660,14 @@ WHERE
     public function get_total_tax_refunded($order): float|int
     {
         global $wpdb;
-
         $order_table = self::get_orders_table_name();
-
         $total = $wpdb->get_var(
             // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order_table is hardcoded.
-            $wpdb->prepare(
-                "SELECT SUM( order_itemmeta.meta_value )
-				FROM {$wpdb->prefix}woocommerce_order_itemmeta AS order_itemmeta
-				INNER JOIN $order_table AS orders ON ( orders.type = 'shop_order_refund' AND orders.parent_order_id = %d )
-				INNER JOIN {$wpdb->prefix}woocommerce_order_items AS order_items ON ( order_items.order_id = orders.id AND order_items.order_item_type = 'tax' )
-				WHERE order_itemmeta.order_item_id = order_items.order_item_id
-				AND order_itemmeta.meta_key IN ('tax_amount', 'shipping_tax_amount')",
-                $order->get_id(),
-            )
+            $wpdb->prepare("SELECT SUM( order_itemmeta.meta_value )\n\t\t\t\tFROM {$wpdb->prefix}woocommerce_order_itemmeta AS order_itemmeta\n\t\t\t\tINNER JOIN {$order_table} AS orders ON ( orders.type = 'shop_order_refund' AND orders.parent_order_id = %d )\n\t\t\t\tINNER JOIN {$wpdb->prefix}woocommerce_order_items AS order_items ON ( order_items.order_id = orders.id AND order_items.order_item_type = 'tax' )\n\t\t\t\tWHERE order_itemmeta.order_item_id = order_items.order_item_id\n\t\t\t\tAND order_itemmeta.meta_key IN ('tax_amount', 'shipping_tax_amount')", $order->get_id())
         ) ?? 0;
         // phpcs:enable
-
         return abs($total);
     }
-
     /**
      * Get the total shipping tax refunded.
      *
@@ -1102,26 +679,14 @@ WHERE
     public function get_total_shipping_tax_refunded($order): float|int
     {
         global $wpdb;
-
         $order_table = self::get_orders_table_name();
-
         $total = $wpdb->get_var(
             // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order_table is hardcoded.
-            $wpdb->prepare(
-                "SELECT SUM( order_itemmeta.meta_value )
-				FROM {$wpdb->prefix}woocommerce_order_itemmeta AS order_itemmeta
-				INNER JOIN $order_table AS orders ON ( orders.type = 'shop_order_refund' AND orders.parent_order_id = %d )
-				INNER JOIN {$wpdb->prefix}woocommerce_order_items AS order_items ON ( order_items.order_id = orders.id AND order_items.order_item_type = 'tax' )
-				WHERE order_itemmeta.order_item_id = order_items.order_item_id
-				AND order_itemmeta.meta_key = 'shipping_tax_amount'",
-                $order->get_id()
-            )
+            $wpdb->prepare("SELECT SUM( order_itemmeta.meta_value )\n\t\t\t\tFROM {$wpdb->prefix}woocommerce_order_itemmeta AS order_itemmeta\n\t\t\t\tINNER JOIN {$order_table} AS orders ON ( orders.type = 'shop_order_refund' AND orders.parent_order_id = %d )\n\t\t\t\tINNER JOIN {$wpdb->prefix}woocommerce_order_items AS order_items ON ( order_items.order_id = orders.id AND order_items.order_item_type = 'tax' )\n\t\t\t\tWHERE order_itemmeta.order_item_id = order_items.order_item_id\n\t\t\t\tAND order_itemmeta.meta_key = 'shipping_tax_amount'", $order->get_id())
         ) ?? 0;
         // phpcs:enable
-
         return abs($total);
     }
-
     /**
      * Get the total shipping refunded.
      *
@@ -1131,26 +696,14 @@ WHERE
     public function get_total_shipping_refunded($order): float|int
     {
         global $wpdb;
-
         $order_table = self::get_orders_table_name();
-
         $total = $wpdb->get_var(
             // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $order_table is hardcoded.
-            $wpdb->prepare(
-                "SELECT SUM( order_itemmeta.meta_value )
-				FROM {$wpdb->prefix}woocommerce_order_itemmeta AS order_itemmeta
-				INNER JOIN $order_table AS orders ON ( orders.type = 'shop_order_refund' AND orders.parent_order_id = %d )
-				INNER JOIN {$wpdb->prefix}woocommerce_order_items AS order_items ON ( order_items.order_id = orders.id AND order_items.order_item_type = 'shipping' )
-				WHERE order_itemmeta.order_item_id = order_items.order_item_id
-				AND order_itemmeta.meta_key IN ('cost')",
-                $order->get_id()
-            )
+            $wpdb->prepare("SELECT SUM( order_itemmeta.meta_value )\n\t\t\t\tFROM {$wpdb->prefix}woocommerce_order_itemmeta AS order_itemmeta\n\t\t\t\tINNER JOIN {$order_table} AS orders ON ( orders.type = 'shop_order_refund' AND orders.parent_order_id = %d )\n\t\t\t\tINNER JOIN {$wpdb->prefix}woocommerce_order_items AS order_items ON ( order_items.order_id = orders.id AND order_items.order_item_type = 'shipping' )\n\t\t\t\tWHERE order_itemmeta.order_item_id = order_items.order_item_id\n\t\t\t\tAND order_itemmeta.meta_key IN ('cost')", $order->get_id())
         ) ?? 0;
         // phpcs:enable
-
         return abs($total);
     }
-
     /**
      * Finds an Order ID based on an order key.
      *
@@ -1160,22 +713,12 @@ WHERE
     public function get_order_id_by_order_key($order_key): int
     {
         global $wpdb;
-
         $orders_table = self::get_orders_table_name();
-        $op_table     = self::get_operational_data_table_name();
-
+        $op_table = self::get_operational_data_table_name();
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        return (int) $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT {$orders_table}.id FROM {$orders_table}
-				INNER JOIN {$op_table} ON {$op_table}.order_id = {$orders_table}.id
-				WHERE {$op_table}.order_key = %s AND {$op_table}.order_key != ''",
-                $order_key
-            )
-        );
+        return (int) $wpdb->get_var($wpdb->prepare("SELECT {$orders_table}.id FROM {$orders_table}\n\t\t\t\tINNER JOIN {$op_table} ON {$op_table}.order_id = {$orders_table}.id\n\t\t\t\tWHERE {$op_table}.order_key = %s AND {$op_table}.order_key != ''", $order_key));
         // phpcs:enable
     }
-
     /**
      * Return count of orders with a specific status.
      *
@@ -1185,12 +728,10 @@ WHERE
     public function get_order_count($status)
     {
         global $wpdb;
-
         $orders_table = self::get_orders_table_name();
-
-        return absint($wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$orders_table} WHERE type = %s AND status = %s", 'shop_order', $status))); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        return absint($wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$orders_table} WHERE type = %s AND status = %s", 'shop_order', $status)));
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
     }
-
     /**
      * Get all orders matching the passed in args.
      *
@@ -1203,7 +744,6 @@ WHERE
         wc_deprecated_function(__METHOD__, '3.1.0', 'Use wc_get_orders instead.');
         return wc_get_orders($args);
     }
-
     /**
      * Get unpaid orders last updated before the specified date.
      *
@@ -1214,10 +754,9 @@ WHERE
     public function get_unpaid_orders($date)
     {
         $timezone_offset = wc_timezone_offset();
-        $gmt_timestamp   = $date - $timezone_offset;
+        $gmt_timestamp = $date - $timezone_offset;
         return $this->get_unpaid_orders_gmt(absint($gmt_timestamp));
     }
-
     /**
      * Get unpaid orders last updated before the specified GMT date.
      *
@@ -1228,24 +767,12 @@ WHERE
     public function get_unpaid_orders_gmt($gmt_timestamp)
     {
         global $wpdb;
-
-        $orders_table    = self::get_orders_table_name();
+        $orders_table = self::get_orders_table_name();
         $order_types_sql = "('" . implode("','", wc_get_order_types()) . "')";
-
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        return $wpdb->get_col(
-            $wpdb->prepare(
-                "SELECT id FROM {$orders_table} WHERE
-				{$orders_table}.type IN {$order_types_sql}
-				AND {$orders_table}.status = %s
-				AND {$orders_table}.date_updated_gmt < %s",
-                OrderInternalStatus::PENDING,
-                gmdate('Y-m-d H:i:s', absint($gmt_timestamp))
-            )
-        );
+        return $wpdb->get_col($wpdb->prepare("SELECT id FROM {$orders_table} WHERE\n\t\t\t\t{$orders_table}.type IN {$order_types_sql}\n\t\t\t\tAND {$orders_table}.status = %s\n\t\t\t\tAND {$orders_table}.date_updated_gmt < %s", Order_Internal_Status::PENDING, gmdate('Y-m-d H:i:s', absint($gmt_timestamp))));
         // phpcs:enable
     }
-
     /**
      * Search order data for a term and return matching order IDs.
      *
@@ -1255,13 +782,7 @@ WHERE
      */
     public function search_orders($term): array
     {
-        $order_ids = wc_get_orders(
-            [
-                's'      => $term,
-                'return' => 'ids',
-            ]
-        );
-
+        $order_ids = wc_get_orders(['s' => $term, 'return' => 'ids']);
         /**
          * Provides an opportunity to modify the list of order IDs obtained during an order search.
          *
@@ -1275,7 +796,6 @@ WHERE
          */
         return array_map(intval(...), (array) apply_filters('woocommerce_cot_shop_order_search_results', $order_ids, $term));
     }
-
     /**
      * Fetch order type for orders in bulk.
      *
@@ -1286,48 +806,36 @@ WHERE
     public function get_orders_type($order_ids): array
     {
         global $wpdb;
-
         if (empty($order_ids)) {
             return [];
         }
-
         $order_types = [];
-
-        if (OrderUtil::custom_orders_table_datastore_cache_enabled()) {
-            if (! is_array($order_ids)) {
+        if (Order_Util::custom_orders_table_datastore_cache_enabled()) {
+            if (!is_array($order_ids)) {
                 // self::get_order_data_for_ids() strict types the $order_ids parameter. Temporarily maintain backward compatibility
                 // for potential misuse of self::get_orders_type().
-                $order_ids = [ (int) $order_ids ];
+                $order_ids = [(int) $order_ids];
             }
             // If we're using order data caching, preemptively pull all the data and prime the cache as this method is
             // almost exclusively used to determine the order class to later hydrate.
             $orders_data = $this->get_order_data_for_ids($order_ids);
             foreach ($orders_data as $order_id => $order_data) {
-                if (! empty($order_data->type)) {
-                    $order_types[ $order_id ] = $order_data->type;
+                if (!empty($order_data->type)) {
+                    $order_types[$order_id] = $order_data->type;
                 }
             }
-
             return $order_types;
         }
-
-        $orders_table          = self::get_orders_table_name();
+        $orders_table = self::get_orders_table_name();
         $order_ids_placeholder = implode(', ', array_fill(0, count($order_ids), '%d'));
-
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-        $results = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT id, type FROM {$orders_table} WHERE id IN ( $order_ids_placeholder )",
-                $order_ids
-            )
-        );
+        $results = $wpdb->get_results($wpdb->prepare("SELECT id, type FROM {$orders_table} WHERE id IN ( {$order_ids_placeholder} )", $order_ids));
         // phpcs:enable
         foreach ($results as $row) {
-            $order_types[ $row->id ] = $row->type;
+            $order_types[$row->id] = $row->type;
         }
         return $order_types;
     }
-
     /**
      * Get order type from DB.
      *
@@ -1337,10 +845,9 @@ WHERE
      */
     public function get_order_type($order_id)
     {
-        $type = $this->get_orders_type([ $order_id ]);
-        return $type[ $order_id ] ?? '';
+        $type = $this->get_orders_type([$order_id]);
+        return $type[$order_id] ?? '';
     }
-
     /**
      * Check if an order exists by id.
      *
@@ -1352,19 +859,11 @@ WHERE
     public function order_exists($order_id): bool
     {
         global $wpdb;
-
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $exists = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT EXISTS (SELECT id FROM {$this->orders_table_name} WHERE id=%d)",
-                $order_id
-            )
-        );
+        $exists = $wpdb->get_var($wpdb->prepare("SELECT EXISTS (SELECT id FROM {$this->orders_table_name} WHERE id=%d)", $order_id));
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-
         return (bool) $exists;
     }
-
     /**
      * Method to read an order from custom tables.
      *
@@ -1374,10 +873,9 @@ WHERE
      */
     public function read(&$order): void
     {
-        $orders_array = [ $order->get_id() => $order ];
+        $orders_array = [$order->get_id() => $order];
         $this->read_multiple($orders_array);
     }
-
     /**
      * Reads multiple orders from custom tables in one pass.
      *
@@ -1388,21 +886,15 @@ WHERE
     public function read_multiple(array &$orders): void
     {
         $order_ids = array_keys($orders);
-        $data      = $this->get_order_data_for_ids($order_ids);
-
+        $data = $this->get_order_data_for_ids($order_ids);
         if (count($data) !== count($order_ids)) {
             throw new \Exception(esc_html__('Invalid order IDs in call to read_multiple()', 'woocommerce'));
         }
-
-        $data_synchronizer = wc_get_container()->get(DataSynchronizer::class);
-        if (! $data_synchronizer instanceof DataSynchronizer) {
+        $data_synchronizer = wc_get_container()->get(Data_Synchronizer::class);
+        if (!$data_synchronizer instanceof Data_Synchronizer) {
             return;
         }
-
-        $data_sync_enabled = $data_synchronizer->data_sync_is_enabled()
-            && ! doing_action('woocommerce_deliver_webhook_async')
-            && ! doing_action('wc-admin_import_orders');
-
+        $data_sync_enabled = $data_synchronizer->data_sync_is_enabled() && !doing_action('woocommerce_deliver_webhook_async') && !doing_action('wc-admin_import_orders');
         if ($data_sync_enabled) {
             /**
              * Filters whether to sync order data from posts on read.
@@ -1417,41 +909,32 @@ WHERE
              */
             $data_sync_enabled = apply_filters('woocommerce_hpos_enable_sync_on_read', false);
         }
-
         $load_posts_for = array_diff($order_ids, array_merge(self::$reading_order_ids, self::$backfilling_order_ids));
-
         $post_orders = [];
         if ($data_sync_enabled) {
             global $wpdb;
-
             // Exclude orders that do not exist in the posts table.
             if ($load_posts_for) {
                 $order_ids_placeholder = implode(', ', array_fill(0, count($load_posts_for), '%d'));
-                $load_posts_for        = array_map(absint(...), $wpdb->get_col($wpdb->prepare("SELECT ID FROM {$wpdb->posts} WHERE ID IN ( $order_ids_placeholder )", ...$load_posts_for))); // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                $load_posts_for = array_map(absint(...), $wpdb->get_col($wpdb->prepare("SELECT ID FROM {$wpdb->posts} WHERE ID IN ( {$order_ids_placeholder} )", ...$load_posts_for)));
+                // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             }
-
             $post_orders = $this->get_post_orders_for_ids(array_intersect_key($orders, array_flip($load_posts_for)));
         }
-
         $cogs_is_enabled = $this->cogs_is_enabled();
-
         foreach ($data as $order_data) {
             $order_id = absint($order_data->id);
-            $order    = $orders[ $order_id ];
-
+            $order = $orders[$order_id];
             $this->init_order_record($order, $order_id, $order_data);
-
             if ($cogs_is_enabled && $order->has_cogs()) {
                 $this->read_cogs_data($order, $order_data->meta_data);
             }
-
-            if ($data_sync_enabled && isset($post_orders[ $order_id ]) && $this->should_sync_order($order)) {
+            if ($data_sync_enabled && isset($post_orders[$order_id]) && $this->should_sync_order($order)) {
                 self::$reading_order_ids[] = $order_id;
-                $this->maybe_sync_order($order, $post_orders[ $order->get_id() ]);
+                $this->maybe_sync_order($order, $post_orders[$order->get_id()]);
             }
         }
     }
-
     /**
      * Read the Cost of Goods Sold value for a given order from the database, if available, and apply it to the order.
      *
@@ -1460,9 +943,8 @@ WHERE
      */
     private function read_cogs_data(WC_Abstract_Order $order, array $meta_data): void
     {
-        $meta_entry = array_filter($meta_data, fn (object $meta): bool => '_cogs_total_value' === $meta->meta_key);
+        $meta_entry = array_filter($meta_data, fn(object $meta): bool => '_cogs_total_value' === $meta->meta_key);
         $cogs_value = [] === $meta_entry ? 0 : (float) current($meta_entry)->meta_value;
-
         /**
          * Filter to customize the Cost of Goods Sold value that gets loaded for a given order.
          *
@@ -1472,11 +954,9 @@ WHERE
          * @param WC_Abstract_Order $product The order for which the value is being loaded.
          */
         $cogs_value = apply_filters('woocommerce_load_order_cogs_value', $cogs_value, $order);
-
         $order->set_cogs_total_value((float) $cogs_value);
         $order->apply_changes();
     }
-
     /**
      * Helper method to check whether to sync the order.
      *
@@ -1486,11 +966,10 @@ WHERE
      */
     private function should_sync_order(\WC_Abstract_Order $order): bool
     {
-        $draft_order    = in_array($order->get_status(), [ 'draft', 'auto-draft' ], true);
+        $draft_order = in_array($order->get_status(), ['draft', 'auto-draft'], true);
         $already_synced = in_array($order->get_id(), self::$reading_order_ids, true);
-        return ! $draft_order && ! $already_synced;
+        return !$draft_order && !$already_synced;
     }
-
     /**
      * Helper method to initialize order object from DB data.
      *
@@ -1509,7 +988,6 @@ WHERE
         $this->set_order_props_from_data($order, $order_data);
         $order->set_object_read(true);
     }
-
     /**
      * For post based data stores, this was used to filter internal meta data. For custom tables, technically there is no internal meta data,
      * (i.e. we store all core data as properties for the order, and not in meta data). So this method is a no-op.
@@ -1523,20 +1001,13 @@ WHERE
      *
      * @return array Filtered meta data.
      */
-    public function filter_raw_meta_data(&$object, $raw_meta_data): array // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.objectFound
-    {$filtered_meta_data = parent::filter_raw_meta_data($object, $raw_meta_data);
-        $allowed_keys       = [
-            '_billing_address_index',
-            '_shipping_address_index',
-        ];
-        $allowed_meta       = array_filter(
-            $raw_meta_data,
-            fn ($meta) => in_array($meta->meta_key, $allowed_keys, true)
-        );
-
+    public function filter_raw_meta_data(&$object, $raw_meta_data): array
+    {
+        $filtered_meta_data = parent::filter_raw_meta_data($object, $raw_meta_data);
+        $allowed_keys = ['_billing_address_index', '_shipping_address_index'];
+        $allowed_meta = array_filter($raw_meta_data, fn($meta) => in_array($meta->meta_key, $allowed_keys, true));
         return array_merge($allowed_meta, $filtered_meta_data);
     }
-
     /**
      * Sync order to/from posts tables if we are able to detect difference between order and posts but the sync is enabled.
      *
@@ -1547,16 +1018,14 @@ WHERE
      */
     private function maybe_sync_order(\WC_Abstract_Order &$order, \WC_Abstract_Order $post_order): void
     {
-        if (! $this->is_post_different_from_order($order, $post_order)) {
+        if (!$this->is_post_different_from_order($order, $post_order)) {
             return;
         }
-
         // Modified dates can be empty when the order is created but never updated again. Fallback to created date in those cases.
-        $order_modified_date      = $order->get_date_modified() ?? $order->get_date_created();
-        $order_modified_date      = is_null($order_modified_date) ? 0 : $order_modified_date->getTimestamp();
+        $order_modified_date = $order->get_date_modified() ?? $order->get_date_created();
+        $order_modified_date = is_null($order_modified_date) ? 0 : $order_modified_date->get_timestamp();
         $post_order_modified_date = $post_order->get_date_modified() ?? $post_order->get_date_created();
-        $post_order_modified_date = is_null($post_order_modified_date) ? 0 : $post_order_modified_date->getTimestamp();
-
+        $post_order_modified_date = is_null($post_order_modified_date) ? 0 : $post_order_modified_date->get_timestamp();
         /**
          * We are here because there was difference in the post and order data even though sync is enabled. If the modified date in
          * the post is the same or more recent than the modified date in the order object, we update the order object with the data
@@ -1567,7 +1036,6 @@ WHERE
             $this->migrate_post_record($order, $post_order);
         }
     }
-
     /**
      * Get the post type order representation.
      *
@@ -1583,7 +1051,6 @@ WHERE
         $cpt_data_store->read($cpt_order);
         return $cpt_order;
     }
-
     /**
      * Helper function to get posts data for an order in bulk. We use to this to compute posts object in bulk so that we can compare it with COT data.
      *
@@ -1599,68 +1066,53 @@ WHERE
         foreach ($order_ids as $order_id) {
             // Exclude orders where the CPT version is a placeholder post.
             $post_type = get_post_type($order_id);
-            if (! $post_type || DataSynchronizer::PLACEHOLDER_ORDER_POST_TYPE === $post_type) {
-                unset($orders[ $order_id ]);
+            if (!$post_type || Data_Synchronizer::PLACEHOLDER_ORDER_POST_TYPE === $post_type) {
+                unset($orders[$order_id]);
                 continue;
             }
-
             // We have to bust meta cache, otherwise we will just get the meta cached by OrderTableDataStore.
             wp_cache_delete(WC_Order::generate_meta_cache_key($order_id, 'orders'), 'orders');
         }
-
-        $cpt_stores       = [];
+        $cpt_stores = [];
         $cpt_store_orders = [];
         foreach ($orders as $order_id => $order) {
             $table_data_store = $order->get_data_store();
-            $cpt_data_store   = $table_data_store->get_cpt_data_store_instance();
-
-            if (! $cpt_data_store) {
+            $cpt_data_store = $table_data_store->get_cpt_data_store_instance();
+            if (!$cpt_data_store) {
                 throw new \Exception(sprintf('No CPT data store found for order %d.', absint($order_id)));
             }
-
             $cpt_store_class_name = $cpt_data_store::class;
-            if (! isset($cpt_stores[ $cpt_store_class_name ])) {
-                $cpt_stores[ $cpt_store_class_name ]       = $cpt_data_store;
-                $cpt_store_orders[ $cpt_store_class_name ] = [];
+            if (!isset($cpt_stores[$cpt_store_class_name])) {
+                $cpt_stores[$cpt_store_class_name] = $cpt_data_store;
+                $cpt_store_orders[$cpt_store_class_name] = [];
             }
-            $cpt_store_orders[ $cpt_store_class_name ][ $order_id ] = $order;
+            $cpt_store_orders[$cpt_store_class_name][$order_id] = $order;
         }
-
         $cpt_orders = [];
         foreach ($cpt_stores as $cpt_store_name => $cpt_store) {
             // Prime caches if we can.
             if (method_exists($cpt_store, 'prime_caches_for_orders')) {
-                $cpt_store->prime_caches_for_orders(array_keys($cpt_store_orders[ $cpt_store_name ]), []);
+                $cpt_store->prime_caches_for_orders(array_keys($cpt_store_orders[$cpt_store_name]), []);
             }
-
-            foreach ($cpt_store_orders[ $cpt_store_name ] as $order_id => $order) {
+            foreach ($cpt_store_orders[$cpt_store_name] as $order_id => $order) {
                 $cpt_order_class_name = wc_get_order_type($order->get_type())['class_name'];
-                $cpt_order            = new $cpt_order_class_name();
-
+                $cpt_order = new $cpt_order_class_name();
                 try {
                     $cpt_order->set_id($order_id);
                     $cpt_store->read($cpt_order);
-                    $cpt_orders[ $order_id ] = $cpt_order;
+                    $cpt_orders[$order_id] = $cpt_order;
                 } catch (Exception $e) {
                     // If the post record has been deleted (for instance, by direct query) then an exception may be thrown.
-                    $this->error_logger->warning(
-                        sprintf(
-                            /* translators: %1$d order ID. */
-                            __('Unable to load the post record for order %1$d', 'woocommerce'),
-                            $order_id
-                        ),
-                        [
-                            'exception_code' => $e->getCode(),
-                            'exception_msg'  => $e->getMessage(),
-                            'origin'         => __METHOD__,
-                        ]
-                    );
+                    $this->error_logger->warning(sprintf(
+                        /* translators: %1$d order ID. */
+                        __('Unable to load the post record for order %1$d', 'woocommerce'),
+                        $order_id
+                    ), ['exception_code' => $e->get_code(), 'exception_msg' => $e->get_message(), 'origin' => __METHOD__]);
                 }
             }
         }
         return $cpt_orders;
     }
-
     /**
      * Computes whether post has been updated after last order. Tries to do it as efficiently as possible.
      *
@@ -1671,18 +1123,15 @@ WHERE
      */
     private function is_post_different_from_order(\WC_Abstract_Order $order, \WC_Abstract_Order $post_order): bool
     {
-        if (ArrayUtil::deep_compare_array_diff($order->get_base_data(), $post_order->get_base_data(), false)) {
+        if (Array_Util::deep_compare_array_diff($order->get_base_data(), $post_order->get_base_data(), false)) {
             return true;
         }
-
         $meta_diff = $this->get_diff_meta_data_between_orders($order, $post_order);
-        if (! empty($meta_diff)) {
+        if (!empty($meta_diff)) {
             return true;
         }
-
         return false;
     }
-
     /**
      * Migrate meta data from post to order.
      *
@@ -1697,7 +1146,6 @@ WHERE
         $order->save_meta_data();
         return $diff;
     }
-
     /**
      * Helper function to compute diff between metadata of post and cot data for an order.
      *
@@ -1711,28 +1159,26 @@ WHERE
      */
     private function get_diff_meta_data_between_orders(\WC_Abstract_Order &$order1, \WC_Abstract_Order $order2, bool $sync = false): array
     {
-        $order1_meta        = ArrayUtil::select($order1->get_meta_data(), 'get_data', ArrayUtil::SELECT_BY_OBJECT_METHOD);
-        $order2_meta        = ArrayUtil::select($order2->get_meta_data(), 'get_data', ArrayUtil::SELECT_BY_OBJECT_METHOD);
-        $order1_meta_by_key = ArrayUtil::select_as_assoc($order1_meta, 'key', ArrayUtil::SELECT_BY_ARRAY_KEY);
-        $order2_meta_by_key = ArrayUtil::select_as_assoc($order2_meta, 'key', ArrayUtil::SELECT_BY_ARRAY_KEY);
-
+        $order1_meta = Array_Util::select($order1->get_meta_data(), 'get_data', Array_Util::SELECT_BY_OBJECT_METHOD);
+        $order2_meta = Array_Util::select($order2->get_meta_data(), 'get_data', Array_Util::SELECT_BY_OBJECT_METHOD);
+        $order1_meta_by_key = Array_Util::select_as_assoc($order1_meta, 'key', Array_Util::SELECT_BY_ARRAY_KEY);
+        $order2_meta_by_key = Array_Util::select_as_assoc($order2_meta, 'key', Array_Util::SELECT_BY_ARRAY_KEY);
         $diff = [];
         foreach ($order1_meta_by_key as $key => $value) {
             if (in_array($key, $this->internal_meta_keys, true)) {
                 // These should have already been verified in the base data comparison.
                 continue;
             }
-            $order1_values = ArrayUtil::select($value, 'value', ArrayUtil::SELECT_BY_ARRAY_KEY);
-            if (! array_key_exists($key, $order2_meta_by_key)) {
+            $order1_values = Array_Util::select($value, 'value', Array_Util::SELECT_BY_ARRAY_KEY);
+            if (!array_key_exists($key, $order2_meta_by_key)) {
                 $sync && $order1->delete_meta_data($key);
-                $diff[ $key ] = $order1_values;
-                unset($order2_meta_by_key[ $key ]);
+                $diff[$key] = $order1_values;
+                unset($order2_meta_by_key[$key]);
                 continue;
             }
-
-            $order2_values = ArrayUtil::select($order2_meta_by_key[ $key ], 'value', ArrayUtil::SELECT_BY_ARRAY_KEY);
-            $new_diff      = ArrayUtil::deep_assoc_array_diff($order1_values, $order2_values);
-            if (! empty($new_diff) && $sync) {
+            $order2_values = Array_Util::select($order2_meta_by_key[$key], 'value', Array_Util::SELECT_BY_ARRAY_KEY);
+            $new_diff = Array_Util::deep_assoc_array_diff($order1_values, $order2_values);
+            if (!empty($new_diff) && $sync) {
                 if (count($order2_values) > 1) {
                     $order1->delete_meta_data($key);
                     foreach ($order2_values as $post_order_value) {
@@ -1741,11 +1187,10 @@ WHERE
                 } else {
                     $order1->update_meta_data($key, $order2_values[0]);
                 }
-                $diff[ $key ] = $new_diff;
-                unset($order2_meta_by_key[ $key ]);
+                $diff[$key] = $new_diff;
+                unset($order2_meta_by_key[$key]);
             }
         }
-
         foreach ($order2_meta_by_key as $key => $value) {
             if (array_key_exists($key, $order1_meta_by_key)) {
                 continue;
@@ -1753,15 +1198,14 @@ WHERE
             if (in_array($key, $this->internal_meta_keys, true)) {
                 continue;
             }
-            $order2_values = ArrayUtil::select($value, 'value', ArrayUtil::SELECT_BY_ARRAY_KEY);
+            $order2_values = Array_Util::select($value, 'value', Array_Util::SELECT_BY_ARRAY_KEY);
             foreach ($order2_values as $meta_value) {
                 $sync && $order1->add_meta_data($key, $meta_value);
             }
-            $diff[ $key ] = $order2_values;
+            $diff[$key] = $order2_values;
         }
         return $diff;
     }
-
     /**
      * Migrate post record from a given order object.
      *
@@ -1770,9 +1214,8 @@ WHERE
      */
     private function migrate_post_record(\WC_Abstract_Order &$order, \WC_Abstract_Order $post_order): void
     {
-        self::$sync_on_read_order_ids[ $order->get_id() ] = true;
-
-        $diff                 = $this->migrate_meta_data_from_post_order($order, $post_order);
+        self::$sync_on_read_order_ids[$order->get_id()] = true;
+        $diff = $this->migrate_meta_data_from_post_order($order, $post_order);
         $post_order_base_data = $post_order->get_base_data();
         foreach ($post_order_base_data as $key => $value) {
             // Skip migrating cogs_total_value if the HPOS order has a valid value and the CPT order has 0.
@@ -1786,9 +1229,7 @@ WHERE
             $this->set_order_prop($order, $key, $value);
         }
         $this->persist_updates($order, false);
-
-        unset(self::$sync_on_read_order_ids[ $order->get_id() ]);
-
+        unset(self::$sync_on_read_order_ids[$order->get_id()]);
         /**
          * Fired when an HPOS order is updated from its corresponding post record on read due to a difference in the data.
          *
@@ -1799,7 +1240,6 @@ WHERE
          */
         do_action('woocommerce_hpos_post_record_migrated_on_read', $order, $diff);
     }
-
     /**
      * Sets order properties based on a row from the database.
      *
@@ -1810,49 +1250,37 @@ WHERE
     {
         foreach ($this->get_all_order_column_mappings() as $column_mapping) {
             foreach ($column_mapping as $prop_details) {
-                if (! isset($prop_details['name'])) {
+                if (!isset($prop_details['name'])) {
                     continue;
                 }
-                if (! is_string($prop_details['name'])) {
+                if (!is_string($prop_details['name'])) {
                     continue;
                 }
-                if (! property_exists($order_data, $prop_details['name'])) {
+                if (!property_exists($order_data, $prop_details['name'])) {
                     continue;
                 }
                 $prop_value = $order_data->{$prop_details['name']};
                 if (is_null($prop_value)) {
                     continue;
                 }
-
                 try {
                     if ('date' === $prop_details['type']) {
                         $prop_value = $this->string_to_timestamp($prop_value);
                     }
-
                     $this->set_order_prop($order, $prop_details['name'], $prop_value);
                 } catch (\Exception $e) {
                     $order_id = $order->get_id();
-                    $this->error_logger->warning(
-                        sprintf(
-                            /* translators: %1$d = peoperty name, %2$d = order ID, %3$s = error message. */
-                            __('Error when setting property \'%1$s\' for order %2$d: %3$s', 'woocommerce'),
-                            $prop_details['name'],
-                            $order_id,
-                            $e->getMessage()
-                        ),
-                        [
-                            'exception_code' => $e->getCode(),
-                            'exception_msg'  => $e->getMessage(),
-                            'origin'         => __METHOD__,
-                            'order_id'       => $order_id,
-                            'property_name'  => $prop_details['name'],
-                        ]
-                    );
+                    $this->error_logger->warning(sprintf(
+                        /* translators: %1$d = peoperty name, %2$d = order ID, %3$s = error message. */
+                        __('Error when setting property \'%1$s\' for order %2$d: %3$s', 'woocommerce'),
+                        $prop_details['name'],
+                        $order_id,
+                        $e->get_message()
+                    ), ['exception_code' => $e->get_code(), 'exception_msg' => $e->get_message(), 'origin' => __METHOD__, 'order_id' => $order_id, 'property_name' => $prop_details['name']]);
                 }
             }
         }
     }
-
     /**
      * Set order prop if a setter exists in either the order object or in the data store.
      *
@@ -1865,15 +1293,14 @@ WHERE
     private function set_order_prop(\WC_Abstract_Order $order, string $prop_name, $prop_value)
     {
         $prop_setter_function_name = "set_{$prop_name}";
-        if (is_callable([ $order, $prop_setter_function_name ])) {
+        if (is_callable([$order, $prop_setter_function_name])) {
             return $order->{$prop_setter_function_name}($prop_value);
         }
-        if (is_callable([ $this, $prop_setter_function_name ])) {
+        if (is_callable([$this, $prop_setter_function_name])) {
             return $this->{$prop_setter_function_name}($order, $prop_value, false);
         }
         return false;
     }
-
     /**
      * Retrieve raw order data for multiple IDs.
      *
@@ -1886,34 +1313,26 @@ WHERE
         if (empty($ids)) {
             return [];
         }
-
-        $using_datastore_cache = OrderUtil::custom_orders_table_datastore_cache_enabled();
-        $order_data            = [];
-
+        $using_datastore_cache = Order_Util::custom_orders_table_datastore_cache_enabled();
+        $order_data = [];
         if ($using_datastore_cache) {
             $order_data = $this->get_order_data_for_ids_from_cache($ids);
-            $ids        = array_diff($ids, array_keys($order_data));
+            $ids = array_diff($ids, array_keys($order_data));
         }
-
         if (count($ids) > 0) {
             $db_order_data = $this->get_order_data_for_ids_from_db($ids);
-            $order_data    = $db_order_data + $order_data;
+            $order_data = $db_order_data + $order_data;
             if (count($db_order_data) > 0 && $using_datastore_cache) {
                 $this->set_order_data_in_cache($db_order_data);
             }
         }
-
         $order_data = array_filter($order_data);
-
         $meta_data = $this->data_store_meta->get_meta_data_for_object_ids(array_keys($order_data));
-
         foreach ($meta_data as $order_id => $order_meta) {
-            $order_data[ $order_id ]->meta_data = $order_meta;
+            $order_data[$order_id]->meta_data = $order_meta;
         }
-
         return $order_data;
     }
-
     /**
      * Retrieve raw order data from the database for the given a set of IDs.
      *
@@ -1924,56 +1343,43 @@ WHERE
     private function get_order_data_for_ids_from_db(array $ids): array
     {
         global $wpdb;
-
-        if (! $ids || empty($ids)) {
+        if (!$ids || empty($ids)) {
             return [];
         }
-
-        $table_aliases     = [
-            'orders'           => $this->get_order_table_alias(),
-            'billing_address'  => $this->get_address_table_alias('billing'),
-            'shipping_address' => $this->get_address_table_alias('shipping'),
-            'operational_data' => $this->get_op_table_alias(),
-        ];
+        $table_aliases = ['orders' => $this->get_order_table_alias(), 'billing_address' => $this->get_address_table_alias('billing'), 'shipping_address' => $this->get_address_table_alias('shipping'), 'operational_data' => $this->get_op_table_alias()];
         $order_table_alias = $table_aliases['orders'];
         $order_table_query = $this->get_order_table_select_statement();
-        $id_placeholder    = implode(', ', array_fill(0, count($ids), '%d'));
-
+        $id_placeholder = implode(', ', array_fill(0, count($ids), '%d'));
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $order_table_query is autogenerated and should already be prepared.
-        $table_data = $wpdb->get_results(
-            $wpdb->prepare(
-                "$order_table_query WHERE $order_table_alias.id in ( $id_placeholder )",
-                $ids
-            )
-        );
+        $table_data = $wpdb->get_results($wpdb->prepare("{$order_table_query} WHERE {$order_table_alias}.id in ( {$id_placeholder} )", $ids));
         // phpcs:enable
-
         $order_data = [];
         foreach ($table_data as $table_datum) {
-            $id                = $table_datum->{"{$order_table_alias}_id"};
-            $order_data[ $id ] = new \stdClass();
+            $id = $table_datum->{"{$order_table_alias}_id"};
+            $order_data[$id] = new \stdClass();
             foreach ($this->get_all_order_column_mappings() as $table_name => $column_mappings) {
-                $table_alias = $table_aliases[ $table_name ];
+                $table_alias = $table_aliases[$table_name];
                 // This remapping is required to keep the query length small enough to be supported by implementations such as HyperDB (i.e. fetching some tables in join via alias.*, while others via full name). We can revert this commit if HyperDB starts supporting SRTM for query length more than 3076 characters.
                 foreach ($column_mappings as $field => $map) {
-                    $field_name = $map['name'] ?? "{$table_name}_$field";
+                    $field_name = $map['name'] ?? "{$table_name}_{$field}";
                     if (property_exists($table_datum, $field_name)) {
-                        $field_value = $table_datum->{$field_name}; // Unique column, field name is different prop name.
-                    } elseif (property_exists($table_datum, "{$table_alias}_$field")) {
-                        $field_value = $table_datum->{"{$table_alias}_$field"}; // Non-unique column (billing, shipping etc).
+                        $field_value = $table_datum->{$field_name};
+                        // Unique column, field name is different prop name.
+                    } elseif (property_exists($table_datum, "{$table_alias}_{$field}")) {
+                        $field_value = $table_datum->{"{$table_alias}_{$field}"};
+                        // Non-unique column (billing, shipping etc).
                     } else {
-                        $field_value = $table_datum->{$field}; // Unique column, field name is same as prop name.
+                        $field_value = $table_datum->{$field};
+                        // Unique column, field name is same as prop name.
                     }
-                    $order_data[ $id ]->{$field_name} = $field_value;
+                    $order_data[$id]->{$field_name} = $field_value;
                 }
             }
-            $order_data[ $id ]->id        = $id;
-            $order_data[ $id ]->meta_data = [];
+            $order_data[$id]->id = $id;
+            $order_data[$id]->meta_data = [];
         }
-
         return $order_data;
     }
-
     /**
      * Retrieve raw order data from cache for the given a set of IDs.
      *
@@ -1983,11 +1389,9 @@ WHERE
      */
     private function get_order_data_for_ids_from_cache(array $ids): array
     {
-        $cache_engine = wc_get_container()->get(WPCacheEngine::class);
-
+        $cache_engine = wc_get_container()->get(Wp_Cache_Engine::class);
         return array_filter($cache_engine->get_cached_objects($ids, $this->get_cache_group()));
     }
-
     /**
      * Store the raw data for a set of orders in cache.
      *
@@ -1995,10 +1399,9 @@ WHERE
      */
     private function set_order_data_in_cache(array $order_data): void
     {
-        $cache_engine = wc_get_container()->get(WPCacheEngine::class);
+        $cache_engine = wc_get_container()->get(Wp_Cache_Engine::class);
         $cache_engine->cache_objects($order_data, 0, $this->get_cache_group());
     }
-
     /**
      * Helper method to generate combined select statement.
      *
@@ -2006,28 +1409,20 @@ WHERE
      */
     private function get_order_table_select_statement(): string
     {
-        $order_table                  = $this::get_orders_table_name();
-        $order_table_alias            = $this->get_order_table_alias();
-        $billing_address_table_alias  = $this->get_address_table_alias('billing');
+        $order_table = $this::get_orders_table_name();
+        $order_table_alias = $this->get_order_table_alias();
+        $billing_address_table_alias = $this->get_address_table_alias('billing');
         $shipping_address_table_alias = $this->get_address_table_alias('shipping');
-        $op_data_table_alias          = $this->get_op_table_alias();
-        $billing_address_clauses      = $this->join_billing_address_table_to_order_query($order_table_alias, $billing_address_table_alias);
-        $shipping_address_clauses     = $this->join_shipping_address_table_to_order_query($order_table_alias, $shipping_address_table_alias);
-        $operational_data_clauses     = $this->join_operational_data_table_to_order_query($order_table_alias, $op_data_table_alias);
-
+        $op_data_table_alias = $this->get_op_table_alias();
+        $billing_address_clauses = $this->join_billing_address_table_to_order_query($order_table_alias, $billing_address_table_alias);
+        $shipping_address_clauses = $this->join_shipping_address_table_to_order_query($order_table_alias, $shipping_address_table_alias);
+        $operational_data_clauses = $this->join_operational_data_table_to_order_query($order_table_alias, $op_data_table_alias);
         /**
          * We fully spell out address table columns because they have duplicate columns for billing and shipping and would be overwritten if we don't spell them out. There is not such duplication in the operational data table and orders table, so select with `alias`.* is fine.
          * We do spell ID columns manually, as they are duplicate.
          */
-        return "
-SELECT $order_table_alias.id as o_id, $op_data_table_alias.id as p_id, $order_table_alias.*, {$billing_address_clauses['select']}, {$shipping_address_clauses['select']}, $op_data_table_alias.*
-FROM $order_table $order_table_alias
-LEFT JOIN {$billing_address_clauses['join']}
-LEFT JOIN {$shipping_address_clauses['join']}
-LEFT JOIN {$operational_data_clauses['join']}
-";
+        return "\nSELECT {$order_table_alias}.id as o_id, {$op_data_table_alias}.id as p_id, {$order_table_alias}.*, {$billing_address_clauses['select']}, {$shipping_address_clauses['select']}, {$op_data_table_alias}.*\nFROM {$order_table} {$order_table_alias}\nLEFT JOIN {$billing_address_clauses['join']}\nLEFT JOIN {$shipping_address_clauses['join']}\nLEFT JOIN {$operational_data_clauses['join']}\n";
     }
-
     /**
      * Helper function to generate select statement for fetching metadata in bulk.
      *
@@ -2036,12 +1431,8 @@ LEFT JOIN {$operational_data_clauses['join']}
     private function get_order_meta_select_statement(): string
     {
         $order_meta_table = self::get_meta_table_name();
-        return "
-SELECT $order_meta_table.id, $order_meta_table.order_id, $order_meta_table.meta_key, $order_meta_table.meta_value
-FROM $order_meta_table
-		";
+        return "\nSELECT {$order_meta_table}.id, {$order_meta_table}.order_id, {$order_meta_table}.meta_key, {$order_meta_table}.meta_value\nFROM {$order_meta_table}\n\t\t";
     }
-
     /**
      * Helper method to generate join query for billing addresses in wc_address table.
      *
@@ -2054,7 +1445,6 @@ FROM $order_meta_table
     {
         return $this->join_address_table_order_query('billing', $order_table_alias, $address_table_alias);
     }
-
     /**
      * Helper method to generate join query for shipping addresses in wc_address table.
      *
@@ -2067,7 +1457,6 @@ FROM $order_meta_table
     {
         return $this->join_address_table_order_query('shipping', $order_table_alias, $address_table_alias);
     }
-
     /**
      * Helper method to generate join and select query for address table.
      *
@@ -2080,22 +1469,14 @@ FROM $order_meta_table
     private function join_address_table_order_query(string $address_type, string $order_table_alias, string $address_table_alias): array
     {
         global $wpdb;
-        $address_table    = $this::get_addresses_table_name();
+        $address_table = $this::get_addresses_table_name();
         $column_props_map = 'billing' === $address_type ? $this->billing_address_column_mapping : $this->shipping_address_column_mapping;
-        $clauses          = $this->generate_select_and_join_clauses($order_table_alias, $address_table, $address_table_alias, $column_props_map);
+        $clauses = $this->generate_select_and_join_clauses($order_table_alias, $address_table, $address_table_alias, $column_props_map);
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $clauses['join'] and $address_table_alias are hardcoded.
-        $clauses['join'] = $wpdb->prepare(
-            "{$clauses['join']} AND $address_table_alias.address_type = %s",
-            $address_type
-        );
-
+        $clauses['join'] = $wpdb->prepare("{$clauses['join']} AND {$address_table_alias}.address_type = %s", $address_type);
         // phpcs:enable
-        return [
-            'select' => $clauses['select'],
-            'join'   => $clauses['join'],
-        ];
+        return ['select' => $clauses['select'], 'join' => $clauses['join']];
     }
-
     /**
      * Helper method to join order operational data table.
      *
@@ -2107,15 +1488,8 @@ FROM $order_meta_table
     private function join_operational_data_table_to_order_query(string $order_table_alias, string $operational_table_alias)
     {
         $operational_data_table = $this::get_operational_data_table_name();
-
-        return $this->generate_select_and_join_clauses(
-            $order_table_alias,
-            $operational_data_table,
-            $operational_table_alias,
-            $this->operational_data_column_mapping
-        );
+        return $this->generate_select_and_join_clauses($order_table_alias, $operational_data_table, $operational_table_alias, $this->operational_data_column_mapping);
     }
-
     /**
      * Helper method to generate join and select clauses.
      *
@@ -2130,14 +1504,9 @@ FROM $order_meta_table
     {
         // Add aliases to column names so they will be unique when fetching.
         $select_clause = $this->generate_select_clause_for_props($table_alias, $column_props_map);
-        $join_clause   = "$table $table_alias ON $table_alias.order_id = $order_table_alias.id";
-
-        return [
-            'select' => $select_clause,
-            'join'   => $join_clause,
-        ];
+        $join_clause = "{$table} {$table_alias} ON {$table_alias}.order_id = {$order_table_alias}.id";
+        return ['select' => $select_clause, 'join' => $join_clause];
     }
-
     /**
      * Helper method to generate select clause for props.
      *
@@ -2150,12 +1519,10 @@ FROM $order_meta_table
     {
         $select_clauses = [];
         foreach ($props as $column_name => $prop_details) {
-            $select_clauses[] = isset($prop_details['name']) ? "$table_alias.$column_name as {$prop_details['name']}" : "$table_alias.$column_name as {$table_alias}_$column_name";
+            $select_clauses[] = isset($prop_details['name']) ? "{$table_alias}.{$column_name} as {$prop_details['name']}" : "{$table_alias}.{$column_name} as {$table_alias}_{$column_name}";
         }
-
         return implode(', ', $select_clauses);
     }
-
     /**
      * Persists order changes to the database.
      *
@@ -2168,46 +1535,37 @@ FROM $order_meta_table
      */
     protected function persist_order_to_db(&$order, bool $force_all_fields = false)
     {
-        $context = (0 === absint($order->get_id())) ? 'create' : 'update';
-
+        $context = 0 === absint($order->get_id()) ? 'create' : 'update';
         if ('create' === $context) {
             $post_id = $this->maybe_create_backup_post($order, 'create');
-            if (! $post_id) {
+            if (!$post_id) {
                 throw new \Exception(esc_html__('Could not create order in posts table.', 'woocommerce'));
             }
-
             $order->set_id($post_id);
         }
-
-        $only_changes = ! $force_all_fields && 'update' === $context;
+        $only_changes = !$force_all_fields && 'update' === $context;
         // Figure out what needs to be updated in the database.
         $db_updates = $this->get_db_rows_for_order($order, $context, $only_changes);
-
         // Persist changes.
         foreach ($db_updates as $update) {
             // Make sure 'data' and 'format' entries match before passing to $wpdb.
             ksort($update['data']);
             ksort($update['format']);
-
             $result = $this->persist_db_row($update);
             if (false === $result) {
                 // translators: %s is a table name.
                 throw new \Exception(esc_html(sprintf(__('Could not persist order to database table "%s".', 'woocommerce'), $update['table'])));
             }
         }
-
         $changes = $order->get_changes();
         $this->update_address_index_meta($order, $changes);
         $default_taxonomies = $this->init_default_taxonomies($order, []);
         $this->set_custom_taxonomies($order, $default_taxonomies);
-
         if ($order->has_cogs() && $this->cogs_is_enabled()) {
-            $this->save_cogs_data($order, ! $only_changes || array_key_exists('cogs_total_value', $changes));
+            $this->save_cogs_data($order, !$only_changes || array_key_exists('cogs_total_value', $changes));
         }
-
-        $this->clear_cached_data([ $order->get_id() ]);
+        $this->clear_cached_data([$order->get_id()]);
     }
-
     /**
      * Save the Cost of Goods Sold value of a given order to the database.
      *
@@ -2217,7 +1575,6 @@ FROM $order_meta_table
     private function save_cogs_data(WC_Abstract_Order $order, bool $cogs_value_changed): void
     {
         $cogs_value_original = $order->get_cogs_total_value();
-
         /**
          * Filter to customize the Cost of Goods Sold value that gets saved for a given order,
          * or to suppress the saving of the value (so that custom storage can be used).
@@ -2231,7 +1588,6 @@ FROM $order_meta_table
         if (null === $cogs_value) {
             return;
         }
-
         $sync_meta = $cogs_value_changed || $cogs_value_original !== (float) $cogs_value;
         if ($sync_meta) {
             $existing_meta = $this->data_store_meta->get_metadata_by_key($order, '_cogs_total_value');
@@ -2239,19 +1595,18 @@ FROM $order_meta_table
                 $existing_meta = current($existing_meta);
                 $this->data_store_meta->delete_meta($order, $existing_meta);
             } elseif ($existing_meta) {
-                $existing_meta        = current($existing_meta);
-                $existing_meta->key   = '_cogs_total_value';
+                $existing_meta = current($existing_meta);
+                $existing_meta->key = '_cogs_total_value';
                 $existing_meta->value = $cogs_value;
                 $this->data_store_meta->update_meta($order, $existing_meta);
             } else {
-                $meta        = new \WC_Meta_Data();
-                $meta->key   = '_cogs_total_value';
+                $meta = new \WC_Meta_Data();
+                $meta->key = '_cogs_total_value';
                 $meta->value = $cogs_value;
                 $this->data_store_meta->add_meta($order, $meta);
             }
         }
     }
-
     /**
      * Takes care of creating the backup post in the posts table (placeholder or actual order post, depending on sync settings).
      *
@@ -2263,27 +1618,16 @@ FROM $order_meta_table
      */
     protected function maybe_create_backup_post(&$order, string $context): int
     {
-        $data_sync = wc_get_container()->get(DataSynchronizer::class);
-
-        $data = [
-            'post_type'     => $data_sync->data_sync_is_enabled() ? $order->get_type() : $data_sync::PLACEHOLDER_ORDER_POST_TYPE,
-            'post_status'   => 'draft',
-            'post_parent'   => $order->get_changes()['parent_id'] ?? $order->get_data()['parent_id'] ?? 0,
-            'post_date'     => gmdate('Y-m-d H:i:s', $order->get_date_created('edit')->getOffsetTimestamp()),
-            'post_date_gmt' => gmdate('Y-m-d H:i:s', $order->get_date_created('edit')->getTimestamp()),
-        ];
-
+        $data_sync = wc_get_container()->get(Data_Synchronizer::class);
+        $data = ['post_type' => $data_sync->data_sync_is_enabled() ? $order->get_type() : $data_sync::PLACEHOLDER_ORDER_POST_TYPE, 'post_status' => 'draft', 'post_parent' => $order->get_changes()['parent_id'] ?? $order->get_data()['parent_id'] ?? 0, 'post_date' => gmdate('Y-m-d H:i:s', $order->get_date_created('edit')->get_offset_timestamp()), 'post_date_gmt' => gmdate('Y-m-d H:i:s', $order->get_date_created('edit')->get_timestamp())];
         if ('backfill' === $context) {
-            if (! $order->get_id()) {
+            if (!$order->get_id()) {
                 return 0;
             }
-
             $data['import_id'] = $order->get_id();
         }
-
         return wp_insert_post($data);
     }
-
     /**
      * Set default taxonomies for the order.
      *
@@ -2299,33 +1643,28 @@ FROM $order_meta_table
         if ('auto-draft' === $order->get_status()) {
             return $sanitized_tax_input;
         }
-
         foreach (get_object_taxonomies($order->get_type(), 'object') as $taxonomy => $tax_object) {
             if (empty($tax_object->default_term)) {
                 return $sanitized_tax_input;
             }
-
             // Filter out empty terms.
-            if (isset($sanitized_tax_input[ $taxonomy ]) && is_array($sanitized_tax_input[ $taxonomy ])) {
-                $sanitized_tax_input[ $taxonomy ] = array_filter($sanitized_tax_input[ $taxonomy ]);
+            if (isset($sanitized_tax_input[$taxonomy]) && is_array($sanitized_tax_input[$taxonomy])) {
+                $sanitized_tax_input[$taxonomy] = array_filter($sanitized_tax_input[$taxonomy]);
             }
-
             // Passed custom taxonomy list overwrites the existing list if not empty.
-            $terms = wp_get_object_terms($order->get_id(), $taxonomy, [ 'fields' => 'ids' ]);
-            if (! empty($terms) && empty($sanitized_tax_input[ $taxonomy ])) {
-                $sanitized_tax_input[ $taxonomy ] = $terms;
+            $terms = wp_get_object_terms($order->get_id(), $taxonomy, ['fields' => 'ids']);
+            if (!empty($terms) && empty($sanitized_tax_input[$taxonomy])) {
+                $sanitized_tax_input[$taxonomy] = $terms;
             }
-
-            if (empty($sanitized_tax_input[ $taxonomy ])) {
+            if (empty($sanitized_tax_input[$taxonomy])) {
                 $default_term_id = get_option('default_term_' . $taxonomy);
-                if (! empty($default_term_id)) {
-                    $sanitized_tax_input[ $taxonomy ] = [ (int) $default_term_id ];
+                if (!empty($default_term_id)) {
+                    $sanitized_tax_input[$taxonomy] = [(int) $default_term_id];
                 }
             }
         }
         return $sanitized_tax_input;
     }
-
     /**
      * Set custom taxonomies for the order.
      *
@@ -2338,24 +1677,20 @@ FROM $order_meta_table
     {
         foreach ($sanitized_tax_input as $taxonomy => $tags) {
             $taxonomy_obj = get_taxonomy($taxonomy);
-
-            if (! $taxonomy_obj) {
+            if (!$taxonomy_obj) {
                 /* translators: %s: Taxonomy name. */
                 _doing_it_wrong(__FUNCTION__, esc_html(sprintf(__('Invalid taxonomy: %s.', 'woocommerce'), $taxonomy)), '7.9.0');
                 continue;
             }
-
             // array = hierarchical, string = non-hierarchical.
             if (is_array($tags)) {
                 $tags = array_filter($tags);
             }
-
             if (current_user_can($taxonomy_obj->cap->assign_terms)) {
                 wp_set_post_terms($order->get_id(), $tags, $taxonomy);
             }
         }
     }
-
     /**
      * Generates an array of rows with all the details required to insert or update an order in the database.
      *
@@ -2369,72 +1704,26 @@ FROM $order_meta_table
     protected function get_db_rows_for_order(\WC_Abstract_Order $order, string $context = 'create', bool $only_changes = false): array
     {
         $result = [];
-
         $row = $this->get_db_row_from_order($order, $this->order_column_mapping, $only_changes);
-        if ('create' === $context && ! $row) {
-            throw new \Exception('No data for new record.'); // This shouldn't occur.
+        if ('create' === $context && !$row) {
+            throw new \Exception('No data for new record.');
+            // This shouldn't occur.
         }
-
         if ($row) {
-            $result[] = [
-                'table'  => self::get_orders_table_name(),
-                'data'   => array_merge(
-                    $row['data'],
-                    [
-                        'id'   => $order->get_id(),
-                        'type' => $order->get_type(),
-                    ]
-                ),
-                'format' => array_merge(
-                    $row['format'],
-                    [
-                        'id'   => '%d',
-                        'type' => '%s',
-                    ]
-                ),
-            ];
+            $result[] = ['table' => self::get_orders_table_name(), 'data' => array_merge($row['data'], ['id' => $order->get_id(), 'type' => $order->get_type()]), 'format' => array_merge($row['format'], ['id' => '%d', 'type' => '%s'])];
         }
-
         // wc_order_operational_data.
         $row = $this->get_db_row_from_order($order, $this->operational_data_column_mapping, $only_changes);
         if ($row) {
-            $result[] = [
-                'table'  => self::get_operational_data_table_name(),
-                'data'   => array_merge($row['data'], [ 'order_id' => $order->get_id() ]),
-                'format' => array_merge($row['format'], [ 'order_id' => '%d' ]),
-            ];
+            $result[] = ['table' => self::get_operational_data_table_name(), 'data' => array_merge($row['data'], ['order_id' => $order->get_id()]), 'format' => array_merge($row['format'], ['order_id' => '%d'])];
         }
-
         // wc_order_addresses.
-        foreach ([ 'billing', 'shipping' ] as $address_type) {
+        foreach (['billing', 'shipping'] as $address_type) {
             $row = $this->get_db_row_from_order($order, $this->{$address_type . '_address_column_mapping'}, $only_changes);
-
             if ($row) {
-                $result[] = [
-                    'table'        => self::get_addresses_table_name(),
-                    'data'         => array_merge(
-                        $row['data'],
-                        [
-                            'order_id'     => $order->get_id(),
-                            'address_type' => $address_type,
-                        ]
-                    ),
-                    'format'       => array_merge(
-                        $row['format'],
-                        [
-                            'order_id'     => '%d',
-                            'address_type' => '%s',
-                        ]
-                    ),
-                    'where'        => [
-                        'order_id'     => $order->get_id(),
-                        'address_type' => $address_type,
-                    ],
-                    'where_format' => [ '%d', '%s' ],
-                ];
+                $result[] = ['table' => self::get_addresses_table_name(), 'data' => array_merge($row['data'], ['order_id' => $order->get_id(), 'address_type' => $address_type]), 'format' => array_merge($row['format'], ['order_id' => '%d', 'address_type' => '%s']), 'where' => ['order_id' => $order->get_id(), 'address_type' => $address_type], 'where_format' => ['%d', '%s']];
             }
         }
-
         /**
          * Allow third parties to include rows that need to be inserted/updated in custom tables when persisting an order.
          *
@@ -2446,7 +1735,6 @@ FROM $order_meta_table
          * @param string     The context of the operation: 'create' or 'update'.
          */
         $ext_rows = apply_filters('woocommerce_orders_table_datastore_extra_db_rows_for_order', [], $order, $context);
-
         /**
          * Filters the rows that are going to be inserted or updated during an order save.
          *
@@ -2457,16 +1745,9 @@ FROM $order_meta_table
          * @param \WC_Order $order   The order object.
          * @param string    $context The context of the operation: 'create' or 'update'.
          */
-        $result = apply_filters(
-            'woocommerce_orders_table_datastore_db_rows_for_order',
-            array_merge($result, $ext_rows),
-            $order,
-            $context
-        );
-
+        $result = apply_filters('woocommerce_orders_table_datastore_db_rows_for_order', array_merge($result, $ext_rows), $order, $context);
         return $result;
     }
-
     /**
      * Produces an array with keys 'row' and 'format' that can be passed to `$wpdb->update()` as the `$data` and
      * `$format` parameters. Values are taken from the order changes array and properly formatted for inclusion in the
@@ -2482,36 +1763,27 @@ FROM $order_meta_table
     protected function get_db_row_from_order($order, $column_mapping, $only_changes = false): false|array
     {
         $changes = $only_changes ? $order->get_changes() : array_merge($order->get_data(), $order->get_changes());
-
         // Make sure 'status' is correctly prefixed.
         if (array_key_exists('status', $column_mapping) && array_key_exists('status', $changes)) {
             $changes['status'] = $this->get_post_status($order);
         }
-
-        $row        = [];
+        $row = [];
         $row_format = [];
-
         foreach ($column_mapping as $column => $details) {
-            if (! isset($details['name'])) {
+            if (!isset($details['name'])) {
                 continue;
             }
-            if (! array_key_exists($details['name'], $changes)) {
+            if (!array_key_exists($details['name'], $changes)) {
                 continue;
             }
-            $row[ $column ]        = $this->database_util->format_object_value_for_db($changes[ $details['name'] ], $details['type']);
-            $row_format[ $column ] = $this->database_util->get_wpdb_format_for_type($details['type']);
+            $row[$column] = $this->database_util->format_object_value_for_db($changes[$details['name']], $details['type']);
+            $row_format[$column] = $this->database_util->get_wpdb_format_for_type($details['type']);
         }
-
-        if (! $row) {
+        if (!$row) {
             return false;
         }
-
-        return [
-            'data'   => $row,
-            'format' => $row_format,
-        ];
+        return ['data' => $row, 'format' => $row_format];
     }
-
     /**
      * Method to delete an order from the database.
      *
@@ -2521,23 +1793,12 @@ FROM $order_meta_table
     public function delete(&$order, $args = []): void
     {
         $order_id = $order->get_id();
-
-        if (! $order_id) {
+        if (!$order_id) {
             return;
         }
-
-        $args = wp_parse_args(
-            $args,
-            [
-                'force_delete'     => false,
-                'suppress_filters' => false,
-            ]
-        );
-
-        $do_filters = ! $args['suppress_filters'];
-
+        $args = wp_parse_args($args, ['force_delete' => false, 'suppress_filters' => false]);
+        $do_filters = !$args['suppress_filters'];
         if ($args['force_delete']) {
-
             if ($do_filters) {
                 /**
                  * Fires immediately before an order is deleted from the database.
@@ -2549,13 +1810,10 @@ FROM $order_meta_table
                  */
                 do_action('woocommerce_before_delete_order', $order_id, $order);
             }
-
             $this->upshift_or_delete_child_orders($order);
             $this->delete_order_data_from_custom_order_tables($order_id);
             $this->delete_items($order);
-
             $order->set_id(0);
-
             /** We can delete the post data if:
              * 1. The HPOS table is authoritative and synchronization is enabled.
              * 2. The post record is of type `shop_order_placehold`, since this is created by the HPOS in the first place.
@@ -2563,9 +1821,8 @@ FROM $order_meta_table
              * In other words, we do not delete the post record when HPOS table is authoritative and synchronization is disabled but post record is a full record and not just a placeholder, because it implies that the order was created before HPOS was enabled.
              */
             $orders_table_is_authoritative = $order->get_data_store()->get_current_class_name() === self::class;
-
             if ($orders_table_is_authoritative) {
-                $data_synchronizer = wc_get_container()->get(DataSynchronizer::class);
+                $data_synchronizer = wc_get_container()->get(Data_Synchronizer::class);
                 if ($data_synchronizer->data_sync_is_enabled()) {
                     // Delete the associated post, which in turn deletes order items, etc. through {@see WC_Post_Data}.
                     // Once we stop creating posts for orders, we should do the cleanup here instead.
@@ -2574,7 +1831,6 @@ FROM $order_meta_table
                     $this->handle_order_deletion_with_sync_disabled($order_id);
                 }
             }
-
             if ($do_filters) {
                 /**
                  * Fires immediately after an order is deleted.
@@ -2583,7 +1839,8 @@ FROM $order_meta_table
                  *
                  * @param int $order_id ID of the order that has been deleted.
                  */
-                do_action('woocommerce_delete_order', $order_id); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
+                do_action('woocommerce_delete_order', $order_id);
+                // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
             }
         } else {
             if ($do_filters) {
@@ -2597,9 +1854,7 @@ FROM $order_meta_table
                  */
                 do_action('woocommerce_before_trash_order', $order_id, $order);
             }
-
             $this->trash_order($order);
-
             if ($do_filters) {
                 /**
                  * Fires immediately after an order is trashed.
@@ -2608,11 +1863,11 @@ FROM $order_meta_table
                  *
                  * @param int $order_id ID of the order that has been trashed.
                  */
-                do_action('woocommerce_trash_order', $order_id); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
+                do_action('woocommerce_trash_order', $order_id);
+                // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
             }
         }
     }
-
     /**
      * Handles the deletion of an order from the orders table when sync is disabled:
      *
@@ -2625,39 +1880,20 @@ FROM $order_meta_table
     protected function handle_order_deletion_with_sync_disabled($order_id): void
     {
         global $wpdb;
-
-        $post_type = $wpdb->get_var(
-            $wpdb->prepare("SELECT post_type FROM {$wpdb->posts} WHERE ID=%d", $order_id)
-        );
-
-        if (DataSynchronizer::PLACEHOLDER_ORDER_POST_TYPE === $post_type) {
-            $wpdb->query(
-                $wpdb->prepare(
-                    "DELETE FROM {$wpdb->posts} WHERE ID=%d OR post_parent=%d",
-                    $order_id,
-                    $order_id
-                )
-            );
+        $post_type = $wpdb->get_var($wpdb->prepare("SELECT post_type FROM {$wpdb->posts} WHERE ID=%d", $order_id));
+        if (Data_Synchronizer::PLACEHOLDER_ORDER_POST_TYPE === $post_type) {
+            $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->posts} WHERE ID=%d OR post_parent=%d", $order_id, $order_id));
             clean_post_cache($order_id);
         } else {
             // phpcs:disable WordPress.DB.SlowDBQuery
-            $wpdb->insert(
-                self::get_meta_table_name(),
-                [
-                    'order_id'   => $order_id,
-                    'meta_key'   => DataSynchronizer::DELETED_RECORD_META_KEY,
-                    'meta_value' => DataSynchronizer::DELETED_FROM_ORDERS_META_VALUE,
-                ]
-            );
+            $wpdb->insert(self::get_meta_table_name(), ['order_id' => $order_id, 'meta_key' => Data_Synchronizer::DELETED_RECORD_META_KEY, 'meta_value' => Data_Synchronizer::DELETED_FROM_ORDERS_META_VALUE]);
             // phpcs:enable WordPress.DB.SlowDBQuery
-
             // Note that at this point upshift_or_delete_child_orders will already have been invoked,
             // thus all the child orders either still exist but have a different parent id,
             // or have been deleted and got their own deletion record already.
             // So there's no need to do anything about them.
         }
     }
-
     /**
      * Set the parent id of child orders to the parent order's parent if the post type
      * for the order is hierarchical, just delete the child orders otherwise.
@@ -2667,32 +1903,16 @@ FROM $order_meta_table
     private function upshift_or_delete_child_orders($order): void
     {
         global $wpdb;
-
-        $order_table     = self::get_orders_table_name();
+        $order_table = self::get_orders_table_name();
         $order_parent_id = $order->get_parent_id();
-
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $child_order_ids = $wpdb->get_col(
-            $wpdb->prepare(
-                "SELECT id FROM $order_table WHERE parent_order_id=%d",
-                $order->get_id()
-            )
-        );
+        $child_order_ids = $wpdb->get_col($wpdb->prepare("SELECT id FROM {$order_table} WHERE parent_order_id=%d", $order->get_id()));
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-
         if (empty($child_order_ids)) {
             return;
         }
-
         if ($this->legacy_proxy->call_function('is_post_type_hierarchical', $order->get_type())) {
-            $wpdb->update(
-                $order_table,
-                [ 'parent_order_id' => $order_parent_id ],
-                [ 'parent_order_id' => $order->get_id() ],
-                [ '%d' ],
-                [ '%d' ]
-            );
-
+            $wpdb->update($order_table, ['parent_order_id' => $order_parent_id], ['parent_order_id' => $order->get_id()], ['%d'], ['%d']);
             $this->clear_cached_data($child_order_ids);
         } else {
             foreach ($child_order_ids as $child_order_id) {
@@ -2703,7 +1923,6 @@ FROM $order_meta_table
             }
         }
     }
-
     /**
      * Trashes an order.
      *
@@ -2712,47 +1931,21 @@ FROM $order_meta_table
     public function trash_order($order): void
     {
         global $wpdb;
-
         if ('trash' === $order->get_status('edit')) {
             return;
         }
-
-        $trash_metadata = [
-            '_wp_trash_meta_status' => 'wc-' . $order->get_status('edit'),
-            '_wp_trash_meta_time'   => time(),
-        ];
-
-        $wpdb->update(
-            self::get_orders_table_name(),
-            [
-                'status'           => 'trash',
-                'date_updated_gmt' => current_time('Y-m-d H:i:s', true),
-            ],
-            [ 'id' => $order->get_id() ],
-            [ '%s', '%s' ],
-            [ '%d' ]
-        );
-
+        $trash_metadata = ['_wp_trash_meta_status' => 'wc-' . $order->get_status('edit'), '_wp_trash_meta_time' => time()];
+        $wpdb->update(self::get_orders_table_name(), ['status' => 'trash', 'date_updated_gmt' => current_time('Y-m-d H:i:s', true)], ['id' => $order->get_id()], ['%s', '%s'], ['%d']);
         $order->set_status('trash');
-
         foreach ($trash_metadata as $meta_key => $meta_value) {
-            $this->add_meta(
-                $order,
-                (object) [
-                    'key'   => $meta_key,
-                    'value' => $meta_value,
-                ]
-            );
+            $this->add_meta($order, (object) ['key' => $meta_key, 'value' => $meta_value]);
         }
-
-        $data_synchronizer = wc_get_container()->get(DataSynchronizer::class);
+        $data_synchronizer = wc_get_container()->get(Data_Synchronizer::class);
         if ($data_synchronizer->data_sync_is_enabled()) {
             wp_trash_post($order->get_id());
         }
-
-        $this->clear_cached_data([ $order->get_id() ]);
+        $this->clear_cached_data([$order->get_id()]);
     }
-
     /**
      * Attempts to restore the specified order back to its original status (after having been trashed).
      *
@@ -2762,52 +1955,40 @@ FROM $order_meta_table
      */
     public function untrash_order(WC_Order $order): bool
     {
-        $id     = $order->get_id();
+        $id = $order->get_id();
         $status = $order->get_status();
-
         if ('trash' !== $status) {
-            wc_get_logger()->warning(
-                sprintf(
-                    /* translators: 1: order ID, 2: order status */
-                    __('Order %1$d cannot be restored from the trash: it has already been restored to status "%2$s".', 'woocommerce'),
-                    $id,
-                    $status
-                )
-            );
+            wc_get_logger()->warning(sprintf(
+                /* translators: 1: order ID, 2: order status */
+                __('Order %1$d cannot be restored from the trash: it has already been restored to status "%2$s".', 'woocommerce'),
+                $id,
+                $status
+            ));
             return false;
         }
-
-        $previous_status           = $order->get_meta('_wp_trash_meta_status');
-        $valid_statuses            = wc_get_order_statuses();
-        $previous_state_is_invalid = ! array_key_exists($previous_status, $valid_statuses);
-        $pending_is_valid_status   = array_key_exists(OrderInternalStatus::PENDING, $valid_statuses);
-
+        $previous_status = $order->get_meta('_wp_trash_meta_status');
+        $valid_statuses = wc_get_order_statuses();
+        $previous_state_is_invalid = !array_key_exists($previous_status, $valid_statuses);
+        $pending_is_valid_status = array_key_exists(Order_Internal_Status::PENDING, $valid_statuses);
         if ($previous_state_is_invalid && $pending_is_valid_status) {
             // If the previous status is no longer valid, let's try to restore it to "pending" instead.
-            wc_get_logger()->warning(
-                sprintf(
-                    /* translators: 1: order ID, 2: order status */
-                    __('The previous status of order %1$d ("%2$s") is invalid. It has been restored to "pending" status instead.', 'woocommerce'),
-                    $id,
-                    $previous_status
-                )
-            );
-
+            wc_get_logger()->warning(sprintf(
+                /* translators: 1: order ID, 2: order status */
+                __('The previous status of order %1$d ("%2$s") is invalid. It has been restored to "pending" status instead.', 'woocommerce'),
+                $id,
+                $previous_status
+            ));
             $previous_status = 'pending';
         } elseif ($previous_state_is_invalid) {
             // If we cannot restore to pending, we should probably stand back and let the merchant intervene some other way.
-            wc_get_logger()->warning(
-                sprintf(
-                    /* translators: 1: order ID, 2: order status */
-                    __('The previous status of order %1$d ("%2$s") is invalid. It could not be restored.', 'woocommerce'),
-                    $id,
-                    $previous_status
-                )
-            );
-
+            wc_get_logger()->warning(sprintf(
+                /* translators: 1: order ID, 2: order status */
+                __('The previous status of order %1$d ("%2$s") is invalid. It could not be restored.', 'woocommerce'),
+                $id,
+                $previous_status
+            ));
             return false;
         }
-
         /**
          * Fires before an order is restored from the trash.
          *
@@ -2817,32 +1998,24 @@ FROM $order_meta_table
          * @param string $previous_status The status of the order before it was trashed.
          */
         do_action('woocommerce_untrash_order', $order->get_id(), $previous_status);
-
         $order->set_status($previous_status);
         $order->save();
-
         // Was the status successfully restored? Let's clean up the meta and indicate success...
         if ('wc-' . $order->get_status() === $previous_status) {
             $order->delete_meta_data('_wp_trash_meta_status');
             $order->delete_meta_data('_wp_trash_meta_time');
             $order->delete_meta_data('_wp_trash_meta_comments_status');
             $order->save_meta_data();
-
             return true;
         }
-
         // ...Or log a warning and bail.
-        wc_get_logger()->warning(
-            sprintf(
-                /* translators: 1: order ID, 2: order status */
-                __('Something went wrong when trying to restore order %d from the trash. It could not be restored.', 'woocommerce'),
-                $id
-            )
-        );
-
+        wc_get_logger()->warning(sprintf(
+            /* translators: 1: order ID, 2: order status */
+            __('Something went wrong when trying to restore order %d from the trash. It could not be restored.', 'woocommerce'),
+            $id
+        ));
         return false;
     }
-
     /**
      * Deletes order data from custom order tables.
      *
@@ -2851,23 +2024,14 @@ FROM $order_meta_table
     public function delete_order_data_from_custom_order_tables($order_id): void
     {
         global $wpdb;
-        $order_cache = wc_get_container()->get(OrderCache::class);
-
+        $order_cache = wc_get_container()->get(Order_Cache::class);
         // Delete COT-specific data.
         foreach ($this->get_all_table_names() as $table) {
-            $wpdb->delete(
-                $table,
-                (self::get_orders_table_name() === $table)
-                    ? [ 'id' => $order_id ]
-                    : [ 'order_id' => $order_id ],
-                [ '%d' ]
-            );
+            $wpdb->delete($table, self::get_orders_table_name() === $table ? ['id' => $order_id] : ['order_id' => $order_id], ['%d']);
             $order_cache->remove($order_id);
         }
-
-        $this->clear_cached_data([ $order_id ]);
+        $this->clear_cached_data([$order_id]);
     }
-
     /**
      * Method to create an order in the database.
      *
@@ -2878,14 +2042,11 @@ FROM $order_meta_table
         if ('' === $order->get_order_key()) {
             $order->set_order_key(wc_generate_order_key());
         }
-
         $this->persist_save($order);
-
         // Do not fire 'woocommerce_new_order' for draft statuses for backwards compatibility.
-        if (in_array($order->get_status('edit'), [ 'auto-draft', 'draft', 'checkout-draft' ], true)) {
+        if (in_array($order->get_status('edit'), ['auto-draft', 'draft', 'checkout-draft'], true)) {
             return;
         }
-
         /**
          * Fires when a new order is created.
          *
@@ -2896,7 +2057,6 @@ FROM $order_meta_table
          */
         do_action('woocommerce_new_order', $order->get_id(), $order);
     }
-
     /**
      * Helper method responsible for persisting new data to order table.
      *
@@ -2914,31 +2074,25 @@ FROM $order_meta_table
     {
         $order->set_version(Constants::get_constant('WC_VERSION'));
         $order->set_currency($order->get_currency() ?: get_woocommerce_currency());
-
-        if (! $order->get_date_created('edit')) {
+        if (!$order->get_date_created('edit')) {
             $order->set_date_created(time());
         }
-
-        if (! $order->get_date_modified('edit')) {
+        if (!$order->get_date_modified('edit')) {
             $order->set_date_modified(current_time('mysql'));
         }
-
         $this->persist_order_to_db($order, $force_all_fields);
-
         $this->update_order_meta($order);
-
         $order->save_meta_data();
         $order->apply_changes();
-
         if ($backfill) {
             self::$backfilling_order_ids[] = $order->get_id();
-            $r_order                       = wc_get_order($order->get_id()); // Refresh order to account for DB changes from post hooks.
+            $r_order = wc_get_order($order->get_id());
+            // Refresh order to account for DB changes from post hooks.
             $this->maybe_backfill_post_record($r_order);
-            self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [ $order->get_id() ]);
+            self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [$order->get_id()]);
         }
         $this->clear_caches($order);
     }
-
     /**
      * Method to update an order in the database.
      *
@@ -2946,67 +2100,45 @@ FROM $order_meta_table
      */
     public function update(&$order): void
     {
-        $previous_status = ArrayUtil::get_value_or_default($order->get_data(), 'status', 'new');
-
+        $previous_status = Array_Util::get_value_or_default($order->get_data(), 'status', 'new');
         // Before updating, ensure date paid is set if missing.
-        if (
-            ! $order->get_date_paid('edit')
-            && version_compare($order->get_version('edit'), '3.0', '<')
-            && $order->has_status(apply_filters('woocommerce_payment_complete_order_status', $order->needs_processing() ? 'processing' : 'completed', $order->get_id(), $order)) // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
-        ) {
+        if (!$order->get_date_paid('edit') && version_compare($order->get_version('edit'), '3.0', '<') && $order->has_status(apply_filters('woocommerce_payment_complete_order_status', $order->needs_processing() ? 'processing' : 'completed', $order->get_id(), $order))) {
             $order->set_date_paid($order->get_date_created('edit'));
         }
-
         if (null === $order->get_date_created('edit')) {
             $order->set_date_created(time());
         }
-
         $order->set_version(Constants::get_constant('WC_VERSION'));
-
         // Fetch changes.
         $changes = $order->get_changes();
-
         // Does not make much sense to backfill to posts an order being sync-on-read from posts.
-        $should_backfill = ! isset(self::$sync_on_read_order_ids[ $order->get_id() ]);
-
+        $should_backfill = !isset(self::$sync_on_read_order_ids[$order->get_id()]);
         $this->persist_updates($order, $should_backfill);
-
         // Update download permissions if necessary.
         if (array_key_exists('billing_email', $changes) || array_key_exists('customer_id', $changes)) {
             $data_store = \WC_Data_Store::load('customer-download');
             $data_store->update_user_by_order_id($order->get_id(), $order->get_customer_id(), $order->get_billing_email());
         }
-
         // Mark user account as active.
         if (array_key_exists('customer_id', $changes)) {
             wc_update_user_last_active($order->get_customer_id());
         }
-
         $order->apply_changes();
         $this->clear_caches($order);
-
-        $draft_statuses = [ 'new', 'auto-draft', 'draft', 'checkout-draft' ];
-
+        $draft_statuses = ['new', 'auto-draft', 'draft', 'checkout-draft'];
         // For backwards compatibility, this hook should be fired only if the new status is not one of the draft statuses and the previous status was one of the draft statuses.
-        if (
-            ! empty($changes['status'])
-            && $changes['status'] !== $previous_status
-            && ! in_array($changes['status'], $draft_statuses, true)
-            && in_array($previous_status, $draft_statuses, true)
-        ) {
-            do_action('woocommerce_new_order', $order->get_id(), $order); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
+        if (!empty($changes['status']) && $changes['status'] !== $previous_status && !in_array($changes['status'], $draft_statuses, true) && in_array($previous_status, $draft_statuses, true)) {
+            do_action('woocommerce_new_order', $order->get_id(), $order);
+            // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
             return;
         }
-
         // For backwards compat with CPT, trashing/untrashing and changing previously datastore-level props does not trigger the update hook.
-        if ((! empty($changes['status']) && in_array('trash', [ $changes['status'], $previous_status ], true))
-            || (! empty($changes) && ! array_diff_key($changes, array_flip($this->get_post_data_store_for_backfill()->get_internal_data_store_key_getters())))) {
+        if (!empty($changes['status']) && in_array('trash', [$changes['status'], $previous_status], true) || !empty($changes) && !array_diff_key($changes, array_flip($this->get_post_data_store_for_backfill()->get_internal_data_store_key_getters()))) {
             return;
         }
-
-        do_action('woocommerce_update_order', $order->get_id(), $order); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
+        do_action('woocommerce_update_order', $order->get_id(), $order);
+        // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
     }
-
     /**
      * Proxy to updating order meta. Here for backward compatibility reasons.
      *
@@ -3018,7 +2150,6 @@ FROM $order_meta_table
     {
         $this->update_order_meta($order);
     }
-
     /**
      * Helper method that is responsible for persisting order updates to the database.
      *
@@ -3035,37 +2166,30 @@ FROM $order_meta_table
     {
         // Fetch changes.
         $changes = $order->get_changes();
-
-        if (! isset($changes['date_modified'])) {
+        if (!isset($changes['date_modified'])) {
             $order->set_date_modified(current_time('mysql'));
         }
-
         $this->persist_order_to_db($order);
-
         $this->update_order_meta($order);
-
         $order->save_meta_data();
-
         if ($backfill) {
             self::$backfilling_order_ids[] = $order->get_id();
             $this->clear_caches($order);
-            $r_order = wc_get_order($order->get_id()); // Refresh order to account for DB changes from post hooks.
+            $r_order = wc_get_order($order->get_id());
+            // Refresh order to account for DB changes from post hooks.
             $this->maybe_backfill_post_record($r_order);
-            self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [ $order->get_id() ]);
+            self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [$order->get_id()]);
         }
-
         return $changes;
     }
-
     /**
      * Helper method to check whether to backfill post record.
      */
     private function should_backfill_post_record(): bool
     {
-        $data_sync = wc_get_container()->get(DataSynchronizer::class);
+        $data_sync = wc_get_container()->get(Data_Synchronizer::class);
         return $data_sync->data_sync_is_enabled();
     }
-
     /**
      * Helper function to decide whether to backfill post record.
      *
@@ -3077,7 +2201,6 @@ FROM $order_meta_table
             $this->backfill_post_record($order);
         }
     }
-
     /**
      * Helper method that updates post meta based on an order object.
      * Mostly used for backwards compatibility purposes in this datastore.
@@ -3091,7 +2214,6 @@ FROM $order_meta_table
         $changes = $order->get_changes();
         $this->update_address_index_meta($order, $changes);
     }
-
     /**
      * Helper function to update billing and shipping address metadata.
      *
@@ -3101,15 +2223,13 @@ FROM $order_meta_table
     private function update_address_index_meta($order, array $changes): void
     {
         // If address changed, store concatenated version to make searches faster.
-        foreach ([ 'billing', 'shipping' ] as $address_type) {
+        foreach (['billing', 'shipping'] as $address_type) {
             $index_meta_key = "_{$address_type}_address_index";
-
-            if (isset($changes[ $address_type ]) || (is_a($order, 'WC_Order') && empty($order->get_meta($index_meta_key)))) {
+            if (isset($changes[$address_type]) || is_a($order, 'WC_Order') && empty($order->get_meta($index_meta_key))) {
                 $order->update_meta_data($index_meta_key, implode(' ', $order->get_address($address_type)));
             }
         }
     }
-
     /**
      * Return array of coupon_code => meta_key for coupon which have usage limit and have tentative keys.
      * Pass $coupon_id if key for only one of the coupon is needed.
@@ -3123,11 +2243,10 @@ FROM $order_meta_table
     {
         $held_keys = $order->get_meta('_coupon_held_keys');
         if ($coupon_id) {
-            return $held_keys[ $coupon_id ] ?? null;
+            return $held_keys[$coupon_id] ?? null;
         }
         return $held_keys;
     }
-
     /**
      * Return array of coupon_code => meta_key for coupon which have usage limit per customer and have tentative keys.
      *
@@ -3140,11 +2259,10 @@ FROM $order_meta_table
     {
         $held_keys_for_user = $order->get_meta('_coupon_held_keys_for_users');
         if ($coupon_id) {
-            return $held_keys_for_user[ $coupon_id ] ?? null;
+            return $held_keys_for_user[$coupon_id] ?? null;
         }
         return $held_keys_for_user;
     }
-
     /**
      * Add/Update list of meta keys that are currently being used by this order to hold a coupon.
      * This is used to figure out what all meta entries we should delete when order is cancelled/completed.
@@ -3162,7 +2280,6 @@ FROM $order_meta_table
             $order->update_meta_data('_coupon_held_keys_for_users', $held_keys_for_user);
         }
     }
-
     /**
      * Release all coupons held by this order.
      *
@@ -3180,7 +2297,6 @@ FROM $order_meta_table
             }
         }
         $order->delete_meta_data('_coupon_held_keys');
-
         $coupon_held_keys_for_users = $this->get_coupon_held_keys_for_users($order);
         if (is_array($coupon_held_keys_for_users)) {
             foreach ($coupon_held_keys_for_users as $coupon_id => $meta_key) {
@@ -3190,12 +2306,10 @@ FROM $order_meta_table
             }
         }
         $order->delete_meta_data('_coupon_held_keys_for_users');
-
         if ($save) {
             $order->save_meta_data();
         }
     }
-
     /**
      * Performs actual query to get orders. Uses `OrdersTableQuery` to build and generate the query.
      *
@@ -3205,31 +2319,22 @@ FROM $order_meta_table
      */
     public function query($query_vars)
     {
-        if (! isset($query_vars['paginate']) || ! $query_vars['paginate']) {
+        if (!isset($query_vars['paginate']) || !$query_vars['paginate']) {
             $query_vars['no_found_rows'] = true;
         }
-
         if (isset($query_vars['anonymized'])) {
-            $query_vars['meta_query'] ??= []; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-
+            $query_vars['meta_query'] ??= [];
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
             if ($query_vars['anonymized']) {
-                $query_vars['meta_query'][] = [
-                    'key'   => '_anonymized',
-                    'value' => 'yes',
-                ];
+                $query_vars['meta_query'][] = ['key' => '_anonymized', 'value' => 'yes'];
             } else {
-                $query_vars['meta_query'][] = [
-                    'key'     => '_anonymized',
-                    'compare' => 'NOT EXISTS',
-                ];
+                $query_vars['meta_query'][] = ['key' => '_anonymized', 'compare' => 'NOT EXISTS'];
             }
         }
-
         // Handle fulfillment status filtering.
-        if (! empty($query_vars['fulfillment_status'])) {
-            $query_vars['meta_query'][] = FulfillmentUtils::get_order_fulfillment_status_meta_query($query_vars['fulfillment_status']);
+        if (!empty($query_vars['fulfillment_status'])) {
+            $query_vars['meta_query'][] = Fulfillment_Utils::get_order_fulfillment_status_meta_query($query_vars['fulfillment_status']);
         }
-
         /**
          * Filter the query args before executing the query.
          *
@@ -3238,34 +2343,21 @@ FROM $order_meta_table
          * @since 10.4.0
          */
         $query_vars = apply_filters('woocommerce_orders_table_datastore_get_orders_query', $query_vars, $this);
-
         try {
-            $query = new OrdersTableQuery($query_vars);
+            $query = new Orders_Table_Query($query_vars);
         } catch (\Exception) {
-            $query = (object) [
-                'orders'        => [],
-                'found_orders'  => 0,
-                'max_num_pages' => 0,
-            ];
+            $query = (object) ['orders' => [], 'found_orders' => 0, 'max_num_pages' => 0];
         }
-
         if (isset($query_vars['return']) && 'ids' === $query_vars['return']) {
             $orders = $query->orders;
         } else {
             $orders = WC()->order_factory->get_orders($query->orders);
         }
-
         if (isset($query_vars['paginate']) && $query_vars['paginate']) {
-            return (object) [
-                'orders'        => $orders,
-                'total'         => $query->found_orders,
-                'max_num_pages' => $query->max_num_pages,
-            ];
+            return (object) ['orders' => $orders, 'total' => $query->found_orders, 'max_num_pages' => $query->max_num_pages];
         }
-
         return $orders;
     }
-
     //phpcs:enable Squiz.Commenting, Generic.Commenting
     /**
      * Get the SQL needed to create all the tables needed for the custom orders table feature.
@@ -3273,160 +2365,72 @@ FROM $order_meta_table
     public function get_database_schema(): string
     {
         global $wpdb;
-
         $collate = $wpdb->has_cap('collation') ? $wpdb->get_charset_collate() : '';
-
-        $orders_table_name           = static::get_orders_table_name();
-        $addresses_table_name        = static::get_addresses_table_name();
+        $orders_table_name = static::get_orders_table_name();
+        $addresses_table_name = static::get_addresses_table_name();
         $operational_data_table_name = static::get_operational_data_table_name();
-        $meta_table                  = static::get_meta_table_name();
-
-        $max_index_length                   = $this->database_util->get_max_index_length();
-        $composite_meta_value_index_length  = max($max_index_length - 8 - 100 - 1, 20); // 8 for order_id, 100 for meta_key, 10 minimum for meta_value.
-        $composite_customer_id_email_length = max($max_index_length - 20, 20); // 8 for customer_id, 20 minimum for email.
-
-        $sql = "
-CREATE TABLE $orders_table_name (
-	id bigint(20) unsigned,
-	status varchar(20) null,
-	currency varchar(10) null,
-	type varchar(20) null,
-	tax_amount decimal(26,8) null,
-	total_amount decimal(26,8) null,
-	customer_id bigint(20) unsigned null,
-	billing_email varchar(320) null,
-	date_created_gmt datetime null,
-	date_updated_gmt datetime null,
-	parent_order_id bigint(20) unsigned null,
-	payment_method varchar(100) null,
-	payment_method_title text null,
-	transaction_id varchar(100) null,
-	ip_address varchar(100) null,
-	user_agent text null,
-	customer_note text null,
-	PRIMARY KEY (id),
-	KEY status (status),
-	KEY date_created (date_created_gmt),
-	KEY customer_id_billing_email (customer_id, billing_email({$composite_customer_id_email_length})),
-	KEY customer_id_status (customer_id, status),
-	KEY billing_email (billing_email($max_index_length)),
-	KEY type_status_date (type, status, date_created_gmt),
-	KEY parent_order_id (parent_order_id),
-	KEY date_updated (date_updated_gmt)
-) $collate;
-CREATE TABLE $addresses_table_name (
-	id bigint(20) unsigned auto_increment primary key,
-	order_id bigint(20) unsigned NOT NULL,
-	address_type varchar(20) null,
-	first_name text null,
-	last_name text null,
-	company text null,
-	address_1 text null,
-	address_2 text null,
-	city text null,
-	state text null,
-	postcode text null,
-	country text null,
-	email varchar(320) null,
-	phone varchar(100) null,
-	KEY order_id (order_id),
-	UNIQUE KEY address_type_order_id (address_type, order_id),
-	KEY email (email($max_index_length)),
-	KEY phone (phone)
-) $collate;
-CREATE TABLE $operational_data_table_name (
-	id bigint(20) unsigned auto_increment primary key,
-	order_id bigint(20) unsigned NULL,
-	created_via varchar(100) NULL,
-	woocommerce_version varchar(20) NULL,
-	prices_include_tax tinyint(1) NULL,
-	coupon_usages_are_counted tinyint(1) NULL,
-	download_permission_granted tinyint(1) NULL,
-	cart_hash varchar(100) NULL,
-	new_order_email_sent tinyint(1) NULL,
-	order_key varchar(100) NULL,
-	order_stock_reduced tinyint(1) NULL,
-	date_paid_gmt datetime NULL,
-	date_completed_gmt datetime NULL,
-	shipping_tax_amount decimal(26,8) NULL,
-	shipping_total_amount decimal(26,8) NULL,
-	discount_tax_amount decimal(26,8) NULL,
-	discount_total_amount decimal(26,8) NULL,
-	recorded_sales tinyint(1) NULL,
-	UNIQUE KEY order_id (order_id),
-	KEY order_key (order_key)
-) $collate;
-CREATE TABLE $meta_table (
-	id bigint(20) unsigned auto_increment primary key,
-	order_id bigint(20) unsigned null,
-	meta_key varchar(255),
-	meta_value text null,
-	KEY meta_key_value (meta_key(100), meta_value($composite_meta_value_index_length)),
-	KEY order_id_meta_key_meta_value (order_id, meta_key(100), meta_value($composite_meta_value_index_length))
-) $collate;
-";
-
+        $meta_table = static::get_meta_table_name();
+        $max_index_length = $this->database_util->get_max_index_length();
+        $composite_meta_value_index_length = max($max_index_length - 8 - 100 - 1, 20);
+        // 8 for order_id, 100 for meta_key, 10 minimum for meta_value.
+        $composite_customer_id_email_length = max($max_index_length - 20, 20);
+        // 8 for customer_id, 20 minimum for email.
+        $sql = "\nCREATE TABLE {$orders_table_name} (\n\tid bigint(20) unsigned,\n\tstatus varchar(20) null,\n\tcurrency varchar(10) null,\n\ttype varchar(20) null,\n\ttax_amount decimal(26,8) null,\n\ttotal_amount decimal(26,8) null,\n\tcustomer_id bigint(20) unsigned null,\n\tbilling_email varchar(320) null,\n\tdate_created_gmt datetime null,\n\tdate_updated_gmt datetime null,\n\tparent_order_id bigint(20) unsigned null,\n\tpayment_method varchar(100) null,\n\tpayment_method_title text null,\n\ttransaction_id varchar(100) null,\n\tip_address varchar(100) null,\n\tuser_agent text null,\n\tcustomer_note text null,\n\tPRIMARY KEY (id),\n\tKEY status (status),\n\tKEY date_created (date_created_gmt),\n\tKEY customer_id_billing_email (customer_id, billing_email({$composite_customer_id_email_length})),\n\tKEY customer_id_status (customer_id, status),\n\tKEY billing_email (billing_email({$max_index_length})),\n\tKEY type_status_date (type, status, date_created_gmt),\n\tKEY parent_order_id (parent_order_id),\n\tKEY date_updated (date_updated_gmt)\n) {$collate};\nCREATE TABLE {$addresses_table_name} (\n\tid bigint(20) unsigned auto_increment primary key,\n\torder_id bigint(20) unsigned NOT NULL,\n\taddress_type varchar(20) null,\n\tfirst_name text null,\n\tlast_name text null,\n\tcompany text null,\n\taddress_1 text null,\n\taddress_2 text null,\n\tcity text null,\n\tstate text null,\n\tpostcode text null,\n\tcountry text null,\n\temail varchar(320) null,\n\tphone varchar(100) null,\n\tKEY order_id (order_id),\n\tUNIQUE KEY address_type_order_id (address_type, order_id),\n\tKEY email (email({$max_index_length})),\n\tKEY phone (phone)\n) {$collate};\nCREATE TABLE {$operational_data_table_name} (\n\tid bigint(20) unsigned auto_increment primary key,\n\torder_id bigint(20) unsigned NULL,\n\tcreated_via varchar(100) NULL,\n\twoocommerce_version varchar(20) NULL,\n\tprices_include_tax tinyint(1) NULL,\n\tcoupon_usages_are_counted tinyint(1) NULL,\n\tdownload_permission_granted tinyint(1) NULL,\n\tcart_hash varchar(100) NULL,\n\tnew_order_email_sent tinyint(1) NULL,\n\torder_key varchar(100) NULL,\n\torder_stock_reduced tinyint(1) NULL,\n\tdate_paid_gmt datetime NULL,\n\tdate_completed_gmt datetime NULL,\n\tshipping_tax_amount decimal(26,8) NULL,\n\tshipping_total_amount decimal(26,8) NULL,\n\tdiscount_tax_amount decimal(26,8) NULL,\n\tdiscount_total_amount decimal(26,8) NULL,\n\trecorded_sales tinyint(1) NULL,\n\tUNIQUE KEY order_id (order_id),\n\tKEY order_key (order_key)\n) {$collate};\nCREATE TABLE {$meta_table} (\n\tid bigint(20) unsigned auto_increment primary key,\n\torder_id bigint(20) unsigned null,\n\tmeta_key varchar(255),\n\tmeta_value text null,\n\tKEY meta_key_value (meta_key(100), meta_value({$composite_meta_value_index_length})),\n\tKEY order_id_meta_key_meta_value (order_id, meta_key(100), meta_value({$composite_meta_value_index_length}))\n) {$collate};\n";
         return $sql;
     }
-
     /**
      * Returns an array of meta for an object.
      *
      * @param  WC_Data $object WC_Data object.
      * @return array
      */
-    public function read_meta(&$object) // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.objectFound
-    {$raw_meta_data = $this->data_store_meta->read_meta($object);
+    public function read_meta(&$object)
+    {
+        $raw_meta_data = $this->data_store_meta->read_meta($object);
         return $this->filter_raw_meta_data($object, $raw_meta_data);
     }
-
     /**
      * Deletes meta based on meta ID.
      *
      * @param WC_Data   $object WC_Data object.
      * @param \stdClass $meta (containing at least ->id).
      */
-    public function delete_meta(&$object, $meta): void // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.objectFound
-    {global $wpdb;
-
+    public function delete_meta(&$object, $meta): void
+    {
+        global $wpdb;
         if ($this->should_backfill_post_record() && isset($meta->id)) {
             // Let's get the actual meta key before its deleted for backfilling. We cannot delete just by ID because meta IDs are different in HPOS and posts tables.
             $db_meta = $this->data_store_meta->get_metadata_by_id($meta->id);
             if ($db_meta) {
-                $meta->key   = $db_meta->meta_key;
+                $meta->key = $db_meta->meta_key;
                 $meta->value = $db_meta->meta_value;
             }
         }
-
-        $delete_meta     = $this->data_store_meta->delete_meta($object, $meta);
+        $delete_meta = $this->data_store_meta->delete_meta($object, $meta);
         $changes_applied = $this->after_meta_change($object, $meta);
-
-        if (! $changes_applied && $object instanceof WC_Abstract_Order && $this->should_backfill_post_record() && isset($meta->key)) {
+        if (!$changes_applied && $object instanceof WC_Abstract_Order && $this->should_backfill_post_record() && isset($meta->key)) {
             self::$backfilling_order_ids[] = $object->get_id();
             if (is_object($meta->value) && '__PHP_Incomplete_Class' === $meta->value::class) {
                 $meta_value = maybe_serialize($meta->value);
-                $wpdb->delete(
-                    _get_meta_table('post'),
-                    [
-                        'post_id'    => $object->get_id(),
-                        'meta_key'   => $meta->key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-                        'meta_value' => $meta_value, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-                    ],
-                    [ '%d', '%s', '%s' ]
-                );
+                $wpdb->delete(_get_meta_table('post'), [
+                    'post_id' => $object->get_id(),
+                    'meta_key' => $meta->key,
+                    // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+                    'meta_value' => $meta_value,
+                ], ['%d', '%s', '%s']);
                 wp_cache_delete($object->get_id(), 'post_meta');
-                /** @var \WC_Logger_Interface $logger */ // phpcs:ignore Generic.Commenting.DocComment.MissingShort
-                $logger = wc_get_container()->get(LegacyProxy::class)->call_function('wc_get_logger');
-                $logger->warning(sprintf('encountered an order meta value of type __PHP_Incomplete_Class during `delete_meta` in order with ID %d: "%s"', $object->get_id(), var_export($meta_value, true))); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export
+                /** @var \WC_Logger_Interface $logger */
+                // phpcs:ignore Generic.Commenting.DocComment.MissingShort
+                $logger = wc_get_container()->get(Legacy_Proxy::class)->call_function('wc_get_logger');
+                $logger->warning(sprintf('encountered an order meta value of type __PHP_Incomplete_Class during `delete_meta` in order with ID %d: "%s"', $object->get_id(), var_export($meta_value, true)));
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export
             } else {
                 delete_post_meta($object->get_id(), $meta->key, $meta->value);
             }
-            self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [ $object->get_id() ]);
+            self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [$object->get_id()]);
         }
-
         return $delete_meta;
     }
-
     /**
      * Add new piece of meta.
      *
@@ -3435,20 +2439,18 @@ CREATE TABLE $meta_table (
      *
      * @return int|bool  meta ID or false on failure
      */
-    public function add_meta(&$object, $meta) // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.objectFound
-    {$add_meta        = $this->data_store_meta->add_meta($object, $meta);
-        $meta->id        = $add_meta;
+    public function add_meta(&$object, $meta)
+    {
+        $add_meta = $this->data_store_meta->add_meta($object, $meta);
+        $meta->id = $add_meta;
         $changes_applied = $this->after_meta_change($object, $meta);
-
-        if (! $changes_applied && $object instanceof WC_Abstract_Order && $this->should_backfill_post_record()) {
+        if (!$changes_applied && $object instanceof WC_Abstract_Order && $this->should_backfill_post_record()) {
             self::$backfilling_order_ids[] = $object->get_id();
             add_post_meta($object->get_id(), $meta->key, $meta->value);
-            self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [ $object->get_id() ]);
+            self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [$object->get_id()]);
         }
-
         return $add_meta;
     }
-
     /**
      * Update meta.
      *
@@ -3457,19 +2459,17 @@ CREATE TABLE $meta_table (
      *
      * @return bool The number of rows updated, or false on error.
      */
-    public function update_meta(&$object, $meta): void // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.objectFound
-    {$update_meta     = $this->data_store_meta->update_meta($object, $meta);
+    public function update_meta(&$object, $meta): void
+    {
+        $update_meta = $this->data_store_meta->update_meta($object, $meta);
         $changes_applied = $this->after_meta_change($object, $meta);
-
-        if (! $changes_applied && $object instanceof WC_Abstract_Order && $this->should_backfill_post_record()) {
+        if (!$changes_applied && $object instanceof WC_Abstract_Order && $this->should_backfill_post_record()) {
             self::$backfilling_order_ids[] = $object->get_id();
             update_post_meta($object->get_id(), $meta->key, $meta->value);
-            self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [ $object->get_id() ]);
+            self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [$object->get_id()]);
         }
-
         return $update_meta;
     }
-
     /**
      * Perform after meta change operations, including updating the date_modified field, clearing caches and applying changes.
      *
@@ -3481,20 +2481,17 @@ CREATE TABLE $meta_table (
     protected function after_meta_change(&$order, $meta): bool
     {
         method_exists($meta, 'apply_changes') && $meta->apply_changes();
-
         // Prevent this happening multiple time in same request.
         if ($this->should_save_after_meta_change($order, $meta)) {
             $order->set_date_modified(current_time('mysql'));
             $order->save();
             return true;
         }
-        $order_cache = wc_get_container()->get(OrderCache::class);
+        $order_cache = wc_get_container()->get(Order_Cache::class);
         $order_cache->remove($order->get_id());
-        $this->clear_cached_data([ $order->get_id() ]);
-
+        $this->clear_cached_data([$order->get_id()]);
         return false;
     }
-
     /**
      * Helper function to check whether the modified date needs to be updated after a meta save.
      *
@@ -3509,15 +2506,9 @@ CREATE TABLE $meta_table (
      */
     private function should_save_after_meta_change($order, $meta = null)
     {
-        $current_time      = $this->legacy_proxy->call_function('current_time', 'mysql', 1);
-        $current_date_time = new \WC_DateTime($current_time, new \DateTimeZone('GMT'));
-
-        $should_save =
-            $order->get_id() > 0
-            && ! isset(self::$sync_on_read_order_ids[ $order->get_id() ])
-            && $order->get_date_modified() < $current_date_time && empty($order->get_changes())
-            && (! is_object($meta) || ! in_array($meta->key, $this->ephemeral_meta_keys, true));
-
+        $current_time = $this->legacy_proxy->call_function('current_time', 'mysql', 1);
+        $current_date_time = new \Wc_date_Time($current_time, new \DateTimeZone('GMT'));
+        $should_save = $order->get_id() > 0 && !isset(self::$sync_on_read_order_ids[$order->get_id()]) && $order->get_date_modified() < $current_date_time && empty($order->get_changes()) && (!is_object($meta) || !in_array($meta->key, $this->ephemeral_meta_keys, true));
         /**
          * Allows code to skip a full order save() when metadata is changed.
          *

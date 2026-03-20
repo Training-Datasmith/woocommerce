@@ -5,14 +5,11 @@
  *
  * @package Automattic\WooCommerce\Internal\EmailEditor
  */
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Email_Editor;
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\EmailEditor;
-
-use Automattic\WooCommerce\EmailEditor\Engine\Logger\Email_Editor_Logger_Interface;
+use Automattic\Woo_Commerce\Email_Editor\Engine\Logger\Email_Editor_Logger_Interface;
 use WC_Log_Levels;
-
 /**
  * WooCommerce logger adapter for the email editor.
  *
@@ -30,9 +27,9 @@ class Logger implements Email_Editor_Logger_Interface
          * The WooCommerce logger instance.
          */
         private readonly \WC_Logger_Interface $wc_logger
-    ) {
+    )
+    {
     }
-
     /**
      * Checks if the log level should be handled.
      *
@@ -49,10 +46,8 @@ class Logger implements Email_Editor_Logger_Interface
          * @since 10.2.0
          */
         $logging_threshold = apply_filters('woocommerce_email_editor_logging_threshold', WC_Log_Levels::WARNING);
-
         return WC_Log_Levels::get_level_severity($logging_threshold) <= WC_Log_Levels::get_level_severity($level);
     }
-
     /**
      * Adds emergency level log message.
      *
@@ -63,7 +58,6 @@ class Logger implements Email_Editor_Logger_Interface
     {
         $this->log(WC_Log_Levels::EMERGENCY, $message, $context);
     }
-
     /**
      * Adds alert level log message.
      *
@@ -74,7 +68,6 @@ class Logger implements Email_Editor_Logger_Interface
     {
         $this->log(WC_Log_Levels::ALERT, $message, $context);
     }
-
     /**
      * Adds critical level log message.
      *
@@ -85,7 +78,6 @@ class Logger implements Email_Editor_Logger_Interface
     {
         $this->log(WC_Log_Levels::CRITICAL, $message, $context);
     }
-
     /**
      * Adds error level log message.
      *
@@ -96,7 +88,6 @@ class Logger implements Email_Editor_Logger_Interface
     {
         $this->log(WC_Log_Levels::ERROR, $message, $context);
     }
-
     /**
      * Adds warning level log message.
      *
@@ -107,7 +98,6 @@ class Logger implements Email_Editor_Logger_Interface
     {
         $this->log(WC_Log_Levels::WARNING, $message, $context);
     }
-
     /**
      * Adds notice level log message.
      *
@@ -118,7 +108,6 @@ class Logger implements Email_Editor_Logger_Interface
     {
         $this->log(WC_Log_Levels::NOTICE, $message, $context);
     }
-
     /**
      * Adds info level log message.
      *
@@ -129,7 +118,6 @@ class Logger implements Email_Editor_Logger_Interface
     {
         $this->log(WC_Log_Levels::INFO, $message, $context);
     }
-
     /**
      * Adds debug level log message.
      *
@@ -140,7 +128,6 @@ class Logger implements Email_Editor_Logger_Interface
     {
         $this->log(WC_Log_Levels::DEBUG, $message, $context);
     }
-
     /**
      * Logs with an arbitrary level.
      *

@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\BlocksSharedState;
-use Automattic\WooCommerce\Internal\ProductFilters\Params;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Blocks_Shared_State;
+use Automattic\Woo_Commerce\Internal\Product_Filters\Params;
 /**
  * ProductFilters class.
  */
-class ProductFilters extends AbstractBlock
+class Product_Filters extends Abstract_Block
 {
     /**
      * Block name.
@@ -18,7 +16,6 @@ class ProductFilters extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-filters';
-
     /**
      * Register the context.
      *
@@ -26,9 +23,8 @@ class ProductFilters extends AbstractBlock
      */
     protected function get_block_type_uses_context(): array
     {
-        return [ 'postId', 'query', 'queryId' ];
+        return ['postId', 'query', 'queryId'];
     }
-
     /**
      * Extra data passed through from server to client for block.
      *
@@ -40,17 +36,14 @@ class ProductFilters extends AbstractBlock
     {
         global $pagenow;
         parent::enqueue_data($attributes);
-
-        BlocksSharedState::load_store_config('I acknowledge that using private APIs means my theme or plugin will inevitably break in the next version of WooCommerce');
-
+        Blocks_Shared_State::load_store_config('I acknowledge that using private APIs means my theme or plugin will inevitably break in the next version of WooCommerce');
         // Classic themes do not support client-side navigation on product
         // archive pages, so disable it globally for the Interactivity Router.
-        $is_product_archive = is_shop() || is_product_taxonomy() || (is_search() && 'product' === get_post_type());
-        if (! wp_is_block_theme() && $is_product_archive) {
-            wp_interactivity_config('core/router', [ 'clientNavigationDisabled' => true ]);
+        $is_product_archive = is_shop() || is_product_taxonomy() || is_search() && 'product' === get_post_type();
+        if (!wp_is_block_theme() && $is_product_archive) {
+            wp_interactivity_config('core/router', ['clientNavigationDisabled' => true]);
         }
     }
-
     /**
      * Include and render the block.
      *
@@ -62,113 +55,100 @@ class ProductFilters extends AbstractBlock
     protected function render($attributes, $content, $block): string|false
     {
         wp_enqueue_script('wc-settings');
-
         $block->context['queryId'] ?? 0;
         $filter_params = $this->get_filter_params();
-
-        wp_interactivity_config($this->get_full_block_name(), [ 'canonicalUrl' => $this->get_canonical_url_no_pagination($filter_params) ]);
-
+        wp_interactivity_config($this->get_full_block_name(), ['canonicalUrl' => $this->get_canonical_url_no_pagination($filter_params)]);
         /**
          * Filter hook to modify the selected filter items.
          *
          * @since 9.7.0
          */
         $active_filters = apply_filters('woocommerce_blocks_product_filters_selected_items', [], $filter_params);
-
-        usort(
-            $active_filters,
-            fn (array $a, array $b) => strnatcmp((string) $a['activeLabel'], (string) $b['activeLabel'])
-        );
-
-        $block_context         = array_merge(
-            $block->context,
-            [
-                'filterParams'  => $filter_params,
-                'activeFilters' => $active_filters,
-            ],
-        );
-        $inner_blocks          = array_reduce(
-            $block->parsed_block['innerBlocks'],
-            fn (string $carry, $parsed_block): string => $carry . (new \WP_Block($parsed_block, $block_context))->render(),
-            ''
-        );
-        $interactivity_context = [
-            'params'        => $filter_params,
-            'activeFilters' => $active_filters,
-        ];
-
+        usort($active_filters, fn(array $a, array $b) => strnatcmp((string) $a['activeLabel'], (string) $b['activeLabel']));
+        $block_context = array_merge($block->context, ['filterParams' => $filter_params, 'activeFilters' => $active_filters]);
+        $inner_blocks = array_reduce($block->parsed_block['innerBlocks'], fn(string $carry, $parsed_block): string => $carry . (new \WP_Block($parsed_block, $block_context))->render(), '');
+        $interactivity_context = ['params' => $filter_params, 'activeFilters' => $active_filters];
         $classes = '';
-        $styles  = '';
-        $tags    = new \WP_HTML_Tag_Processor($content);
-
+        $styles = '';
+        $tags = new \WP_HTML_Tag_Processor($content);
         if ($tags->next_tag()) {
             $classes = $tags->get_attribute('class');
-            $styles  = $tags->get_attribute('style');
+            $styles = $tags->get_attribute('style');
         }
-
-        $wrapper_attributes = [
-            'class'                            => $classes,
-            'data-wp-interactive'              => $this->get_full_block_name(),
-            'data-wp-watch--scrolling'         => 'callbacks.scrollLimit',
-            'data-wp-on--keyup'                => 'actions.closeOverlayOnEscape',
-            'data-wp-context'                  => wp_json_encode($interactivity_context, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP),
-            'data-wp-class--is-overlay-opened' => 'context.isOverlayOpened',
-            'style'                            => $styles,
-        ];
-
+        $wrapper_attributes = ['class' => $classes, 'data-wp-interactive' => $this->get_full_block_name(), 'data-wp-watch--scrolling' => 'callbacks.scrollLimit', 'data-wp-on--keyup' => 'actions.closeOverlayOnEscape', 'data-wp-context' => wp_json_encode($interactivity_context, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), 'data-wp-class--is-overlay-opened' => 'context.isOverlayOpened', 'style' => $styles];
         // TODO: Remove this conditional once the fix is released in WP. https://github.com/woocommerce/gutenberg/pull/4.
-        if (! isset($block->context['productCollectionLocation'])) {
+        if (!isset($block->context['productCollectionLocation'])) {
             $wrapper_attributes['data-wp-router-region'] = $this->generate_navigation_id($block);
         }
-
         ob_start();
         ?>
-		<div <?php echo get_block_wrapper_attributes($wrapper_attributes); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>>
+		<div <?php 
+        echo get_block_wrapper_attributes($wrapper_attributes);
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>>
 			<button
 				class="wc-block-product-filters__open-overlay"
 				data-wp-on--click="actions.openOverlay"
 			>
-				<?php echo $this->get_svg_icon('filter-icon-2'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
-				<span><?php echo esc_html__('Filter products', 'woocommerce'); ?></span>
+				<?php 
+        echo $this->get_svg_icon('filter-icon-2');
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
+				<span><?php 
+        echo esc_html__('Filter products', 'woocommerce');
+        ?></span>
 			</button>
 			<div class="wc-block-product-filters__overlay">
 				<div class="wc-block-product-filters__overlay-wrapper">
 					<div
 						class="wc-block-product-filters__overlay-dialog"
 						role="dialog"
-						aria-label="<?php echo esc_html__('Product Filters', 'woocommerce'); ?>"
+						aria-label="<?php 
+        echo esc_html__('Product Filters', 'woocommerce');
+        ?>"
 					>
 						<header class="wc-block-product-filters__overlay-header">
 							<button
 								class="wc-block-product-filters__close-overlay"
 								data-wp-on--click="actions.closeOverlay"
 							>
-								<span><?php echo esc_html__('Close', 'woocommerce'); ?></span>
-								<?php echo $this->get_svg_icon('close'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
+								<span><?php 
+        echo esc_html__('Close', 'woocommerce');
+        ?></span>
+								<?php 
+        echo $this->get_svg_icon('close');
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
 							</button>
 						</header>
 						<div class="wc-block-product-filters__overlay-content">
-							<?php echo $inner_blocks; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
+							<?php 
+        echo $inner_blocks;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
 						</div>
 						<footer
 							class="wc-block-product-filters__overlay-footer"
 						>
 							<button
 								class="wc-block-product-filters__apply wp-element-button"
-								data-wp-interactive="<?php echo esc_attr($this->get_full_block_name()); ?>"
+								data-wp-interactive="<?php 
+        echo esc_attr($this->get_full_block_name());
+        ?>"
 								data-wp-on--click="actions.closeOverlay"
 							>
-								<span><?php echo esc_html__('Apply', 'woocommerce'); ?></span>
+								<span><?php 
+        echo esc_html__('Apply', 'woocommerce');
+        ?></span>
 							</button>
 						</footer>
 					</div>
 				</div>
 			</div>
 		</div>
-		<?php
+		<?php 
         return ob_get_clean();
     }
-
     /**
      * Get SVG icon markup for a given icon name.
      *
@@ -177,21 +157,12 @@ class ProductFilters extends AbstractBlock
      */
     private function get_svg_icon(string $name): string
     {
-        $icons = [
-            'close'         => '<path d="M12 13.0607L15.7123 16.773L16.773 15.7123L13.0607 12L16.773 8.28772L15.7123 7.22706L12 10.9394L8.28771 7.22705L7.22705 8.28771L10.9394 12L7.22706 15.7123L8.28772 16.773L12 13.0607Z" fill="currentColor"/>',
-            'filter-icon-2' => '<path d="M10 17.5H14V16H10V17.5ZM6 6V7.5H18V6H6ZM8 12.5H16V11H8V12.5Z" fill="currentColor"/>',
-        ];
-
-        if (! isset($icons[ $name ])) {
+        $icons = ['close' => '<path d="M12 13.0607L15.7123 16.773L16.773 15.7123L13.0607 12L16.773 8.28772L15.7123 7.22706L12 10.9394L8.28771 7.22705L7.22705 8.28771L10.9394 12L7.22706 15.7123L8.28772 16.773L12 13.0607Z" fill="currentColor"/>', 'filter-icon-2' => '<path d="M10 17.5H14V16H10V17.5ZM6 6V7.5H18V6H6ZM8 12.5H16V11H8V12.5Z" fill="currentColor"/>'];
+        if (!isset($icons[$name])) {
             return '';
         }
-
-        return sprintf(
-            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">%s</svg>',
-            $icons[ $name ]
-        );
+        return sprintf('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">%s</svg>', $icons[$name]);
     }
-
     /**
      * Generate a unique navigation ID for the block.
      *
@@ -200,12 +171,8 @@ class ProductFilters extends AbstractBlock
      */
     private function generate_navigation_id($block): string
     {
-        return sprintf(
-            'wc-product-filters-%s',
-            md5(wp_json_encode($block->parsed_block['innerBlocks']))
-        );
+        return sprintf('wc-product-filters-%s', md5(wp_json_encode($block->parsed_block['innerBlocks'])));
     }
-
     /**
      * Parse the filter parameters from the URL.
      * For now we only get the global query params from the URL. In the future,
@@ -223,13 +190,8 @@ class ProductFilters extends AbstractBlock
         }
         parse_str((string) $parsed_url['query'], $url_query_params);
         $filter_param_keys = wc_get_container()->get(Params::class)->get_param_keys();
-        return array_filter(
-            $url_query_params,
-            fn ($key) => in_array($key, $filter_param_keys, true),
-            ARRAY_FILTER_USE_KEY
-        );
+        return array_filter($url_query_params, fn($key) => in_array($key, $filter_param_keys, true), ARRAY_FILTER_USE_KEY);
     }
-
     /**
      * Disable the style handle for this block type. We use block.json to load the style.
      */
@@ -237,7 +199,6 @@ class ProductFilters extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Disable the editor style handle for this block type. We use block.json to load the style.
      */
@@ -245,7 +206,6 @@ class ProductFilters extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Disable the script handle for this block type. We use block.json to load the script.
      *
@@ -255,7 +215,6 @@ class ProductFilters extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the canonical URL without pagination.
      *
@@ -265,44 +224,34 @@ class ProductFilters extends AbstractBlock
     private function get_canonical_url_no_pagination($filter_params): string
     {
         $canonical_url_no_pagination = is_singular() ? get_permalink() : get_pagenum_link(1);
-        $decoded_url                 = html_entity_decode($canonical_url_no_pagination, ENT_QUOTES, get_bloginfo('charset'));
-        $parsed_url                  = wp_parse_url($decoded_url);
-
+        $decoded_url = html_entity_decode($canonical_url_no_pagination, ENT_QUOTES, get_bloginfo('charset'));
+        $parsed_url = wp_parse_url($decoded_url);
         // If there are active filters, $parsed_url['query'] is empty for page or post but not empty for archives.
         if (empty($filter_params) || empty($parsed_url['query'])) {
             return $decoded_url;
         }
-
         foreach (array_keys($filter_params) as $key) {
             $parsed_url['query'] = remove_query_arg($key, $parsed_url['query']);
         }
-
         $url = '';
-
         if (isset($parsed_url['scheme'])) {
             $url .= $parsed_url['scheme'] . '://';
         }
-
         if (isset($parsed_url['host'])) {
             $url .= $parsed_url['host'];
         }
-
         if (isset($parsed_url['port'])) {
             $url .= ':' . $parsed_url['port'];
         }
-
         if (isset($parsed_url['path'])) {
             $url .= $parsed_url['path'];
         }
-
-        if (! empty($parsed_url['query'])) {
+        if (!empty($parsed_url['query'])) {
             $url .= '?' . $parsed_url['query'];
         }
-
         if (isset($parsed_url['fragment'])) {
             $url .= '#' . $parsed_url['fragment'];
         }
-
         return $url;
     }
 }

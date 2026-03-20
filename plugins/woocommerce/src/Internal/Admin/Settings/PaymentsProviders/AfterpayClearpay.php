@@ -1,21 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
 
-namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
-
-use Automattic\WooCommerce\Internal\Logging\SafeGlobalFunctionProxy;
+use Automattic\Woo_Commerce\Internal\Logging\Safe_Global_Function_Proxy;
 use Throwable;
 use WC_Payment_Gateway;
-
 defined('ABSPATH') || exit;
-
 /**
  * Afterpay and Clearpay payment gateway provider class.
  *
  * This class handles all the custom logic for the Afterpay and Clearpay payment gateway provider.
  */
-class AfterpayClearpay extends PaymentGateway
+class Afterpay_Clearpay extends Payment_Gateway
 {
     /**
      * Check if the payment gateway has a payments processor account connected.
@@ -28,26 +25,15 @@ class AfterpayClearpay extends PaymentGateway
     public function is_account_connected(WC_Payment_Gateway $payment_gateway): bool
     {
         try {
-            if (is_callable([ $payment_gateway, 'get_merchant_id' ]) &&
-                is_callable([ $payment_gateway, 'get_secret_key' ])) {
-                return ! empty($payment_gateway->get_merchant_id()) &&
-                    ! empty($payment_gateway->get_secret_key());
+            if (is_callable([$payment_gateway, 'get_merchant_id']) && is_callable([$payment_gateway, 'get_secret_key'])) {
+                return !empty($payment_gateway->get_merchant_id()) && !empty($payment_gateway->get_secret_key());
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway has an account connected: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway has an account connected: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         return parent::is_account_connected($payment_gateway);
     }
-
     /**
      * Try to determine if the payment gateway is in test mode.
      *
@@ -62,7 +48,6 @@ class AfterpayClearpay extends PaymentGateway
     {
         return $this->is_afterpay_clearpay_in_sandbox_mode($payment_gateway) ?? parent::is_in_test_mode($payment_gateway);
     }
-
     /**
      * Try to determine if the payment gateway is in dev mode.
      *
@@ -77,7 +62,6 @@ class AfterpayClearpay extends PaymentGateway
     {
         return $this->is_afterpay_clearpay_in_sandbox_mode($payment_gateway) ?? parent::is_in_dev_mode($payment_gateway);
     }
-
     /**
      * Try to determine if the payment gateway is in test mode onboarding (aka sandbox or test-drive).
      *
@@ -92,7 +76,6 @@ class AfterpayClearpay extends PaymentGateway
     {
         return $this->is_afterpay_clearpay_in_sandbox_mode($payment_gateway) ?? parent::is_in_test_mode_onboarding($payment_gateway);
     }
-
     /**
      * Check if the Afterpay/Clearpay payment gateway is in sandbox mode.
      *
@@ -106,21 +89,13 @@ class AfterpayClearpay extends PaymentGateway
     private function is_afterpay_clearpay_in_sandbox_mode(WC_Payment_Gateway $payment_gateway): ?bool
     {
         try {
-            if (is_callable([ $payment_gateway, 'get_api_env' ])) {
+            if (is_callable([$payment_gateway, 'get_api_env'])) {
                 return 'production' !== $payment_gateway->get_api_env();
             }
         } catch (\Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway is in sandbox mode: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway is in sandbox mode: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         // Let the caller know that we couldn't determine the environment.
         return null;
     }

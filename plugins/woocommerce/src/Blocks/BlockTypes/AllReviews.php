@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * AllReviews class.
  */
-class AllReviews extends AbstractBlock
+class All_Reviews extends Abstract_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class AllReviews extends AbstractBlock
      * @var string
      */
     protected $block_name = 'all-reviews';
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -25,14 +23,9 @@ class AllReviews extends AbstractBlock
      */
     protected function get_block_type_script($key = null)
     {
-        $script = [
-            'handle'       => 'wc-reviews-block-frontend',
-            'path'         => $this->asset_api->get_block_asset_build_path('reviews-frontend'),
-            'dependencies' => [],
-        ];
-        return $key ? $script[ $key ] : $script;
+        $script = ['handle' => 'wc-reviews-block-frontend', 'path' => $this->asset_api->get_block_asset_build_path('reviews-frontend'), 'dependencies' => []];
+        return $key ? $script[$key] : $script;
     }
-
     /**
      * Extra data passed through from server to client for block.
      *

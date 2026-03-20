@@ -1,28 +1,24 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\CLI\Migrator\Commands;
 
-namespace Automattic\WooCommerce\Internal\CLI\Migrator\Commands;
-
-use Automattic\WooCommerce\Internal\CLI\Migrator\Core\CredentialManager;
-use Automattic\WooCommerce\Internal\CLI\Migrator\Core\PlatformRegistry;
+use Automattic\Woo_Commerce\Internal\CLI\Migrator\Core\Credential_Manager;
+use Automattic\Woo_Commerce\Internal\CLI\Migrator\Core\Platform_Registry;
 use WP_CLI;
-
 /**
  * The command for interactively setting up platform credentials.
  */
-class SetupCommand
+class Setup_Command
 {
     /**
      * The credential manager.
      */
-    private CredentialManager $credential_manager;
-
+    private Credential_Manager $credential_manager;
     /**
      * The platform registry.
      */
-    private PlatformRegistry $platform_registry;
-
+    private Platform_Registry $platform_registry;
     /**
      * Initialize the command with its dependencies.
      *
@@ -31,12 +27,11 @@ class SetupCommand
      *
      * @internal
      */
-    final public function init(CredentialManager $credential_manager, PlatformRegistry $platform_registry): void
+    final public function init(Credential_Manager $credential_manager, Platform_Registry $platform_registry): void
     {
         $this->credential_manager = $credential_manager;
-        $this->platform_registry  = $platform_registry;
+        $this->platform_registry = $platform_registry;
     }
-
     /**
      * Sets up the credentials for a given platform.
      *
@@ -55,15 +50,13 @@ class SetupCommand
     public function __invoke(array $args, array $assoc_args): void
     {
         // Resolve and validate the platform.
-        $platform              = $this->platform_registry->resolve_platform($assoc_args);
+        $platform = $this->platform_registry->resolve_platform($assoc_args);
         $platform_display_name = $this->platform_registry->get_platform_display_name($platform);
-
         // Get platform-specific credential fields and set them up.
         $required_fields = $this->platform_registry->get_platform_credential_fields($platform);
         if (empty($required_fields)) {
             WP_CLI::error("The platform '{$platform_display_name}' does not have configured credential fields.");
         }
-
         $this->credential_manager->setup_credentials($platform, $required_fields);
         WP_CLI::success('Credentials saved successfully.');
     }

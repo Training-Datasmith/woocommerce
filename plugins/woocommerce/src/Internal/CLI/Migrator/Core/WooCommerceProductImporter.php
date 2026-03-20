@@ -5,20 +5,16 @@
  *
  * @package Automattic\WooCommerce\Internal\CLI\Migrator\Core
  */
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\CLI\Migrator\Core;
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\CLI\Migrator\Core;
-
-use Automattic\WooCommerce\Utilities\FeaturesUtil;
+use Automattic\Woo_Commerce\Utilities\Features_Util;
 use Exception;
 use WC_Product;
 use WC_Product_Simple;
 use WC_Product_Variable;
 use WC_Product_Variation;
-
 defined('ABSPATH') || exit;
-
 /**
  * WooCommerceProductImporter class.
  *
@@ -28,7 +24,7 @@ defined('ABSPATH') || exit;
  *
  * @internal This class is part of the CLI Migrator feature and should not be used directly.
  */
-class WooCommerceProductImporter
+class Woo_Commerce_Product_Importer
 {
     /**
      * Default timeout for image downloads in seconds.
@@ -36,50 +32,34 @@ class WooCommerceProductImporter
      * @var int
      */
     private const DEFAULT_IMAGE_TIMEOUT = 10;
-
     /**
      * Maximum number of images to process per product.
      *
      * @var int
      */
     private const MAX_IMAGES_PER_PRODUCT = 50;
-
     /**
      * Import options and configuration.
      */
     private array $import_options;
-
     /**
      * Progress callback function for per-product updates.
      *
      * @var callable|null
      */
     private $progress_callback;
-
     /**
      * Statistics tracking for import operations.
      */
-    private array $import_stats = [
-        'products_created'   => 0,
-        'products_updated'   => 0,
-        'products_skipped'   => 0,
-        'images_processed'   => 0,
-        'errors_encountered' => 0,
-    ];
-
+    private array $import_stats = ['products_created' => 0, 'products_updated' => 0, 'products_skipped' => 0, 'images_processed' => 0, 'errors_encountered' => 0];
     /**
      * Migration data including image and variation mappings for session persistence.
      */
-    private array $migration_data = [
-        'images_mapping'     => [],
-        'variations_mapping' => [],
-    ];
-
+    private array $migration_data = ['images_mapping' => [], 'variations_mapping' => []];
     /**
      * Mapping of original attribute names to taxonomy names for current product.
      */
     private array $current_attribute_mapping = [];
-
     /**
      * Constructor - parameterless to support WooCommerce DI container.
      */
@@ -87,7 +67,6 @@ class WooCommerceProductImporter
     {
         $this->import_options = $this->get_default_options();
     }
-
     /**
      * Configure the importer with options.
      *
@@ -97,7 +76,6 @@ class WooCommerceProductImporter
     {
         $this->import_options = array_merge($this->import_options, $options);
     }
-
     /**
      * Set progress callback for per-product import updates.
      *
@@ -108,7 +86,6 @@ class WooCommerceProductImporter
     {
         $this->progress_callback = $callback;
     }
-
     /**
      * Import a single product from mapped data.
      *
@@ -118,95 +95,62 @@ class WooCommerceProductImporter
      */
     public function import_product(array $product_data, array $source_data = []): array
     {
-        $start_time   = microtime(true);
+        $start_time = microtime(true);
         $product_name = $product_data['name'] ?? 'Unknown Product';
-
         $this->current_attribute_mapping = [];
-
         try {
-            wc_get_logger()->info("Starting import for product: {$product_name}", [ 'source' => 'wc-migrator' ]);
-
+            wc_get_logger()->info("Starting import for product: {$product_name}", ['source' => 'wc-migrator']);
             $validation_result = $this->validate_product_data($product_data);
-            if (! $validation_result['valid']) {
-                wc_get_logger()->error("Validation failed for product: {$product_name} - " . $validation_result['message'], [ 'source' => 'wc-migrator' ]);
+            if (!$validation_result['valid']) {
+                wc_get_logger()->error("Validation failed for product: {$product_name} - " . $validation_result['message'], ['source' => 'wc-migrator']);
                 return $this->create_error_result('validation_failed', $validation_result['message'], $product_data);
             }
-
             $existing_product_id = $this->find_existing_product($product_data);
-
             if ($existing_product_id && $this->import_options['skip_existing']) {
                 ++$this->import_stats['products_skipped'];
                 return $this->create_success_result('skipped', $existing_product_id, 'Product already exists and skip_existing is enabled');
             }
-
             $product_type = $this->determine_product_type($product_data);
-            $product      = $this->get_or_create_product_object($existing_product_id, $product_type);
-
-            if (! $product) {
+            $product = $this->get_or_create_product_object($existing_product_id, $product_type);
+            if (!$product) {
                 return $this->create_error_result('product_creation_failed', 'Failed to create product object', $product_data);
             }
-
             if ($existing_product_id) {
                 $existing_migration_data = $product->get_meta('_migration_data');
                 if (is_array($existing_migration_data)) {
-                    $this->migration_data['images_mapping']     = $existing_migration_data['images_mapping'] ?? [];
+                    $this->migration_data['images_mapping'] = $existing_migration_data['images_mapping'] ?? [];
                     $this->migration_data['variations_mapping'] = $existing_migration_data['variations_mapping'] ?? [];
                 }
             }
-
             $this->set_basic_product_properties($product, $product_data);
-
             $this->set_product_taxonomies($product, $product_data);
-
             $this->handle_product_images($product, $product_data['images'] ?? []);
-
-            wc_get_logger()->debug("Processing {$product_type} product: {$product_name}", [ 'source' => 'wc-migrator' ]);
-
+            wc_get_logger()->debug("Processing {$product_type} product: {$product_name}", ['source' => 'wc-migrator']);
             match ($product_type) {
                 'variable' => $this->handle_variable_product($product, $product_data),
                 default => $this->handle_simple_product($product, $product_data),
             };
-
             $product_id = $product->save();
-
-            if (! $product_id) {
+            if (!$product_id) {
                 return $this->create_error_result('save_failed', 'Failed to save product to database', $product_data);
             }
-
             $this->handle_post_save_operations($product_id, $product_data);
-
             if ($existing_product_id) {
                 ++$this->import_stats['products_updated'];
             } else {
                 ++$this->import_stats['products_created'];
             }
-
             $duration = microtime(true) - $start_time;
-            $action   = $existing_product_id ? 'updated' : 'created';
-
-            wc_get_logger()->info(
-                "Successfully {$action} product: {$product_name} (ID: {$product_id}) in {$duration}s",
-                [ 'source' => 'wc-migrator' ]
-            );
-
+            $action = $existing_product_id ? 'updated' : 'created';
+            wc_get_logger()->info("Successfully {$action} product: {$product_name} (ID: {$product_id}) in {$duration}s", ['source' => 'wc-migrator']);
             return $this->create_success_result($action, $product_id, "Product {$action} successfully in {$duration}s");
-
         } catch (Exception $e) {
             ++$this->import_stats['errors_encountered'];
             $duration = microtime(true) - $start_time;
-
-            wc_get_logger()->error(
-                "Exception importing product: {$product_name} after {$duration}s - " . $e->getMessage(),
-                [
-                    'source'    => 'wc-migrator',
-                    'exception' => $e,
-                ]
-            );
-
-            return $this->create_error_result('exception', $e->getMessage(), $product_data);
+            wc_get_logger()->error("Exception importing product: {$product_name} after {$duration}s - " . $e->get_message(), ['source' => 'wc-migrator', 'exception' => $e]);
+            return $this->create_error_result('exception', $e->get_message(), $product_data);
         }
     }
-
     /**
      * Import a batch of products.
      *
@@ -216,23 +160,14 @@ class WooCommerceProductImporter
      */
     public function import_batch(array $products_data, array $source_data_batch = []): array
     {
-        $results     = [];
-        $batch_stats = [
-            'successful' => 0,
-            'failed'     => 0,
-            'skipped'    => 0,
-        ];
-
+        $results = [];
+        $batch_stats = ['successful' => 0, 'failed' => 0, 'skipped' => 0];
         $total_count = count($products_data);
-
         foreach ($products_data as $index => $product_data) {
-            $source_data  = $source_data_batch[ $index ] ?? [];
+            $source_data = $source_data_batch[$index] ?? [];
             $product_name = $product_data['name'] ?? 'Unknown Product';
-
             $result = $this->import_product($product_data, $source_data);
-
             $results[] = $result;
-
             if ('success' === $result['status']) {
                 if ('skipped' === $result['action']) {
                     ++$batch_stats['skipped'];
@@ -242,18 +177,12 @@ class WooCommerceProductImporter
             } else {
                 ++$batch_stats['failed'];
             }
-
             if ($this->progress_callback) {
                 call_user_func($this->progress_callback, $index + 1, $total_count, $product_name, $result);
             }
         }
-
-        return [
-            'results' => $results,
-            'stats'   => $batch_stats,
-        ];
+        return ['results' => $results, 'stats' => $batch_stats];
     }
-
     /**
      * Get current import statistics.
      *
@@ -263,21 +192,13 @@ class WooCommerceProductImporter
     {
         return $this->import_stats;
     }
-
     /**
      * Reset import statistics.
      */
     public function reset_stats(): void
     {
-        $this->import_stats = [
-            'products_created'   => 0,
-            'products_updated'   => 0,
-            'products_skipped'   => 0,
-            'images_processed'   => 0,
-            'errors_encountered' => 0,
-        ];
+        $this->import_stats = ['products_created' => 0, 'products_updated' => 0, 'products_skipped' => 0, 'images_processed' => 0, 'errors_encountered' => 0];
     }
-
     /**
      * Get default import options.
      *
@@ -285,21 +206,8 @@ class WooCommerceProductImporter
      */
     private function get_default_options(): array
     {
-        return [
-            'skip_existing'           => false,
-            'update_existing'         => true,
-            'import_images'           => true,
-            'image_timeout'           => self::DEFAULT_IMAGE_TIMEOUT,
-            'max_images_per_product'  => self::MAX_IMAGES_PER_PRODUCT,
-            'skip_duplicate_images'   => false,
-            'create_categories'       => true,
-            'create_tags'             => true,
-            'handle_variations'       => true,
-            'assign_default_category' => false,
-            'dry_run'                 => false,
-        ];
+        return ['skip_existing' => false, 'update_existing' => true, 'import_images' => true, 'image_timeout' => self::DEFAULT_IMAGE_TIMEOUT, 'max_images_per_product' => self::MAX_IMAGES_PER_PRODUCT, 'skip_duplicate_images' => false, 'create_categories' => true, 'create_tags' => true, 'handle_variations' => true, 'assign_default_category' => false, 'dry_run' => false];
     }
-
     /**
      * Validate product data before import.
      *
@@ -308,25 +216,18 @@ class WooCommerceProductImporter
      */
     private function validate_product_data(array $product_data): array
     {
-        $required_fields = [ 'name' ];
-        $missing_fields  = [];
-
+        $required_fields = ['name'];
+        $missing_fields = [];
         foreach ($required_fields as $field) {
-            if (empty($product_data[ $field ])) {
+            if (empty($product_data[$field])) {
                 $missing_fields[] = $field;
             }
         }
-
-        if (! empty($missing_fields)) {
-            return [
-                'valid'   => false,
-                'message' => 'Missing required fields: ' . implode(', ', $missing_fields),
-            ];
+        if (!empty($missing_fields)) {
+            return ['valid' => false, 'message' => 'Missing required fields: ' . implode(', ', $missing_fields)];
         }
-
-        return [ 'valid' => true ];
+        return ['valid' => true];
     }
-
     /**
      * Find existing product by various identifiers.
      *
@@ -335,40 +236,36 @@ class WooCommerceProductImporter
      */
     private function find_existing_product(array $product_data): ?int
     {
-        if (! empty($product_data['original_product_id'])) {
-            $existing_posts = get_posts(
-                [
-                    'post_type'   => 'product',
-                    'post_status' => 'any', // Find regardless of status.
-                    'meta_key'    => '_original_product_id', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-                    'meta_value'  => $product_data['original_product_id'], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-                    'fields'      => 'ids',
-                    'numberposts' => 1,
-                ]
-            );
-
-            if (! empty($existing_posts)) {
+        if (!empty($product_data['original_product_id'])) {
+            $existing_posts = get_posts([
+                'post_type' => 'product',
+                'post_status' => 'any',
+                // Find regardless of status.
+                'meta_key' => '_original_product_id',
+                // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+                'meta_value' => $product_data['original_product_id'],
+                // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+                'fields' => 'ids',
+                'numberposts' => 1,
+            ]);
+            if (!empty($existing_posts)) {
                 return (int) $existing_posts[0];
             }
         }
-
-        if (! empty($product_data['sku'])) {
+        if (!empty($product_data['sku'])) {
             $product_id = wc_get_product_id_by_sku($product_data['sku']);
             if ($product_id) {
                 return $product_id;
             }
         }
-
-        if (! empty($product_data['slug'])) {
+        if (!empty($product_data['slug'])) {
             $post = get_page_by_path($product_data['slug'], OBJECT, 'product');
             if ($post) {
                 return $post->ID;
             }
         }
-
         return null;
     }
-
     /**
      * Determine product type from product data.
      *
@@ -380,22 +277,18 @@ class WooCommerceProductImporter
         if (isset($product_data['is_variable'])) {
             return $product_data['is_variable'] ? 'variable' : 'simple';
         }
-
-        if (! empty($product_data['variations']) && count($product_data['variations']) >= 1) {
+        if (!empty($product_data['variations']) && count($product_data['variations']) >= 1) {
             return 'variable';
         }
-
-        if (! empty($product_data['attributes'])) {
+        if (!empty($product_data['attributes'])) {
             foreach ($product_data['attributes'] as $attribute) {
-                if (! empty($attribute['is_variation']) || ! empty($attribute['variation'])) {
+                if (!empty($attribute['is_variation']) || !empty($attribute['variation'])) {
                     return 'variable';
                 }
             }
         }
-
         return 'simple';
     }
-
     /**
      * Get or create product object with proper type conversion handling.
      *
@@ -405,31 +298,23 @@ class WooCommerceProductImporter
      */
     private function get_or_create_product_object(?int $existing_product_id, string $required_type): ?WC_Product
     {
-        if (! $existing_product_id) {
+        if (!$existing_product_id) {
             return $this->create_product_object($required_type);
         }
-
         $existing_product = wc_get_product($existing_product_id);
-        if (! $existing_product) {
+        if (!$existing_product) {
             return $this->create_product_object($required_type);
         }
-
         $current_type = $existing_product->get_type();
         if ($current_type === $required_type) {
             return $existing_product;
         }
-
-        wc_get_logger()->info(
-            "Converting product ID {$existing_product_id} from {$current_type} to {$required_type}",
-            [ 'source' => 'wc-migrator' ]
-        );
-
+        wc_get_logger()->info("Converting product ID {$existing_product_id} from {$current_type} to {$required_type}", ['source' => 'wc-migrator']);
         return match ($required_type) {
             'variable' => new WC_Product_Variable($existing_product_id),
             default => new WC_Product_Simple($existing_product_id),
         };
     }
-
     /**
      * Create appropriate product object based on type.
      *
@@ -443,7 +328,6 @@ class WooCommerceProductImporter
             default => new WC_Product_Simple(),
         };
     }
-
     /**
      * Set basic product properties common to all product types.
      *
@@ -453,60 +337,48 @@ class WooCommerceProductImporter
     private function set_basic_product_properties(WC_Product $product, array $product_data): void
     {
         $product->set_name($product_data['name']);
-
-        if (! empty($product_data['slug'])) {
+        if (!empty($product_data['slug'])) {
             $product->set_slug($product_data['slug']);
         }
-
-        if (! empty($product_data['description'])) {
+        if (!empty($product_data['description'])) {
             $product->set_description($product_data['description']);
         }
-
-        if (! empty($product_data['short_description'])) {
+        if (!empty($product_data['short_description'])) {
             $product->set_short_description($product_data['short_description']);
         }
-
-        if (! empty($product_data['status'])) {
+        if (!empty($product_data['status'])) {
             $product->set_status($product_data['status']);
         }
-
-        if (! empty($product_data['sku'])) {
+        if (!empty($product_data['sku'])) {
             $product->set_sku($product_data['sku']);
         }
-
         if (isset($product_data['catalog_visibility'])) {
             $product->set_catalog_visibility($product_data['catalog_visibility']);
         }
-
-        if (! empty($product_data['date_created_gmt'])) {
+        if (!empty($product_data['date_created_gmt'])) {
             $product->set_date_created($product_data['date_created_gmt']);
         }
-
-        if (! empty($product_data['weight'])) {
+        if (!empty($product_data['weight'])) {
             $product->set_weight($product_data['weight']);
         }
-
-        if (! empty($product_data['tax_status'])) {
+        if (!empty($product_data['tax_status'])) {
             $product->set_tax_status($product_data['tax_status']);
         }
-
-        if (! empty($product_data['metafields'])) {
+        if (!empty($product_data['metafields'])) {
             foreach ($product_data['metafields'] as $key => $value) {
-                if (! empty($key)) {
+                if (!empty($key)) {
                     $product->add_meta_data($key, $value, true);
                 }
             }
         }
-
-        if (! empty($product_data['meta_data'])) {
+        if (!empty($product_data['meta_data'])) {
             foreach ($product_data['meta_data'] as $meta) {
-                if (! empty($meta['key'])) {
+                if (!empty($meta['key'])) {
                     $product->add_meta_data($meta['key'], $meta['value'] ?? '', true);
                 }
             }
         }
     }
-
     /**
      * Handle simple product specific data.
      *
@@ -515,36 +387,30 @@ class WooCommerceProductImporter
      */
     private function handle_simple_product(WC_Product_Simple $product, array $product_data): void
     {
-        if (! empty($product_data['regular_price'])) {
+        if (!empty($product_data['regular_price'])) {
             $product->set_regular_price($product_data['regular_price']);
             $product->set_price($product_data['regular_price']);
         }
-
-        if (! empty($product_data['sale_price'])) {
+        if (!empty($product_data['sale_price'])) {
             $product->set_sale_price($product_data['sale_price']);
             $product->set_price($product_data['sale_price']);
         }
-
-        if (! empty($product_data['sku'])) {
+        if (!empty($product_data['sku'])) {
             add_filter('wc_product_has_unique_sku', '__return_false', 999);
             $product->set_sku($product_data['sku']);
             remove_filter('wc_product_has_unique_sku', '__return_false', 999);
         }
-
         if (isset($product_data['manage_stock'])) {
             $product->set_manage_stock($product_data['manage_stock']);
         }
-
-        if (! empty($product_data['stock_quantity'])) {
+        if (!empty($product_data['stock_quantity'])) {
             $product->set_stock_quantity((int) $product_data['stock_quantity']);
         }
-
-        if (! empty($product_data['stock_status'])) {
+        if (!empty($product_data['stock_status'])) {
             $product->set_stock_status($product_data['stock_status']);
         }
-
         if (array_key_exists('cost_of_goods', $product_data)) {
-            $cogs_is_enabled = FeaturesUtil::feature_is_enabled('cost_of_goods_sold');
+            $cogs_is_enabled = Features_Util::feature_is_enabled('cost_of_goods_sold');
             if ($cogs_is_enabled) {
                 $product->set_cogs_value((float) $product_data['cost_of_goods']);
             } else {
@@ -552,7 +418,6 @@ class WooCommerceProductImporter
             }
         }
     }
-
     /**
      * Handle variable product specific data.
      *
@@ -567,18 +432,14 @@ class WooCommerceProductImporter
         $product->set_manage_stock(false);
         $product->set_weight('');
         $product->set_stock_quantity(null);
-
-        if (! empty($product_data['attributes'])) {
+        if (!empty($product_data['attributes'])) {
             $this->setup_attributes($product, $product_data['attributes']);
         }
-
         $product->save();
-
-        if (! empty($product_data['variations']) && $this->import_options['handle_variations']) {
+        if (!empty($product_data['variations']) && $this->import_options['handle_variations']) {
             $this->sync_variations($product, $product_data['variations']);
         }
     }
-
     /**
      * Sets up product attributes for variable products with global taxonomy creation.
      *
@@ -587,11 +448,10 @@ class WooCommerceProductImporter
      */
     private function setup_attributes(WC_Product_Variable $product, array $attributes_data): void
     {
-        $woo_attributes                  = [];
+        $woo_attributes = [];
         $this->current_attribute_mapping = [];
-
         foreach ($attributes_data as $attribute_info) {
-            $attr_name    = $attribute_info['name'] ?? null;
+            $attr_name = $attribute_info['name'] ?? null;
             $attr_options = $attribute_info['options'] ?? [];
             if (empty($attr_name)) {
                 continue;
@@ -599,26 +459,15 @@ class WooCommerceProductImporter
             if (empty($attr_options)) {
                 continue;
             }
-
             $taxonomy_slug = sanitize_title($attr_name);
             $taxonomy_name = 'pa_' . $taxonomy_slug;
-            $attribute_id  = 0;
-
-            if (! taxonomy_exists($taxonomy_name)) {
-                $attribute_id = wc_create_attribute(
-                    [
-                        'name'         => $attr_name,
-                        'slug'         => $taxonomy_slug,
-                        'type'         => 'select',
-                        'order_by'     => 'menu_order',
-                        'has_archives' => false,
-                    ]
-                );
+            $attribute_id = 0;
+            if (!taxonomy_exists($taxonomy_name)) {
+                $attribute_id = wc_create_attribute(['name' => $attr_name, 'slug' => $taxonomy_slug, 'type' => 'select', 'order_by' => 'menu_order', 'has_archives' => false]);
                 if (is_wp_error($attribute_id)) {
-                    wc_get_logger()->warning("Failed to create attribute '{$attr_name}': " . $attribute_id->get_error_message(), [ 'source' => 'wc-migrator' ]);
+                    wc_get_logger()->warning("Failed to create attribute '{$attr_name}': " . $attribute_id->get_error_message(), ['source' => 'wc-migrator']);
                     continue;
                 }
-
                 register_taxonomy(
                     $taxonomy_name,
                     /**
@@ -627,51 +476,36 @@ class WooCommerceProductImporter
                      * @since 10.2.0
                      * @param array $object_types Array of object types.
                      */
-                    apply_filters('woocommerce_taxonomy_objects_' . $taxonomy_name, [ 'product' ]),
+                    apply_filters('woocommerce_taxonomy_objects_' . $taxonomy_name, ['product']),
                     /**
                      * Filters the arguments for registering the attribute taxonomy.
                      *
                      * @since 10.2.0
                      * @param array $args Array of taxonomy registration arguments.
                      */
-                    apply_filters(
-                        'woocommerce_taxonomy_args_' . $taxonomy_name,
-                        [
-                            'labels'       => [
-                                'name' => $attr_name,
-                            ],
-                            'hierarchical' => false,
-                            'show_ui'      => false,
-                            'show_in_rest' => true,
-                            'query_var'    => true,
-                            'rewrite'      => false,
-                            'public'       => false,
-                        ]
-                    )
+                    apply_filters('woocommerce_taxonomy_args_' . $taxonomy_name, ['labels' => ['name' => $attr_name], 'hierarchical' => false, 'show_ui' => false, 'show_in_rest' => true, 'query_var' => true, 'rewrite' => false, 'public' => false])
                 );
             } else {
                 $attribute_id = wc_attribute_taxonomy_id_by_name($taxonomy_name);
             }
-
-            $term_ids   = [];
+            $term_ids = [];
             $term_slugs = [];
             foreach ($attr_options as $value) {
                 $term_slug = sanitize_title($value);
-                $term      = get_term_by('slug', $term_slug, $taxonomy_name);
-                if (! $term) {
-                    $term_result = wp_insert_term($value, $taxonomy_name, [ 'slug' => $term_slug ]);
+                $term = get_term_by('slug', $term_slug, $taxonomy_name);
+                if (!$term) {
+                    $term_result = wp_insert_term($value, $taxonomy_name, ['slug' => $term_slug]);
                     if (is_wp_error($term_result)) {
-                        wc_get_logger()->warning("Failed to insert term '{$value}' (slug: {$term_slug}) into {$taxonomy_name}: " . $term_result->get_error_message(), [ 'source' => 'wc-migrator' ]);
+                        wc_get_logger()->warning("Failed to insert term '{$value}' (slug: {$term_slug}) into {$taxonomy_name}: " . $term_result->get_error_message(), ['source' => 'wc-migrator']);
                         continue;
                     }
-                    $term_ids[]   = $term_result['term_id'];
+                    $term_ids[] = $term_result['term_id'];
                     $term_slugs[] = $term_slug;
                 } else {
-                    $term_ids[]   = $term->term_id;
+                    $term_ids[] = $term->term_id;
                     $term_slugs[] = $term->slug;
                 }
             }
-
             $woo_attribute = new \WC_Product_Attribute();
             $woo_attribute->set_name($taxonomy_name);
             $woo_attribute->set_id($attribute_id);
@@ -680,13 +514,10 @@ class WooCommerceProductImporter
             $woo_attribute->set_visible($attribute_info['is_visible'] ?? true);
             $woo_attribute->set_variation($attribute_info['is_variation'] ?? true);
             $woo_attributes[] = $woo_attribute;
-
-            $this->current_attribute_mapping[ $attr_name ] = $taxonomy_name;
+            $this->current_attribute_mapping[$attr_name] = $taxonomy_name;
         }
-
         $product->set_attributes($woo_attributes);
     }
-
     /**
      * Creates or updates product variations with proper mapping and lookup.
      *
@@ -695,15 +526,12 @@ class WooCommerceProductImporter
      */
     private function sync_variations(WC_Product_Variable $product, array $variations_data): void
     {
-        $parent_product_id       = $product->get_id();
-        $parent_original_id      = $product->get_meta('_original_product_id');
+        $parent_product_id = $product->get_id();
+        $parent_original_id = $product->get_meta('_original_product_id');
         $processed_variation_ids = [];
-
         $variation_count = count($variations_data);
-        wc_get_logger()->debug("Syncing {$variation_count} variations for product ID {$parent_product_id}", [ 'source' => 'wc-migrator' ]);
-
+        wc_get_logger()->debug("Syncing {$variation_count} variations for product ID {$parent_product_id}", ['source' => 'wc-migrator']);
         $attribute_taxonomy_map = $this->current_attribute_mapping;
-
         // Build fallback mapping from product attributes if current mapping is empty.
         if (empty($attribute_taxonomy_map)) {
             $product_attributes = $product->get_attributes();
@@ -711,129 +539,111 @@ class WooCommerceProductImporter
                 if ($attribute_obj->get_variation()) {
                     $attribute_label = wc_attribute_label($taxonomy, $product);
                     // Store mapping with both original case and lowercase for case-insensitive lookup.
-                    $attribute_taxonomy_map[ $attribute_label ]               = $taxonomy;
-                    $attribute_taxonomy_map[ strtolower($attribute_label) ] = $taxonomy;
+                    $attribute_taxonomy_map[$attribute_label] = $taxonomy;
+                    $attribute_taxonomy_map[strtolower($attribute_label)] = $taxonomy;
                 }
             }
         }
-
         foreach ($variations_data as $var_data) {
             $original_variant_id = $var_data['original_id'] ?? null;
-            if (! $original_variant_id) {
-                wc_get_logger()->warning('Skipping variation: Missing original ID.', [ 'source' => 'wc-migrator' ]);
+            if (!$original_variant_id) {
+                wc_get_logger()->warning('Skipping variation: Missing original ID.', ['source' => 'wc-migrator']);
                 continue;
             }
-
             $variation_id = null;
-            $variation    = null;
-
-            if (isset($this->migration_data['variations_mapping'][ $original_variant_id ])) {
-                $_variation_id = $this->migration_data['variations_mapping'][ $original_variant_id ];
-                $_variation    = wc_get_product($_variation_id);
+            $variation = null;
+            if (isset($this->migration_data['variations_mapping'][$original_variant_id])) {
+                $_variation_id = $this->migration_data['variations_mapping'][$original_variant_id];
+                $_variation = wc_get_product($_variation_id);
                 if ($_variation instanceof WC_Product_Variation && $_variation->get_parent_id() === $parent_product_id) {
-                    $variation    = $_variation;
+                    $variation = $_variation;
                     $variation_id = $_variation_id;
                 } else {
-                    unset($this->migration_data['variations_mapping'][ $original_variant_id ]);
+                    unset($this->migration_data['variations_mapping'][$original_variant_id]);
                 }
             }
-
-            if (! $variation) {
+            if (!$variation) {
                 $query_args = [
                     'post_parent' => $parent_product_id,
-                    'post_type'   => 'product_variation',
+                    'post_type' => 'product_variation',
                     'numberposts' => 1,
                     'post_status' => 'any',
-                    'meta_key'    => '_original_variant_id', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-                    'meta_value'  => $original_variant_id, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-                    'fields'      => 'ids',
+                    'meta_key' => '_original_variant_id',
+                    // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+                    'meta_value' => $original_variant_id,
+                    // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+                    'fields' => 'ids',
                 ];
-
                 $found_ids = get_posts($query_args);
-                if (! empty($found_ids)) {
+                if (!empty($found_ids)) {
                     $variation_id = $found_ids[0];
-                    $variation    = wc_get_product($variation_id);
-                    if (! ($variation instanceof WC_Product_Variation)) {
-                        wc_get_logger()->warning("Found post ID {$variation_id} for original variant {$original_variant_id}, but it's not a WC_Product_Variation.", [ 'source' => 'wc-migrator' ]);
-                        $variation    = null;
+                    $variation = wc_get_product($variation_id);
+                    if (!$variation instanceof WC_Product_Variation) {
+                        wc_get_logger()->warning("Found post ID {$variation_id} for original variant {$original_variant_id}, but it's not a WC_Product_Variation.", ['source' => 'wc-migrator']);
+                        $variation = null;
                         $variation_id = null;
                     }
                 }
             }
-
-            if (! $variation) {
+            if (!$variation) {
                 $variation = new WC_Product_Variation();
                 $variation->set_parent_id($parent_product_id);
             }
-
             $variation->set_status('publish');
             $variation->set_menu_order($var_data['menu_order'] ?? 0);
-
             $variation->set_regular_price($var_data['regular_price'] ?? '');
             $variation->set_sale_price($var_data['sale_price'] ?? '');
-
-            if (! empty($var_data['sku'])) {
+            if (!empty($var_data['sku'])) {
                 add_filter('wc_product_has_unique_sku', '__return_false', 999);
                 $variation->set_sku($var_data['sku']);
                 remove_filter('wc_product_has_unique_sku', '__return_false', 999);
             }
-
             $variation->set_manage_stock($var_data['manage_stock'] ?? false);
             $variation->set_stock_quantity($var_data['stock_quantity'] ?? null);
             $variation->set_stock_status($var_data['stock_status'] ?? 'instock');
-
             $variation->set_weight($var_data['weight'] ?? '');
-
-            if (! empty($var_data['tax_status'])) {
+            if (!empty($var_data['tax_status'])) {
                 $variation->set_tax_status($var_data['tax_status']);
             }
-
             $image_original_id = $var_data['image_original_id'] ?? null;
-            if ($image_original_id && isset($this->migration_data['images_mapping'][ $image_original_id ])) {
-                $variation->set_image_id($this->migration_data['images_mapping'][ $image_original_id ]);
+            if ($image_original_id && isset($this->migration_data['images_mapping'][$image_original_id])) {
+                $variation->set_image_id($this->migration_data['images_mapping'][$image_original_id]);
             } else {
                 $variation->set_image_id('');
             }
-
             $wc_variation_attributes = [];
-            if (! empty($var_data['attributes']) && is_array($var_data['attributes'])) {
+            if (!empty($var_data['attributes']) && is_array($var_data['attributes'])) {
                 foreach ($var_data['attributes'] as $attr_name => $attr_value) {
-                    if (isset($attribute_taxonomy_map[ $attr_name ])) {
-                        $taxonomy                  = $attribute_taxonomy_map[ $attr_name ];
-                        $term_slug                 = sanitize_title($attr_value);
+                    if (isset($attribute_taxonomy_map[$attr_name])) {
+                        $taxonomy = $attribute_taxonomy_map[$attr_name];
+                        $term_slug = sanitize_title($attr_value);
                         $normalized_attribute_name = wc_variation_attribute_name($taxonomy);
-
-                        $wc_variation_attributes[ $normalized_attribute_name ] = $term_slug;
+                        $wc_variation_attributes[$normalized_attribute_name] = $term_slug;
                     } else {
-                        wc_get_logger()->warning("Attribute taxonomy mapping not found for option '{$attr_name}' while processing variation {$original_variant_id}.", [ 'source' => 'wc-migrator' ]);
+                        wc_get_logger()->warning("Attribute taxonomy mapping not found for option '{$attr_name}' while processing variation {$original_variant_id}.", ['source' => 'wc-migrator']);
                     }
                 }
             }
             $variation->set_attributes($wc_variation_attributes);
-
             $variation->update_meta_data('_original_variant_id', $original_variant_id);
             if ($parent_original_id) {
                 $variation->update_meta_data('_original_product_id', $parent_original_id);
             }
-
             $saved_variation_id = $variation->save();
             if ($saved_variation_id) {
                 $processed_variation_ids[] = $saved_variation_id;
-                $this->migration_data['variations_mapping'][ $original_variant_id ] = $saved_variation_id;
-                if (! empty($var_data['cost_of_goods'])) {
+                $this->migration_data['variations_mapping'][$original_variant_id] = $saved_variation_id;
+                if (!empty($var_data['cost_of_goods'])) {
                     update_post_meta($saved_variation_id, '_cogs_total_value', (float) $var_data['cost_of_goods']);
                 }
             } else {
-                wc_get_logger()->error("Failed to save variation for original variant {$original_variant_id}", [ 'source' => 'wc-migrator' ]);
+                wc_get_logger()->error("Failed to save variation for original variant {$original_variant_id}", ['source' => 'wc-migrator']);
             }
         }
-
         WC_Product_Variable::sync($parent_product_id);
-
         $processed_count = count($processed_variation_ids);
-        wc_get_logger()->debug("Successfully synced {$processed_count}/{$variation_count} variations for product ID {$parent_product_id}", [ 'source' => 'wc-migrator' ]);
+        wc_get_logger()->debug("Successfully synced {$processed_count}/{$variation_count} variations for product ID {$parent_product_id}", ['source' => 'wc-migrator']);
     }
-
     /**
      * Handle post-save operations like metadata and migration tracking.
      *
@@ -842,22 +652,17 @@ class WooCommerceProductImporter
      */
     private function handle_post_save_operations(int $product_id, array $product_data): void
     {
-
-        if (! empty($product_data['original_product_id'])) {
+        if (!empty($product_data['original_product_id'])) {
             update_post_meta($product_id, '_original_product_id', $product_data['original_product_id']);
         }
-
-        if (! empty($product_data['original_url'])) {
+        if (!empty($product_data['original_url'])) {
             update_post_meta($product_id, '_original_url', $product_data['original_url']);
         }
-
         update_post_meta($product_id, '_migration_data', $this->migration_data);
-
-        if (! empty($product_data['metafields'])) {
+        if (!empty($product_data['metafields'])) {
             $this->update_seo_meta($product_id, $product_data['metafields'], $product_data);
         }
     }
-
     /**
      * Set product taxonomies (categories, tags, brand) before product save.
      *
@@ -867,51 +672,45 @@ class WooCommerceProductImporter
     private function set_product_taxonomies(WC_Product $product, array $product_data): void
     {
         $product_id = $product->get_id();
-        if (! $product_id) {
+        if (!$product_id) {
             $product_id = $product->save();
-            if (! $product_id) {
-                wc_get_logger()->warning('Could not save product to set taxonomies.', [ 'source' => 'wc-migrator' ]);
+            if (!$product_id) {
+                wc_get_logger()->warning('Could not save product to set taxonomies.', ['source' => 'wc-migrator']);
                 return;
             }
         }
-
         $taxonomies_to_set = [];
-
         if (isset($product_data['categories']) && is_array($product_data['categories']) && $this->import_options['create_categories']) {
             $term_ids = $this->get_or_create_terms($product_data['categories'], 'product_cat');
-            if (! empty($term_ids)) {
+            if (!empty($term_ids)) {
                 $taxonomies_to_set['product_cat'] = $term_ids;
             } elseif ($this->import_options['assign_default_category']) {
                 $default_cat_id = get_option('default_product_cat');
                 if ($default_cat_id) {
-                    $taxonomies_to_set['product_cat'] = [ $default_cat_id ];
-                    wc_get_logger()->info("Assigned default category (ID: {$default_cat_id}) to product with no categories", [ 'source' => 'wc-migrator' ]);
+                    $taxonomies_to_set['product_cat'] = [$default_cat_id];
+                    wc_get_logger()->info("Assigned default category (ID: {$default_cat_id}) to product with no categories", ['source' => 'wc-migrator']);
                 }
             } else {
-                wc_get_logger()->debug('Product has no categories and assign_default_category is disabled', [ 'source' => 'wc-migrator' ]);
+                wc_get_logger()->debug('Product has no categories and assign_default_category is disabled', ['source' => 'wc-migrator']);
             }
         }
-
         if (isset($product_data['tags']) && is_array($product_data['tags']) && $this->import_options['create_tags']) {
             $term_ids = $this->get_or_create_terms($product_data['tags'], 'product_tag');
-            if (! empty($term_ids)) {
+            if (!empty($term_ids)) {
                 $taxonomies_to_set['product_tag'] = $term_ids;
             }
         }
-
-        if (! empty($product_data['brand']['name']) && taxonomy_exists('product_brand')) {
-            $brand_data = [ $product_data['brand'] ];
-            $term_ids   = $this->get_or_create_terms($brand_data, 'product_brand');
-            if (! empty($term_ids)) {
+        if (!empty($product_data['brand']['name']) && taxonomy_exists('product_brand')) {
+            $brand_data = [$product_data['brand']];
+            $term_ids = $this->get_or_create_terms($brand_data, 'product_brand');
+            if (!empty($term_ids)) {
                 $taxonomies_to_set['product_brand'] = $term_ids;
             }
         }
-
         foreach ($taxonomies_to_set as $taxonomy => $ids) {
             wp_set_object_terms($product_id, $ids, $taxonomy, false);
         }
     }
-
     /**
      * Helper to get or create term IDs for a given taxonomy.
      *
@@ -931,13 +730,11 @@ class WooCommerceProductImporter
             if (empty($term_slug)) {
                 continue;
             }
-
             $term = get_term_by('slug', $term_slug, $taxonomy);
-
-            if (! $term) {
-                $term_result = wp_insert_term($term_name, $taxonomy, [ 'slug' => $term_slug ]);
+            if (!$term) {
+                $term_result = wp_insert_term($term_name, $taxonomy, ['slug' => $term_slug]);
                 if (is_wp_error($term_result)) {
-                    wc_get_logger()->warning("Failed to insert term '{$term_name}' (slug: {$term_slug}) into {$taxonomy}: " . $term_result->get_error_message(), [ 'source' => 'wc-migrator' ]);
+                    wc_get_logger()->warning("Failed to insert term '{$term_name}' (slug: {$term_slug}) into {$taxonomy}: " . $term_result->get_error_message(), ['source' => 'wc-migrator']);
                     continue;
                 }
                 $term_ids[] = $term_result['term_id'];
@@ -947,7 +744,6 @@ class WooCommerceProductImporter
         }
         return array_unique($term_ids);
     }
-
     /**
      * Handle product images using product object methods.
      *
@@ -959,78 +755,64 @@ class WooCommerceProductImporter
         if (empty($images_data)) {
             return;
         }
-
-        $gallery_ids     = [];
-        $featured_id     = null;
-        $product_id      = $product->get_id();
+        $gallery_ids = [];
+        $featured_id = null;
+        $product_id = $product->get_id();
         $processed_count = 0;
-
         foreach ($images_data as $index => $image) {
             if ($processed_count >= $this->import_options['max_images_per_product']) {
                 break;
             }
-
             $original_id = $image['original_id'] ?? null;
-            $image_url   = $image['src'] ?? null;
-            $image_alt   = $image['alt'] ?? '';
-            $is_featured = $image['is_featured'] ?? (0 === $index);
-
+            $image_url = $image['src'] ?? null;
+            $image_alt = $image['alt'] ?? '';
+            $is_featured = $image['is_featured'] ?? 0 === $index;
             if (empty($original_id) || empty($image_url)) {
-                wc_get_logger()->warning('Skipping image: Missing original ID or URL.', [ 'source' => 'wc-migrator' ]);
+                wc_get_logger()->warning('Skipping image: Missing original ID or URL.', ['source' => 'wc-migrator']);
                 continue;
             }
-
-            if (isset($this->migration_data['images_mapping'][ $original_id ]) && wp_attachment_is_image($this->migration_data['images_mapping'][ $original_id ])) {
-                $attachment_id = $this->migration_data['images_mapping'][ $original_id ];
+            if (isset($this->migration_data['images_mapping'][$original_id]) && wp_attachment_is_image($this->migration_data['images_mapping'][$original_id])) {
+                $attachment_id = $this->migration_data['images_mapping'][$original_id];
             } else {
-                if (! $product_id) {
+                if (!$product_id) {
                     $product_id = $product->save();
-                    if (! $product_id) {
-                        wc_get_logger()->warning("Skipping image upload {$original_id}: Could not get product ID before sideloading.", [ 'source' => 'wc-migrator' ]);
+                    if (!$product_id) {
+                        wc_get_logger()->warning("Skipping image upload {$original_id}: Could not get product ID before sideloading.", ['source' => 'wc-migrator']);
                         continue;
                     }
                 }
-
-                $start_time    = microtime(true);
-                $image_desc    = $image_alt ?: $product->get_name();
+                $start_time = microtime(true);
+                $image_desc = $image_alt ?: $product->get_name();
                 $attachment_id = $this->import_image($image_url, $image_alt, $product_id);
-                $duration      = microtime(true) - $start_time;
-
+                $duration = microtime(true) - $start_time;
                 if (is_wp_error($attachment_id)) {
-                    wc_get_logger()->error("Error uploading {$image_url}: " . $attachment_id->get_error_message() . " (Duration: {$duration}s)", [ 'source' => 'wc-migrator' ]);
+                    wc_get_logger()->error("Error uploading {$image_url}: " . $attachment_id->get_error_message() . " (Duration: {$duration}s)", ['source' => 'wc-migrator']);
                     continue;
                 }
-
-                if (! $attachment_id) {
-                    wc_get_logger()->warning("Image upload failed for {$image_url} (Duration: {$duration}s)", [ 'source' => 'wc-migrator' ]);
+                if (!$attachment_id) {
+                    wc_get_logger()->warning("Image upload failed for {$image_url} (Duration: {$duration}s)", ['source' => 'wc-migrator']);
                     continue;
                 }
-
-                $this->migration_data['images_mapping'][ $original_id ] = $attachment_id;
-
+                $this->migration_data['images_mapping'][$original_id] = $attachment_id;
                 if ($image_alt) {
                     update_post_meta($attachment_id, '_wp_attachment_image_alt', $image_alt);
                 }
             }
-
             if ($is_featured) {
                 $featured_id = $attachment_id;
             } else {
                 $gallery_ids[] = $attachment_id;
             }
-
             ++$processed_count;
             ++$this->import_stats['images_processed'];
         }
-
         if ($featured_id) {
             $product->set_image_id($featured_id);
         }
-        if (! empty($gallery_ids)) {
+        if (!empty($gallery_ids)) {
             $product->set_gallery_image_ids(array_unique($gallery_ids));
         }
     }
-
     /**
      * Import image from URL.
      *
@@ -1044,38 +826,31 @@ class WooCommerceProductImporter
         if ($this->import_options['dry_run']) {
             return null;
         }
-
-        if (! $this->import_options['skip_duplicate_images']) {
+        if (!$this->import_options['skip_duplicate_images']) {
             $existing_attachment = $this->get_attachment_by_url($image_url);
             if ($existing_attachment) {
                 return $existing_attachment;
             }
         }
-
         require_once ABSPATH . 'wp-admin/includes/media.php';
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';
-
         add_filter('http_request_timeout', $this->set_image_download_timeout(...));
         add_filter('http_request_args', $this->optimize_http_request_args(...));
         add_filter('image_sideload_extensions', $this->add_avif_support_to_sideload(...));
         try {
             $attachment_id = media_sideload_image($image_url, $product_id, null, 'id');
-
             if (is_wp_error($attachment_id)) {
                 $message = sprintf('Image import failed for URL %s: %s', $image_url, $attachment_id->get_error_message());
-
                 if ($this->import_options['verbose'] ?? false) {
                     \WP_CLI::warning($message);
                 }
-                wc_get_logger()->error($message, [ 'source' => 'wc-migrator-images' ]);
+                wc_get_logger()->error($message, ['source' => 'wc-migrator-images']);
                 return null;
             }
-
             if ($alt_text) {
                 update_post_meta($attachment_id, '_wp_attachment_image_alt', $alt_text);
             }
-
             return $attachment_id;
         } finally {
             remove_filter('http_request_timeout', $this->set_image_download_timeout(...));
@@ -1083,7 +858,6 @@ class WooCommerceProductImporter
             remove_filter('image_sideload_extensions', $this->add_avif_support_to_sideload(...));
         }
     }
-
     /**
      * Set HTTP timeout for image downloads.
      *
@@ -1093,7 +867,6 @@ class WooCommerceProductImporter
     {
         return $this->import_options['image_timeout'];
     }
-
     /**
      * Optimize HTTP request arguments for faster image downloads.
      *
@@ -1103,11 +876,9 @@ class WooCommerceProductImporter
     public function optimize_http_request_args(array $args): array
     {
         $args['redirection'] = 3;
-        $args['timeout']     = $this->import_options['image_timeout'] ?? 30;
-
+        $args['timeout'] = $this->import_options['image_timeout'] ?? 30;
         return $args;
     }
-
     /**
      * Add AVIF support to image sideload extensions.
      *
@@ -1116,12 +887,11 @@ class WooCommerceProductImporter
      */
     public function add_avif_support_to_sideload(array $allowed_extensions): array
     {
-        if (! in_array('avif', $allowed_extensions, true)) {
+        if (!in_array('avif', $allowed_extensions, true)) {
             $allowed_extensions[] = 'avif';
         }
         return $allowed_extensions;
     }
-
     /**
      * Get existing attachment by URL.
      *
@@ -1131,17 +901,10 @@ class WooCommerceProductImporter
     private function get_attachment_by_url(string $image_url): ?int
     {
         global $wpdb;
-
-        $basename      = wp_basename($image_url);
-        $attachment_id = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value LIKE %s",
-                '%' . $wpdb->esc_like($basename)
-            )
-        );
+        $basename = wp_basename($image_url);
+        $attachment_id = $wpdb->get_var($wpdb->prepare("SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value LIKE %s", '%' . $wpdb->esc_like($basename)));
         return $attachment_id ? (int) $attachment_id : null;
     }
-
     /**
      * Create success result array.
      *
@@ -1152,14 +915,8 @@ class WooCommerceProductImporter
      */
     private function create_success_result(string $action, int $product_id, string $message): array
     {
-        return [
-            'status'     => 'success',
-            'action'     => $action,
-            'product_id' => $product_id,
-            'message'    => $message,
-        ];
+        return ['status' => 'success', 'action' => $action, 'product_id' => $product_id, 'message' => $message];
     }
-
     /**
      * Updates SEO meta fields if Yoast SEO is active.
      *
@@ -1169,29 +926,24 @@ class WooCommerceProductImporter
      */
     private function update_seo_meta(int $product_id, array $metafields, array $product_data): void
     {
-        if (! defined('WPSEO_VERSION')) {
+        if (!defined('WPSEO_VERSION')) {
             return;
         }
-
-        $seo_title       = $metafields['global_title_tag'] ?? null;
+        $seo_title = $metafields['global_title_tag'] ?? null;
         $seo_description = $metafields['global_description_tag'] ?? null;
-
-        $final_seo_title       = $seo_title ?: $product_data['name'] ?? '';
-        $fallback_desc         = $product_data['description'] ?: $product_data['short_description'] ?? '';
+        $final_seo_title = $seo_title ?: $product_data['name'] ?? '';
+        $fallback_desc = $product_data['description'] ?: $product_data['short_description'] ?? '';
         $final_seo_description = $seo_description ?: wp_strip_all_tags($fallback_desc);
-
         $current_title = get_post_meta($product_id, '_yoast_wpseo_title', true);
-        if ($current_title !== $final_seo_title && ! empty($final_seo_title)) {
+        if ($current_title !== $final_seo_title && !empty($final_seo_title)) {
             update_post_meta($product_id, '_yoast_wpseo_title', $final_seo_title);
         }
-
         $current_desc = get_post_meta($product_id, '_yoast_wpseo_metadesc', true);
-        if ($current_desc !== $final_seo_description && ! empty($final_seo_description)) {
+        if ($current_desc !== $final_seo_description && !empty($final_seo_description)) {
             $truncated_desc = mb_substr($final_seo_description, 0, 160);
             update_post_meta($product_id, '_yoast_wpseo_metadesc', $truncated_desc);
         }
     }
-
     /**
      * Set COGS value directly using meta data.
      *
@@ -1202,7 +954,6 @@ class WooCommerceProductImporter
     {
         $product->update_meta_data('_cogs_total_value', $cogs_value);
     }
-
     /**
      * Create error result array.
      *
@@ -1213,11 +964,6 @@ class WooCommerceProductImporter
      */
     private function create_error_result(string $error_code, string $message, array $product_data): array
     {
-        return [
-            'status'       => 'error',
-            'error_code'   => $error_code,
-            'message'      => $message,
-            'product_data' => $product_data,
-        ];
+        return ['status' => 'error', 'error_code' => $error_code, 'message' => $message, 'product_data' => $product_data];
     }
 }

@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Admin\ProductReviews;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Product_Reviews;
 
 /**
  * A utility class for handling comments that are product reviews.
  */
-class ReviewsUtil
+class Reviews_Util
 {
     /**
      * Modifies the moderation URLs in the email notifications for product reviews.
@@ -19,25 +18,16 @@ class ReviewsUtil
     public static function modify_product_review_moderation_urls($message, $comment_id)
     {
         $comment = get_comment($comment_id);
-
         // Only modify URLs for product reviews.
-        if (! $comment || get_post_type($comment->comment_post_ID) !== 'product') {
+        if (!$comment || get_post_type($comment->comment_post_ID) !== 'product') {
             return $message;
         }
-
         // Replace the WordPress comment moderation URLs with WooCommerce product review URLs.
         $product_reviews_url = admin_url('edit.php?post_type=product&page=product-reviews');
-
         // Replace the moderation panel URL (this is the "show all reviews pending" link).
-        $message = str_replace(
-            admin_url('edit-comments.php?comment_status=moderated#wpbody-content'),
-            $product_reviews_url . '&comment_status=moderated',
-            $message
-        );
-
+        $message = str_replace(admin_url('edit-comments.php?comment_status=moderated#wpbody-content'), $product_reviews_url . '&comment_status=moderated', $message);
         return $message;
     }
-
     /**
      * Removes product reviews from the edit-comments page to fix the "Mine" tab counter.
      *
@@ -49,34 +39,30 @@ class ReviewsUtil
     public static function comments_clauses_without_product_reviews(array $clauses, $comment_query): array
     {
         global $wpdb;
-
-        if (! empty($comment_query->query_vars['post_type'])) {
+        if (!empty($comment_query->query_vars['post_type'])) {
             $post_type = $comment_query->query_vars['post_type'];
-            if (! is_array($post_type)) {
+            if (!is_array($post_type)) {
                 $post_type = explode(',', (string) $post_type);
             }
             if (in_array('product', $post_type, true)) {
                 return $clauses;
             }
         }
-
         /**
          * Any comment queries with these values are likely to be custom handling where we don't want to change default behavior.
          * This may change for the `type` query vars in the future if we break out review replies as their own type.
          */
-        foreach ([ 'ID', 'parent', 'parent__in', 'post_author__in', 'post_author', 'post_name', 'type', 'type__in', 'type__not_in', 'post_type__in', 'comment__in', 'comment__not_in' ] as $arg) {
-            if (! empty($comment_query->query_vars[ $arg ])) {
+        foreach (['ID', 'parent', 'parent__in', 'post_author__in', 'post_author', 'post_name', 'type', 'type__in', 'type__not_in', 'post_type__in', 'comment__in', 'comment__not_in'] as $arg) {
+            if (!empty($comment_query->query_vars[$arg])) {
                 return $clauses;
             }
         }
-
-        if (! empty($comment_query->query_vars['post_id']) && absint($comment_query->query_vars['post_id']) > 0) {
+        if (!empty($comment_query->query_vars['post_id']) && absint($comment_query->query_vars['post_id']) > 0) {
             if ('product' === get_post_type(absint($comment_query->query_vars['post_id']))) {
                 return $clauses;
             }
         }
-
-        if (! empty($comment_query->query_vars['post__in'])) {
+        if (!empty($comment_query->query_vars['post__in'])) {
             $post_ids = wp_parse_id_list($comment_query->query_vars['post__in']);
             _prime_post_caches($post_ids, false, false);
             foreach ($post_ids as $post_id) {
@@ -85,10 +71,8 @@ class ReviewsUtil
                 }
             }
         }
-
-        $clauses['join']  .= " LEFT JOIN {$wpdb->posts} AS wp_posts_to_exclude_reviews ON comment_post_ID = wp_posts_to_exclude_reviews.ID ";
+        $clauses['join'] .= " LEFT JOIN {$wpdb->posts} AS wp_posts_to_exclude_reviews ON comment_post_ID = wp_posts_to_exclude_reviews.ID ";
         $clauses['where'] .= (trim((string) $clauses['where']) ? ' AND ' : '') . " wp_posts_to_exclude_reviews.post_type NOT IN ('product') ";
-
         return $clauses;
     }
 }

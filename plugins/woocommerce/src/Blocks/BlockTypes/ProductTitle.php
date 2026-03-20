@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * ProductTitle class.
  */
-class ProductTitle extends AbstractBlock
+class Product_Title extends Abstract_Block
 {
     /**
      * Block name.
@@ -15,14 +14,12 @@ class ProductTitle extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-title';
-
     /**
      * API version name.
      *
      * @var string
      */
     protected $api_version = '3';
-
     /**
      * Register script and style assets for the block type before it is registered.
      *
@@ -31,6 +28,6 @@ class ProductTitle extends AbstractBlock
     protected function register_block_type_assets()
     {
         parent::register_block_type_assets();
-        $this->register_chunk_translations([ $this->block_name ]);
+        $this->register_chunk_translations([$this->block_name]);
     }
 }

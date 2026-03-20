@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes\OrderConfirmation;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Order_Confirmation;
 
 /**
  * TotalsWrapper class.
  */
-class TotalsWrapper extends AbstractOrderConfirmationBlock
+class Totals_Wrapper extends Abstract_Order_Confirmation_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class TotalsWrapper extends AbstractOrderConfirmationBlock
      * @var string
      */
     protected $block_name = 'order-confirmation-totals-wrapper';
-
     /**
      * This renders the content of the totals wrapper.
      *
@@ -26,12 +24,11 @@ class TotalsWrapper extends AbstractOrderConfirmationBlock
      */
     protected function render_content($order, $permission = false, $attributes = [], $content = '')
     {
-        if (! $permission) {
+        if (!$permission) {
             return '';
         }
         return $content;
     }
-
     /**
      * Get the frontend style handle for this block type.
      */

@@ -1,13 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers\Woo_Payments;
 
-namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders\WooPayments;
-
-use Automattic\WooCommerce\Internal\Admin\Settings\Payments;
-
+use Automattic\Woo_Commerce\Internal\Admin\Settings\Payments;
 defined('ABSPATH') || exit;
-
 /**
  * WooPayments provider controller class.
  *
@@ -15,18 +12,16 @@ defined('ABSPATH') || exit;
  *
  * @internal
  */
-class WooPaymentsController
+class Woo_Payments_Controller
 {
     /**
      * The payments settings page service.
      */
     private Payments $payments;
-
     /**
      * The WooPayments-specific Payments settings page service.
      */
-    private WooPaymentsService $woopayments;
-
+    private Woo_Payments_Service $woopayments;
     /**
      * Register hooks.
      */
@@ -34,7 +29,6 @@ class WooPaymentsController
     {
         add_action('admin_init', $this->handle_returns_from_wpcom(...));
     }
-
     /**
      * Initialize the class instance.
      *
@@ -43,12 +37,11 @@ class WooPaymentsController
      *
      * @internal
      */
-    final public function init(Payments $payments, WooPaymentsService $woopayments): void
+    final public function init(Payments $payments, Woo_Payments_Service $woopayments): void
     {
-        $this->payments    = $payments;
+        $this->payments = $payments;
         $this->woopayments = $woopayments;
     }
-
     /**
      * Handle returns from WordPress.com after the user has accepted or declined the WPCOM connection.
      *
@@ -58,7 +51,7 @@ class WooPaymentsController
     {
         // Handle the return from WPCOM after the user has accepted or declined the WordPress.com connection.
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        if (! empty($_GET[ WooPaymentsService::WPCOM_CONNECTION_RETURN_PARAM ])) {
+        if (!empty($_GET[Woo_Payments_Service::WPCOM_CONNECTION_RETURN_PARAM])) {
             // We are only interested in connection flows that are initiated from NOX session entry points.
             // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             if (empty($_GET['source'])) {
@@ -66,29 +59,18 @@ class WooPaymentsController
             }
             // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             $source = sanitize_text_field(wp_unslash($_GET['source']));
-            if (! in_array($source, [ WooPaymentsService::SESSION_ENTRY_DEFAULT, WooPaymentsService::SESSION_ENTRY_LYS ], true)) {
+            if (!in_array($source, [Woo_Payments_Service::SESSION_ENTRY_DEFAULT, Woo_Payments_Service::SESSION_ENTRY_LYS], true)) {
                 return;
             }
-
             $location = $this->payments->get_country();
-
             // Determine the connection state by querying the WPCOM connection onboarding step status.
-            $wpcom_connected = WooPaymentsService::ONBOARDING_STEP_STATUS_COMPLETED === $this->woopayments->get_onboarding_step_status(WooPaymentsService::ONBOARDING_STEP_WPCOM_CONNECTION, $location);
-
+            $wpcom_connected = Woo_Payments_Service::ONBOARDING_STEP_STATUS_COMPLETED === $this->woopayments->get_onboarding_step_status(Woo_Payments_Service::ONBOARDING_STEP_WPCOM_CONNECTION, $location);
             // Track the connection attempt result.
-            $event_props = [
-                'step_id' => WooPaymentsService::ONBOARDING_STEP_WPCOM_CONNECTION,
-                'source'  => $source,
-            ];
-            $this->woopayments->record_event(
-                $wpcom_connected ? 'wpcom_connection_success' : 'wpcom_connection_failure',
-                $location,
-                $event_props
-            );
-
+            $event_props = ['step_id' => Woo_Payments_Service::ONBOARDING_STEP_WPCOM_CONNECTION, 'source' => $source];
+            $this->woopayments->record_event($wpcom_connected ? 'wpcom_connection_success' : 'wpcom_connection_failure', $location, $event_props);
             // On successful connection, mark the onboarding step as completed, if not already.
             if ($wpcom_connected) {
-                $this->woopayments->mark_onboarding_step_completed(WooPaymentsService::ONBOARDING_STEP_WPCOM_CONNECTION, $location);
+                $this->woopayments->mark_onboarding_step_completed(Woo_Payments_Service::ONBOARDING_STEP_WPCOM_CONNECTION, $location);
             }
         }
     }

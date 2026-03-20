@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\CLI\Migrator\Interfaces;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\CLI\Migrator\Interfaces;
 
 /**
  * Defines the contract for classes responsible for retrieving
@@ -11,7 +10,7 @@ namespace Automattic\WooCommerce\Internal\CLI\Migrator\Interfaces;
  * Implementations should accept platform credentials via constructor:
  * public function __construct(array $credentials)
  */
-interface PlatformFetcherInterface
+interface Platform_Fetcher_Interface
 {
     /**
      * Fetches a batch of items from the source platform.
@@ -25,7 +24,6 @@ interface PlatformFetcherInterface
      *               'has_next_page' => bool Indicates if there are more pages to fetch.
      */
     public function fetch_batch(array $args): array;
-
     /**
      * Fetches the estimated total count of items available for migration.
      *

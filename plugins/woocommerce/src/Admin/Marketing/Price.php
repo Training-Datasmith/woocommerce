@@ -1,11 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Represents a price with a currency.
  */
-
-namespace Automattic\WooCommerce\Admin\Marketing;
+namespace Automattic\Woo_Commerce\Admin\Marketing;
 
 /**
  * Price class
@@ -23,7 +22,6 @@ class Price
     public function __construct(protected string $value, protected string $currency)
     {
     }
-
     /**
      * Get value of the price.
      */
@@ -31,7 +29,6 @@ class Price
     {
         return $this->value;
     }
-
     /**
      * Get the currency of the price.
      */

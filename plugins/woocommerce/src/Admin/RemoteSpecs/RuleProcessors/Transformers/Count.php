@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors\Transformers;
 
 use stdClass;
-
 /**
  * Count elements in Array or Countable object.
  *
  * @package Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers
  */
-class Count implements TransformerInterface
+class Count implements Transformer_Interface
 {
     /**
      *  Count elements in Array or Countable object.
@@ -24,13 +22,11 @@ class Count implements TransformerInterface
      */
     public function transform($value, ?stdClass $arguments = null, $default_value = null)
     {
-        if (! is_array($value) && ! $value instanceof \Countable) {
+        if (!is_array($value) && !$value instanceof \Countable) {
             return $default_value;
         }
-
         return count($value);
     }
-
     /**
      * Validate Transformer arguments.
      *

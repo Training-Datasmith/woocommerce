@@ -1,16 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * A temporary class for creating tasks on the fly from deprecated tasks.
  */
-
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks;
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks;
 
 /**
  * DeprecatedExtendedTask class.
  */
-class DeprecatedExtendedTask extends Task
+class Deprecated_Extended_Task extends Task
 {
     /**
      * ID.
@@ -18,70 +17,60 @@ class DeprecatedExtendedTask extends Task
      * @var string
      */
     public $id = '';
-
     /**
      * Additional info.
      *
      * @var string|null
      */
     public $additional_info = '';
-
     /**
      * Content.
      *
      * @var string
      */
     public $content = '';
-
     /**
      * Whether the task is complete or not.
      *
      * @var boolean
      */
     public $is_complete = false;
-
     /**
      * Snoozeable.
      *
      * @var boolean
      */
     public $is_snoozeable = false;
-
     /**
      * Dismissable.
      *
      * @var boolean
      */
     public $is_dismissable = false;
-
     /**
      * Whether the store is capable of viewing the task.
      *
      * @var bool
      */
     public $can_view = true;
-
     /**
      * Level.
      *
      * @var int
      */
     public $level = 3;
-
     /**
      * Time.
      *
      * @var string|null
      */
     public $time;
-
     /**
      * Title.
      *
      * @var string
      */
     public $title = '';
-
     /**
      * Constructor.
      *
@@ -91,34 +80,18 @@ class DeprecatedExtendedTask extends Task
     public function __construct($task_list, $args)
     {
         parent::__construct($task_list);
-        $task_args = wp_parse_args(
-            $args,
-            [
-                'id'              => null,
-                'is_dismissable'  => false,
-                'is_snoozeable'   => false,
-                'can_view'        => true,
-                'level'           => 3,
-                'additional_info' => null,
-                'content'         => '',
-                'title'           => '',
-                'is_complete'     => false,
-                'time'            => null,
-            ]
-        );
-
-        $this->id              = $task_args['id'];
+        $task_args = wp_parse_args($args, ['id' => null, 'is_dismissable' => false, 'is_snoozeable' => false, 'can_view' => true, 'level' => 3, 'additional_info' => null, 'content' => '', 'title' => '', 'is_complete' => false, 'time' => null]);
+        $this->id = $task_args['id'];
         $this->additional_info = $task_args['additional_info'];
-        $this->content         = $task_args['content'];
-        $this->is_complete     = $task_args['is_complete'];
-        $this->is_dismissable  = $task_args['is_dismissable'];
-        $this->is_snoozeable   = $task_args['is_snoozeable'];
-        $this->can_view        = $task_args['can_view'];
-        $this->level           = $task_args['level'];
-        $this->time            = $task_args['time'];
-        $this->title           = $task_args['title'];
+        $this->content = $task_args['content'];
+        $this->is_complete = $task_args['is_complete'];
+        $this->is_dismissable = $task_args['is_dismissable'];
+        $this->is_snoozeable = $task_args['is_snoozeable'];
+        $this->can_view = $task_args['can_view'];
+        $this->level = $task_args['level'];
+        $this->time = $task_args['time'];
+        $this->title = $task_args['title'];
     }
-
     /**
      * ID.
      *
@@ -128,7 +101,6 @@ class DeprecatedExtendedTask extends Task
     {
         return $this->id;
     }
-
     /**
      * Additional info.
      *
@@ -138,7 +110,6 @@ class DeprecatedExtendedTask extends Task
     {
         return $this->additional_info;
     }
-
     /**
      * Content.
      *
@@ -148,7 +119,6 @@ class DeprecatedExtendedTask extends Task
     {
         return $this->content;
     }
-
     /**
      * Level.
      *
@@ -158,7 +128,6 @@ class DeprecatedExtendedTask extends Task
     {
         return $this->level;
     }
-
     /**
      * Title
      *
@@ -168,7 +137,6 @@ class DeprecatedExtendedTask extends Task
     {
         return $this->title;
     }
-
     /**
      * Time
      *
@@ -178,7 +146,6 @@ class DeprecatedExtendedTask extends Task
     {
         return $this->time;
     }
-
     /**
      * Check if a task is snoozeable.
      *
@@ -188,7 +155,6 @@ class DeprecatedExtendedTask extends Task
     {
         return $this->is_snoozeable;
     }
-
     /**
      * Check if a task is dismissable.
      *
@@ -198,7 +164,6 @@ class DeprecatedExtendedTask extends Task
     {
         return $this->is_dismissable;
     }
-
     /**
      * Check if a task is dismissable.
      *
@@ -208,7 +173,6 @@ class DeprecatedExtendedTask extends Task
     {
         return $this->is_complete;
     }
-
     /**
      * Check if a task is dismissable.
      *

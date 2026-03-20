@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors\Transformers;
 
 use stdClass;
-
 /**
  * Search array value by one of its key.
  *
  * @package Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers
  */
-class ArrayValues implements TransformerInterface
+class Array_Values implements Transformer_Interface
 {
     /**
      * Search array value by one of its key.
@@ -24,13 +22,11 @@ class ArrayValues implements TransformerInterface
      */
     public function transform($value, ?stdClass $arguments = null, $default_value = [])
     {
-        if (! is_array($value)) {
+        if (!is_array($value)) {
             return $default_value;
         }
-
         return array_values($value);
     }
-
     /**
      * Validate Transformer arguments.
      *

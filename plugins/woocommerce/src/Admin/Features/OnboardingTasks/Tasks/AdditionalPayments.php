@@ -1,27 +1,23 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Tasks;
 
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
-
-use Automattic\WooCommerce\Internal\Admin\Settings\Payments as SettingsPaymentsService;
-use Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
-
+use Automattic\Woo_Commerce\Internal\Admin\Settings\Payments as SettingsPaymentsService;
+use Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
 /**
  * Payments Task
  */
-class AdditionalPayments extends Payments
+class Additional_Payments extends Payments
 {
     /**
      * Used to cache is_complete() method result.
      */
     private $is_complete_result;
-
     /**
      * Used to cache can_view() method result.
      */
     private $can_view_result;
-
     /**
      * ID.
      */
@@ -29,7 +25,6 @@ class AdditionalPayments extends Payments
     {
         return 'payments';
     }
-
     /**
      * Title.
      *
@@ -37,12 +32,8 @@ class AdditionalPayments extends Payments
      */
     public function get_title()
     {
-        return __(
-            'Set up additional payment options',
-            'woocommerce'
-        );
+        return __('Set up additional payment options', 'woocommerce');
     }
-
     /**
      * Content.
      *
@@ -50,12 +41,8 @@ class AdditionalPayments extends Payments
      */
     public function get_content()
     {
-        return __(
-            'Choose payment providers and enable payment methods at checkout.',
-            'woocommerce'
-        );
+        return __('Choose payment providers and enable payment methods at checkout.', 'woocommerce');
     }
-
     /**
      * Time.
      *
@@ -65,7 +52,6 @@ class AdditionalPayments extends Payments
     {
         return __('2 minutes', 'woocommerce');
     }
-
     /**
      * Task completion.
      *
@@ -76,10 +62,8 @@ class AdditionalPayments extends Payments
         if (null === $this->is_complete_result) {
             $this->is_complete_result = $this->has_enabled_non_psp_payment_suggestion();
         }
-
         return $this->is_complete_result;
     }
-
     /**
      * Task visibility.
      *
@@ -90,26 +74,22 @@ class AdditionalPayments extends Payments
         if (null !== $this->can_view_result) {
             return $this->can_view_result;
         }
-
         // Always show task if there are any gateways enabled (i.e. the Payments task is complete).
         if (self::has_gateways()) {
             $this->can_view_result = true;
         } else {
             $this->can_view_result = false;
         }
-
         return $this->can_view_result;
     }
-
     /**
      * Action URL.
      */
     public function get_action_url(): string
     {
         // We auto-expand the "Other" section to show the additional payment methods.
-        return admin_url('admin.php?page=wc-settings&tab=checkout&other_pes_section=expanded&from=' . SettingsPaymentsService::FROM_ADDITIONAL_PAYMENTS_TASK);
+        return admin_url('admin.php?page=wc-settings&tab=checkout&other_pes_section=expanded&from=' . Settings_Payments_Service::FROM_ADDITIONAL_PAYMENTS_TASK);
     }
-
     /**
      * Check if there are any enabled non-PSP payment suggestions.
      *
@@ -120,18 +100,12 @@ class AdditionalPayments extends Payments
         $providers = $this->get_payment_providers();
         foreach ($providers as $provider) {
             // Check if the provider is enabled and has a suggestion category ID that matches the ones we are interested in.
-            if (
-                ! empty($provider['state']['enabled']) &&
-                ! empty($provider['_suggestion_category_id']) &&
-                in_array($provider['_suggestion_category_id'], [ PaymentsProviders::CATEGORY_BNPL, PaymentsProviders::CATEGORY_EXPRESS_CHECKOUT, PaymentsProviders::CATEGORY_CRYPTO ], true)
-            ) {
+            if (!empty($provider['state']['enabled']) && !empty($provider['_suggestion_category_id']) && in_array($provider['_suggestion_category_id'], [Payments_Providers::CATEGORY_BNPL, Payments_Providers::CATEGORY_EXPRESS_CHECKOUT, Payments_Providers::CATEGORY_CRYPTO], true)) {
                 return true;
             }
         }
-
         return false;
     }
-
     /**
      * Get the list of payments providers as it is used on the Payments Settings page.
      *
@@ -145,14 +119,12 @@ class AdditionalPayments extends Payments
              *
              * @var SettingsPaymentsService $settings_payments_service
              */
-            $settings_payments_service = wc_get_container()->get(SettingsPaymentsService::class);
-
+            $settings_payments_service = wc_get_container()->get(Settings_Payments_Service::class);
             $providers = $settings_payments_service->get_payment_providers($settings_payments_service->get_country(), false);
         } catch (\Throwable) {
             // In case of any error, return an empty array.
             $providers = [];
         }
-
         return $providers;
     }
 }

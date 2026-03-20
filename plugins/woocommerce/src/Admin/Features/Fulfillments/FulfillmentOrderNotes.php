@@ -7,13 +7,10 @@
  *
  * @package WooCommerce\Admin\Features\Fulfillments
  */
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments;
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments;
-
-use Automattic\WooCommerce\Internal\Orders\OrderNoteGroup;
-
+use Automattic\Woo_Commerce\Internal\Orders\Order_Note_Group;
 /**
  * FulfillmentOrderNotes class.
  *
@@ -22,7 +19,7 @@ use Automattic\WooCommerce\Internal\Orders\OrderNoteGroup;
  *
  * @since 10.7.0
  */
-class FulfillmentOrderNotes
+class Fulfillment_Order_Notes
 {
     /**
      * Stores the previous status of a fulfillment before update.
@@ -30,7 +27,6 @@ class FulfillmentOrderNotes
      * @var array<int, string>
      */
     private array $previous_statuses = [];
-
     /**
      * Register hooks for fulfillment order notes.
      */
@@ -41,7 +37,6 @@ class FulfillmentOrderNotes
         add_action('woocommerce_fulfillment_after_update', $this->add_fulfillment_updated_note(...), 10, 1);
         add_action('woocommerce_fulfillment_after_delete', $this->add_fulfillment_deleted_note(...), 10, 1);
     }
-
     /**
      * Add an order note when a fulfillment is created.
      *
@@ -50,15 +45,13 @@ class FulfillmentOrderNotes
     public function add_fulfillment_created_note(Fulfillment $fulfillment): void
     {
         $order = $fulfillment->get_order();
-        if (! $order instanceof \WC_Order) {
+        if (!$order instanceof \WC_Order) {
             return;
         }
-
-        $items_text    = $this->format_items($fulfillment, $order);
+        $items_text = $this->format_items($fulfillment, $order);
         $tracking_text = $this->format_tracking($fulfillment);
-        $status        = $fulfillment->get_status() ?? 'unfulfilled';
-        $status_label  = $this->get_fulfillment_status_label($status);
-
+        $status = $fulfillment->get_status() ?? 'unfulfilled';
+        $status_label = $this->get_fulfillment_status_label($status);
         $message = sprintf(
             /* translators: 1: fulfillment ID, 2: fulfillment status label, 3: item list */
             __('Fulfillment #%1$d created (status: %2$s). Items: %3$s.', 'woocommerce'),
@@ -66,15 +59,13 @@ class FulfillmentOrderNotes
             $status_label,
             $items_text
         );
-
-        if (! empty($tracking_text)) {
+        if (!empty($tracking_text)) {
             $message .= ' ' . sprintf(
                 /* translators: %s: tracking number */
                 __('Tracking: %s.', 'woocommerce'),
                 $tracking_text
             );
         }
-
         /**
          * Filters the order note message when a fulfillment is created.
          *
@@ -88,14 +79,11 @@ class FulfillmentOrderNotes
          */
         $message = apply_filters('woocommerce_fulfillment_created_order_note', $message, $fulfillment, $order);
         $message = $this->normalize_note_message($message);
-
         if (null === $message) {
             return;
         }
-
-        $order->add_order_note($message, 0, false, [ 'note_group' => OrderNoteGroup::FULFILLMENT ]);
+        $order->add_order_note($message, 0, false, ['note_group' => Order_Note_Group::FULFILLMENT]);
     }
-
     /**
      * Capture the previous status of a fulfillment before update.
      *
@@ -108,12 +96,11 @@ class FulfillmentOrderNotes
     public function capture_previous_status(Fulfillment $fulfillment): Fulfillment
     {
         if ($fulfillment->get_id() > 0) {
-            $old_fulfillment                                   = new Fulfillment((string) $fulfillment->get_id());
-            $this->previous_statuses[ $fulfillment->get_id() ] = $old_fulfillment->get_status() ?? 'unfulfilled';
+            $old_fulfillment = new Fulfillment((string) $fulfillment->get_id());
+            $this->previous_statuses[$fulfillment->get_id()] = $old_fulfillment->get_status() ?? 'unfulfilled';
         }
         return $fulfillment;
     }
-
     /**
      * Add an order note when a fulfillment is updated.
      *
@@ -125,41 +112,34 @@ class FulfillmentOrderNotes
     public function add_fulfillment_updated_note(Fulfillment $fulfillment): void
     {
         $order = $fulfillment->get_order();
-        if (! $order instanceof \WC_Order) {
+        if (!$order instanceof \WC_Order) {
             return;
         }
-
         $fulfillment_id = $fulfillment->get_id();
-        $old_status     = $this->previous_statuses[ $fulfillment_id ] ?? null;
-        $new_status     = $fulfillment->get_status() ?? 'unfulfilled';
-
+        $old_status = $this->previous_statuses[$fulfillment_id] ?? null;
+        $new_status = $fulfillment->get_status() ?? 'unfulfilled';
         // If status changed, add a status change note.
         if (null !== $old_status && $old_status !== $new_status) {
             $this->add_fulfillment_status_changed_note($fulfillment, $order, $old_status, $new_status);
-            unset($this->previous_statuses[ $fulfillment_id ]);
+            unset($this->previous_statuses[$fulfillment_id]);
             return;
         }
-
-        unset($this->previous_statuses[ $fulfillment_id ]);
-
-        $items_text    = $this->format_items($fulfillment, $order);
+        unset($this->previous_statuses[$fulfillment_id]);
+        $items_text = $this->format_items($fulfillment, $order);
         $tracking_text = $this->format_tracking($fulfillment);
-
         $message = sprintf(
             /* translators: 1: fulfillment ID, 2: item list */
             __('Fulfillment #%1$d updated. Items: %2$s.', 'woocommerce'),
             $fulfillment->get_id(),
             $items_text
         );
-
-        if (! empty($tracking_text)) {
+        if (!empty($tracking_text)) {
             $message .= ' ' . sprintf(
                 /* translators: %s: tracking number */
                 __('Tracking: %s.', 'woocommerce'),
                 $tracking_text
             );
         }
-
         /**
          * Filters the order note message when a fulfillment is updated.
          *
@@ -173,14 +153,11 @@ class FulfillmentOrderNotes
          */
         $message = apply_filters('woocommerce_fulfillment_updated_order_note', $message, $fulfillment, $order);
         $message = $this->normalize_note_message($message);
-
         if (null === $message) {
             return;
         }
-
-        $order->add_order_note($message, 0, false, [ 'note_group' => OrderNoteGroup::FULFILLMENT ]);
+        $order->add_order_note($message, 0, false, ['note_group' => Order_Note_Group::FULFILLMENT]);
     }
-
     /**
      * Add an order note when a fulfillment is deleted.
      *
@@ -189,16 +166,14 @@ class FulfillmentOrderNotes
     public function add_fulfillment_deleted_note(Fulfillment $fulfillment): void
     {
         $order = $fulfillment->get_order();
-        if (! $order instanceof \WC_Order) {
+        if (!$order instanceof \WC_Order) {
             return;
         }
-
         $message = sprintf(
             /* translators: %d: fulfillment ID */
             __('Fulfillment #%d deleted.', 'woocommerce'),
             $fulfillment->get_id()
         );
-
         /**
          * Filters the order note message when a fulfillment is deleted.
          *
@@ -212,14 +187,11 @@ class FulfillmentOrderNotes
          */
         $message = apply_filters('woocommerce_fulfillment_deleted_order_note', $message, $fulfillment, $order);
         $message = $this->normalize_note_message($message);
-
         if (null === $message) {
             return;
         }
-
-        $order->add_order_note($message, 0, false, [ 'note_group' => OrderNoteGroup::FULFILLMENT ]);
+        $order->add_order_note($message, 0, false, ['note_group' => Order_Note_Group::FULFILLMENT]);
     }
-
     /**
      * Add an order note when the order fulfillment status changes.
      *
@@ -233,14 +205,12 @@ class FulfillmentOrderNotes
     {
         $old_status_label = $this->get_order_fulfillment_status_label($old_status);
         $new_status_label = $this->get_order_fulfillment_status_label($new_status);
-
         $message = sprintf(
             /* translators: 1: old fulfillment status label, 2: new fulfillment status label */
             __('Order fulfillment status changed from %1$s to %2$s.', 'woocommerce'),
             $old_status_label,
             $new_status_label
         );
-
         /**
          * Filters the order note message when the order fulfillment status changes.
          *
@@ -255,14 +225,11 @@ class FulfillmentOrderNotes
          */
         $message = apply_filters('woocommerce_fulfillment_order_status_changed_order_note', $message, $order, $old_status, $new_status);
         $message = $this->normalize_note_message($message);
-
         if (null === $message) {
             return;
         }
-
-        $order->add_order_note($message, 0, false, [ 'note_group' => OrderNoteGroup::FULFILLMENT ]);
+        $order->add_order_note($message, 0, false, ['note_group' => Order_Note_Group::FULFILLMENT]);
     }
-
     /**
      * Add a status change note for a fulfillment.
      *
@@ -275,7 +242,6 @@ class FulfillmentOrderNotes
     {
         $old_status_label = $this->get_fulfillment_status_label($old_status);
         $new_status_label = $this->get_fulfillment_status_label($new_status);
-
         $message = sprintf(
             /* translators: 1: fulfillment ID, 2: old status label, 3: new status label */
             __('Fulfillment #%1$d status changed from %2$s to %3$s.', 'woocommerce'),
@@ -283,7 +249,6 @@ class FulfillmentOrderNotes
             $old_status_label,
             $new_status_label
         );
-
         /**
          * Filters the order note message when a fulfillment status changes.
          *
@@ -299,14 +264,11 @@ class FulfillmentOrderNotes
          */
         $message = apply_filters('woocommerce_fulfillment_status_changed_order_note', $message, $fulfillment, $order, $old_status, $new_status);
         $message = $this->normalize_note_message($message);
-
         if (null === $message) {
             return;
         }
-
-        $order->add_order_note($message, 0, false, [ 'note_group' => OrderNoteGroup::FULFILLMENT ]);
+        $order->add_order_note($message, 0, false, ['note_group' => Order_Note_Group::FULFILLMENT]);
     }
-
     /**
      * Format fulfillment items as a comma-separated string.
      *
@@ -316,22 +278,19 @@ class FulfillmentOrderNotes
      */
     private function format_items(Fulfillment $fulfillment, \WC_Order $order): string
     {
-        $items       = $fulfillment->get_items();
+        $items = $fulfillment->get_items();
         $order_items = $order->get_items();
-        $parts       = [];
-
+        $parts = [];
         foreach ($items as $item) {
             $item_id = isset($item['item_id']) ? (int) $item['item_id'] : 0;
-            $qty     = isset($item['qty']) ? (int) $item['qty'] : 0;
-            $name    = '';
-
+            $qty = isset($item['qty']) ? (int) $item['qty'] : 0;
+            $name = '';
             foreach ($order_items as $order_item) {
                 if ((int) $order_item->get_id() === $item_id) {
                     $name = $order_item->get_name();
                     break;
                 }
             }
-
             if (empty($name)) {
                 $name = sprintf(
                     /* translators: %d: item ID */
@@ -339,13 +298,10 @@ class FulfillmentOrderNotes
                     $item_id
                 );
             }
-
             $parts[] = sprintf('%s x%s', $name, $qty);
         }
-
         return implode(', ', $parts);
     }
-
     /**
      * Format the tracking information from a fulfillment.
      *
@@ -356,16 +312,13 @@ class FulfillmentOrderNotes
      */
     private function format_tracking(Fulfillment $fulfillment): string
     {
-        $tracking_number   = $fulfillment->get_meta('_tracking_number', true);
+        $tracking_number = $fulfillment->get_meta('_tracking_number', true);
         $shipping_provider = $fulfillment->get_meta('_shipping_provider', true);
-        $tracking_url      = $fulfillment->get_meta('_tracking_url', true);
-
-        if (! is_string($tracking_number) || '' === $tracking_number) {
+        $tracking_url = $fulfillment->get_meta('_tracking_url', true);
+        if (!is_string($tracking_number) || '' === $tracking_number) {
             return '';
         }
-
-        $parts = [ $tracking_number ];
-
+        $parts = [$tracking_number];
         if (is_string($shipping_provider) && '' !== $shipping_provider) {
             $parts[] = sprintf(
                 /* translators: %s: shipping provider name */
@@ -373,7 +326,6 @@ class FulfillmentOrderNotes
                 $shipping_provider
             );
         }
-
         if (is_string($tracking_url) && '' !== $tracking_url) {
             $parts[] = sprintf(
                 /* translators: %s: tracking URL */
@@ -381,10 +333,8 @@ class FulfillmentOrderNotes
                 $tracking_url
             );
         }
-
         return implode(', ', $parts);
     }
-
     /**
      * Get the display label for a fulfillment status key.
      *
@@ -393,10 +343,9 @@ class FulfillmentOrderNotes
      */
     private function get_fulfillment_status_label(string $status): string
     {
-        $statuses = FulfillmentUtils::get_fulfillment_statuses();
-        return $statuses[ $status ]['label'] ?? $status;
+        $statuses = Fulfillment_Utils::get_fulfillment_statuses();
+        return $statuses[$status]['label'] ?? $status;
     }
-
     /**
      * Get the display label for an order fulfillment status key.
      *
@@ -405,10 +354,9 @@ class FulfillmentOrderNotes
      */
     private function get_order_fulfillment_status_label(string $status): string
     {
-        $statuses = FulfillmentUtils::get_order_fulfillment_statuses();
-        return $statuses[ $status ]['label'] ?? $status;
+        $statuses = Fulfillment_Utils::get_order_fulfillment_statuses();
+        return $statuses[$status]['label'] ?? $status;
     }
-
     /**
      * Sanitize an order note message.
      *
@@ -419,17 +367,14 @@ class FulfillmentOrderNotes
      */
     private function normalize_note_message($message): ?string
     {
-        if (! $message || ! is_string($message)) {
+        if (!$message || !is_string($message)) {
             return null;
         }
-
         $message = wp_kses_post($message);
         $message = trim($message);
-
         if ('' === $message) {
             return null;
         }
-
         return $message;
     }
 }

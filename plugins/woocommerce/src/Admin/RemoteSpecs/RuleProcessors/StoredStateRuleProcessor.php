@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor that performs a comparison operation against a value in the
  * stored state object.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
 /**
  * Rule processor that performs a comparison operation against a value in the
  * stored state object.
  */
-class StoredStateRuleProcessor implements RuleProcessorInterface
+class Stored_State_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * Performs a comparison operation against a value in the stored state object.
@@ -26,17 +24,11 @@ class StoredStateRuleProcessor implements RuleProcessorInterface
      */
     public function process($rule, $stored_state)
     {
-        if (! isset($stored_state->{$rule->index})) {
+        if (!isset($stored_state->{$rule->index})) {
             return false;
         }
-
-        return ComparisonOperation::compare(
-            $stored_state->{$rule->index},
-            $rule->value,
-            $rule->operation
-        );
+        return Comparison_Operation::compare($stored_state->{$rule->index}, $rule->value, $rule->operation);
     }
-
     /**
      * Validates the rule.
      *
@@ -46,18 +38,15 @@ class StoredStateRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->index)) {
+        if (!isset($rule->index)) {
             return false;
         }
-
-        if (! isset($rule->value)) {
+        if (!isset($rule->value)) {
             return false;
         }
-
-        if (! isset($rule->operation)) {
+        if (!isset($rule->operation)) {
             return false;
         }
-
         return true;
     }
 }

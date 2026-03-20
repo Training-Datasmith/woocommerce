@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\CLI\Migrator\Core;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\CLI\Migrator\Core;
 
 use WP_CLI;
-
 /**
  * Manages platform credentials.
  */
-class CredentialManager
+class Credential_Manager
 {
     /**
      * Retrieves the stored credentials for a given platform.
@@ -20,17 +18,14 @@ class CredentialManager
      */
     public function get_credentials(string $platform_slug): ?array
     {
-        $option_name      = "wc_migrator_credentials_{$platform_slug}";
+        $option_name = "wc_migrator_credentials_{$platform_slug}";
         $credentials_json = get_option($option_name, false);
-        if (! $credentials_json) {
+        if (!$credentials_json) {
             return null;
         }
-
         $credentials = json_decode($credentials_json, true);
-
         return is_array($credentials) ? $credentials : null;
     }
-
     /**
      * Checks if credentials exist for a given platform.
      *
@@ -41,10 +36,8 @@ class CredentialManager
     public function has_credentials(string $platform_slug): bool
     {
         $credentials = $this->get_credentials($platform_slug);
-
-        return ! empty($credentials);
+        return !empty($credentials);
     }
-
     /**
      * Prompts the user for credentials via the command line.
      *
@@ -56,12 +49,10 @@ class CredentialManager
     {
         $credentials = [];
         foreach ($fields as $key => $prompt) {
-            $credentials[ $key ] = $this->readline($prompt . ' ');
+            $credentials[$key] = $this->readline($prompt . ' ');
         }
-
         return $credentials;
     }
-
     /**
      * Saves credentials to the database for a given platform.
      *
@@ -73,7 +64,6 @@ class CredentialManager
         $option_name = "wc_migrator_credentials_{$platform_slug}";
         update_option($option_name, wp_json_encode($credentials));
     }
-
     /**
      * Deletes credentials from the database for a given platform.
      *
@@ -84,7 +74,6 @@ class CredentialManager
         $option_name = "wc_migrator_credentials_{$platform_slug}";
         delete_option($option_name);
     }
-
     /**
      * Handles the interactive credential setup process for a platform.
      *
@@ -97,13 +86,10 @@ class CredentialManager
             WP_CLI::error('No credential fields specified for setup.');
             return;
         }
-
         WP_CLI::log('Configuring credentials for ' . ucfirst($platform_slug) . '...');
-
         $credentials = $this->prompt_for_credentials($required_fields);
         $this->save_credentials($platform_slug, $credentials);
     }
-
     /**
      * Reads a line from STDIN.
      *
@@ -116,7 +102,6 @@ class CredentialManager
         if (method_exists('WP_CLI', 'readline')) {
             return WP_CLI::readline($prompt);
         }
-
         WP_CLI::line($prompt);
         return trim(fgets(STDIN));
     }

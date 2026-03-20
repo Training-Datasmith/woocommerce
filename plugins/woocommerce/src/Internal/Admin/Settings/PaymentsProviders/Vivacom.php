@@ -1,21 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
 
-namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
-
-use Automattic\WooCommerce\Internal\Logging\SafeGlobalFunctionProxy;
+use Automattic\Woo_Commerce\Internal\Logging\Safe_Global_Function_Proxy;
 use Throwable;
 use WC_Payment_Gateway;
-
 defined('ABSPATH') || exit;
-
 /**
  * Viva.com payment gateway provider class.
  *
  * This class handles all the custom logic for the Viva.com payment gateway provider.
  */
-class Vivacom extends PaymentGateway
+class Vivacom extends Payment_Gateway
 {
     /**
      * Check if the payment gateway has a payments processor account connected.
@@ -29,28 +26,15 @@ class Vivacom extends PaymentGateway
     {
         try {
             if ($this->is_in_test_mode($payment_gateway)) {
-                return property_exists($payment_gateway, 'test_client_id') && ! empty($payment_gateway->test_client_id)
-                    && property_exists($payment_gateway, 'test_client_secret') && ! empty($payment_gateway->test_client_secret)
-                    && property_exists($payment_gateway, 'test_source_code') && ! empty($payment_gateway->test_source_code);
+                return property_exists($payment_gateway, 'test_client_id') && !empty($payment_gateway->test_client_id) && property_exists($payment_gateway, 'test_client_secret') && !empty($payment_gateway->test_client_secret) && property_exists($payment_gateway, 'test_source_code') && !empty($payment_gateway->test_source_code);
             }
-            return property_exists($payment_gateway, 'client_id') && ! empty($payment_gateway->client_id)
-                    && property_exists($payment_gateway, 'client_secret') && ! empty($payment_gateway->client_secret)
-                    && property_exists($payment_gateway, 'source_code') && ! empty($payment_gateway->source_code);
+            return property_exists($payment_gateway, 'client_id') && !empty($payment_gateway->client_id) && property_exists($payment_gateway, 'client_secret') && !empty($payment_gateway->client_secret) && property_exists($payment_gateway, 'source_code') && !empty($payment_gateway->source_code);
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway has an account connected: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway has an account connected: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         return parent::is_account_connected($payment_gateway);
     }
-
     /**
      * Try to determine if the payment gateway is in test mode onboarding (aka sandbox or test-drive).
      *

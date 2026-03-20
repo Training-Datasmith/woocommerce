@@ -1,13 +1,12 @@
 <?php
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-use Automattic\WooCommerce\Admin\Features\Features;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
 /**
  * MiniCartTitleBlock class.
  */
-class MiniCartTitleBlock extends AbstractInnerBlock
+class Mini_Cart_Title_Block extends Abstract_Inner_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class MiniCartTitleBlock extends AbstractInnerBlock
      * @var string
      */
     protected $block_name = 'mini-cart-title-block';
-
     /**
      * Render the block.
      *
@@ -31,7 +29,6 @@ class MiniCartTitleBlock extends AbstractInnerBlock
         }
         return $content;
     }
-
     /**
      * Render the interactivity API powered experimental title block.
      *
@@ -42,20 +39,19 @@ class MiniCartTitleBlock extends AbstractInnerBlock
      */
     protected function render_experimental_iapi_title_block($attributes, $content, $block): string|false
     {
-        $wrapper_attributes = get_block_wrapper_attributes(
-            [
-                'class' => 'wc-block-mini-cart__title',
-            ]
-        );
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => 'wc-block-mini-cart__title']);
         ob_start();
         ?>
-			<h2 <?php echo $wrapper_attributes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>>
-				<?php
-                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                    echo $content;
+			<h2 <?php 
+        echo $wrapper_attributes;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>>
+				<?php 
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo $content;
         ?>
 			</h2>
-		<?php
+		<?php 
         return ob_get_clean();
     }
 }

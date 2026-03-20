@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments\Providers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments\Providers;
 
 /**
  * Yurtici Kargo Shipping Provider class.
  */
-class YurticiKargoShippingProvider extends AbstractShippingProvider
+class Yurtici_Kargo_Shipping_Provider extends Abstract_Shipping_Provider
 {
     /**
      * Get the key of the shipping provider.
@@ -16,7 +15,6 @@ class YurticiKargoShippingProvider extends AbstractShippingProvider
     {
         return 'yurtici-kargo';
     }
-
     /**
      * Get the name of the shipping provider.
      */
@@ -24,7 +22,6 @@ class YurticiKargoShippingProvider extends AbstractShippingProvider
     {
         return 'Yurtiçi Kargo';
     }
-
     /**
      * Get the icon of the shipping provider.
      */
@@ -32,7 +29,6 @@ class YurticiKargoShippingProvider extends AbstractShippingProvider
     {
         return esc_url(WC()->plugin_url()) . '/assets/images/shipping_providers/yurtici-kargo.png';
     }
-
     /**
      * Get the tracking URL for a given tracking number.
      *

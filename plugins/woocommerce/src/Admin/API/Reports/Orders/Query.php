@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Class for parameter-based Orders Reports querying
  *
@@ -18,17 +18,14 @@ declare(strict_types=1);
  * $report = new \Automattic\WooCommerce\Admin\API\Reports\Orders\Query( $args );
  * $mydata = $report->get_data();
  */
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Orders;
 
-namespace Automattic\WooCommerce\Admin\API\Reports\Orders;
-
-use Automattic\WooCommerce\Admin\API\Reports\GenericQuery;
-
+use Automattic\Woo_Commerce\Admin\API\Reports\Generic_Query;
 defined('ABSPATH') || exit;
-
 /**
  * API\Reports\Orders\Query
  */
-class Query extends GenericQuery
+class Query extends Generic_Query
 {
     /**
      * Specific query name.
@@ -38,7 +35,6 @@ class Query extends GenericQuery
      * @var string
      */
     protected $name = 'orders';
-
     /**
      * Get the default allowed query vars.
      *

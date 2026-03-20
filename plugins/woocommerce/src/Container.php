@@ -3,14 +3,11 @@
 /**
  * Container class file.
  */
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce;
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce;
-
-use Automattic\WooCommerce\Internal\DependencyManagement\ContainerException;
-use Automattic\WooCommerce\Internal\DependencyManagement\RuntimeContainer;
-
+use Automattic\Woo_Commerce\Internal\Dependency_Management\Container_Exception;
+use Automattic\Woo_Commerce\Internal\Dependency_Management\Runtime_Container;
 /**
  * PSR11 compliant dependency injection container for WooCommerce.
  *
@@ -34,8 +31,7 @@ final readonly class Container
     /**
      * The underlying container.
      */
-    private \Automattic\WooCommerce\Internal\DependencyManagement\RuntimeContainer $container;
-
+    private \Automattic\Woo_Commerce\Internal\Dependency_Management\Runtime_Container $container;
     /**
      * Class constructor.
      */
@@ -44,14 +40,8 @@ final readonly class Container
         // When the League container was in use we allowed to retrieve the container itself
         // by using 'Psr\Container\ContainerInterface' as the class identifier,
         // we continue allowing that for compatibility.
-        $this->container = new RuntimeContainer(
-            [
-                self::class                          => $this,
-                \Psr\Container\ContainerInterface::class => $this,
-            ]
-        );
+        $this->container = new Runtime_Container([self::class => $this, \Psr\Container\Container_Interface::class => $this]);
     }
-
     /**
      * Returns an instance of the specified class.
      * See the comment about ContainerException in RuntimeContainer::get.
@@ -69,7 +59,6 @@ final readonly class Container
     {
         return $this->container->get($id);
     }
-
     /**
      * Returns true if the container can return an instance of the given class or false otherwise.
      * See the comment in RuntimeContainer::has.

@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * FilterWrapper class.
  */
-class FilterWrapper extends AbstractBlock
+class Filter_Wrapper extends Abstract_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class FilterWrapper extends AbstractBlock
      * @var string
      */
     protected $block_name = 'filter-wrapper';
-
     /**
      * Get the frontend style handle for this block type.
      */

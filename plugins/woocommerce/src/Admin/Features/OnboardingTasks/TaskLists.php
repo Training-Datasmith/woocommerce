@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Handles storage and retrieval of task lists
  */
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks;
 
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks;
-
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks\ReviewShippingOptions;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Tasks\Review_Shipping_Options;
 /**
  * Task Lists class.
  */
-class TaskLists
+class Task_Lists
 {
     /**
      * Class instance.
@@ -21,21 +19,18 @@ class TaskLists
      * @var TaskLists instance
      */
     protected static $instance;
-
     /**
      * An array of all registered lists.
      *
      * @var array
      */
     protected static $lists = [];
-
     /**
      * Boolean value to indicate if default tasks have been added.
      *
      * @var boolean
      */
     protected static $default_tasks_loaded = false;
-
     /**
      * The contents of this array is used in init_tasks() to run their init() methods.
      * If the classes do not have an init() method then nothing is executed.
@@ -44,30 +39,17 @@ class TaskLists
      *
      * @var array
      */
-    public const DEFAULT_TASKS = [
-        'StoreDetails',
-        'Products',
-        'WooCommercePayments',
-        'Payments',
-        'Tax',
-        'Shipping',
-        'Marketing',
-        'AdditionalPayments',
-        'ReviewShippingOptions',
-        'GetMobileApp',
-    ];
-
+    public const DEFAULT_TASKS = ['StoreDetails', 'Products', 'WooCommercePayments', 'Payments', 'Tax', 'Shipping', 'Marketing', 'AdditionalPayments', 'ReviewShippingOptions', 'GetMobileApp'];
     /**
      * Get class instance.
      */
     final public static function instance()
     {
-        if (! static::$instance) {
+        if (!static::$instance) {
             static::$instance = new static();
         }
         return static::$instance;
     }
-
     /**
      * Initialize the task lists.
      */
@@ -79,7 +61,6 @@ class TaskLists
         add_action('admin_menu', self::menu_task_count(...));
         add_filter('woocommerce_admin_shared_settings', self::task_list_preloaded_settings(...), 20);
     }
-
     /**
      * Check if an experiment is the treatment or control.
      *
@@ -87,108 +68,34 @@ class TaskLists
      */
     public static function is_experiment_treatment(string $name): bool
     {
-        $anon_id        = isset($_COOKIE['tk_ai']) ? sanitize_text_field(wp_unslash($_COOKIE['tk_ai'])) : '';
+        $anon_id = isset($_COOKIE['tk_ai']) ? sanitize_text_field(wp_unslash($_COOKIE['tk_ai'])) : '';
         $allow_tracking = 'yes' === get_option('woocommerce_allow_tracking');
-        $abtest         = new \WooCommerce\Admin\Experimental_Abtest(
-            $anon_id,
-            'woocommerce',
-            $allow_tracking
-        );
-
+        $abtest = new \Woo_Commerce\Admin\Experimental_Abtest($anon_id, 'woocommerce', $allow_tracking);
         $date = new \DateTime();
-        $date->setTimeZone(new \DateTimeZone('UTC'));
-
-        $experiment_name = sprintf(
-            '%s_%s_%s',
-            $name,
-            $date->format('Y'),
-            $date->format('m')
-        );
+        $date->set_time_zone(new \DateTimeZone('UTC'));
+        $experiment_name = sprintf('%s_%s_%s', $name, $date->format('Y'), $date->format('m'));
         return $abtest->get_variation($experiment_name) === 'treatment';
     }
-
     /**
      * Initialize default lists.
      */
     public static function init_default_lists(): void
     {
-        $tasks = [
-            'StoreDetails',
-            'Products',
-            'Payments',
-            'CustomizeStore',
-            'Tax',
-            'Shipping',
-            'LaunchYourStore',
-        ];
-
+        $tasks = ['StoreDetails', 'Products', 'Payments', 'CustomizeStore', 'Tax', 'Shipping', 'LaunchYourStore'];
         if (Features::is_enabled('core-profiler')) {
             $key = array_search('StoreDetails', $tasks, true);
             if (false !== $key) {
-                unset($tasks[ $key ]);
+                unset($tasks[$key]);
             }
         }
-
-        self::add_list(
-            [
-                'id'                      => 'setup',
-                'title'                   => __('Get ready to start selling', 'woocommerce'),
-                'tasks'                   => $tasks,
-                'display_progress_header' => true,
-                'event_prefix'            => 'tasklist_',
-                'options'                 => [
-                    'use_completed_title' => true,
-                ],
-                'visible'                 => true,
-            ]
-        );
-
-        self::add_list(
-            [
-                'id'      => 'extended',
-                'title'   => __('Things to do next', 'woocommerce'),
-                'sort_by' => [
-                    [
-                        'key'   => 'is_complete',
-                        'order' => 'asc',
-                    ],
-                    [
-                        'key'   => 'level',
-                        'order' => 'asc',
-                    ],
-                ],
-                'tasks'   => [
-                    'Marketing',
-                    'ExtendStore',
-                    'AdditionalPayments',
-                    'GetMobileApp',
-                ],
-            ]
-        );
-
+        self::add_list(['id' => 'setup', 'title' => __('Get ready to start selling', 'woocommerce'), 'tasks' => $tasks, 'display_progress_header' => true, 'event_prefix' => 'tasklist_', 'options' => ['use_completed_title' => true], 'visible' => true]);
+        self::add_list(['id' => 'extended', 'title' => __('Things to do next', 'woocommerce'), 'sort_by' => [['key' => 'is_complete', 'order' => 'asc'], ['key' => 'level', 'order' => 'asc']], 'tasks' => ['Marketing', 'ExtendStore', 'AdditionalPayments', 'GetMobileApp']]);
         if (Features::is_enabled('shipping-smart-defaults')) {
-            self::add_task(
-                'extended',
-                new ReviewShippingOptions(
-                    self::get_list('extended')
-                )
-            );
-
+            self::add_task('extended', new Review_Shipping_Options(self::get_list('extended')));
             // Tasklist that will never be shown in homescreen,
             // used for having tasks that are accessed by other means.
-            self::add_list(
-                [
-                    'id'           => 'secret_tasklist',
-                    'hidden_id'    => 'setup',
-                    'tasks'        => [
-                        'ExperimentalShippingRecommendation',
-                    ],
-                    'event_prefix' => 'secret_tasklist_',
-                    'visible'      => false,
-                ]
-            );
+            self::add_list(['id' => 'secret_tasklist', 'hidden_id' => 'setup', 'tasks' => ['ExperimentalShippingRecommendation'], 'event_prefix' => 'secret_tasklist_', 'visible' => false]);
         }
-
         if (has_filter('woocommerce_admin_experimental_onboarding_tasklists')) {
             /**
              * Filter to override default task lists.
@@ -199,7 +106,6 @@ class TaskLists
             self::$lists = apply_filters('woocommerce_admin_experimental_onboarding_tasklists', self::$lists);
         }
     }
-
     /**
      * Initialize tasks.
      */
@@ -207,56 +113,47 @@ class TaskLists
     {
         foreach (self::DEFAULT_TASKS as $task) {
             $class = 'Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks\\' . $task;
-            if (! method_exists($class, 'init')) {
+            if (!method_exists($class, 'init')) {
                 continue;
             }
             $class::init();
         }
     }
-
     /**
      * Temporarily store the active task to persist across page loads when necessary.
      * Most tasks do not need this.
      */
     public static function set_active_task(): void
     {
-        if (! isset($_GET[ Task::ACTIVE_TASK_TRANSIENT ]) || ! current_user_can('manage_woocommerce')) { // phpcs:ignore csrf ok.
+        if (!isset($_GET[Task::ACTIVE_TASK_TRANSIENT]) || !current_user_can('manage_woocommerce')) {
+            // phpcs:ignore csrf ok.
             return;
         }
         $referer = wp_get_referer();
-        if (! $referer || !str_starts_with($referer, wc_admin_url())) {
+        if (!$referer || !str_starts_with($referer, wc_admin_url())) {
             return;
         }
-
-        $task_id = sanitize_title_with_dashes(wp_unslash($_GET[ Task::ACTIVE_TASK_TRANSIENT ])); // phpcs:ignore csrf ok.
-
+        $task_id = sanitize_title_with_dashes(wp_unslash($_GET[Task::ACTIVE_TASK_TRANSIENT]));
+        // phpcs:ignore csrf ok.
         $task = self::get_task($task_id);
-
-        if (! $task) {
+        if (!$task) {
             return;
         }
-
         $task->set_active();
     }
-
     /**
      * Add a task list.
      *
      * @param array $args Task list properties.
      */
-    public static function add_list(array $args): \WP_Error|\Automattic\WooCommerce\Admin\Features\OnboardingTasks\TaskList
+    public static function add_list(array $args): \WP_Error|\Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task_List
     {
-        if (isset(self::$lists[ $args['id'] ])) {
-            return new \WP_Error(
-                'woocommerce_task_list_exists',
-                __('Task list ID already exists', 'woocommerce')
-            );
+        if (isset(self::$lists[$args['id']])) {
+            return new \WP_Error('woocommerce_task_list_exists', __('Task list ID already exists', 'woocommerce'));
         }
-
-        self::$lists[ $args['id'] ] = new TaskList($args);
-        return self::$lists[ $args['id'] ];
+        self::$lists[$args['id']] = new Task_List($args);
+        return self::$lists[$args['id']];
     }
-
     /**
      * Add task to a given task list.
      *
@@ -267,16 +164,11 @@ class TaskLists
      */
     public static function add_task($list_id, $task)
     {
-        if (! isset(self::$lists[ $list_id ])) {
-            return new \WP_Error(
-                'woocommerce_task_list_invalid_list',
-                __('Task list ID does not exist', 'woocommerce')
-            );
+        if (!isset(self::$lists[$list_id])) {
+            return new \WP_Error('woocommerce_task_list_invalid_list', __('Task list ID does not exist', 'woocommerce'));
         }
-
-        self::$lists[ $list_id ]->add_task($task);
+        self::$lists[$list_id]->add_task($task);
     }
-
     /**
      * Add default extended task lists.
      *
@@ -285,18 +177,16 @@ class TaskLists
     public static function maybe_add_extended_tasks($extended_tasks): void
     {
         $tasks = $extended_tasks ?? [];
-
         foreach (self::$lists as $task_list) {
             if (!str_starts_with((string) $task_list->id, 'extended')) {
                 continue;
             }
             foreach ($tasks as $args) {
-                $task = new DeprecatedExtendedTask($task_list, $args);
+                $task = new Deprecated_Extended_Task($task_list, $args);
                 $task_list->add_task($task);
             }
         }
     }
-
     /**
      * Get all task lists.
      *
@@ -306,7 +196,6 @@ class TaskLists
     {
         return self::$lists;
     }
-
     /**
      * Get all task lists.
      *
@@ -314,12 +203,8 @@ class TaskLists
      */
     public static function get_lists_by_ids($ids): array
     {
-        return array_filter(
-            self::$lists,
-            fn ($task_list) => in_array($task_list->get_list_id(), $ids, true)
-        );
+        return array_filter(self::$lists, fn($task_list) => in_array($task_list->get_list_id(), $ids, true));
     }
-
     /**
      * Get all task list ids.
      */
@@ -327,7 +212,6 @@ class TaskLists
     {
         return array_keys(self::$lists);
     }
-
     /**
      * Clear all task lists.
      */
@@ -336,18 +220,13 @@ class TaskLists
         self::$lists = [];
         return self::$lists;
     }
-
     /**
      * Get visible task lists.
      */
     public static function get_visible(): array
     {
-        return array_filter(
-            self::get_lists(),
-            fn ($task_list) => $task_list->is_visible()
-        );
+        return array_filter(self::get_lists(), fn($task_list) => $task_list->is_visible());
     }
-
     /**
      * Retrieve a task list by ID.
      *
@@ -357,9 +236,8 @@ class TaskLists
      */
     public static function get_list($id)
     {
-        return self::$lists[ $id ] ?? null;
+        return self::$lists[$id] ?? null;
     }
-
     /**
      * Retrieve single task.
      *
@@ -371,26 +249,17 @@ class TaskLists
     public static function get_task($id, $task_list_id = null)
     {
         $task_list = $task_list_id ? self::get_list($task_list_id) : null;
-
-        if ($task_list_id && ! $task_list) {
+        if ($task_list_id && !$task_list) {
             return null;
         }
-
-        $tasks_to_search = $task_list ? $task_list->tasks : array_reduce(
-            self::get_lists(),
-            fn (array $all, $curr) => array_merge($all, $curr->tasks),
-            []
-        );
-
+        $tasks_to_search = $task_list ? $task_list->tasks : array_reduce(self::get_lists(), fn(array $all, $curr) => array_merge($all, $curr->tasks), []);
         foreach ($tasks_to_search as $task) {
             if ($id === $task->get_id()) {
                 return $task;
             }
         }
-
         return null;
     }
-
     /**
      * Return number of setup tasks remaining
      *
@@ -401,46 +270,34 @@ class TaskLists
     public static function setup_tasks_remaining()
     {
         $setup_list = self::get_list('setup');
-
-        if (! $setup_list || $setup_list->is_hidden() || $setup_list->has_previously_completed()) {
+        if (!$setup_list || $setup_list->is_hidden() || $setup_list->has_previously_completed()) {
             return;
         }
-
-        $viewable_tasks  = $setup_list->get_viewable_tasks();
+        $viewable_tasks = $setup_list->get_viewable_tasks();
         $completed_tasks = get_option(Task::COMPLETED_OPTION, []);
-        if (! is_array($completed_tasks)) {
+        if (!is_array($completed_tasks)) {
             $completed_tasks = [];
         }
-
-        return count(
-            array_filter(
-                $viewable_tasks,
-                fn ($task) => ! in_array($task->get_id(), $completed_tasks, true)
-            )
-        );
+        return count(array_filter($viewable_tasks, fn($task) => !in_array($task->get_id(), $completed_tasks, true)));
     }
-
     /**
      * Add badge to homescreen menu item for remaining tasks
      */
     public static function menu_task_count(): void
     {
         global $submenu;
-
         $tasks_count = self::setup_tasks_remaining();
-
-        if (! $tasks_count || ! isset($submenu['woocommerce'])) {
+        if (!$tasks_count || !isset($submenu['woocommerce'])) {
             return;
         }
-
         foreach ($submenu['woocommerce'] as $key => $menu_item) {
             if (str_starts_with((string) $menu_item[0], _x('Home', 'Admin menu name', 'woocommerce'))) {
-                $submenu['woocommerce'][ $key ][0] .= ' <span class="menu-counter remaining-tasks-badge woocommerce-task-list-remaining-tasks-badge"><span class="count-' . esc_attr($tasks_count) . '">' . absint($tasks_count) . '</span></span>'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+                $submenu['woocommerce'][$key][0] .= ' <span class="menu-counter remaining-tasks-badge woocommerce-task-list-remaining-tasks-badge"><span class="count-' . esc_attr($tasks_count) . '">' . absint($tasks_count) . '</span></span>';
+                // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
                 break;
             }
         }
     }
-
     /**
      * Add visible list ids to component settings.
      *
@@ -448,18 +305,16 @@ class TaskLists
      */
     public static function task_list_preloaded_settings(array $settings): array
     {
-        $settings['visibleTaskListIds']   = self::all_hidden() ? [] : array_keys(self::get_visible());
-        $settings['completedTaskListIds'] = get_option(TaskList::COMPLETED_OPTION, []);
-
+        $settings['visibleTaskListIds'] = self::all_hidden() ? [] : array_keys(self::get_visible());
+        $settings['completedTaskListIds'] = get_option(Task_List::COMPLETED_OPTION, []);
         return $settings;
     }
-
     /**
      * Check if all task lists are hidden.
      */
     public static function all_hidden(): bool
     {
-        $hidden_lists = get_option(TaskList::HIDDEN_OPTION, []);
+        $hidden_lists = get_option(Task_List::HIDDEN_OPTION, []);
         return count($hidden_lists) === count(self::get_lists());
     }
 }

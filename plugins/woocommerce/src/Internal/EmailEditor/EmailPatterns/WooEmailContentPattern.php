@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Email_Editor\Email_Patterns;
 
-namespace Automattic\WooCommerce\Internal\EmailEditor\EmailPatterns;
-
-use Automattic\WooCommerce\EmailEditor\Engine\Patterns\Abstract_Pattern;
-use Automattic\WooCommerce\Internal\EmailEditor\Integration;
-
+use Automattic\Woo_Commerce\Email_Editor\Engine\Patterns\Abstract_Pattern;
+use Automattic\Woo_Commerce\Internal\Email_Editor\Integration;
 /**
  * Pattern class for WooCommerce email content.
  *
  * Provides a default content pattern that can be used in WooCommerce email templates.
  */
-class WooEmailContentPattern extends Abstract_Pattern
+class Woo_Email_Content_Pattern extends Abstract_Pattern
 {
     /**
      * Pattern name identifier.
@@ -20,41 +18,39 @@ class WooEmailContentPattern extends Abstract_Pattern
      * @var string
      */
     public $name = 'woo-email-content-pattern';
-
     /**
      * Allowed block types for this pattern.
      *
      * @var array
      */
     public $block_types = [];
-
     /**
      * Template types where this pattern can be used.
      *
      * @var array
      */
-    public $template_types = [ 'email-template' ];    // Required.
-
+    public $template_types = ['email-template'];
+    // Required.
     /**
      * Categories this pattern belongs to.
      *
      * @var array
      */
-    public $categories = [ 'email-contents' ];        // Optional.
-
+    public $categories = ['email-contents'];
+    // Optional.
     /**
      * Pattern namespace.
      *
      * @var string
      */
-    public $namespace = 'woocommerce';      // Required.
-
+    public $namespace = 'woocommerce';
+    // Required.
     /**
      * List of supported post types.
      *
      * @var string[]
      */
-    protected $post_types = [ Integration::EMAIL_POST_TYPE ];
+    protected $post_types = [Integration::EMAIL_POST_TYPE];
     /**
      * Get the pattern content.
      *
@@ -82,7 +78,6 @@ class WooEmailContentPattern extends Abstract_Pattern
 <!-- /wp:buttons --></div>
 <!-- /wp:group -->';
     }
-
     /**
      * Get the pattern title.
      *

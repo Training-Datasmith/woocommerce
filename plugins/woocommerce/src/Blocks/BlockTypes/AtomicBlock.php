@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * AtomicBlock class.
  *
  * @internal
  */
-class AtomicBlock extends AbstractBlock
+class Atomic_Block extends Abstract_Block
 {
     /**
      * Get the editor script data for this block type.
@@ -20,7 +19,6 @@ class AtomicBlock extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the editor style handle for this block type.
      */
@@ -28,7 +26,6 @@ class AtomicBlock extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -38,7 +35,6 @@ class AtomicBlock extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the frontend style handle for this block type.
      */

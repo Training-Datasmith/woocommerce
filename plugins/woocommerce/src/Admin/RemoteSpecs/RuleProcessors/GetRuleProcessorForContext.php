@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 /**
  * A custom GetRuleProcessor class to support context_vars and context_plugins rule types.
  *
  * GetRuleProcessor class.
  */
-class GetRuleProcessorForContext
+class Get_Rule_Processor_For_Context
 {
     /**
      * Constructor.
@@ -21,7 +20,8 @@ class GetRuleProcessorForContext
          * Contains the context variables.
          */
         protected array $context = []
-    ) {
+    )
+    {
     }
     /**
      * Get the processor for the specified rule type.
@@ -33,8 +33,8 @@ class GetRuleProcessorForContext
     public function get_processor($rule_type)
     {
         return match ($rule_type) {
-            'context_plugins' => new ContextPluginsRuleProcessor($this->context['plugins'] ?? []),
-            default => GetRuleProcessor::get_processor($rule_type),
+            'context_plugins' => new Context_Plugins_Rule_Processor($this->context['plugins'] ?? []),
+            default => Get_Rule_Processor::get_processor($rule_type),
         };
     }
 }

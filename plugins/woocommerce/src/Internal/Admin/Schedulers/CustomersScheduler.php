@@ -1,20 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Customer syncing related functions and actions.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\Schedulers;
+namespace Automattic\Woo_Commerce\Internal\Admin\Schedulers;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\Customers\DataStore as CustomersDataStore;
-
+use Automattic\Woo_Commerce\Admin\API\Reports\Customers\Data_Store as CustomersDataStore;
 /**
  * CustomersScheduler Class.
  */
-class CustomersScheduler extends ImportScheduler
+class Customers_Scheduler extends Import_Scheduler
 {
     /**
      * Slug to identify the scheduler.
@@ -22,7 +19,6 @@ class CustomersScheduler extends ImportScheduler
      * @var string
      */
     public static $name = 'customers';
-
     /**
      * Attach customer lookup update hooks.
      *
@@ -30,10 +26,9 @@ class CustomersScheduler extends ImportScheduler
      */
     public static function init(): void
     {
-        CustomersDataStore::init();
+        Customers_Data_Store::init();
         parent::init();
     }
-
     /**
      * Add customer dependencies.
      *
@@ -41,11 +36,8 @@ class CustomersScheduler extends ImportScheduler
      */
     public static function get_dependencies(): array
     {
-        return [
-            'delete_batch_init' => OrdersScheduler::get_action('delete_batch_init'),
-        ];
+        return ['delete_batch_init' => Orders_Scheduler::get_action('delete_batch_init')];
     }
-
     /**
      * Get the customer IDs and total count that need to be synced.
      *
@@ -57,36 +49,18 @@ class CustomersScheduler extends ImportScheduler
      */
     public static function get_items($limit = 10, $page = 1, $days = false, $skip_existing = false)
     {
-        $customer_roles = apply_filters('woocommerce_analytics_import_customer_roles', [ 'customer' ]);
-        $query_args     = [
-            'fields'   => 'ID',
-            'orderby'  => 'ID',
-            'order'    => 'ASC',
-            'number'   => $limit,
-            'paged'    => $page,
-            'role__in' => $customer_roles,
-        ];
-
+        $customer_roles = apply_filters('woocommerce_analytics_import_customer_roles', ['customer']);
+        $query_args = ['fields' => 'ID', 'orderby' => 'ID', 'order' => 'ASC', 'number' => $limit, 'paged' => $page, 'role__in' => $customer_roles];
         if (is_int($days)) {
-            $query_args['date_query'] = [
-                'after' => gmdate('Y-m-d 00:00:00', time() - (DAY_IN_SECONDS * $days)),
-            ];
+            $query_args['date_query'] = ['after' => gmdate('Y-m-d 00:00:00', time() - DAY_IN_SECONDS * $days)];
         }
-
         if ($skip_existing) {
             add_action('pre_user_query', self::exclude_existing_customers_from_query(...));
         }
-
         $customer_query = new \WP_User_Query($query_args);
-
         remove_action('pre_user_query', self::exclude_existing_customers_from_query(...));
-
-        return (object) [
-            'total' => $customer_query->get_total(),
-            'ids'   => $customer_query->get_results(),
-        ];
+        return (object) ['total' => $customer_query->get_total(), 'ids' => $customer_query->get_results()];
     }
-
     /**
      * Exclude users that already exist in our customer lookup table.
      *
@@ -98,13 +72,8 @@ class CustomersScheduler extends ImportScheduler
     public static function exclude_existing_customers_from_query($wp_user_query): void
     {
         global $wpdb;
-
-        $wp_user_query->query_where .= " AND NOT EXISTS (
-			SELECT ID FROM {$wpdb->prefix}wc_customer_lookup
-			WHERE {$wpdb->prefix}wc_customer_lookup.user_id = {$wpdb->users}.ID
-		)";
+        $wp_user_query->query_where .= " AND NOT EXISTS (\n\t\t\tSELECT ID FROM {$wpdb->prefix}wc_customer_lookup\n\t\t\tWHERE {$wpdb->prefix}wc_customer_lookup.user_id = {$wpdb->users}.ID\n\t\t)";
     }
-
     /**
      * Get total number of rows imported.
      *
@@ -116,7 +85,6 @@ class CustomersScheduler extends ImportScheduler
         global $wpdb;
         return $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wc_customer_lookup");
     }
-
     /**
      * Imports a single customer.
      *
@@ -125,9 +93,8 @@ class CustomersScheduler extends ImportScheduler
      */
     public static function import($user_id): void
     {
-        CustomersDataStore::update_registered_customer($user_id);
+        Customers_Data_Store::update_registered_customer($user_id);
     }
-
     /**
      * Delete a batch of customers.
      *
@@ -137,16 +104,9 @@ class CustomersScheduler extends ImportScheduler
     public static function delete($batch_size): void
     {
         global $wpdb;
-
-        $customer_ids = $wpdb->get_col(
-            $wpdb->prepare(
-                "SELECT customer_id FROM {$wpdb->prefix}wc_customer_lookup ORDER BY customer_id ASC LIMIT %d",
-                $batch_size
-            )
-        );
-
+        $customer_ids = $wpdb->get_col($wpdb->prepare("SELECT customer_id FROM {$wpdb->prefix}wc_customer_lookup ORDER BY customer_id ASC LIMIT %d", $batch_size));
         foreach ($customer_ids as $customer_id) {
-            CustomersDataStore::delete_customer($customer_id);
+            Customers_Data_Store::delete_customer($customer_id);
         }
     }
 }

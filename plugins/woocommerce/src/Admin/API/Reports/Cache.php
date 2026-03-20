@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Reports Cache.
  *
  * Handles report data object caching.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports;
+namespace Automattic\Woo_Commerce\Admin\API\Reports;
 
 defined('ABSPATH') || exit;
-
 /**
  * REST API Reports Cache class.
  */
@@ -20,7 +18,6 @@ class Cache
      * Cache version. Used to invalidate all cached values.
      */
     public const VERSION_OPTION = 'woocommerce_reports';
-
     /**
      * Invalidate cache.
      */
@@ -28,7 +25,6 @@ class Cache
     {
         \WC_Cache_Helper::get_transient_version(self::VERSION_OPTION, true);
     }
-
     /**
      * Get cache version number.
      *
@@ -38,7 +34,6 @@ class Cache
     {
         return \WC_Cache_Helper::get_transient_version(self::VERSION_OPTION);
     }
-
     /**
      * Get cached value.
      *
@@ -48,18 +43,12 @@ class Cache
     public static function get($key)
     {
         $transient_version = self::get_version();
-        $transient_value   = get_transient($key);
-
-        if (
-            isset($transient_value['value'], $transient_value['version']) &&
-            $transient_value['version'] === $transient_version
-        ) {
+        $transient_value = get_transient($key);
+        if (isset($transient_value['value'], $transient_value['version']) && $transient_value['version'] === $transient_version) {
             return $transient_value['value'];
         }
-
         return false;
     }
-
     /**
      * Update cached value.
      *
@@ -70,11 +59,7 @@ class Cache
     public static function set($key, $value)
     {
         $transient_version = self::get_version();
-        $transient_value   = [
-            'version' => $transient_version,
-            'value'   => $value,
-        ];
-
+        $transient_value = ['version' => $transient_version, 'value' => $value];
         return set_transient($key, $transient_value, WEEK_IN_SECONDS);
     }
 }

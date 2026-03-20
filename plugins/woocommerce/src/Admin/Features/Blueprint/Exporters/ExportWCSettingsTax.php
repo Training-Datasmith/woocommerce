@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Blueprint\Exporters;
 
-namespace Automattic\WooCommerce\Admin\Features\Blueprint\Exporters;
-
-use Automattic\WooCommerce\Blueprint\Steps\RunSql;
-use Automattic\WooCommerce\Blueprint\UseWPFunctions;
-use Automattic\WooCommerce\Blueprint\Util;
-
+use Automattic\Woo_Commerce\Blueprint\Steps\Run_Sql;
+use Automattic\Woo_Commerce\Blueprint\Use_Wp_Functions;
+use Automattic\Woo_Commerce\Blueprint\Util;
 /**
  * Class ExportWCSettingsTax
  *
@@ -15,10 +13,9 @@ use Automattic\WooCommerce\Blueprint\Util;
  *
  * @package Automattic\WooCommerce\Admin\Features\Blueprint\Exporters
  */
-class ExportWCSettingsTax extends ExportWCSettings
+class Export_Wc_Settings_Tax extends Export_Wc_Settings
 {
-    use UseWPFunctions;
-
+    use Use_Wp_Functions;
     /**
      * Get the alias for this exporter.
      */
@@ -26,7 +23,6 @@ class ExportWCSettingsTax extends ExportWCSettings
     {
         return 'setWCSettingsTax';
     }
-
     /**
      * Export WooCommerce tax rates.
      *
@@ -35,15 +31,8 @@ class ExportWCSettingsTax extends ExportWCSettings
     public function export(): array
     {
         $basic_tax_settings = parent::export();
-
-        return [
-            $basic_tax_settings,
-            ...$this->generateTaxRateSteps('wc_tax_rate_classes'),
-            ...$this->generateTaxRateSteps('woocommerce_tax_rates'),
-            ...$this->generateTaxRateSteps('woocommerce_tax_rate_locations'),
-        ];
+        return [$basic_tax_settings, ...$this->generate_tax_rate_steps('wc_tax_rate_classes'), ...$this->generate_tax_rate_steps('woocommerce_tax_rates'), ...$this->generate_tax_rate_steps('woocommerce_tax_rate_locations')];
     }
-
     /**
      * Return label used in the frontend.
      *
@@ -53,7 +42,6 @@ class ExportWCSettingsTax extends ExportWCSettings
     {
         return __('Tax', 'woocommerce');
     }
-
     /**
      * Return description used in the frontend.
      *
@@ -63,7 +51,6 @@ class ExportWCSettingsTax extends ExportWCSettings
     {
         return __('Includes all settings in WooCommerce | Settings | Tax.', 'woocommerce');
     }
-
     /**
      * Get the page ID for the settings page.
      */
@@ -71,20 +58,16 @@ class ExportWCSettingsTax extends ExportWCSettings
     {
         return 'tax';
     }
-
     /**
      * Generate SQL steps for exporting data.
      *
      * @param string $table Table identifier.
      * @return array Array of RunSql steps.
      */
-    private function generateTaxRateSteps(string $table): array
+    private function generate_tax_rate_steps(string $table): array
     {
         global $wpdb;
         $table = $wpdb->prefix . $table;
-        return array_map(
-            fn ($record): \Automattic\WooCommerce\Blueprint\Steps\RunSql => new RunSql(Util::array_to_insert_sql($record, $table, 'replace into')),
-            $wpdb->get_results($wpdb->prepare('SELECT * FROM %i', $table), ARRAY_A),
-        );
+        return array_map(fn($record): \Automattic\Woo_Commerce\Blueprint\Steps\Run_Sql => new Run_Sql(Util::array_to_insert_sql($record, $table, 'replace into')), $wpdb->get_results($wpdb->prepare('SELECT * FROM %i', $table), ARRAY_A));
     }
 }

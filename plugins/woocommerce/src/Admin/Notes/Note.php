@@ -1,51 +1,57 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Admin (Dashboard) Notes.
  *
  * The WooCommerce admin notes class gets admin notes data from storage and checks validity.
  */
-
-namespace Automattic\WooCommerce\Admin\Notes;
+namespace Automattic\Woo_Commerce\Admin\Notes;
 
 defined('ABSPATH') || exit;
-
 /**
  * Note class.
  */
 class Note extends \WC_Data
 {
     // Note types.
-    public const E_WC_ADMIN_NOTE_ERROR         = 'error';     // used for presenting error conditions.
-    public const E_WC_ADMIN_NOTE_WARNING       = 'warning';   // used for presenting warning conditions.
-    public const E_WC_ADMIN_NOTE_UPDATE        = 'update';    // i.e. used when a new version is available.
-    public const E_WC_ADMIN_NOTE_INFORMATIONAL = 'info';      // used for presenting informational messages.
-    public const E_WC_ADMIN_NOTE_MARKETING     = 'marketing'; // used for adding marketing messages.
-    public const E_WC_ADMIN_NOTE_SURVEY        = 'survey';    // used for adding survey messages.
-    public const E_WC_ADMIN_NOTE_EMAIL         = 'email';     // used for adding notes that will be sent by email.
-
+    public const E_WC_ADMIN_NOTE_ERROR = 'error';
+    // used for presenting error conditions.
+    public const E_WC_ADMIN_NOTE_WARNING = 'warning';
+    // used for presenting warning conditions.
+    public const E_WC_ADMIN_NOTE_UPDATE = 'update';
+    // i.e. used when a new version is available.
+    public const E_WC_ADMIN_NOTE_INFORMATIONAL = 'info';
+    // used for presenting informational messages.
+    public const E_WC_ADMIN_NOTE_MARKETING = 'marketing';
+    // used for adding marketing messages.
+    public const E_WC_ADMIN_NOTE_SURVEY = 'survey';
+    // used for adding survey messages.
+    public const E_WC_ADMIN_NOTE_EMAIL = 'email';
+    // used for adding notes that will be sent by email.
     // Note status codes.
-    public const E_WC_ADMIN_NOTE_PENDING    = 'pending';    // the note is pending - hidden but not actioned.
-    public const E_WC_ADMIN_NOTE_UNACTIONED = 'unactioned'; // the note has not yet been actioned by a user.
-    public const E_WC_ADMIN_NOTE_ACTIONED   = 'actioned';   // the note has had its action completed by a user.
-    public const E_WC_ADMIN_NOTE_SNOOZED    = 'snoozed';    // the note has been snoozed by a user.
-    public const E_WC_ADMIN_NOTE_SENT       = 'sent';    // the note has been sent by email to the user.
-
+    public const E_WC_ADMIN_NOTE_PENDING = 'pending';
+    // the note is pending - hidden but not actioned.
+    public const E_WC_ADMIN_NOTE_UNACTIONED = 'unactioned';
+    // the note has not yet been actioned by a user.
+    public const E_WC_ADMIN_NOTE_ACTIONED = 'actioned';
+    // the note has had its action completed by a user.
+    public const E_WC_ADMIN_NOTE_SNOOZED = 'snoozed';
+    // the note has been snoozed by a user.
+    public const E_WC_ADMIN_NOTE_SENT = 'sent';
+    // the note has been sent by email to the user.
     /**
      * This is the name of this object type.
      *
      * @var string
      */
     protected $object_type = 'admin-note';
-
     /**
      * Cache group.
      *
      * @var string
      */
     protected $cache_group = 'admin-note';
-
     /**
      * Note constructor. Loads note data.
      *
@@ -54,46 +60,26 @@ class Note extends \WC_Data
     public function __construct($data = '')
     {
         // Set default data here to allow `content_data` to be an object.
-        $this->data = [
-            'name'          => '-',
-            'type'          => self::E_WC_ADMIN_NOTE_INFORMATIONAL,
-            'locale'        => 'en_US',
-            'title'         => '-',
-            'content'       => '-',
-            'content_data'  => new \stdClass(),
-            'status'        => self::E_WC_ADMIN_NOTE_UNACTIONED,
-            'source'        => 'woocommerce',
-            'date_created'  => '0000-00-00 00:00:00',
-            'date_reminder' => null,
-            'is_snoozable'  => false,
-            'actions'       => [],
-            'layout'        => 'plain',
-            'image'         => '',
-            'is_deleted'    => false,
-            'is_read'       => false,
-        ];
-
+        $this->data = ['name' => '-', 'type' => self::E_WC_ADMIN_NOTE_INFORMATIONAL, 'locale' => 'en_US', 'title' => '-', 'content' => '-', 'content_data' => new \stdClass(), 'status' => self::E_WC_ADMIN_NOTE_UNACTIONED, 'source' => 'woocommerce', 'date_created' => '0000-00-00 00:00:00', 'date_reminder' => null, 'is_snoozable' => false, 'actions' => [], 'layout' => 'plain', 'image' => '', 'is_deleted' => false, 'is_read' => false];
         parent::__construct($data);
-
         if ($data instanceof Note) {
             $this->set_id(absint($data->get_id()));
         } elseif (is_numeric($data)) {
             $this->set_id($data);
-        } elseif (is_object($data) && ! empty($data->note_id)) {
+        } elseif (is_object($data) && !empty($data->note_id)) {
             $this->set_id($data->note_id);
-            unset($data->icon); // Icons are deprecated.
+            unset($data->icon);
+            // Icons are deprecated.
             $this->set_props((array) $data);
             $this->set_object_read(true);
         } else {
             $this->set_object_read(true);
         }
-
         $this->data_store = Notes::load_data_store();
         if ($this->get_id() > 0) {
             $this->data_store->read($this);
         }
     }
-
     /**
      * Merge changes with data and clear.
      *
@@ -101,17 +87,15 @@ class Note extends \WC_Data
      */
     public function apply_changes(): void
     {
-        $this->data = array_replace_recursive($this->data, $this->changes); // @codingStandardsIgnoreLine
-
+        $this->data = array_replace_recursive($this->data, $this->changes);
+        // @codingStandardsIgnoreLine
         // Note actions need to be replaced wholesale.
         // Merging arrays doesn't allow for deleting note actions.
         if (isset($this->changes['actions'])) {
             $this->data['actions'] = $this->changes['actions'];
         }
-
         $this->changes = [];
     }
-
     /*
     |--------------------------------------------------------------------------
     | Helpers
@@ -125,11 +109,8 @@ class Note extends \WC_Data
      */
     public static function get_deprecated_types(): array
     {
-        return [
-            self::E_WC_ADMIN_NOTE_EMAIL,
-        ];
+        return [self::E_WC_ADMIN_NOTE_EMAIL];
     }
-
     /**
      * Get allowed types.
      *
@@ -137,18 +118,9 @@ class Note extends \WC_Data
      */
     public static function get_allowed_types()
     {
-        $allowed_types = [
-            self::E_WC_ADMIN_NOTE_ERROR,
-            self::E_WC_ADMIN_NOTE_WARNING,
-            self::E_WC_ADMIN_NOTE_UPDATE,
-            self::E_WC_ADMIN_NOTE_INFORMATIONAL,
-            self::E_WC_ADMIN_NOTE_MARKETING,
-            self::E_WC_ADMIN_NOTE_SURVEY,
-        ];
-
+        $allowed_types = [self::E_WC_ADMIN_NOTE_ERROR, self::E_WC_ADMIN_NOTE_WARNING, self::E_WC_ADMIN_NOTE_UPDATE, self::E_WC_ADMIN_NOTE_INFORMATIONAL, self::E_WC_ADMIN_NOTE_MARKETING, self::E_WC_ADMIN_NOTE_SURVEY];
         return apply_filters('woocommerce_note_types', $allowed_types);
     }
-
     /**
      * Get allowed statuses.
      *
@@ -156,17 +128,9 @@ class Note extends \WC_Data
      */
     public static function get_allowed_statuses()
     {
-        $allowed_statuses = [
-            self::E_WC_ADMIN_NOTE_PENDING,
-            self::E_WC_ADMIN_NOTE_ACTIONED,
-            self::E_WC_ADMIN_NOTE_UNACTIONED,
-            self::E_WC_ADMIN_NOTE_SNOOZED,
-            self::E_WC_ADMIN_NOTE_SENT,
-        ];
-
+        $allowed_statuses = [self::E_WC_ADMIN_NOTE_PENDING, self::E_WC_ADMIN_NOTE_ACTIONED, self::E_WC_ADMIN_NOTE_UNACTIONED, self::E_WC_ADMIN_NOTE_SNOOZED, self::E_WC_ADMIN_NOTE_SENT];
         return apply_filters('woocommerce_note_statuses', $allowed_statuses);
     }
-
     /*
     |--------------------------------------------------------------------------
     | Getters
@@ -183,9 +147,8 @@ class Note extends \WC_Data
      */
     public function get_data(): array
     {
-        return array_merge([ 'id' => $this->get_id() ], $this->data);
+        return array_merge(['id' => $this->get_id()], $this->data);
     }
-
     /**
      * Get note name.
      *
@@ -196,7 +159,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('name', $context);
     }
-
     /**
      * Get note type.
      *
@@ -207,7 +169,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('type', $context);
     }
-
     /**
      * Get note locale.
      *
@@ -218,7 +179,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('locale', $context);
     }
-
     /**
      * Get note title.
      *
@@ -229,7 +189,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('title', $context);
     }
-
     /**
      * Get note content.
      *
@@ -240,7 +199,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('content', $context);
     }
-
     /**
      * Get note content data (i.e. values that would be needed for re-localization)
      *
@@ -251,7 +209,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('content_data', $context);
     }
-
     /**
      * Get note status.
      *
@@ -262,7 +219,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('status', $context);
     }
-
     /**
      * Get note source.
      *
@@ -273,7 +229,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('source', $context);
     }
-
     /**
      * Get date note was created.
      *
@@ -284,7 +239,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('date_created', $context);
     }
-
     /**
      * Get date on which user should be reminded of the note (if any).
      *
@@ -295,7 +249,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('date_reminder', $context);
     }
-
     /**
      * Get note snoozability.
      *
@@ -306,7 +259,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('is_snoozable', $context);
     }
-
     /**
      * Get actions on the note (if any).
      *
@@ -317,7 +269,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('actions', $context);
     }
-
     /**
      * Get action by action name on the note.
      *
@@ -328,17 +279,15 @@ class Note extends \WC_Data
     public function get_action($action_name, $context = 'view')
     {
         $actions = $this->get_prop('actions', $context);
-
         $matching_action = null;
         foreach ($actions as $i => $action) {
             if ($action->name === $action_name) {
-                $matching_action = & $actions[ $i ];
+                $matching_action =& $actions[$i];
                 break;
             }
         }
         return $matching_action;
     }
-
     /**
      * Get note layout (the old notes won't have one).
      *
@@ -349,7 +298,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('layout', $context);
     }
-
     /**
      * Get note image (if any).
      *
@@ -360,7 +308,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('image', $context);
     }
-
     /**
      * Get deleted status.
      *
@@ -371,7 +318,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('is_deleted', $context);
     }
-
     /**
      * Get is_read status.
      *
@@ -382,7 +328,6 @@ class Note extends \WC_Data
     {
         return $this->get_prop('is_read', $context);
     }
-
     /*
     |--------------------------------------------------------------------------
     | Setters
@@ -393,7 +338,6 @@ class Note extends \WC_Data
     | object.
     |
     */
-
     /**
      * Set note name.
      *
@@ -405,10 +349,8 @@ class Note extends \WC_Data
         if (empty($name)) {
             $this->error('admin_note_invalid_data', __('The admin note name prop cannot be empty.', 'woocommerce'));
         }
-
         $this->set_prop('name', $name);
     }
-
     /**
      * Set note type.
      *
@@ -419,28 +361,18 @@ class Note extends \WC_Data
         if (empty($type)) {
             $this->error('admin_note_invalid_data', __('The admin note type prop cannot be empty.', 'woocommerce'));
         }
-
         if (in_array($type, self::get_deprecated_types(), true)) {
-            $this->error(
-                'admin_note_invalid_data',
-                __('The admin note type prop is deprecated.', 'woocommerce')
-            );
+            $this->error('admin_note_invalid_data', __('The admin note type prop is deprecated.', 'woocommerce'));
         }
-
-        if (! in_array($type, self::get_allowed_types(), true)) {
-            $this->error(
-                'admin_note_invalid_data',
-                sprintf(
-                    /* translators: %s: admin note type. */
-                    __('The admin note type prop (%s) is not one of the supported types.', 'woocommerce'),
-                    $type
-                )
-            );
+        if (!in_array($type, self::get_allowed_types(), true)) {
+            $this->error('admin_note_invalid_data', sprintf(
+                /* translators: %s: admin note type. */
+                __('The admin note type prop (%s) is not one of the supported types.', 'woocommerce'),
+                $type
+            ));
         }
-
         $this->set_prop('type', $type);
     }
-
     /**
      * Set note locale.
      *
@@ -451,10 +383,8 @@ class Note extends \WC_Data
         if (empty($locale)) {
             $this->error('admin_note_invalid_data', __('The admin note locale prop cannot be empty.', 'woocommerce'));
         }
-
         $this->set_prop('locale', $locale);
     }
-
     /**
      * Set note title.
      *
@@ -465,10 +395,8 @@ class Note extends \WC_Data
         if (empty($title)) {
             $this->error('admin_note_invalid_data', __('The admin note title prop cannot be empty.', 'woocommerce'));
         }
-
         $this->set_prop('title', $title);
     }
-
     /**
      * Set note icon (Deprecated).
      *
@@ -478,7 +406,6 @@ class Note extends \WC_Data
     {
         wc_deprecated_function('set_icon', '4.3');
     }
-
     /**
      * Set note content.
      *
@@ -486,31 +413,13 @@ class Note extends \WC_Data
      */
     public function set_content($content): void
     {
-        $allowed_html = [
-            'br'     => [],
-            'em'     => [],
-            'strong' => [],
-            'a'      => [
-                'href'     => true,
-                'rel'      => true,
-                'name'     => true,
-                'target'   => true,
-                'download' => [
-                    'valueless' => 'y',
-                ],
-            ],
-            'p'      => [],
-        ];
-
+        $allowed_html = ['br' => [], 'em' => [], 'strong' => [], 'a' => ['href' => true, 'rel' => true, 'name' => true, 'target' => true, 'download' => ['valueless' => 'y']], 'p' => []];
         $content = wp_kses($content, $allowed_html);
-
         if (empty($content)) {
             $this->error('admin_note_invalid_data', __('The admin note content prop cannot be empty.', 'woocommerce'));
         }
-
         $this->set_prop('content', $content);
     }
-
     /**
      * Set note data for potential re-localization.
      *
@@ -520,13 +429,11 @@ class Note extends \WC_Data
     public function set_content_data($content_data): void
     {
         // Make sure $content_data is stdClass Object or an array.
-        if (! ($content_data instanceof \stdClass)) {
+        if (!$content_data instanceof \stdClass) {
             $this->error('admin_note_invalid_data', __('The admin note content_data prop must be an instance of stdClass.', 'woocommerce'));
         }
-
         $this->set_prop('content_data', $content_data);
     }
-
     /**
      * Set note status.
      *
@@ -537,21 +444,15 @@ class Note extends \WC_Data
         if (empty($status)) {
             $this->error('admin_note_invalid_data', __('The admin note status prop cannot be empty.', 'woocommerce'));
         }
-
-        if (! in_array($status, self::get_allowed_statuses(), true)) {
-            $this->error(
-                'admin_note_invalid_data',
-                sprintf(
-                    /* translators: %s: admin note status property. */
-                    __('The admin note status prop (%s) is not one of the supported statuses.', 'woocommerce'),
-                    $status
-                )
-            );
+        if (!in_array($status, self::get_allowed_statuses(), true)) {
+            $this->error('admin_note_invalid_data', sprintf(
+                /* translators: %s: admin note status property. */
+                __('The admin note status prop (%s) is not one of the supported statuses.', 'woocommerce'),
+                $status
+            ));
         }
-
         $this->set_prop('status', $status);
     }
-
     /**
      * Set note source.
      *
@@ -562,10 +463,8 @@ class Note extends \WC_Data
         if (empty($source)) {
             $this->error('admin_note_invalid_data', __('The admin note source prop cannot be empty.', 'woocommerce'));
         }
-
         $this->set_prop('source', $source);
     }
-
     /**
      * Set date note was created. NULL is not allowed
      *
@@ -576,13 +475,11 @@ class Note extends \WC_Data
         if (empty($date)) {
             $this->error('admin_note_invalid_data', __('The admin note date prop cannot be empty.', 'woocommerce'));
         }
-
-        if (is_string($date) && ! is_numeric($date)) {
+        if (is_string($date) && !is_numeric($date)) {
             $date = wc_string_to_timestamp($date);
         }
         $this->set_date_prop('date_created', $date);
     }
-
     /**
      * Set date admin should be reminded of note. NULL IS allowed
      *
@@ -590,12 +487,11 @@ class Note extends \WC_Data
      */
     public function set_date_reminder($date): void
     {
-        if (is_string($date) && ! is_numeric($date)) {
+        if (is_string($date) && !is_numeric($date)) {
             $date = wc_string_to_timestamp($date);
         }
         $this->set_date_prop('date_reminder', $date);
     }
-
     /**
      * Set note snoozability.
      *
@@ -605,7 +501,6 @@ class Note extends \WC_Data
     {
         return $this->set_prop('is_snoozable', $is_snoozable);
     }
-
     /**
      * Clear actions from a note.
      */
@@ -613,7 +508,6 @@ class Note extends \WC_Data
     {
         $this->set_prop('actions', []);
     }
-
     /**
      * Set note layout.
      *
@@ -625,15 +519,13 @@ class Note extends \WC_Data
         if (empty($layout)) {
             $layout = 'plain';
         }
-        $valid_layouts = [ 'plain', 'thumbnail' ];
-
+        $valid_layouts = ['plain', 'thumbnail'];
         if (in_array($layout, $valid_layouts, true)) {
             $this->set_prop('layout', $layout);
         } else {
             $this->error('admin_note_invalid_data', __('The admin note layout has a wrong prop value.', 'woocommerce'));
         }
     }
-
     /**
      * Set note image.
      *
@@ -643,7 +535,6 @@ class Note extends \WC_Data
     {
         $this->set_prop('image', $image);
     }
-
     /**
      * Set note deleted status. NULL is not allowed
      *
@@ -653,7 +544,6 @@ class Note extends \WC_Data
     {
         $this->set_prop('is_deleted', $is_deleted);
     }
-
     /**
      * Set note is_read status. NULL is not allowed
      *
@@ -663,7 +553,6 @@ class Note extends \WC_Data
     {
         $this->set_prop('is_read', $is_read);
     }
-
     /**
      * Add an action to the note
      *
@@ -674,43 +563,24 @@ class Note extends \WC_Data
      * @param boolean $primary        Deprecated since version 3.4.0.
      * @param string  $actioned_text The label to display after the note has been actioned but before it is dismissed in the UI.
      */
-    public function add_action(
-        $name,
-        $label,
-        $url = '',
-        $status = self::E_WC_ADMIN_NOTE_ACTIONED,
-        $primary = false,
-        $actioned_text = ''
-    ): void {
-        $name          = wc_clean($name);
-        $label         = wc_clean($label);
-        $query         = esc_url_raw($url);
-        $status        = wc_clean($status);
+    public function add_action($name, $label, $url = '', $status = self::E_WC_ADMIN_NOTE_ACTIONED, $primary = false, $actioned_text = ''): void
+    {
+        $name = wc_clean($name);
+        $label = wc_clean($label);
+        $query = esc_url_raw($url);
+        $status = wc_clean($status);
         $actioned_text = wc_clean($actioned_text);
-
         if (empty($name)) {
             $this->error('admin_note_invalid_data', __('The admin note action name prop cannot be empty.', 'woocommerce'));
         }
-
         if (empty($label)) {
             $this->error('admin_note_invalid_data', __('The admin note action label prop cannot be empty.', 'woocommerce'));
         }
-
-        $action = [
-            'name'          => $name,
-            'label'         => $label,
-            'query'         => $query,
-            'status'        => $status,
-            'actioned_text' => $actioned_text,
-            'nonce_name'    => null,
-            'nonce_action'  => null,
-        ];
-
-        $note_actions   = $this->get_prop('actions', 'edit');
+        $action = ['name' => $name, 'label' => $label, 'query' => $query, 'status' => $status, 'actioned_text' => $actioned_text, 'nonce_name' => null, 'nonce_action' => null];
+        $note_actions = $this->get_prop('actions', 'edit');
         $note_actions[] = (object) $action;
         $this->set_prop('actions', $note_actions);
     }
-
     /**
      * Set actions on a note.
      *
@@ -720,7 +590,6 @@ class Note extends \WC_Data
     {
         $this->set_prop('actions', $actions);
     }
-
     /**
      * Add a nonce to an existing note action.
      *
@@ -734,21 +603,17 @@ class Note extends \WC_Data
     public function add_nonce_to_action(string $note_action_name, string $nonce_action, string $nonce_name): void
     {
         $actions = $this->get_prop('actions', 'edit');
-
         $matching_action = null;
         foreach ($actions as $i => $action) {
             if ($action->name === $note_action_name) {
-                $matching_action = & $actions[ $i ];
+                $matching_action =& $actions[$i];
             }
         }
-
         if (empty($matching_action)) {
             throw new \Exception(sprintf('Could not find action %s in note %s', $note_action_name, $this->get_name()));
         }
-
         $matching_action->nonce_action = $nonce_action;
-        $matching_action->nonce_name   = $nonce_name;
-
+        $matching_action->nonce_name = $nonce_name;
         $this->set_actions($actions);
     }
 }

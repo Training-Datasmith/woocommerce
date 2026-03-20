@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Handles the registration of marketing channels and acts as their repository.
  */
-
-namespace Automattic\WooCommerce\Admin\Marketing;
+namespace Automattic\Woo_Commerce\Admin\Marketing;
 
 use Exception;
-
 /**
  * MarketingChannels repository class
  *
  * @since x.x.x
  */
-class MarketingChannels
+class Marketing_Channels
 {
     /**
      * The registered marketing channels.
@@ -22,7 +20,6 @@ class MarketingChannels
      * @var MarketingChannelInterface[]
      */
     private array $registered_channels = [];
-
     /**
      * Registers a marketing channel.
      *
@@ -31,15 +28,13 @@ class MarketingChannels
      *
      * @throws Exception If the given marketing channel is already registered.
      */
-    public function register(MarketingChannelInterface $channel): void
+    public function register(Marketing_Channel_Interface $channel): void
     {
-        if (isset($this->registered_channels[ $channel->get_slug() ])) {
+        if (isset($this->registered_channels[$channel->get_slug()])) {
             throw new Exception(__('Marketing channel cannot be registered because there is already a channel registered with the same slug!', 'woocommerce'));
         }
-
-        $this->registered_channels[ $channel->get_slug() ] = $channel;
+        $this->registered_channels[$channel->get_slug()] = $channel;
     }
-
     /**
      * Unregisters all marketing channels.
      */
@@ -47,7 +42,6 @@ class MarketingChannels
     {
         unset($this->registered_channels);
     }
-
     /**
      * Returns an array of all registered marketing channels.
      *
@@ -63,7 +57,6 @@ class MarketingChannels
          * @since x.x.x
          */
         $channels = apply_filters('woocommerce_marketing_channels', $this->registered_channels);
-
         return array_values($channels);
     }
 }

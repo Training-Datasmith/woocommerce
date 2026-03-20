@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Admin Add Install Jetpack and WooCommerce Shipping & Tax Plugin Note Provider.
  *
@@ -8,31 +8,26 @@ declare(strict_types=1);
  * and WooCommerce Shipping & Tax plugins after it fails to install during
  * WooCommerce setup.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\Notes;
+namespace Automattic\Woo_Commerce\Internal\Admin\Notes;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\Notes\Note;
-use Automattic\WooCommerce\Admin\Notes\Notes;
-use Automattic\WooCommerce\Admin\Notes\NoteTraits;
-use Automattic\WooCommerce\Admin\PluginsHelper;
-
+use Automattic\Woo_Commerce\Admin\Notes\Note;
+use Automattic\Woo_Commerce\Admin\Notes\Notes;
+use Automattic\Woo_Commerce\Admin\Notes\Note_Traits;
+use Automattic\Woo_Commerce\Admin\Plugins_Helper;
 /**
  * Install_JP_And_WCS_Plugins
  */
-class InstallJPAndWCSPlugins
+class Install_Jp_And_Wcs_Plugins
 {
     /**
      * Note traits.
      */
-    use NoteTraits;
-
+    use Note_Traits;
     /**
      * Name of the note for use in the database.
      */
     public const NOTE_NAME = 'wc-admin-install-jp-and-wcs-plugins';
-
     /**
      * Constructor.
      */
@@ -44,14 +39,12 @@ class InstallJPAndWCSPlugins
         add_action('woocommerce_plugins_install_error', $this->on_install_error(...));
         add_action('woocommerce_plugins_activate_error', $this->on_install_error(...));
     }
-
     /**
      * Get the note.
      */
-    public static function get_note(): \Automattic\WooCommerce\Admin\Notes\Note
+    public static function get_note(): \Automattic\Woo_Commerce\Admin\Notes\Note
     {
         $content = __('We noticed that there was a problem during the Jetpack and WooCommerce Shipping & Tax install. Please try again and enjoy all the advantages of having the plugins connected to your store! Sorry for the inconvenience. The "Jetpack" and "WooCommerce Shipping & Tax" plugins will be installed & activated for free.', 'woocommerce');
-
         $note = new Note();
         $note->set_title(__('Uh oh... There was a problem during the Jetpack and WooCommerce Shipping & Tax install. Please try again.', 'woocommerce'));
         $note->set_content($content);
@@ -59,15 +52,9 @@ class InstallJPAndWCSPlugins
         $note->set_type(Note::E_WC_ADMIN_NOTE_INFORMATIONAL);
         $note->set_name(self::NOTE_NAME);
         $note->set_source('woocommerce-admin');
-        $note->add_action(
-            'install-jp-and-wcs-plugins',
-            __('Install plugins', 'woocommerce'),
-            false,
-            Note::E_WC_ADMIN_NOTE_ACTIONED
-        );
+        $note->add_action('install-jp-and-wcs-plugins', __('Install plugins', 'woocommerce'), false, Note::E_WC_ADMIN_NOTE_ACTIONED);
         return $note;
     }
-
     /**
      * Action the Install Jetpack and WooCommerce Shipping & Tax note, if any exists,
      * and as long as both the Jetpack and WooCommerce Shipping & Tax plugins have been
@@ -76,28 +63,23 @@ class InstallJPAndWCSPlugins
     public static function action_note(): void
     {
         // Make sure that both plugins are active before actioning the note.
-        $active_plugin_slugs = PluginsHelper::get_active_plugin_slugs();
-        $jp_active           = in_array('jetpack', $active_plugin_slugs, true);
-        $wcs_active          = in_array('woocommerce-services', $active_plugin_slugs, true);
-
-        if (! $jp_active || ! $wcs_active) {
+        $active_plugin_slugs = Plugins_Helper::get_active_plugin_slugs();
+        $jp_active = in_array('jetpack', $active_plugin_slugs, true);
+        $wcs_active = in_array('woocommerce-services', $active_plugin_slugs, true);
+        if (!$jp_active || !$wcs_active) {
             return;
         }
-
         // Action any notes with a matching name.
         $data_store = Notes::load_data_store();
-        $note_ids   = $data_store->get_notes_with_name(self::NOTE_NAME);
-
+        $note_ids = $data_store->get_notes_with_name(self::NOTE_NAME);
         foreach ($note_ids as $note_id) {
             $note = Notes::get_note($note_id);
-
             if ($note) {
                 $note->set_status(Note::E_WC_ADMIN_NOTE_ACTIONED);
                 $note->save();
             }
         }
     }
-
     /**
      * Install the Jetpack and WooCommerce Shipping & Tax plugins in response to the action
      * being clicked in the admin note.
@@ -109,11 +91,9 @@ class InstallJPAndWCSPlugins
         if (self::NOTE_NAME !== $note->get_name()) {
             return;
         }
-
         $this->install_and_activate_plugin('jetpack');
         $this->install_and_activate_plugin('woocommerce-services');
     }
-
     /**
      * Installs and activates the specified plugin.
      *
@@ -121,20 +101,16 @@ class InstallJPAndWCSPlugins
      */
     private function install_and_activate_plugin(string $plugin): void
     {
-        $install_request = [ 'plugin' => $plugin ];
-        $installer       = new \Automattic\WooCommerce\Admin\API\OnboardingPlugins();
-        $result          = $installer->install_plugin($install_request);
-
+        $install_request = ['plugin' => $plugin];
+        $installer = new \Automattic\Woo_Commerce\Admin\API\Onboarding_Plugins();
+        $result = $installer->install_plugin($install_request);
         // @todo Use the error statuses to decide whether or not to action the note.
         if (is_wp_error($result)) {
             return;
         }
-
-        $activate_request = [ 'plugins' => $plugin ];
-
+        $activate_request = ['plugins' => $plugin];
         $installer->activate_plugins($activate_request);
     }
-
     /**
      * Create an alert notification in response to an error installing a plugin.
      *
@@ -146,7 +122,6 @@ class InstallJPAndWCSPlugins
         if ('jetpack' !== $slug && 'woocommerce-services' !== $slug) {
             return;
         }
-
         self::possibly_add_note();
     }
 }

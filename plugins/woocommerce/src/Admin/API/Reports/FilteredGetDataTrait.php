@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\API\Reports;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\API\Reports;
 
 // Exit if accessed directly.
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit;
 }
-
 /**
  * Trait to call filters on `get_data` methods for data stores.
  *
@@ -26,7 +24,7 @@ if (! defined('ABSPATH')) {
  *
  * @see DataStore
  */
-trait FilteredGetDataTrait
+trait Filtered_Get_Data_Trait
 {
     /**
      * Get the data based on args.
@@ -46,7 +44,7 @@ trait FilteredGetDataTrait
          * @since 9.3.0
          * @param array $query_args Query parameters.
          */
-        $args    = apply_filters("woocommerce_analytics_{$this->context}_query_args", $query_args);
+        $args = apply_filters("woocommerce_analytics_{$this->context}_query_args", $query_args);
         $results = parent::get_data($args);
         /**
          * Called after the data is fetched.

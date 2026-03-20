@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Admin\Logging;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Logging;
 
 use Automattic\Jetpack\Constants;
-use Automattic\WooCommerce\Internal\Admin\Logging\FileV2\{ File, FileController };
+use Automattic\Woo_Commerce\Internal\Admin\Logging\File_V2\{File, File_Controller};
 use WC_Log_Handler;
-
 /**
  * LogHandlerFileV2 class.
  */
-class LogHandlerFileV2 extends WC_Log_Handler
+class Log_Handler_File_V2 extends WC_Log_Handler
 {
     /**
      * Instance of the FileController class.
@@ -19,23 +17,20 @@ class LogHandlerFileV2 extends WC_Log_Handler
      * @var FileController
      */
     private $file_controller;
-
     /**
      * Instance of the Settings class.
      *
      * @var Settings
      */
     private $settings;
-
     /**
      * LogHandlerFileV2 class.
      */
     public function __construct()
     {
-        $this->file_controller = wc_get_container()->get(FileController::class);
-        $this->settings        = wc_get_container()->get(Settings::class);
+        $this->file_controller = wc_get_container()->get(File_Controller::class);
+        $this->settings = wc_get_container()->get(Settings::class);
     }
-
     /**
      * Handle a log entry.
      *
@@ -55,24 +50,18 @@ class LogHandlerFileV2 extends WC_Log_Handler
     public function handle($timestamp, $level, $message, $context)
     {
         $context = (array) $context;
-
         if (isset($context['source']) && is_string($context['source']) && strlen($context['source']) >= 3) {
             $source = sanitize_title(trim($context['source']));
         } else {
             $source = $this->determine_source();
         }
-
         $entry = static::format_entry($timestamp, $level, $message, $context);
-
         $written = $this->file_controller->write_to_file($source, $entry, $timestamp);
-
         if ($written) {
             $this->file_controller->invalidate_cache();
         }
-
         return $written;
     }
-
     /**
      * Builds a log entry text from level, timestamp, and message.
      *
@@ -85,90 +74,60 @@ class LogHandlerFileV2 extends WC_Log_Handler
      */
     protected static function format_entry($timestamp, $level, $message, $context)
     {
-        $time_string  = static::format_time($timestamp);
+        $time_string = static::format_time($timestamp);
         $level_string = strtoupper($level);
-
         if (isset($context['backtrace']) && true === filter_var($context['backtrace'], FILTER_VALIDATE_BOOLEAN)) {
             $context['backtrace'] = static::get_backtrace();
         }
-
         $context_for_entry = $context;
         unset($context_for_entry['source']);
-
-        if (! empty($context_for_entry)) {
+        if (!empty($context_for_entry)) {
             $formatted_context = wp_json_encode($context_for_entry, JSON_UNESCAPED_UNICODE);
-            $message          .= stripslashes(" CONTEXT: $formatted_context");
+            $message .= stripslashes(" CONTEXT: {$formatted_context}");
         }
-
-        $entry = "$time_string $level_string $message";
-
+        $entry = "{$time_string} {$level_string} {$message}";
         // phpcs:disable WooCommerce.Commenting.CommentHooks.MissingSinceComment
         /** This filter is documented in includes/abstracts/abstract-wc-log-handler.php */
-        return apply_filters(
-            'woocommerce_format_log_entry',
-            $entry,
-            [
-                'timestamp' => $timestamp,
-                'level'     => $level,
-                'message'   => $message,
-                'context'   => $context,
-            ]
-        );
+        return apply_filters('woocommerce_format_log_entry', $entry, ['timestamp' => $timestamp, 'level' => $level, 'message' => $message, 'context' => $context]);
         // phpcs:enable WooCommerce.Commenting.CommentHooks.MissingSinceComment
     }
-
     /**
      * Figures out a source string to use for a log entry based on where the log method was called from.
      */
     protected function determine_source(): string
     {
-        $source_roots = [
-            'mu-plugin' => trailingslashit(Constants::get_constant('WPMU_PLUGIN_DIR')),
-            'plugin'    => trailingslashit(Constants::get_constant('WP_PLUGIN_DIR')),
-            'theme'     => trailingslashit(get_theme_root()),
-        ];
-
-        $source    = '';
+        $source_roots = ['mu-plugin' => trailingslashit(Constants::get_constant('WPMU_PLUGIN_DIR')), 'plugin' => trailingslashit(Constants::get_constant('WP_PLUGIN_DIR')), 'theme' => trailingslashit(get_theme_root())];
+        $source = '';
         $backtrace = static::get_backtrace();
-
         foreach ($backtrace as $frame) {
-            if (! isset($frame['file'])) {
+            if (!isset($frame['file'])) {
                 continue;
             }
-
             foreach ($source_roots as $type => $path) {
                 if (str_starts_with($frame['file'], $path)) {
                     $relative_path = trim(substr($frame['file'], strlen($path)), DIRECTORY_SEPARATOR);
-
                     if ('mu-plugin' === $type) {
                         $info = pathinfo($relative_path);
-
                         if ('.' === $info['dirname']) {
-                            $source = "$type-" . $info['filename'];
+                            $source = "{$type}-" . $info['filename'];
                         } else {
-                            $source = "$type-" . $info['dirname'];
+                            $source = "{$type}-" . $info['dirname'];
                         }
-
                         break 2;
                     }
-
                     $segments = explode(DIRECTORY_SEPARATOR, $relative_path);
                     if (is_array($segments)) {
-                        $source = "$type-" . reset($segments);
+                        $source = "{$type}-" . reset($segments);
                     }
-
                     break 2;
                 }
             }
         }
-
-        if (! $source) {
+        if (!$source) {
             $source = 'log';
         }
-
         return sanitize_title($source);
     }
-
     /**
      * Delete all logs from a specific source.
      *
@@ -180,54 +139,20 @@ class LogHandlerFileV2 extends WC_Log_Handler
     public function clear(string $source, bool $quiet = false): int
     {
         $source = File::sanitize_source($source);
-
-        $files = $this->file_controller->get_files(
-            [
-                'source' => $source,
-            ]
-        );
-
+        $files = $this->file_controller->get_files(['source' => $source]);
         if (is_wp_error($files) || count($files) < 1) {
             return 0;
         }
-
-        $file_ids = array_map(
-            fn ($file): string => $file->get_file_id(),
-            $files
-        );
-
+        $file_ids = array_map(fn($file): string => $file->get_file_id(), $files);
         $deleted = $this->file_controller->delete_files($file_ids);
-
-        if ($deleted > 0 && ! $quiet) {
-            $this->handle(
-                time(),
-                'info',
-                sprintf(
-                    esc_html(
-                        // translators: %1$s is a number of log files, %2$s is a slug-style name for a file.
-                        _n(
-                            '%1$s log file from source %2$s was deleted.',
-                            '%1$s log files from source %2$s were deleted.',
-                            $deleted,
-                            'woocommerce'
-                        )
-                    ),
-                    number_format_i18n($deleted),
-                    sprintf(
-                        '<code>%s</code>',
-                        esc_html($source)
-                    )
-                ),
-                [
-                    'source'    => 'wc_logger',
-                    'backtrace' => true,
-                ]
-            );
+        if ($deleted > 0 && !$quiet) {
+            $this->handle(time(), 'info', sprintf(esc_html(
+                // translators: %1$s is a number of log files, %2$s is a slug-style name for a file.
+                _n('%1$s log file from source %2$s was deleted.', '%1$s log files from source %2$s were deleted.', $deleted, 'woocommerce')
+            ), number_format_i18n($deleted), sprintf('<code>%s</code>', esc_html($source))), ['source' => 'wc_logger', 'backtrace' => true]);
         }
-
         return $deleted;
     }
-
     /**
      * Delete all logs older than a specified timestamp.
      *
@@ -237,74 +162,38 @@ class LogHandlerFileV2 extends WC_Log_Handler
      */
     public function delete_logs_before_timestamp(int $timestamp = 0): int
     {
-        if (! $timestamp) {
+        if (!$timestamp) {
             return 0;
         }
-
-        $files = $this->file_controller->get_files(
-            [
-                'date_filter' => 'created',
-                'date_start'  => 1,
-                'date_end'    => $timestamp,
-            ]
-        );
-
+        $files = $this->file_controller->get_files(['date_filter' => 'created', 'date_start' => 1, 'date_end' => $timestamp]);
         if (is_wp_error($files)) {
             return 0;
         }
-
-        $files = array_filter(
-            $files,
-            function ($file) use ($timestamp): bool {
-                /**
-                 * Allows preventing an expired log file from being deleted.
-                 *
-                 * @param bool $delete    True to delete the file.
-                 * @param File $file      The log file object.
-                 * @param int  $timestamp The expiration threshold.
-                 *
-                 * @since 8.7.0
-                 */
-                $delete = apply_filters('woocommerce_logger_delete_expired_file', true, $file, $timestamp);
-
-                return boolval($delete);
-            }
-        );
-
+        $files = array_filter($files, function ($file) use ($timestamp): bool {
+            /**
+             * Allows preventing an expired log file from being deleted.
+             *
+             * @param bool $delete    True to delete the file.
+             * @param File $file      The log file object.
+             * @param int  $timestamp The expiration threshold.
+             *
+             * @since 8.7.0
+             */
+            $delete = apply_filters('woocommerce_logger_delete_expired_file', true, $file, $timestamp);
+            return boolval($delete);
+        });
         if (count($files) < 1) {
             return 0;
         }
-
-        $file_ids = array_map(
-            fn ($file): string => $file->get_file_id(),
-            $files
-        );
-
-        $deleted        = $this->file_controller->delete_files($file_ids);
+        $file_ids = array_map(fn($file): string => $file->get_file_id(), $files);
+        $deleted = $this->file_controller->delete_files($file_ids);
         $this->settings->get_retention_period();
-
         if ($deleted > 0) {
-            $this->handle(
-                time(),
-                'info',
-                sprintf(
-                    esc_html(
-                        // translators: %s is a number of log files.
-                        _n(
-                            '%s expired log file was deleted.',
-                            '%s expired log files were deleted.',
-                            $deleted,
-                            'woocommerce'
-                        )
-                    ),
-                    number_format_i18n($deleted)
-                ),
-                [
-                    'source' => 'wc_logger',
-                ]
-            );
+            $this->handle(time(), 'info', sprintf(esc_html(
+                // translators: %s is a number of log files.
+                _n('%s expired log file was deleted.', '%s expired log files were deleted.', $deleted, 'woocommerce')
+            ), number_format_i18n($deleted)), ['source' => 'wc_logger']);
         }
-
         return $deleted;
     }
 }

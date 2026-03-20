@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Blueprint\Exporters;
 
-namespace Automattic\WooCommerce\Admin\Features\Blueprint\Exporters;
-
-use Automattic\WooCommerce\Admin\Features\Blueprint\SettingOptions;
-use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
-use Automattic\WooCommerce\Blueprint\UseWPFunctions;
-
+use Automattic\Woo_Commerce\Admin\Features\Blueprint\Setting_Options;
+use Automattic\Woo_Commerce\Blueprint\Steps\Set_Site_Options;
+use Automattic\Woo_Commerce\Blueprint\Use_Wp_Functions;
 /**
  * Class ExportWCSettingsEmails
  *
@@ -15,10 +13,9 @@ use Automattic\WooCommerce\Blueprint\UseWPFunctions;
  *
  * @package Automattic\WooCommerce\Admin\Features\Blueprint\Exporters
  */
-class ExportWCSettingsEmails extends ExportWCSettings
+class Export_Wc_Settings_Emails extends Export_Wc_Settings
 {
-    use UseWPFunctions;
-
+    use Use_Wp_Functions;
     /**
      * Get the alias for this exporter.
      */
@@ -26,28 +23,20 @@ class ExportWCSettingsEmails extends ExportWCSettings
     {
         return 'setWCSettingsEmails';
     }
-
     /**
      * Export WooCommerce settings.
      */
-    public function export(): \Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions
+    public function export(): \Automattic\Woo_Commerce\Blueprint\Steps\Set_Site_Options
     {
-        $emails          = \WC_Emails::instance();
-        $setting_options = new SettingOptions();
-
+        $emails = \WC_Emails::instance();
+        $setting_options = new Setting_Options();
         $email_settings = $setting_options->get_page_options($this->get_page_id());
-
         // Get sub-settings for each email.
         foreach ($emails->get_emails() as $email) {
-            $email_settings = array_merge(
-                $email_settings,
-                $setting_options->get_page_options('email_' . $email->id)
-            );
+            $email_settings = array_merge($email_settings, $setting_options->get_page_options('email_' . $email->id));
         }
-
-        return new SetSiteOptions($email_settings);
+        return new Set_Site_Options($email_settings);
     }
-
     /**
      * Return label used in the frontend.
      *
@@ -57,7 +46,6 @@ class ExportWCSettingsEmails extends ExportWCSettings
     {
         return __('Emails', 'woocommerce');
     }
-
     /**
      * Return description used in the frontend.
      *
@@ -67,7 +55,6 @@ class ExportWCSettingsEmails extends ExportWCSettings
     {
         return __('Includes all settings in WooCommerce | Settings | Emails.', 'woocommerce');
     }
-
     /**
      * Get the page ID for the settings page.
      */

@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Caching;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Caching;
 
 /**
  * Base class for caching objects (or associative arrays) that have a unique identifier.
@@ -17,23 +16,20 @@ namespace Automattic\WooCommerce\Caching;
  * to the cache engine will be prefixed with the object type and a random string. The 'flush' operation
  * just forces the generation a new prefix and lets the old cached objects expire.
  */
-abstract class ObjectCache
+abstract class Object_Cache
 {
     /**
      * Expiration value to be passed to 'set' to use the value of $default_expiration.
      */
     public const DEFAULT_EXPIRATION = -1;
-
     /**
      * Maximum expiration time value, in seconds, that can be passed to 'set'.
      */
     public const MAX_EXPIRATION = MONTH_IN_SECONDS;
-
     /**
      * This needs to be set in each derived class.
      */
     private readonly string $object_type;
-
     /**
      * Default value for the duration of the objects in the cache, in seconds
      * (may not be used depending on the cache engine used WordPress cache implementation).
@@ -41,26 +37,22 @@ abstract class ObjectCache
      * @var int
      */
     protected $default_expiration = HOUR_IN_SECONDS;
-
     /**
      * Temporarily used when retrieving data in 'get'.
      */
     private object|array|null $last_cached_data = null;
-
     /**
      * The cache engine to use.
      *
      * @var ?CacheEngine
      */
     private $cache_engine;
-
     /**
      * Gets an identifier for the types of objects cached by this class.
      * This identifier will be used to compose the keys passed to the cache engine.
      * It must be unique for each class inheriting from ObjectCache.
      */
     abstract public function get_object_type(): string;
-
     /**
      * Creates a new instance of the class.
      *
@@ -70,10 +62,9 @@ abstract class ObjectCache
     {
         $this->object_type = $this->get_object_type();
         if (empty($this->object_type)) {
-            throw new CacheException('Class ' . static::class . ' returns an empty value for get_object_type', $this);
+            throw new Cache_Exception('Class ' . static::class . ' returns an empty value for get_object_type', $this);
         }
     }
-
     /**
      * Get the default expiration time for cached objects, in seconds.
      */
@@ -81,15 +72,13 @@ abstract class ObjectCache
     {
         return $this->default_expiration;
     }
-
     /**
      * Get the cache engine to use and cache it internally.
      */
-    private function get_cache_engine(): CacheEngine
+    private function get_cache_engine(): Cache_Engine
     {
         if (null === $this->cache_engine) {
             $engine = $this->get_cache_engine_instance();
-
             /**
              * Filters the underlying cache engine to be used by an instance of ObjectCache.
              *
@@ -103,7 +92,6 @@ abstract class ObjectCache
         }
         return $this->cache_engine;
     }
-
     /**
      * Add an object to the cache, or update an already cached object.
      *
@@ -116,46 +104,34 @@ abstract class ObjectCache
     public function set($object, $id = null, int $expiration = self::DEFAULT_EXPIRATION): bool
     {
         if (null === $object) {
-            throw new CacheException("Can't cache a null value", $this, $id);
+            throw new Cache_Exception("Can't cache a null value", $this, $id);
         }
-
-        if (! is_array($object) && ! is_object($object)) {
-            throw new CacheException("Can't cache a non-object, non-array value", $this, $id);
+        if (!is_array($object) && !is_object($object)) {
+            throw new Cache_Exception("Can't cache a non-object, non-array value", $this, $id);
         }
-
-        if (! is_string($id) && ! is_int($id) && ! is_null($id)) {
-            throw new CacheException("Object id must be an int, a string, or null for 'set'", $this, $id);
+        if (!is_string($id) && !is_int($id) && !is_null($id)) {
+            throw new Cache_Exception("Object id must be an int, a string, or null for 'set'", $this, $id);
         }
-
         $this->verify_expiration_value($expiration);
-
         $errors = $this->validate($object);
-        if (! is_null($errors)) {
+        if (!is_null($errors)) {
             try {
                 $id = $this->get_id_from_object_if_null($object, $id);
-            } catch (\Throwable) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+            } catch (\Throwable) {
+                // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
                 // Nothing else to do, we won't be able to add any significant object id to the CacheException and that's it.
             }
             if (count($errors) === 1) {
-                throw new CacheException('Object validation/serialization failed: ' . $errors[0], $this, $id, $errors);
+                throw new Cache_Exception('Object validation/serialization failed: ' . $errors[0], $this, $id, $errors);
             }
-
-            if (! empty($errors)) {
-                throw new CacheException('Object validation/serialization failed', $this, $id, $errors);
+            if (!empty($errors)) {
+                throw new Cache_Exception('Object validation/serialization failed', $this, $id, $errors);
             }
         }
-
         $id = $this->get_id_from_object_if_null($object, $id);
-
         $this->last_cached_data = $object;
-        return $this->get_cache_engine()->cache_object(
-            $id,
-            $object,
-            self::DEFAULT_EXPIRATION === $expiration ? $this->default_expiration : $expiration,
-            $this->get_object_type()
-        );
+        return $this->get_cache_engine()->cache_object($id, $object, self::DEFAULT_EXPIRATION === $expiration ? $this->default_expiration : $expiration, $this->get_object_type());
     }
-
     /**
      * Update an object in the cache, but only if an object is already cached with the same id.
      *
@@ -168,14 +144,11 @@ abstract class ObjectCache
     public function update_if_cached($object, $id = null, int $expiration = self::DEFAULT_EXPIRATION): bool
     {
         $id = $this->get_id_from_object_if_null($object, $id);
-
-        if (! $this->is_cached($id)) {
+        if (!$this->is_cached($id)) {
             return false;
         }
-
         return $this->set($object, $id, $expiration);
     }
-
     /**
      * Get the id from an object if the id itself is null.
      *
@@ -191,13 +164,11 @@ abstract class ObjectCache
         if (null === $id) {
             $id = $this->get_object_id($object);
             if (null === $id) {
-                throw new CacheException("Null id supplied and the cache class doesn't implement get_object_id", $this);
+                throw new Cache_Exception("Null id supplied and the cache class doesn't implement get_object_id", $this);
             }
         }
-
         return $id;
     }
-
     /**
      * Check if the given expiration time value is valid, throw an exception if not.
      *
@@ -206,11 +177,10 @@ abstract class ObjectCache
      */
     private function verify_expiration_value(int $expiration): void
     {
-        if (self::DEFAULT_EXPIRATION !== $expiration && (($expiration < 1) || ($expiration > self::MAX_EXPIRATION))) {
-            throw new CacheException('Invalid expiration value, must be ObjectCache::DEFAULT_EXPIRATION or a value between 1 and ObjectCache::MAX_EXPIRATION', $this);
+        if (self::DEFAULT_EXPIRATION !== $expiration && ($expiration < 1 || $expiration > self::MAX_EXPIRATION)) {
+            throw new Cache_Exception('Invalid expiration value, must be ObjectCache::DEFAULT_EXPIRATION or a value between 1 and ObjectCache::MAX_EXPIRATION', $this);
         }
     }
-
     /**
      * Retrieve a cached object, and if no object is cached with the given id,
      * try to get one via get_from_datastore method or by supplying a callback and then cache it.
@@ -226,29 +196,24 @@ abstract class ObjectCache
      */
     public function get($id, int $expiration = self::DEFAULT_EXPIRATION, ?callable $get_from_datastore_callback = null)
     {
-        if (! is_string($id) && ! is_int($id)) {
-            throw new CacheException("Object id must be an int or a string for 'get'", $this);
+        if (!is_string($id) && !is_int($id)) {
+            throw new Cache_Exception("Object id must be an int or a string for 'get'", $this);
         }
-
         $this->verify_expiration_value($expiration);
-
         $data = $this->get_cache_engine()->get_cached_object($id, $this->get_object_type());
         if (null === $data) {
             $object = null;
             if ($get_from_datastore_callback) {
                 $object = $get_from_datastore_callback($id);
             }
-
             if (null === $object) {
                 return null;
             }
             $this->set($object, $id, $expiration);
             $data = $this->last_cached_data;
         }
-
         return $data;
     }
-
     /**
      * Remove an object from the cache.
      *
@@ -259,7 +224,6 @@ abstract class ObjectCache
     {
         return $this->get_cache_engine()->delete_cached_object($id, $this->get_object_type());
     }
-
     /**
      * Remove all the objects from the cache.
      *
@@ -269,7 +233,6 @@ abstract class ObjectCache
     {
         return $this->get_cache_engine()->delete_cache_group($this->get_object_type());
     }
-
     /**
      * Is a given object cached?
      *
@@ -280,7 +243,6 @@ abstract class ObjectCache
     {
         return $this->get_cache_engine()->is_cached($id, $this->get_object_type());
     }
-
     /**
      * Get the id of an object. This is used by 'set' when a null id is passed.
      * If the object id can't be determined the method must return null.
@@ -289,7 +251,6 @@ abstract class ObjectCache
      * @return int|string|null
      */
     abstract protected function get_object_id($object);
-
     /**
      * Validate an object before it's cached.
      *
@@ -297,15 +258,13 @@ abstract class ObjectCache
      * @return array|null An array with validation error messages, null or an empty array if there are no errors.
      */
     abstract protected function validate($object): ?array;
-
     /**
      * Get the instance of the cache engine to use.
      */
-    protected function get_cache_engine_instance(): CacheEngine
+    protected function get_cache_engine_instance(): Cache_Engine
     {
-        return wc_get_container()->get(WPCacheEngine::class);
+        return wc_get_container()->get(Wp_Cache_Engine::class);
     }
-
     /**
      * Get a random string to be used to compose the cache key prefix.
      * It should return a different string each time.

@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor that performs a comparison operation against the base
  * location - state.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
 /**
  * Rule processor that performs a comparison operation against the base
  * location - state.
  */
-class BaseLocationStateRuleProcessor implements RuleProcessorInterface
+class Base_Location_State_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * Performs a comparison operation against the base location - state.
@@ -27,17 +25,11 @@ class BaseLocationStateRuleProcessor implements RuleProcessorInterface
     public function process($rule, $stored_state)
     {
         $base_location = wc_get_base_location();
-        if (! is_array($base_location) || ! array_key_exists('state', $base_location)) {
+        if (!is_array($base_location) || !array_key_exists('state', $base_location)) {
             return false;
         }
-
-        return ComparisonOperation::compare(
-            $base_location['state'],
-            $rule->value,
-            $rule->operation
-        );
+        return Comparison_Operation::compare($base_location['state'], $rule->value, $rule->operation);
     }
-
     /**
      * Validates the rule.
      *
@@ -47,14 +39,12 @@ class BaseLocationStateRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->value)) {
+        if (!isset($rule->value)) {
             return false;
         }
-
-        if (! isset($rule->operation)) {
+        if (!isset($rule->operation)) {
             return false;
         }
-
         return true;
     }
 }

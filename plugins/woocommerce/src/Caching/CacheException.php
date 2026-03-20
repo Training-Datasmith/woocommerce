@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Caching;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Caching;
 
 /**
  * Exception thrown by classes derived from ObjectCache.
  */
-class CacheException extends \Exception
+class Cache_Exception extends \Exception
 {
     /**
      * Error messages.
      */
     private readonly array $errors;
-
     /**
      * Creates a new instance of the class.
      *
@@ -24,19 +22,24 @@ class CacheException extends \Exception
      * @param mixed           $code An error code, if available.
      * @param \Throwable|null $previous The previous exception, if available.
      */
-    public function __construct(string $message, /**
-     * The object that threw the exception.
-     */
-        private readonly ObjectCache $thrower, /**
-     * The id of the cached object, if available.
-     */
-        private $cached_id = null, ?array $errors = null, $code = 0, ?\Throwable $previous = null)
+    public function __construct(
+        string $message,
+        /**
+         * The object that threw the exception.
+         */
+        private readonly Object_Cache $thrower,
+        /**
+         * The id of the cached object, if available.
+         */
+        private $cached_id = null,
+        ?array $errors = null,
+        $code = 0,
+        ?\Throwable $previous = null
+    )
     {
-        $this->errors    = $errors ?? [];
-
+        $this->errors = $errors ?? [];
         parent::__construct($message, $code, $previous);
     }
-
     /**
      * Get a string representation of the exception object.
      *
@@ -47,7 +50,6 @@ class CacheException extends \Exception
         $cached_id_part = $this->cached_id ? ", id: {$this->cached_id}" : '';
         return "CacheException: [{$this->thrower->get_object_type()}{$cached_id_part}]: {$this->message}";
     }
-
     /**
      * Gets the array of error messages passed to the exception constructor.
      *
@@ -57,7 +59,6 @@ class CacheException extends \Exception
     {
         return $this->errors;
     }
-
     /**
      * Gets the object that threw the exception as passed to the exception constructor.
      *
@@ -67,7 +68,6 @@ class CacheException extends \Exception
     {
         return $this->thrower;
     }
-
     /**
      * Gets the id of the cached object as passed to the exception constructor.
      *

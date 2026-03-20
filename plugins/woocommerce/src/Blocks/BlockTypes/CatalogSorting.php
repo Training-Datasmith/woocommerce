@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * CatalogSorting class.
  */
-class CatalogSorting extends AbstractBlock
+class Catalog_Sorting extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,7 +15,6 @@ class CatalogSorting extends AbstractBlock
      * @var string
      */
     protected $block_name = 'catalog-sorting';
-
     /**
      * Render the block.
      *
@@ -32,34 +29,13 @@ class CatalogSorting extends AbstractBlock
         ob_start();
         woocommerce_catalog_ordering($attributes);
         $catalog_sorting = ob_get_clean();
-
-        if (! $catalog_sorting) {
+        if (!$catalog_sorting) {
             return;
         }
-
-        $classes_and_styles = StyleAttributesUtils::get_classes_and_styles_by_attributes($attributes, [], [ 'extra_classes' ]);
-        $wrapper_attributes = get_block_wrapper_attributes(
-            [
-                'class' => implode(
-                    ' ',
-                    array_filter(
-                        [
-                            'woocommerce wc-block-catalog-sorting',
-                            esc_attr($classes_and_styles['classes']),
-                        ]
-                    )
-                ),
-                'style' => esc_attr($styles_and_classes['styles'] ?? ''),
-            ]
-        );
-
-        return sprintf(
-            '<div %1$s>%2$s</div>',
-            $wrapper_attributes,
-            $catalog_sorting
-        );
+        $classes_and_styles = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes, [], ['extra_classes']);
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => implode(' ', array_filter(['woocommerce wc-block-catalog-sorting', esc_attr($classes_and_styles['classes'])])), 'style' => esc_attr($styles_and_classes['styles'] ?? '')]);
+        return sprintf('<div %1$s>%2$s</div>', $wrapper_attributes, $catalog_sorting);
     }
-
     /**
      * Get the frontend script handle for this block type.
      *

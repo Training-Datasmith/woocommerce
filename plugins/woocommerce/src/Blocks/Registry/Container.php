@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Registry;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Registry;
 
 use Closure;
 use Exception;
-
 /**
  * A simple Dependency Injection Container
  *
@@ -22,7 +20,6 @@ class Container
      * @var AbstractDependencyType[]
      */
     private array $registry = [];
-
     /**
      * Public api for adding a factory to the container.
      *
@@ -44,11 +41,10 @@ class Container
      *
      * @return FactoryType  An instance of the FactoryType dependency.
      */
-    public function factory(Closure $instantiation_callback): \Automattic\WooCommerce\Blocks\Registry\FactoryType
+    public function factory(Closure $instantiation_callback): \Automattic\Woo_Commerce\Blocks\Registry\Factory_Type
     {
-        return new FactoryType($instantiation_callback);
+        return new Factory_Type($instantiation_callback);
     }
-
     /**
      * Interface for registering a new dependency with the container.
      *
@@ -70,14 +66,13 @@ class Container
      */
     public function register($id, $value): void
     {
-        if (empty($this->registry[ $id ])) {
-            if (! $value instanceof FactoryType) {
-                $value = new SharedType($value);
+        if (empty($this->registry[$id])) {
+            if (!$value instanceof Factory_Type) {
+                $value = new Shared_Type($value);
             }
-            $this->registry[ $id ] = $value;
+            $this->registry[$id] = $value;
         }
     }
-
     /**
      * Interface for retrieving the dependency stored in the container for the
      * given identifier.
@@ -90,15 +85,10 @@ class Container
      */
     public function get($id)
     {
-        if (! isset($this->registry[ $id ])) {
+        if (!isset($this->registry[$id])) {
             // this is a developer facing exception, hence it is not localized.
-            throw new Exception(
-                sprintf(
-                    'Cannot construct an instance of %s because it has not been registered.',
-                    $id
-                )
-            );
+            throw new Exception(sprintf('Cannot construct an instance of %s because it has not been registered.', $id));
         }
-        return $this->registry[ $id ]->get($this);
+        return $this->registry[$id]->get($this);
     }
 }

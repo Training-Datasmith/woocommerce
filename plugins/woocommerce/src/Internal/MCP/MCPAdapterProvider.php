@@ -3,24 +3,20 @@
 /**
  * MCP Adapter Provider class file.
  */
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\MCP;
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\MCP;
-
-use Automattic\WooCommerce\Internal\Abilities\AbilitiesRegistry;
-use Automattic\WooCommerce\Internal\MCP\Transport\WooCommerceRestTransport;
-use Automattic\WooCommerce\Utilities\FeaturesUtil;
-
+use Automattic\Woo_Commerce\Internal\Abilities\Abilities_Registry;
+use Automattic\Woo_Commerce\Internal\MCP\Transport\Woo_Commerce_Rest_Transport;
+use Automattic\Woo_Commerce\Utilities\Features_Util;
 defined('ABSPATH') || exit;
-
 /**
  * MCP Adapter Provider class for WooCommerce.
  *
  * Manages MCP (Model Context Protocol) adapter initialization and server configuration.
  * Abilities should be registered separately using the WordPress Abilities API.
  */
-class MCPAdapterProvider
+class Mcp_Adapter_Provider
 {
     /**
      * MCP server namespace.
@@ -28,19 +24,16 @@ class MCPAdapterProvider
      * @var string
      */
     public const MCP_NAMESPACE = 'woocommerce';
-
     /**
      * MCP server route.
      *
      * @var string
      */
     public const MCP_ROUTE = 'mcp';
-
     /**
      * Whether MCP adapter is initialized.
      */
     private bool $initialized = false;
-
     /**
      * Constructor.
      */
@@ -53,47 +46,38 @@ class MCPAdapterProvider
          */
         add_action('rest_api_init', $this->maybe_initialize(...), 10);
     }
-
     /**
      * Check feature flag and initialize MCP adapter if enabled.
      */
     public function maybe_initialize(): void
     {
         // Check if MCP integration feature is enabled.
-        if (! FeaturesUtil::feature_is_enabled('mcp_integration')) {
+        if (!Features_Util::feature_is_enabled('mcp_integration')) {
             return;
         }
-
         // Prevent double initialization.
         if ($this->initialized) {
             return;
         }
-
         $this->initialize_mcp_adapter();
         $this->register_hooks();
         $this->initialized = true;
     }
-
     /**
      * Initialize the MCP adapter.
      */
     private function initialize_mcp_adapter(): void
     {
         // Check if MCP adapter class exists (should be autoloaded by WooCommerce's composer).
-        if (! class_exists('WP\MCP\Core\McpAdapter')) {
+        if (!class_exists('WP\MCP\Core\McpAdapter')) {
             if (function_exists('wc_get_logger')) {
-                wc_get_logger()->warning(
-                    'MCP adapter class not found. Skipping MCP initialization.',
-                    [ 'source' => 'woocommerce-mcp' ]
-                );
+                wc_get_logger()->warning('MCP adapter class not found. Skipping MCP initialization.', ['source' => 'woocommerce-mcp']);
             }
             return;
         }
-
         // Initialize the MCP adapter instance - this triggers the rest_api_init hook registration.
-        \WP\MCP\Core\McpAdapter::instance();
+        \WP\MCP\Core\Mcp_Adapter::instance();
     }
-
     /**
      * Register WordPress hooks for MCP adapter.
      */
@@ -102,7 +86,6 @@ class MCPAdapterProvider
         // Initialize MCP server when MCP adapter is ready.
         add_action('mcp_adapter_init', $this->initialize_mcp_server(...));
     }
-
     /**
      * Initialize MCP server.
      *
@@ -112,12 +95,10 @@ class MCPAdapterProvider
     {
         // Get filtered abilities for MCP server.
         $abilities_ids = $this->get_woocommerce_mcp_abilities();
-
         // Bail if no abilities are available.
         if (empty($abilities_ids)) {
             return;
         }
-
         /*
          * Temporarily disable MCP validation during server creation.
          * Workaround for validator bug with union types (e.g., ["integer", "null"]).
@@ -126,34 +107,18 @@ class MCPAdapterProvider
          * @see https://github.com/WordPress/mcp-adapter/issues/47
          */
         add_filter('mcp_validation_enabled', self::disable_mcp_validation(...), 999);
-
         try {
             // Create MCP server.
-            $adapter->create_server(
-                'woocommerce-mcp',
-                self::MCP_NAMESPACE,
-                self::MCP_ROUTE,
-                __('WooCommerce MCP Server', 'woocommerce'),
-                __('AI-accessible WooCommerce operations via MCP', 'woocommerce'),
-                '1.0.0',
-                [ WooCommerceRestTransport::class ],
-                \WP\MCP\Infrastructure\ErrorHandling\ErrorLogMcpErrorHandler::class,
-                \WP\MCP\Infrastructure\Observability\NullMcpObservabilityHandler::class,
-                $abilities_ids,
-            );
+            $adapter->create_server('woocommerce-mcp', self::MCP_NAMESPACE, self::MCP_ROUTE, __('WooCommerce MCP Server', 'woocommerce'), __('AI-accessible WooCommerce operations via MCP', 'woocommerce'), '1.0.0', [Woo_Commerce_Rest_Transport::class], \WP\MCP\Infrastructure\Error_Handling\Error_Log_Mcp_Error_Handler::class, \WP\MCP\Infrastructure\Observability\Null_Mcp_Observability_Handler::class, $abilities_ids);
         } catch (\Throwable $e) {
             if (function_exists('wc_get_logger')) {
-                wc_get_logger()->error(
-                    'MCP server initialization failed: ' . $e->getMessage(),
-                    [ 'source' => 'woocommerce-mcp' ]
-                );
+                wc_get_logger()->error('MCP server initialization failed: ' . $e->get_message(), ['source' => 'woocommerce-mcp']);
             }
         } finally {
             // Re-enable MCP validation immediately after server creation.
             remove_filter('mcp_validation_enabled', self::disable_mcp_validation(...), 999);
         }
     }
-
     /**
      * Get WooCommerce abilities for MCP server.
      *
@@ -165,33 +130,26 @@ class MCPAdapterProvider
     private function get_woocommerce_mcp_abilities(): array
     {
         // Get all abilities from the registry.
-        $abilities_registry = wc_get_container()->get(AbilitiesRegistry::class);
-        $all_abilities_ids  = $abilities_registry->get_abilities_ids();
-
+        $abilities_registry = wc_get_container()->get(Abilities_Registry::class);
+        $all_abilities_ids = $abilities_registry->get_abilities_ids();
         // Filter abilities based on namespace and custom filter.
-        $mcp_abilities = array_filter(
-            $all_abilities_ids,
-            static function ($ability_id) {
-                // Include WooCommerce abilities by default.
-                $include = str_starts_with($ability_id, 'woocommerce/');
-
-                // Allow filter to override inclusion decision.
-                /**
-                 * Filter to override MCP ability inclusion decision.
-                 *
-                 * @since 10.3.0
-                 *
-                 * @param bool   $include    Whether to include the ability.
-                 * @param string $ability_id The ability ID.
-                 */
-                return apply_filters('woocommerce_mcp_include_ability', $include, $ability_id);
-            }
-        );
-
+        $mcp_abilities = array_filter($all_abilities_ids, static function ($ability_id) {
+            // Include WooCommerce abilities by default.
+            $include = str_starts_with($ability_id, 'woocommerce/');
+            // Allow filter to override inclusion decision.
+            /**
+             * Filter to override MCP ability inclusion decision.
+             *
+             * @since 10.3.0
+             *
+             * @param bool   $include    Whether to include the ability.
+             * @param string $ability_id The ability ID.
+             */
+            return apply_filters('woocommerce_mcp_include_ability', $include, $ability_id);
+        });
         // Re-index array.
         return array_values($mcp_abilities);
     }
-
     /**
      * Temporarily disable MCP validation.
      *
@@ -204,7 +162,6 @@ class MCPAdapterProvider
     {
         return false;
     }
-
     /**
      * Check if MCP adapter is initialized.
      *
@@ -214,7 +171,6 @@ class MCPAdapterProvider
     {
         return $this->initialized;
     }
-
     /**
      * Check if the current request is for the MCP endpoint.
      *
@@ -223,16 +179,13 @@ class MCPAdapterProvider
     public static function is_mcp_request(): bool
     {
         // Check if this is a REST request.
-        if (! wp_is_serving_rest_request()) {
+        if (!wp_is_serving_rest_request()) {
             return false;
         }
-
         // Get the request URI.
         $request_uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
-
         // Build the MCP endpoint path dynamically from constants.
         $mcp_endpoint = '/' . self::MCP_NAMESPACE . '/' . self::MCP_ROUTE;
-
         // Check if the request is for the MCP endpoint.
         return str_contains($request_uri, $mcp_endpoint);
     }

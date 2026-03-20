@@ -1,45 +1,39 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs;
 
 /**
  * Specs data source poller class.
  * This handles polling specs from JSON endpoints, and
  * stores the specs in to the database as an option.
  */
-abstract class DataSourcePoller
+abstract class Data_Source_Poller
 {
     /**
      * Get class instance.
      */
     abstract public static function get_instance();
-
     /**
      * Name of data sources filter.
      */
     public const FILTER_NAME = 'data_source_poller_data_sources';
-
     /**
      * Name of data source specs filter.
      */
     public const FILTER_NAME_SPECS = 'data_source_poller_specs';
-
     /**
      * Default args.
      *
      * @var array
      */
     protected $args = [];
-
     /**
      * The logger instance.
      *
      * @var WC_Logger|null
      */
     protected static $logger;
-
     /**
      * Constructor.
      *
@@ -47,23 +41,21 @@ abstract class DataSourcePoller
      * @param array  $data_sources urls for data sources.
      * @param array  $args Options for DataSourcePoller.
      */
-    public function __construct(/**
-     * Id of DataSourcePoller.
-     */
-        protected $id, /**
-     * Default data sources array.
-     */
+    public function __construct(
+        /**
+         * Id of DataSourcePoller.
+         */
+        protected $id,
+        /**
+         * Default data sources array.
+         */
         protected $data_sources = [],
         $args = []
-    ) {
-        $arg_defaults = [
-            'spec_key'         => 'id',
-            'transient_name'   => 'woocommerce_admin_' . $this->id . '_specs',
-            'transient_expiry' => 7 * DAY_IN_SECONDS,
-        ];
-        $this->args   = wp_parse_args($args, $arg_defaults);
+    )
+    {
+        $arg_defaults = ['spec_key' => 'id', 'transient_name' => 'woocommerce_admin_' . $this->id . '_specs', 'transient_expiry' => 7 * DAY_IN_SECONDS];
+        $this->args = wp_parse_args($args, $arg_defaults);
     }
-
     /**
      * Get the logger instance.
      *
@@ -74,10 +66,8 @@ abstract class DataSourcePoller
         if (is_null(self::$logger)) {
             self::$logger = wc_get_logger();
         }
-
         return self::$logger;
     }
-
     /**
      * Returns the key identifier of spec, this can easily be overwritten. Defaults to id.
      *
@@ -87,9 +77,8 @@ abstract class DataSourcePoller
     protected function get_spec_key($spec)
     {
         $key = $this->args['spec_key'];
-        return $spec->$key ?? false;
+        return $spec->{$key} ?? false;
     }
-
     /**
      * Reads the data sources for specs and persists those specs.
      *
@@ -97,16 +86,14 @@ abstract class DataSourcePoller
      */
     public function get_specs_from_data_sources()
     {
-        $locale      = get_user_locale();
+        $locale = get_user_locale();
         $specs_group = get_transient($this->args['transient_name']) ?? [];
-        $specs       = $specs_group[ $locale ] ?? null;
-
-        if (! is_array($specs)) {
+        $specs = $specs_group[$locale] ?? null;
+        if (!is_array($specs)) {
             $this->read_specs_from_data_sources();
             $specs_group = get_transient($this->args['transient_name']);
-            $specs       = $specs_group[ $locale ] ?? [];
+            $specs = $specs_group[$locale] ?? [];
         }
-
         /**
          * Filter specs.
          *
@@ -118,7 +105,6 @@ abstract class DataSourcePoller
         $specs = apply_filters(self::FILTER_NAME_SPECS, $specs, $this->id);
         return false !== $specs ? $specs : [];
     }
-
     /**
      * Gets specs from cache if it exists.
      *
@@ -126,10 +112,9 @@ abstract class DataSourcePoller
      */
     public function get_cached_specs()
     {
-        $locale      = get_user_locale();
+        $locale = get_user_locale();
         $specs_group = get_transient($this->args['transient_name']) ?? [];
-        $specs       = $specs_group[ $locale ] ?? null;
-
+        $specs = $specs_group[$locale] ?? null;
         /**
          * Filter specs.
          *
@@ -139,10 +124,8 @@ abstract class DataSourcePoller
          * @since 8.8.0
          */
         $specs = apply_filters(self::FILTER_NAME_SPECS, $specs, $this->id);
-
         return false !== $specs ? $specs : [];
     }
-
     /**
      * Reads the data sources for specs and persists those specs.
      *
@@ -151,7 +134,6 @@ abstract class DataSourcePoller
     public function read_specs_from_data_sources()
     {
         $specs = [];
-
         /**
          * Filter data sources.
          *
@@ -161,26 +143,20 @@ abstract class DataSourcePoller
          * @since 8.8.0
          */
         $data_sources = apply_filters(self::FILTER_NAME, $this->data_sources, $this->id);
-
         // Note that this merges the specs from the data sources based on the
         // id - last one wins.
         foreach ($data_sources as $url) {
             $specs_from_data_source = self::read_data_source($url);
             $this->merge_specs($specs_from_data_source, $specs, $url);
         }
-
-        $specs_group            = get_transient($this->args['transient_name']);
-        $specs_group            = is_array($specs_group) ? $specs_group : [];
-        $locale                 = get_user_locale();
-        $specs_group[ $locale ] = $specs;
+        $specs_group = get_transient($this->args['transient_name']);
+        $specs_group = is_array($specs_group) ? $specs_group : [];
+        $locale = get_user_locale();
+        $specs_group[$locale] = $specs;
         // Persist the specs as a transient.
-        $this->set_specs_transient(
-            $specs_group,
-            $this->args['transient_expiry']
-        );
+        $this->set_specs_transient($specs_group, $this->args['transient_expiry']);
         return count($specs) !== 0;
     }
-
     /**
      * Delete the specs transient.
      *
@@ -190,7 +166,6 @@ abstract class DataSourcePoller
     {
         return delete_transient($this->args['transient_name']);
     }
-
     /**
      * Set the specs transient.
      *
@@ -199,13 +174,8 @@ abstract class DataSourcePoller
      */
     public function set_specs_transient($specs, $expiration = 0): void
     {
-        set_transient(
-            $this->args['transient_name'],
-            $specs,
-            $expiration,
-        );
+        set_transient($this->args['transient_name'], $specs, $expiration);
     }
-
     /**
      * Read a single data source and return the read specs
      *
@@ -215,54 +185,27 @@ abstract class DataSourcePoller
      */
     protected static function read_data_source($url)
     {
-        $logger_context = [ 'source' => $url ];
-        $logger         = self::get_logger();
-        $response       = wp_remote_get(
-            add_query_arg(
-                'locale',
-                get_user_locale(),
-                $url
-            ),
-            [
-                'user-agent' => 'WooCommerce/' . WC_VERSION . '; ' . home_url('/'),
-            ]
-        );
-
-        if (is_wp_error($response) || ! isset($response['body'])) {
-            $logger->error(
-                'Error getting data feed',
-                $logger_context
-            );
+        $logger_context = ['source' => $url];
+        $logger = self::get_logger();
+        $response = wp_remote_get(add_query_arg('locale', get_user_locale(), $url), ['user-agent' => 'WooCommerce/' . WC_VERSION . '; ' . home_url('/')]);
+        if (is_wp_error($response) || !isset($response['body'])) {
+            $logger->error('Error getting data feed', $logger_context);
             // phpcs:ignore
             $logger->error(print_r($response, true), $logger_context);
-
             return [];
         }
-
-        $body  = $response['body'];
+        $body = $response['body'];
         $specs = json_decode($body);
-
         if (null === $specs) {
-            $logger->error(
-                'Empty response in data feed',
-                $logger_context
-            );
-
+            $logger->error('Empty response in data feed', $logger_context);
             return [];
         }
-
-        if (! is_array($specs)) {
-            $logger->error(
-                'Data feed is not an array',
-                $logger_context
-            );
-
+        if (!is_array($specs)) {
+            $logger->error('Data feed is not an array', $logger_context);
             return [];
         }
-
         return $specs;
     }
-
     /**
      * Merge the specs.
      *
@@ -273,15 +216,13 @@ abstract class DataSourcePoller
     protected function merge_specs($specs_to_merge_in, array &$specs, $url)
     {
         foreach ($specs_to_merge_in as $spec) {
-            if (! $this->validate_spec($spec, $url)) {
+            if (!$this->validate_spec($spec, $url)) {
                 continue;
             }
-
-            $id           = $this->get_spec_key($spec);
-            $specs[ $id ] = $spec;
+            $id = $this->get_spec_key($spec);
+            $specs[$id] = $spec;
         }
     }
-
     /**
      * Validate the spec.
      *
@@ -292,20 +233,14 @@ abstract class DataSourcePoller
      */
     protected function validate_spec($spec, $url)
     {
-        $logger         = self::get_logger();
-        $logger_context = [ 'source' => $url ];
-
-        if (! $this->get_spec_key($spec)) {
-            $logger->error(
-                'Spec is invalid because the id is missing in feed',
-                $logger_context
-            );
+        $logger = self::get_logger();
+        $logger_context = ['source' => $url];
+        if (!$this->get_spec_key($spec)) {
+            $logger->error('Spec is invalid because the id is missing in feed', $logger_context);
             // phpcs:ignore
             $logger->error(print_r($spec, true), $logger_context);
-
             return false;
         }
-
         return true;
     }
 }

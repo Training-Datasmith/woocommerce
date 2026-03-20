@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Admin\RemoteFreeExtensions;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Remote_Free_Extensions;
 
 use WC_Logger_Interface;
-
 /**
  * Process install options for plugins.
  */
-class ProcessCoreProfilerPluginInstallOptions
+class Process_Core_Profiler_Plugin_Install_Options
 {
     /**
      * Logger instance.
@@ -17,33 +15,53 @@ class ProcessCoreProfilerPluginInstallOptions
      * @var WC_Logger_Interface Logger instance
      */
     private readonly WC_Logger_Interface $logger;
-
     private const DISALLOWED_OPTIONS = [
-        'siteurl',              // The URL to your WordPress installation.
-        'home',                 // The home URL of the site.
-        'admin_email',          // Administrator email address.
-        'wp_user_roles',        // Serialized roles and capabilities.
-        'active_plugins',       // List of active plugins.
-        'template',             // The current theme template.
-        'stylesheet',           // The current theme stylesheet.
-        'default_role',         // Default role for new users.
-        'ftp_hostname',         // FTP server hostname.
-        'ftp_username',         // FTP server username.
-        'ftp_password',         // FTP server password.
-        'ftp_port',             // FTP server port.
-        'ftp_ssl',              // Whether to use FTP over SSL.
-        'ftp_pasv',             // Whether to use passive FTP.
-        'rewrite_rules',        // URL rewrite rules.
-        'permalink_structure',  // Structure of permalinks.
-        'cron',                 // Scheduled tasks (WP-Cron jobs).
-        'upload_path',          // Filesystem path for uploads.
-        'upload_url_path',      // URL path for uploads.
-        'mailserver_url',       // Mail server hostname.
-        'mailserver_login',     // Mail server login.
-        'mailserver_pass',      // Mail server password.
-        'mailserver_port',       // Mail server port.
+        'siteurl',
+        // The URL to your WordPress installation.
+        'home',
+        // The home URL of the site.
+        'admin_email',
+        // Administrator email address.
+        'wp_user_roles',
+        // Serialized roles and capabilities.
+        'active_plugins',
+        // List of active plugins.
+        'template',
+        // The current theme template.
+        'stylesheet',
+        // The current theme stylesheet.
+        'default_role',
+        // Default role for new users.
+        'ftp_hostname',
+        // FTP server hostname.
+        'ftp_username',
+        // FTP server username.
+        'ftp_password',
+        // FTP server password.
+        'ftp_port',
+        // FTP server port.
+        'ftp_ssl',
+        // Whether to use FTP over SSL.
+        'ftp_pasv',
+        // Whether to use passive FTP.
+        'rewrite_rules',
+        // URL rewrite rules.
+        'permalink_structure',
+        // Structure of permalinks.
+        'cron',
+        // Scheduled tasks (WP-Cron jobs).
+        'upload_path',
+        // Filesystem path for uploads.
+        'upload_url_path',
+        // URL path for uploads.
+        'mailserver_url',
+        // Mail server hostname.
+        'mailserver_login',
+        // Mail server login.
+        'mailserver_pass',
+        // Mail server password.
+        'mailserver_port',
     ];
-
     /**
      * Constructor.
      *
@@ -51,18 +69,20 @@ class ProcessCoreProfilerPluginInstallOptions
      * @param string                   $slug Plugin slug.
      * @param WC_Logger_Interface|null $logger Logger instance.
      */
-    public function __construct(/**
-     * List of plugins.
-     */
-        private readonly array $plugins, /**
-     * Plugin slug.
-     */
+    public function __construct(
+        /**
+         * List of plugins.
+         */
+        private readonly array $plugins,
+        /**
+         * Plugin slug.
+         */
         private readonly string $slug,
         ?WC_Logger_Interface $logger = null
-    ) {
-        $this->logger  = $logger ?? wc_get_logger();
+    )
+    {
+        $this->logger = $logger ?? wc_get_logger();
     }
-
     /**
      * Retrieve install options for a plugin.
      *
@@ -78,22 +98,19 @@ class ProcessCoreProfilerPluginInstallOptions
         }
         return null;
     }
-
     /**
      * Process install options based on a filtering function.
      */
     public function process_install_options(): void
     {
         $install_options = $this->get_install_options($this->slug);
-        if (! $install_options) {
+        if (!$install_options) {
             return;
         }
-
         foreach ($install_options as $install_option) {
             $this->add_install_option($install_option);
         }
     }
-
     /**
      * Updates an install option in the WordPress database.
      *
@@ -101,21 +118,13 @@ class ProcessCoreProfilerPluginInstallOptions
      */
     protected function add_install_option(object $install_option)
     {
-        $default_options = [
-            'force_array' => false,
-            'autoload'    => false,
-        ];
-
-        $options = isset($install_option->options)
-            ? (object) $install_option->options
-            : new \stdClass();
-
+        $default_options = ['force_array' => false, 'autoload' => false];
+        $options = isset($install_option->options) ? (object) $install_option->options : new \stdClass();
         foreach ($default_options as $key => $value) {
-            if (! isset($options->$key)) {
-                $options->$key = $value;
+            if (!isset($options->{$key})) {
+                $options->{$key} = $value;
             }
         }
-
         if ($options->force_array) {
             $install_option->value = json_decode(wp_json_encode($install_option->value), true);
             // In case of JSON error, return early.
@@ -124,9 +133,7 @@ class ProcessCoreProfilerPluginInstallOptions
                 return;
             }
         }
-
         $autoload = null;
-
         if (isset($options->autoload)) {
             if ('yes' === $options->autoload) {
                 $autoload = true;
@@ -136,10 +143,8 @@ class ProcessCoreProfilerPluginInstallOptions
                 $autoload = $options->autoload;
             }
         }
-
         $this->add_option($install_option->name, $install_option->value, $autoload);
     }
-
     /**
      * Updates an option in the WordPress database.
      *
@@ -155,10 +160,8 @@ class ProcessCoreProfilerPluginInstallOptions
             $this->logger && $this->logger->error('Disallowed option: ' . $name);
             return;
         }
-
         add_option($name, $value, '', $autoload);
     }
-
     /**
      * Checks if the given plugin matches the provided slug.
      *

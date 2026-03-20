@@ -5,49 +5,24 @@
  *
  * @since 9.9.0
  */
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Email_Improvements;
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Admin\EmailImprovements;
-
-use Automattic\WooCommerce\Utilities\FeaturesUtil;
+use Automattic\Woo_Commerce\Utilities\Features_Util;
 use WC_Tracker;
-
 defined('ABSPATH') || exit;
-
 /**
  * EmailImprovements Class.
  */
-class EmailImprovements
+class Email_Improvements
 {
     /**
      * Non-exhaustive list of email customizers.
      *
      * @var string[]
      */
-    private const EMAIL_CUSTOMIZERS = [
-        'aco-email-customizer-and-designer-for-woocommerce.php',
-        'decorator.php',
-        'email-customizer-for-woocommerce.php',
-        'email-customizer-pro.php',
-        'kadence-woocommerce-email-designer.php',
-        'mailpoet.php',
-        'wp-html-mail.php',
-        'yaymail.php',
-    ];
-
-    private const EMAIL_TEMPLATE_PARTS = [
-        'email-addresses.php',
-        'email-customer-details.php',
-        'email-downloads.php',
-        'email-footer.php',
-        'email-header.php',
-        'email-mobile-messaging.php',
-        'email-order-details.php',
-        'email-order-items.php',
-        'email-styles.php',
-    ];
-
+    private const EMAIL_CUSTOMIZERS = ['aco-email-customizer-and-designer-for-woocommerce.php', 'decorator.php', 'email-customizer-for-woocommerce.php', 'email-customizer-pro.php', 'kadence-woocommerce-email-designer.php', 'mailpoet.php', 'wp-html-mail.php', 'yaymail.php'];
+    private const EMAIL_TEMPLATE_PARTS = ['email-addresses.php', 'email-customer-details.php', 'email-downloads.php', 'email-footer.php', 'email-header.php', 'email-mobile-messaging.php', 'email-order-details.php', 'email-order-items.php', 'email-styles.php'];
     /**
      * Hook into WordPress.
      */
@@ -55,7 +30,6 @@ class EmailImprovements
     {
         add_action('admin_init', self::add_email_improvements_modal_to_url(...));
     }
-
     /**
      * Check if any core emails are being overridden by a template override.
      *
@@ -64,10 +38,9 @@ class EmailImprovements
     public static function has_email_templates_overridden(): bool
     {
         $all_template_overrides = WC_Tracker::get_all_template_overrides();
-        $core_email_overrides   = self::get_core_email_overrides($all_template_overrides);
+        $core_email_overrides = self::get_core_email_overrides($all_template_overrides);
         return count($core_email_overrides) > 0;
     }
-
     /**
      * Check if any of the email customizers is enabled.
      *
@@ -75,18 +48,14 @@ class EmailImprovements
      */
     public static function is_email_customizer_enabled(): bool
     {
-        $all_plugins    = WC_Tracker::get_all_plugins();
+        $all_plugins = WC_Tracker::get_all_plugins();
         $active_plugins = $all_plugins['active_plugins'];
-        $plugin_slugs   = array_map(
-            function (int|string $plugin_path): string {
-                $parts = explode('/', $plugin_path);
-                return end($parts);
-            },
-            array_keys($active_plugins)
-        );
+        $plugin_slugs = array_map(function (int|string $plugin_path): string {
+            $parts = explode('/', $plugin_path);
+            return end($parts);
+        }, array_keys($active_plugins));
         return count(array_intersect(self::EMAIL_CUSTOMIZERS, $plugin_slugs)) > 0;
     }
-
     /**
      * Check if email improvements are enabled for existing stores.
      *
@@ -94,11 +63,10 @@ class EmailImprovements
      */
     public static function is_email_improvements_enabled_for_existing_stores(): bool
     {
-        $is_feature_enabled             = FeaturesUtil::feature_is_enabled('email_improvements');
+        $is_feature_enabled = Features_Util::feature_is_enabled('email_improvements');
         $is_enabled_for_existing_stores = 'yes' === get_option('woocommerce_email_improvements_existing_store_enabled');
         return $is_feature_enabled && $is_enabled_for_existing_stores;
     }
-
     /**
      * Check if email improvements should be enabled for existing stores.
      * - The feature is not already enabled.
@@ -110,7 +78,7 @@ class EmailImprovements
      */
     public static function should_enable_email_improvements_for_existing_stores(): bool
     {
-        if (FeaturesUtil::feature_is_enabled('email_improvements')) {
+        if (Features_Util::feature_is_enabled('email_improvements')) {
             return false;
         }
         $manually_disabled_before = get_option('woocommerce_email_improvements_last_disabled_at');
@@ -120,14 +88,12 @@ class EmailImprovements
         if (self::has_email_templates_overridden()) {
             return false;
         }
-
         if (self::is_email_customizer_enabled()) {
             return false;
         }
         // Temporarily paused roll-out to gather more feedback.
         return false;
     }
-
     /**
      * Check if we should notice the merchant about email improvements.
      *
@@ -135,26 +101,24 @@ class EmailImprovements
      */
     public static function should_notify_merchant_about_email_improvements(): bool
     {
-        return ! FeaturesUtil::feature_is_enabled('email_improvements');
+        return !Features_Util::feature_is_enabled('email_improvements');
     }
-
     /**
      * Add email improvements modal parameter to the URL when loading the WooCommerce Home page.
      */
     public static function add_email_improvements_modal_to_url(): void
     {
         // Check if we're on the WooCommerce Home page.
-        if (! isset($_GET['page']) || 'wc-admin' !== $_GET['page'] || isset($_GET['path'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if (!isset($_GET['page']) || 'wc-admin' !== $_GET['page'] || isset($_GET['path'])) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             return;
         }
-
         $dismissed_modal = get_option('woocommerce_admin_dismissed_email_improvements_modal');
         if ('yes' !== $dismissed_modal && self::is_email_improvements_enabled_for_existing_stores()) {
             update_option('woocommerce_admin_dismissed_email_improvements_modal', 'yes');
             wp_safe_redirect(add_query_arg('emailImprovementsModal', 'enabled'));
             exit;
         }
-
         $dismissed_modal = get_option('woocommerce_admin_dismissed_try_email_improvements_modal');
         if ('yes' !== $dismissed_modal && self::should_notify_merchant_about_email_improvements()) {
             update_option('woocommerce_admin_dismissed_try_email_improvements_modal', 'yes');
@@ -162,7 +126,6 @@ class EmailImprovements
             exit;
         }
     }
-
     /**
      * Get all core emails.
      *
@@ -170,12 +133,8 @@ class EmailImprovements
      */
     public static function get_core_emails(): array
     {
-        return array_filter(
-            self::get_emails(),
-            fn (\WC_Email $email) => str_starts_with($email::class, 'WC_Email_') && is_string($email->template_html)
-        );
+        return array_filter(self::get_emails(), fn(\WC_Email $email) => str_starts_with($email::class, 'WC_Email_') && is_string($email->template_html));
     }
-
     /**
      * Get all core email template overrides.
      *
@@ -184,15 +143,11 @@ class EmailImprovements
      */
     public static function get_core_email_overrides($template_overrides): array
     {
-        $core_emails          = self::get_core_emails();
-        $core_email_templates = array_map(
-            fn ($email) => basename((string) $email->template_html),
-            $core_emails
-        );
-        $all_email_templates  = array_merge($core_email_templates, self::EMAIL_TEMPLATE_PARTS);
+        $core_emails = self::get_core_emails();
+        $core_email_templates = array_map(fn($email) => basename((string) $email->template_html), $core_emails);
+        $all_email_templates = array_merge($core_email_templates, self::EMAIL_TEMPLATE_PARTS);
         return array_intersect($all_email_templates, $template_overrides);
     }
-
     /**
      * Get all enabled email IDs.
      *
@@ -200,13 +155,9 @@ class EmailImprovements
      */
     public static function get_enabled_emails(): array
     {
-        $enabled_emails = array_filter(
-            self::get_emails(),
-            fn (\WC_Email $email) => $email->is_enabled() && ! $email->is_manual()
-        );
+        $enabled_emails = array_filter(self::get_emails(), fn(\WC_Email $email) => $email->is_enabled() && !$email->is_manual());
         return array_values(array_map(get_class(...), $enabled_emails));
     }
-
     /**
      * Get all disabled email IDs.
      *
@@ -214,13 +165,9 @@ class EmailImprovements
      */
     public static function get_disabled_emails(): array
     {
-        $disabled_emails = array_filter(
-            self::get_emails(),
-            fn (\WC_Email $email) => ! $email->is_enabled() && ! $email->is_manual()
-        );
+        $disabled_emails = array_filter(self::get_emails(), fn(\WC_Email $email) => !$email->is_enabled() && !$email->is_manual());
         return array_values(array_map(get_class(...), $disabled_emails));
     }
-
     /**
      * Get all enabled or manual emails with Cc or Bcc.
      *
@@ -228,14 +175,9 @@ class EmailImprovements
      */
     public static function get_enabled_or_manual_emails_with_cc_or_bcc(): array
     {
-        $enabled_or_manual_emails = array_filter(
-            self::get_emails(),
-            fn (\WC_Email $email) => $email->is_enabled() || $email->is_manual()
-        );
-
-        $email_ids_with_cc  = [];
+        $enabled_or_manual_emails = array_filter(self::get_emails(), fn(\WC_Email $email) => $email->is_enabled() || $email->is_manual());
+        $email_ids_with_cc = [];
         $email_ids_with_bcc = [];
-
         foreach ($enabled_or_manual_emails as $email) {
             if ($email->get_cc_recipient()) {
                 $email_ids_with_cc[] = $email::class;
@@ -244,13 +186,8 @@ class EmailImprovements
                 $email_ids_with_bcc[] = $email::class;
             }
         }
-
-        return [
-            'ccs'  => $email_ids_with_cc,
-            'bccs' => $email_ids_with_bcc,
-        ];
+        return ['ccs' => $email_ids_with_cc, 'bccs' => $email_ids_with_bcc];
     }
-
     /**
      * A helper method to filter out non-WC_Email objects.
      *
@@ -259,9 +196,6 @@ class EmailImprovements
     private static function get_emails(): array
     {
         $emails = WC()->mailer()->get_emails();
-        return array_filter(
-            $emails,
-            fn (\WC_Email $email): bool => is_object($email) && $email instanceof \WC_Email
-        );
+        return array_filter($emails, fn(\WC_Email $email): bool => is_object($email) && $email instanceof \WC_Email);
     }
 }

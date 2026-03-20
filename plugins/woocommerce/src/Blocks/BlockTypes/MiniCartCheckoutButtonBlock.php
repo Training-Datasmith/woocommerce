@@ -1,13 +1,12 @@
 <?php
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-use Automattic\WooCommerce\Admin\Features\Features;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
 /**
  * MiniCartCheckoutButtonBlock class.
  */
-class MiniCartCheckoutButtonBlock extends AbstractInnerBlock
+class Mini_Cart_Checkout_Button_Block extends Abstract_Inner_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class MiniCartCheckoutButtonBlock extends AbstractInnerBlock
      * @var string
      */
     protected $block_name = 'mini-cart-checkout-button-block';
-
     /**
      * Render experimental iAPI block markup.
      *
@@ -27,27 +25,25 @@ class MiniCartCheckoutButtonBlock extends AbstractInnerBlock
     protected function render_experimental_iapi_markup(array $attributes, $content, $block): string|false
     {
         $default_go_to_checkout_text = __('Go to checkout', 'woocommerce');
-        $go_to_checkout_text         = $attributes['checkoutButtonLabel'] ?: $default_go_to_checkout_text;
-        $checkout_page_id            = wc_get_page_id('checkout');
-        $checkout_page_url           = get_permalink($checkout_page_id);
-        $wrapper_attributes          = get_block_wrapper_attributes(
-            [
-                'href'  => esc_url($checkout_page_url),
-                'class' => 'wc-block-components-button wp-element-button wc-block-mini-cart__footer-checkout',
-            ]
-        );
-
+        $go_to_checkout_text = $attributes['checkoutButtonLabel'] ?: $default_go_to_checkout_text;
+        $checkout_page_id = wc_get_page_id('checkout');
+        $checkout_page_url = get_permalink($checkout_page_id);
+        $wrapper_attributes = get_block_wrapper_attributes(['href' => esc_url($checkout_page_url), 'class' => 'wc-block-components-button wp-element-button wc-block-mini-cart__footer-checkout']);
         ob_start();
         ?>
-		<a <?php echo $wrapper_attributes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>>
+		<a <?php 
+        echo $wrapper_attributes;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>>
 			<div class="wc-block-components-button__text">
-				<?php echo esc_html($go_to_checkout_text); ?>
+				<?php 
+        echo esc_html($go_to_checkout_text);
+        ?>
 			</div>
 		</a>
-		<?php
+		<?php 
         return ob_get_clean();
     }
-
     /**
      * Render the markup for the Mini-Cart Contents block.
      *
@@ -61,7 +57,6 @@ class MiniCartCheckoutButtonBlock extends AbstractInnerBlock
         if (Features::is_enabled('experimental-iapi-mini-cart')) {
             return $this->render_experimental_iapi_markup($attributes, $content, $block);
         }
-
         return $content;
     }
 }

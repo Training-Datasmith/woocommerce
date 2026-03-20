@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Handles storage and retrieval of admin notes
  */
-
-namespace Automattic\WooCommerce\Admin\Notes;
+namespace Automattic\Woo_Commerce\Admin\Notes;
 
 use WC_Site_Tracking;
-
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit;
 }
 /**
@@ -21,7 +19,6 @@ class Notes
      * Hook used for recurring "unsnooze" action.
      */
     public const UNSNOOZE_HOOK = 'wc_admin_unsnooze_admin_notes';
-
     /**
      * Hook appropriate actions.
      */
@@ -32,7 +29,6 @@ class Notes
         add_action('update_option_woocommerce_show_marketplace_suggestions', self::possibly_delete_marketing_notes(...), 10, 2);
         add_action(self::UNSNOOZE_HOOK, self::unsnooze_notes(...));
     }
-
     /**
      * Get notes from the database.
      *
@@ -43,8 +39,8 @@ class Notes
     public static function get_notes($context = 'edit', $args = []): array
     {
         $data_store = self::load_data_store();
-        $raw_notes  = $data_store->get_notes($args);
-        $notes      = [];
+        $raw_notes = $data_store->get_notes($args);
+        $notes = [];
         foreach ((array) $raw_notes as $raw_note) {
             try {
                 $note = new Note($raw_note);
@@ -54,49 +50,46 @@ class Notes
                  * @since 6.9.0
                  * @param Note $note The note object from the database.
                  */
-                $note                               = apply_filters('woocommerce_get_note_from_db', $note);
-                $note_id                            = $note->get_id();
-                $notes[ $note_id ]                  = $note->get_data();
-                $notes[ $note_id ]['name']          = $note->get_name($context);
-                $notes[ $note_id ]['type']          = $note->get_type($context);
-                $notes[ $note_id ]['locale']        = $note->get_locale($context);
-                $notes[ $note_id ]['title']         = $note->get_title($context);
-                $notes[ $note_id ]['content']       = $note->get_content($context);
-                $notes[ $note_id ]['content_data']  = $note->get_content_data($context);
-                $notes[ $note_id ]['status']        = $note->get_status($context);
-                $notes[ $note_id ]['source']        = $note->get_source($context);
-                $notes[ $note_id ]['date_created']  = $note->get_date_created($context);
-                $notes[ $note_id ]['date_reminder'] = $note->get_date_reminder($context);
-                $notes[ $note_id ]['actions']       = $note->get_actions($context);
-                $notes[ $note_id ]['layout']        = $note->get_layout($context);
-                $notes[ $note_id ]['image']         = $note->get_image($context);
-                $notes[ $note_id ]['is_deleted']    = $note->get_is_deleted($context);
+                $note = apply_filters('woocommerce_get_note_from_db', $note);
+                $note_id = $note->get_id();
+                $notes[$note_id] = $note->get_data();
+                $notes[$note_id]['name'] = $note->get_name($context);
+                $notes[$note_id]['type'] = $note->get_type($context);
+                $notes[$note_id]['locale'] = $note->get_locale($context);
+                $notes[$note_id]['title'] = $note->get_title($context);
+                $notes[$note_id]['content'] = $note->get_content($context);
+                $notes[$note_id]['content_data'] = $note->get_content_data($context);
+                $notes[$note_id]['status'] = $note->get_status($context);
+                $notes[$note_id]['source'] = $note->get_source($context);
+                $notes[$note_id]['date_created'] = $note->get_date_created($context);
+                $notes[$note_id]['date_reminder'] = $note->get_date_reminder($context);
+                $notes[$note_id]['actions'] = $note->get_actions($context);
+                $notes[$note_id]['layout'] = $note->get_layout($context);
+                $notes[$note_id]['image'] = $note->get_image($context);
+                $notes[$note_id]['is_deleted'] = $note->get_is_deleted($context);
             } catch (\Exception $e) {
-                wc_caught_exception($e, self::class . '::' . __FUNCTION__, [ $note_id ]);
+                wc_caught_exception($e, self::class . '::' . __FUNCTION__, [$note_id]);
             }
         }
         return $notes;
     }
-
     /**
      * Get admin note using it's ID
      *
      * @param int $note_id Note ID.
      */
-    public static function get_note($note_id): \Automattic\WooCommerce\Admin\Notes\Note|false
+    public static function get_note($note_id): \Automattic\Woo_Commerce\Admin\Notes\Note|false
     {
         if (false !== $note_id) {
             try {
                 return new Note($note_id);
             } catch (\Exception $e) {
-                wc_caught_exception($e, self::class . '::' . __FUNCTION__, [ $note_id ]);
+                wc_caught_exception($e, self::class . '::' . __FUNCTION__, [$note_id]);
                 return false;
             }
         }
-
         return false;
     }
-
     /**
      * Get admin note using its name.
      *
@@ -109,15 +102,12 @@ class Notes
     public static function get_note_by_name($note_name)
     {
         $data_store = self::load_data_store();
-        $note_ids   = $data_store->get_notes_with_name($note_name);
-
+        $note_ids = $data_store->get_notes_with_name($note_name);
         if (empty($note_ids)) {
             return false;
         }
-
         return self::get_note($note_ids[0]);
     }
-
     /**
      * Get the total number of notes
      *
@@ -130,7 +120,6 @@ class Notes
         $data_store = self::load_data_store();
         return $data_store->get_notes_count($type, $status);
     }
-
     /**
      * Deletes admin notes with a given name.
      *
@@ -139,13 +128,11 @@ class Notes
     public static function delete_notes_with_name($names): void
     {
         if (is_string($names)) {
-            $names = [ $names ];
-        } elseif (! is_array($names)) {
+            $names = [$names];
+        } elseif (!is_array($names)) {
             return;
         }
-
         $data_store = self::load_data_store();
-
         foreach ($names as $name) {
             $note_ids = $data_store->get_notes_with_name($name);
             foreach ((array) $note_ids as $note_id) {
@@ -156,7 +143,6 @@ class Notes
             }
         }
     }
-
     /**
      * Update a note.
      *
@@ -170,27 +156,22 @@ class Notes
             $note->set_status($requested_updates['status']);
             $note_changed = true;
         }
-
         if (isset($requested_updates['date_reminder'])) {
             $note->set_date_reminder($requested_updates['date_reminder']);
             $note_changed = true;
         }
-
         if (isset($requested_updates['is_deleted'])) {
             $note->set_is_deleted($requested_updates['is_deleted']);
             $note_changed = true;
         }
-
         if (isset($requested_updates['is_read'])) {
             $note->set_is_read($requested_updates['is_read']);
             $note_changed = true;
         }
-
         if ($note_changed) {
             $note->save();
         }
     }
-
     /**
      * Soft delete of a note.
      *
@@ -201,7 +182,6 @@ class Notes
         $note->set_is_deleted(1);
         $note->save();
     }
-
     /**
      * Soft delete of all the admin notes. Returns the deleted items.
      *
@@ -211,23 +191,10 @@ class Notes
     public static function delete_all_notes($args = []): array
     {
         $data_store = self::load_data_store();
-        $defaults   = [
-            'order'      => 'desc',
-            'orderby'    => 'date_created',
-            'per_page'   => 25,
-            'page'       => 1,
-            'type'       => [
-                Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
-                Note::E_WC_ADMIN_NOTE_MARKETING,
-                Note::E_WC_ADMIN_NOTE_WARNING,
-                Note::E_WC_ADMIN_NOTE_SURVEY,
-            ],
-            'is_deleted' => 0,
-        ];
-        $args       = wp_parse_args($args, $defaults);
+        $defaults = ['order' => 'desc', 'orderby' => 'date_created', 'per_page' => 25, 'page' => 1, 'type' => [Note::E_WC_ADMIN_NOTE_INFORMATIONAL, Note::E_WC_ADMIN_NOTE_MARKETING, Note::E_WC_ADMIN_NOTE_WARNING, Note::E_WC_ADMIN_NOTE_SURVEY], 'is_deleted' => 0];
+        $args = wp_parse_args($args, $defaults);
         // Here we filter for the same params we are using to show the note list in client side.
         $raw_notes = $data_store->get_notes($args);
-
         $notes = [];
         foreach ((array) $raw_notes as $raw_note) {
             $note = self::get_note($raw_note->note_id);
@@ -238,28 +205,20 @@ class Notes
         }
         return $notes;
     }
-
     /**
      * Clear note snooze status if the reminder date has been reached.
      */
     public static function unsnooze_notes(): void
     {
         $data_store = self::load_data_store();
-        $raw_notes  = $data_store->get_notes(
-            [
-                'status' => [ Note::E_WC_ADMIN_NOTE_SNOOZED ],
-            ]
-        );
-        $now        = new \DateTime();
-
+        $raw_notes = $data_store->get_notes(['status' => [Note::E_WC_ADMIN_NOTE_SNOOZED]]);
+        $now = new \DateTime();
         foreach ($raw_notes as $raw_note) {
             $note = self::get_note($raw_note->note_id);
             if (false === $note) {
                 continue;
             }
-
             $date_reminder = $note->get_date_reminder('edit');
-
             if ($date_reminder < $now) {
                 $note->set_status(Note::E_WC_ADMIN_NOTE_UNACTIONED);
                 $note->set_date_reminder(null);
@@ -267,17 +226,15 @@ class Notes
             }
         }
     }
-
     /**
      * Schedule unsnooze notes event.
      */
     public static function schedule_unsnooze_notes(): void
     {
-        if (! wp_next_scheduled(self::UNSNOOZE_HOOK)) {
+        if (!wp_next_scheduled(self::UNSNOOZE_HOOK)) {
             wp_schedule_event(time() + 5, 'hourly', self::UNSNOOZE_HOOK);
         }
     }
-
     /**
      * Unschedule unsnooze notes event.
      */
@@ -285,7 +242,6 @@ class Notes
     {
         wp_clear_scheduled_hook(self::UNSNOOZE_HOOK);
     }
-
     /**
      * Delete marketing notes if marketing has been opted out.
      *
@@ -297,10 +253,8 @@ class Notes
         if ('no' !== $value) {
             return;
         }
-
         $data_store = self::load_data_store();
-        $note_ids   = $data_store->get_note_ids_by_type(Note::E_WC_ADMIN_NOTE_MARKETING);
-
+        $note_ids = $data_store->get_note_ids_by_type(Note::E_WC_ADMIN_NOTE_MARKETING);
         foreach ($note_ids as $note_id) {
             $note = self::get_note($note_id);
             if ($note) {
@@ -308,24 +262,21 @@ class Notes
             }
         }
     }
-
     /**
      * Delete actioned survey notes.
      */
     public static function possibly_delete_survey_notes(): void
     {
         $data_store = self::load_data_store();
-        $note_ids   = $data_store->get_note_ids_by_type(Note::E_WC_ADMIN_NOTE_SURVEY);
-
+        $note_ids = $data_store->get_note_ids_by_type(Note::E_WC_ADMIN_NOTE_SURVEY);
         foreach ($note_ids as $note_id) {
             $note = self::get_note($note_id);
-            if ($note && ($note->get_status() === Note::E_WC_ADMIN_NOTE_ACTIONED)) {
+            if ($note && $note->get_status() === Note::E_WC_ADMIN_NOTE_ACTIONED) {
                 $note->set_is_deleted(1);
                 $note->save();
             }
         }
     }
-
     /**
      * Get the status of a given note by name.
      *
@@ -335,14 +286,11 @@ class Notes
     public static function get_note_status($note_name)
     {
         $note = self::get_note_by_name($note_name);
-
-        if (! $note) {
+        if (!$note) {
             return false;
         }
-
         return $note->get_status();
     }
-
     /**
      * Get action by id.
      *
@@ -352,9 +300,8 @@ class Notes
      */
     public static function get_action_by_id($note, $action_id)
     {
-        $actions      = $note->get_actions('edit');
+        $actions = $note->get_actions('edit');
         $found_action = false;
-
         foreach ($actions as $action) {
             if ($action->id === $action_id) {
                 $found_action = $action;
@@ -362,7 +309,6 @@ class Notes
         }
         return $found_action;
     }
-
     /**
      * Trigger note action.
      *
@@ -379,7 +325,6 @@ class Notes
          * @param Note   $note The corresponding Note.
          */
         do_action('woocommerce_note_action', $triggered_action->name, $note);
-
         /**
          * Fires when an admin note action is taken.
          * For more specific targeting of note actions.
@@ -387,33 +332,19 @@ class Notes
          * @param Note $note The corresponding Note.
          */
         do_action('woocommerce_note_action_' . $triggered_action->name, $note);
-
         // Update the note with the status for this action.
-        if (! empty($triggered_action->status)) {
+        if (!empty($triggered_action->status)) {
             $note->set_status($triggered_action->status);
         }
-
         $note->save();
-
-        $event_params = [
-            'note_name'    => $note->get_name(),
-            'note_type'    => $note->get_type(),
-            'note_title'   => $note->get_title(),
-            'note_content' => $note->get_content(),
-            'action_name'  => $triggered_action->name,
-            'action_label' => $triggered_action->label,
-            'screen'       => self::get_screen_name(),
-        ];
-
-        if (in_array($note->get_type(), [ 'error', 'update' ], true)) {
+        $event_params = ['note_name' => $note->get_name(), 'note_type' => $note->get_type(), 'note_title' => $note->get_title(), 'note_content' => $note->get_content(), 'action_name' => $triggered_action->name, 'action_label' => $triggered_action->label, 'screen' => self::get_screen_name()];
+        if (in_array($note->get_type(), ['error', 'update'], true)) {
             wc_admin_record_tracks_event('store_alert_action', $event_params);
         } else {
             self::record_tracks_event_without_cookies('inbox_action_click', $event_params);
         }
-
         return $note;
     }
-
     /**
      * Record tracks event for a specific user.
      *
@@ -425,12 +356,10 @@ class Notes
     {
         // We save the current user id to set it back after the event recording.
         $current_user_id = get_current_user_id();
-
         wp_set_current_user($user_id);
         self::record_tracks_event_without_cookies($event_name, $params);
         wp_set_current_user($current_user_id);
     }
-
     /**
      * Record tracks event without using cookies.
      *
@@ -442,14 +371,12 @@ class Notes
         // We save the cookie to set it back after the event recording.
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $anon_id = $_COOKIE['tk_ai'] ?? null;
-
         unset($_COOKIE['tk_ai']);
         wc_admin_record_tracks_event($event_name, $params);
         if (isset($anon_id)) {
             WC_Site_Tracking::set_tracking_cookie('tk_ai', $anon_id);
         }
     }
-
     /**
      * Get screen name.
      *
@@ -458,20 +385,19 @@ class Notes
     public static function get_screen_name()
     {
         $screen_name = '';
-
         if (isset($_SERVER['HTTP_REFERER'])) {
-            parse_str(wp_parse_url($_SERVER['HTTP_REFERER'], PHP_URL_QUERY), $queries); // phpcs:ignore sanitization ok.
+            parse_str(wp_parse_url($_SERVER['HTTP_REFERER'], PHP_URL_QUERY), $queries);
+            // phpcs:ignore sanitization ok.
         }
         if (isset($queries)) {
-            $page      = $queries['page'] ?? null;
-            $path      = $queries['path'] ?? null;
+            $page = $queries['page'] ?? null;
+            $path = $queries['path'] ?? null;
             $post_type = $queries['post_type'] ?? null;
-            $post      = isset($queries['post']) ? get_post_type($queries['post']) : null;
+            $post = isset($queries['post']) ? get_post_type($queries['post']) : null;
         }
-
         if (isset($page)) {
             $current_page = 'wc-admin' === $page ? 'home_screen' : $page;
-            $screen_name  = isset($path) ? substr(str_replace('/', '_', $path), 1) : $current_page;
+            $screen_name = isset($path) ? substr(str_replace('/', '_', $path), 1) : $current_page;
         } elseif (isset($post_type)) {
             $screen_name = $post_type;
         } elseif (isset($post)) {
@@ -479,7 +405,6 @@ class Notes
         }
         return $screen_name;
     }
-
     /**
      * Loads the data store.
      *
@@ -495,10 +420,7 @@ class Notes
         try {
             return \WC_Data_Store::load('admin-note');
         } catch (\Exception) {
-            throw new NotesUnavailableException(
-                'woocommerce_admin_notes_unavailable',
-                __('Notes are unavailable because the "admin-note" data store cannot be loaded.', 'woocommerce')
-            );
+            throw new Notes_Unavailable_Exception('woocommerce_admin_notes_unavailable', __('Notes are unavailable because the "admin-note" data store cannot be loaded.', 'woocommerce'));
         }
     }
 }

@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor that fails.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
 /**
  * Rule processor that fails.
  */
-class FailRuleProcessor implements RuleProcessorInterface
+class Fail_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * Fails the rule.
@@ -26,7 +24,6 @@ class FailRuleProcessor implements RuleProcessorInterface
     {
         return false;
     }
-
     /**
      * Validates the rule.
      *

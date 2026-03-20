@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * ProductNew class.
  */
-class ProductNew extends AbstractProductGrid
+class Product_New extends Abstract_Product_Grid
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class ProductNew extends AbstractProductGrid
      * @var string
      */
     protected $block_name = 'product-new';
-
     /**
      * Set args specific to this block
      *
@@ -24,6 +22,6 @@ class ProductNew extends AbstractProductGrid
     protected function set_block_query_args(&$query_args)
     {
         $query_args['orderby'] = 'date';
-        $query_args['order']   = 'DESC';
+        $query_args['order'] = 'DESC';
     }
 }

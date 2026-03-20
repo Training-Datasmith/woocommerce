@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\AI;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\AI;
 
 /**
  * Class Connection

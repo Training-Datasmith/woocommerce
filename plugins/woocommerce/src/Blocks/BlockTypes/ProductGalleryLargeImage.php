@@ -1,18 +1,16 @@
 <?php
-declare(strict_types=1);
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-use Automattic\WooCommerce\Blocks\Utils\ProductGalleryUtils;
+use Automattic\Woo_Commerce\Blocks\Utils\Product_Gallery_Utils;
 use WP_Block;
-
 /**
  * ProductGalleryLargeImage class.
  */
-class ProductGalleryLargeImage extends AbstractBlock
+class Product_Gallery_Large_Image extends Abstract_Block
 {
-    use EnableBlockJsonAssetsTrait;
-
+    use Enable_Block_Json_Assets_Trait;
     /**
      * Block name. Block has been initially created as Large Image but has been renamed
      * to more generic name.
@@ -20,7 +18,6 @@ class ProductGalleryLargeImage extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-gallery-large-image';
-
     /**
      *  Register the context
      *
@@ -28,9 +25,8 @@ class ProductGalleryLargeImage extends AbstractBlock
      */
     protected function get_block_type_uses_context(): array
     {
-        return [ 'postId', 'hoverZoom', 'fullScreenOnClick' ];
+        return ['postId', 'hoverZoom', 'fullScreenOnClick'];
     }
-
     /**
      * Initialize this block type.
      *
@@ -43,7 +39,6 @@ class ProductGalleryLargeImage extends AbstractBlock
         add_filter('block_type_metadata_settings', $this->add_block_type_metadata_settings(...), 10, 2);
         parent::initialize();
     }
-
     /**
      * Enqueue frontend assets for this block, just in time for rendering.
      *
@@ -53,11 +48,10 @@ class ProductGalleryLargeImage extends AbstractBlock
      */
     protected function enqueue_assets(array $attributes, $content, $block)
     {
-        if (! empty($block->context['hoverZoom']) || ! empty($block->context['fullScreenOnClick'])) {
+        if (!empty($block->context['hoverZoom']) || !empty($block->context['fullScreenOnClick'])) {
             parent::enqueue_assets($attributes, $content, $block);
         }
     }
-
     /**
      * Include and render the block.
      *
@@ -69,18 +63,17 @@ class ProductGalleryLargeImage extends AbstractBlock
     protected function render($attributes, $content, $block): string|false
     {
         $post_id = $block->context['postId'];
-        if (! isset($post_id)) {
+        if (!isset($post_id)) {
             return '';
         }
         global $product;
         $previous_product = $product;
-        $product          = wc_get_product($post_id);
-        if (! $product instanceof \WC_Product) {
+        $product = wc_get_product($post_id);
+        if (!$product instanceof \WC_Product) {
             $product = $previous_product;
-
             return '';
         }
-        $images_html       = '';
+        $images_html = '';
         $inner_blocks_html = '';
         foreach ($block->inner_blocks as $inner_block) {
             if ('woocommerce/product-image' === $inner_block->name) {
@@ -89,51 +82,40 @@ class ProductGalleryLargeImage extends AbstractBlock
             } else {
                 // For Next/Previous Buttons block, check if we have more than one image, otherwise don't render it.
                 if ('woocommerce/product-gallery-large-image-next-previous' === $inner_block->name) {
-                    $product_gallery_image_count = ProductGalleryUtils::get_product_gallery_image_count($product);
+                    $product_gallery_image_count = Product_Gallery_Utils::get_product_gallery_image_count($product);
                     if ($product_gallery_image_count <= 1) {
                         continue;
                     }
                 }
-
                 // Render all the inner blocks once each.
-                $inner_block_html = (
-                    new WP_Block(
-                        $inner_block->parsed_block,
-                        array_merge(
-                            (array) $block->context,
-                            [ 'iapi/provider' => 'woocommerce/product-gallery' ]
-                        ),
-                    )
-                )->render([ 'dynamic' => true ]);
-
+                $inner_block_html = (new WP_Block($inner_block->parsed_block, array_merge((array) $block->context, ['iapi/provider' => 'woocommerce/product-gallery'])))->render(['dynamic' => true]);
                 $inner_blocks_html .= $inner_block_html;
             }
         }
         ob_start();
         ?>
 			<div class="wc-block-product-gallery-large-image wp-block-woocommerce-product-gallery-large-image">
-				<?php
+				<?php 
         // No need to use wp_kses here because the image HTML is built internally.
         ?>
-				<?php
+				<?php 
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         ?>
-				<?php
+				<?php 
         echo $images_html;
         ?>
 				<div class="wc-block-product-gallery-large-image__inner-blocks">
-					<?php
+					<?php 
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         ?>
-					<?php
+					<?php 
         echo $inner_blocks_html;
         ?>
 				</div>
 			</div>
-		<?php
+		<?php 
         return ob_get_clean();
     }
-
     /**
      * Update the single image html.
      *
@@ -145,7 +127,6 @@ class ProductGalleryLargeImage extends AbstractBlock
     private function update_single_image($image_html, array $context, $index)
     {
         $p = new \WP_HTML_Tag_Processor($image_html);
-
         if ($p->next_tag()) {
             $p->remove_attribute('onclick');
             $p->remove_attribute('style');
@@ -157,45 +138,35 @@ class ProductGalleryLargeImage extends AbstractBlock
              */
             $p = new \WP_HTML_Tag_Processor($image_html);
         }
-
         // Bail out early if we don't find any image.
-        if (! $p->next_tag()) {
+        if (!$p->next_tag()) {
             return $image_html;
         }
-
         $p->set_attribute('tabindex', '-1');
         $p->set_attribute('draggable', 'false');
         $p->set_attribute('data-wp-on--click', 'actions.onViewerClick');
         $p->set_attribute('data-wp-on--touchstart', 'actions.onTouchStart');
         $p->set_attribute('data-wp-on--touchmove', 'actions.onTouchMove');
         $p->set_attribute('data-wp-on--touchend', 'actions.onTouchEnd');
-
         if (0 === $index) {
             $p->set_attribute('fetchpriority', 'high');
         } else {
             $p->set_attribute('fetchpriority', 'low');
             $p->set_attribute('loading', 'lazy');
         }
-
         $img_classes = 'wc-block-woocommerce-product-gallery-large-image__image';
-
-        if (! empty($context['fullScreenOnClick'])) {
+        if (!empty($context['fullScreenOnClick'])) {
             $img_classes .= ' wc-block-woocommerce-product-gallery-large-image__image--full-screen-on-click';
-
             $p->set_attribute('data-wp-on--click', 'actions.openDialog');
         }
-        if (! empty($context['hoverZoom'])) {
+        if (!empty($context['hoverZoom'])) {
             $img_classes .= ' wc-block-woocommerce-product-gallery-large-image__image--hoverZoom';
-
             $p->set_attribute('data-wp-on--mousemove', 'actions.startZoom');
             $p->set_attribute('data-wp-on--mouseleave', 'actions.resetZoom');
         }
-
         $p->add_class($img_classes);
-
         return $p->get_updated_html();
     }
-
     /**
      * Get the main images html code. The first element of the array contains the HTML of the first image that is visible, the second element contains the HTML of the other images that are hidden.
      *
@@ -206,41 +177,39 @@ class ProductGalleryLargeImage extends AbstractBlock
      */
     private function get_main_images_html($context, \WC_Product $product, $inner_block)
     {
-        $image_data = ProductGalleryUtils::get_product_gallery_image_data($product, 'woocommerce_single');
-
+        $image_data = Product_Gallery_Utils::get_product_gallery_image_data($product, 'woocommerce_single');
         ob_start();
         ?>
 			<ul
 				class="wc-block-product-gallery-large-image__container"
 				data-wp-interactive="woocommerce/product-gallery"
 				data-wp-on--keydown="actions.onViewerImageKeyDown"
-				aria-label="<?php esc_attr_e('Product gallery', 'woocommerce'); ?>"
+				aria-label="<?php 
+        esc_attr_e('Product gallery', 'woocommerce');
+        ?>"
 				tabindex="0"
 				aria-roledescription="carousel"
 			>
-				<?php foreach ($image_data as $index => $image) : ?>
+				<?php 
+        foreach ($image_data as $index => $image) {
+            ?>
 					<li
 						class="wc-block-product-gallery-large-image__wrapper"
 					>
-						<?php
-                            $image_html = (
-                                new WP_Block(
-                                    $inner_block->parsed_block,
-                                    array_merge($context, [ 'imageId' => $image['id'] ])
-                                )
-                            )->render([ 'dynamic' => true ]);
-
-				    echo $this->update_single_image($image_html, $context, $index); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-				    ?>
+						<?php 
+            $image_html = (new WP_Block($inner_block->parsed_block, array_merge($context, ['imageId' => $image['id']])))->render(['dynamic' => true]);
+            echo $this->update_single_image($image_html, $context, $index);
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            ?>
 					</li>
-				<?php endforeach; ?>
+				<?php 
+        }
+        ?>
 			</ul>
-		<?php
+		<?php 
         $template = ob_get_clean();
-
         return wp_interactivity_process_directives($template);
     }
-
     /**
      * Disable the editor style handle for this block type.
      */
@@ -248,7 +217,6 @@ class ProductGalleryLargeImage extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Viewer renders inner blocks manually so we need to skip default
      * rendering routine for its inner blocks
@@ -258,7 +226,7 @@ class ProductGalleryLargeImage extends AbstractBlock
      */
     public function add_block_type_metadata_settings(array $settings, array $metadata): array
     {
-        if (! empty($metadata['name']) && 'woocommerce/product-gallery-large-image' === $metadata['name']) {
+        if (!empty($metadata['name']) && 'woocommerce/product-gallery-large-image' === $metadata['name']) {
             $settings['skip_inner_blocks'] = true;
         }
         return $settings;

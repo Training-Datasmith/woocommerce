@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Blueprint\Exporters;
 
-namespace Automattic\WooCommerce\Admin\Features\Blueprint\Exporters;
-
-use Automattic\WooCommerce\Admin\Features\Blueprint\SettingOptions;
-use Automattic\WooCommerce\Blueprint\Exporters\HasAlias;
-use Automattic\WooCommerce\Blueprint\Exporters\StepExporter;
-use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
-use Automattic\WooCommerce\Blueprint\UseWPFunctions;
-
+use Automattic\Woo_Commerce\Admin\Features\Blueprint\Setting_Options;
+use Automattic\Woo_Commerce\Blueprint\Exporters\Has_Alias;
+use Automattic\Woo_Commerce\Blueprint\Exporters\Step_Exporter;
+use Automattic\Woo_Commerce\Blueprint\Steps\Set_Site_Options;
+use Automattic\Woo_Commerce\Blueprint\Use_Wp_Functions;
 /**
  * Class ExportWCSettings
  *
@@ -17,32 +15,28 @@ use Automattic\WooCommerce\Blueprint\UseWPFunctions;
  *
  * @package Automattic\WooCommerce\Admin\Features\Blueprint\Exporters
  */
-abstract class ExportWCSettings implements StepExporter, HasAlias
+abstract class Export_Wc_Settings implements Step_Exporter, Has_Alias
 {
-    use UseWPFunctions;
-
+    use Use_Wp_Functions;
     /**
      * The setting options class.
      */
-    protected \Automattic\WooCommerce\Admin\Features\Blueprint\SettingOptions $setting_options;
-
+    protected \Automattic\Woo_Commerce\Admin\Features\Blueprint\Setting_Options $setting_options;
     /**
      * Constructor.
      *
      * @param SettingOptions|null $setting_options The setting options class.
      */
-    public function __construct(?SettingOptions $setting_options = null)
+    public function __construct(?Setting_Options $setting_options = null)
     {
-        $this->setting_options = $setting_options ?? new SettingOptions();
+        $this->setting_options = $setting_options ?? new Setting_Options();
     }
-
     /**
      * Return a page I.D to export.
      *
      * @return string The page ID.
      */
     abstract protected function get_page_id(): string;
-
     /**
      * Export WooCommerce settings.
      *
@@ -50,9 +44,8 @@ abstract class ExportWCSettings implements StepExporter, HasAlias
      */
     public function export()
     {
-        return new SetSiteOptions($this->setting_options->get_page_options($this->get_page_id()));
+        return new Set_Site_Options($this->setting_options->get_page_options($this->get_page_id()));
     }
-
     /**
      * Get the name of the step.
      *
@@ -62,7 +55,6 @@ abstract class ExportWCSettings implements StepExporter, HasAlias
     {
         return 'setSiteOptions';
     }
-
     /**
      * Get the alias for this exporter.
      *
@@ -72,7 +64,6 @@ abstract class ExportWCSettings implements StepExporter, HasAlias
     {
         return 'setWCSettingsGeneral';
     }
-
     /**
      * Return label used in the frontend.
      *
@@ -82,7 +73,6 @@ abstract class ExportWCSettings implements StepExporter, HasAlias
     {
         return __('General', 'woocommerce');
     }
-
     /**
      * Return description used in the frontend.
      *
@@ -92,7 +82,6 @@ abstract class ExportWCSettings implements StepExporter, HasAlias
     {
         return __('Includes all settings in WooCommerce | Settings | General.', 'woocommerce');
     }
-
     /**
      * Check if the current user has the required capabilities for this step.
      *

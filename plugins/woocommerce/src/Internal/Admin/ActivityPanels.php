@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Activity Panel.
  */
+namespace Automattic\Woo_Commerce\Internal\Admin;
 
-namespace Automattic\WooCommerce\Internal\Admin;
-
-use Automattic\WooCommerce\Admin\Notes\Notes;
-
+use Automattic\Woo_Commerce\Admin\Notes\Notes;
 /**
  * Contains backend logic for the activity panel feature.
  */
-class ActivityPanels
+class Activity_Panels
 {
     /**
      * Class instance.
@@ -20,18 +18,16 @@ class ActivityPanels
      * @var ActivityPanels instance
      */
     protected static $instance;
-
     /**
      * Get class instance.
      */
     public static function get_instance()
     {
-        if (! self::$instance) {
+        if (!self::$instance) {
             self::$instance = new self();
         }
         return self::$instance;
     }
-
     /**
      * Hook into WooCommerce.
      */
@@ -43,7 +39,6 @@ class ActivityPanels
         // New settings injection.
         add_filter('woocommerce_admin_shared_settings', $this->component_settings(...), 20);
     }
-
     /**
      * Adds fields so that we can store activity panel last read and open times.
      *
@@ -51,15 +46,8 @@ class ActivityPanels
      */
     public function add_user_data_fields($user_data_fields): array
     {
-        return array_merge(
-            $user_data_fields,
-            [
-                'activity_panel_inbox_last_read',
-                'activity_panel_reviews_last_read',
-            ]
-        );
+        return array_merge($user_data_fields, ['activity_panel_inbox_last_read', 'activity_panel_reviews_last_read']);
     }
-
     /**
      * Add alert count to the component settings.
      *
@@ -67,7 +55,7 @@ class ActivityPanels
      */
     public function component_settings(array $settings): array
     {
-        $settings['alertCount'] = Notes::get_notes_count([ 'error', 'update' ], [ 'unactioned' ]);
+        $settings['alertCount'] = Notes::get_notes_count(['error', 'update'], ['unactioned']);
         return $settings;
     }
 }

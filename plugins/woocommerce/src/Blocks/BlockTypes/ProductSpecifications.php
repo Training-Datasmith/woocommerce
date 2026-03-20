@@ -1,14 +1,13 @@
 <?php
-declare(strict_types=1);
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-use Automattic\WooCommerce\Enums\ProductType;
-
+use Automattic\Woo_Commerce\Enums\Product_Type;
 /**
  * ProductSpecifications class.
  */
-class ProductSpecifications extends AbstractBlock
+class Product_Specifications extends Abstract_Block
 {
     /**
      * Block name.
@@ -16,7 +15,6 @@ class ProductSpecifications extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-specifications';
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -26,7 +24,6 @@ class ProductSpecifications extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Render the block.
      *
@@ -38,75 +35,42 @@ class ProductSpecifications extends AbstractBlock
      */
     protected function render($attributes, $content, $block): string|false
     {
-        if (! isset($block->context['postId'])) {
+        if (!isset($block->context['postId'])) {
             return '';
         }
-
         $product = wc_get_product($block->context['postId']);
-
-        if (! $product) {
+        if (!$product) {
             return '';
         }
-
         $product_data = [];
-
         // Get display settings with defaults.
-        $show_weight     = $attributes['showWeight'] ?? true;
+        $show_weight = $attributes['showWeight'] ?? true;
         $show_dimensions = $attributes['showDimensions'] ?? true;
         $show_attributes = $attributes['showAttributes'] ?? true;
-
         if ($show_weight && $product->has_weight()) {
-            $product_data['weight'] = [
-                'label' => __('Weight', 'woocommerce'),
-                'value' => wc_format_weight($product->get_weight()),
-            ];
+            $product_data['weight'] = ['label' => __('Weight', 'woocommerce'), 'value' => wc_format_weight($product->get_weight())];
         }
-
         if ($show_dimensions && $product->has_dimensions()) {
-            $product_data['dimensions'] = [
-                'label' => __('Dimensions', 'woocommerce'),
-                'value' => wc_format_dimensions($product->get_dimensions(false)),
-            ];
+            $product_data['dimensions'] = ['label' => __('Dimensions', 'woocommerce'), 'value' => wc_format_dimensions($product->get_dimensions(false))];
         }
-
-        $is_interactive = $product->is_type(ProductType::VARIABLE);
-
+        $is_interactive = $product->is_type(Product_Type::VARIABLE);
         if ($is_interactive) {
-            $variations                = $product->get_available_variations('objects');
+            $variations = $product->get_available_variations('objects');
             $formatted_variations_data = [];
             foreach ($variations as $variation) {
-                $formatted_variations_data[ $variation->get_id() ] = [
-                    'weight'     => wc_format_weight($variation->get_weight()),
-                    'dimensions' => html_entity_decode(wc_format_dimensions($variation->get_dimensions(false)), ENT_QUOTES, get_bloginfo('charset')),
-                ];
+                $formatted_variations_data[$variation->get_id()] = ['weight' => wc_format_weight($variation->get_weight()), 'dimensions' => html_entity_decode(wc_format_dimensions($variation->get_dimensions(false)), ENT_QUOTES, get_bloginfo('charset'))];
             }
-
-            wp_interactivity_config(
-                'woocommerce',
-                [
-                    'products' => [
-                        $product->get_id() => [
-                            'weight'     => $product_data['weight']['value'] ?? '',
-                            'dimensions' => html_entity_decode($product_data['dimensions']['value'] ?? '', ENT_QUOTES, get_bloginfo('charset')),
-                            'variations' => $formatted_variations_data,
-                        ],
-                    ],
-                ]
-            );
+            wp_interactivity_config('woocommerce', ['products' => [$product->get_id() => ['weight' => $product_data['weight']['value'] ?? '', 'dimensions' => html_entity_decode($product_data['dimensions']['value'] ?? '', ENT_QUOTES, get_bloginfo('charset')), 'variations' => $formatted_variations_data]]]);
             wp_enqueue_script_module('woocommerce/product-elements');
         }
-
         if ($show_attributes) {
             foreach ($product->get_attributes() as $attribute) {
                 $values = [];
-
                 if ($attribute->is_taxonomy()) {
                     $attribute_taxonomy = $attribute->get_taxonomy_object();
-                    $attribute_values   = wc_get_product_terms($product->get_id(), $attribute->get_name(), [ 'fields' => 'all' ]);
-
+                    $attribute_values = wc_get_product_terms($product->get_id(), $attribute->get_name(), ['fields' => 'all']);
                     foreach ($attribute_values as $attribute_value) {
                         $value_name = esc_html($attribute_value->name);
-
                         if ($attribute_taxonomy->attribute_public) {
                             $values[] = '<a href="' . esc_url(get_term_link($attribute_value->term_id, $attribute->get_name())) . '" rel="tag">' . $value_name . '</a>';
                         } else {
@@ -115,62 +79,77 @@ class ProductSpecifications extends AbstractBlock
                     }
                 } else {
                     $values = $attribute->get_options();
-
                     foreach ($values as &$value) {
                         $value = make_clickable(esc_html($value));
                     }
                 }
-
-                $product_data[ 'attribute_' . sanitize_title_with_dashes($attribute->get_name()) ] = [
-                    'label' => wc_attribute_label($attribute->get_name()),
-                    'value' => wpautop(wptexturize(implode(', ', $values))),
-                ];
+                $product_data['attribute_' . sanitize_title_with_dashes($attribute->get_name())] = ['label' => wc_attribute_label($attribute->get_name()), 'value' => wpautop(wptexturize(implode(', ', $values)))];
             }
         }
-
         if (empty($product_data)) {
             return '';
         }
-
         ob_start();
-
-        $wrapper_attributes = get_block_wrapper_attributes(
-            [ 'class' => 'wp-block-table' ]
-        );
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => 'wp-block-table']);
         ?>
-		<figure <?php echo $wrapper_attributes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>>
+		<figure <?php 
+        echo $wrapper_attributes;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>>
 			<table>
 				<thead class="screen-reader-text">
 					<tr>
-						<th><?php esc_html_e('Attributes', 'woocommerce'); ?></th>
-						<th><?php esc_html_e('Value', 'woocommerce'); ?></th>
+						<th><?php 
+        esc_html_e('Attributes', 'woocommerce');
+        ?></th>
+						<th><?php 
+        esc_html_e('Value', 'woocommerce');
+        ?></th>
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ($product_data as $product_attribute_key => $product_attribute) : ?>
-						<tr class="wp-block-product-specifications-item wp-block-product-specifications-item-<?php echo esc_attr($product_attribute_key); ?>">
+					<?php 
+        foreach ($product_data as $product_attribute_key => $product_attribute) {
+            ?>
+						<tr class="wp-block-product-specifications-item wp-block-product-specifications-item-<?php 
+            echo esc_attr($product_attribute_key);
+            ?>">
 							<th scope="row" class="wp-block-product-specifications-item__label">
-								<?php echo wp_kses_post($product_attribute['label']); ?>
+								<?php 
+            echo wp_kses_post($product_attribute['label']);
+            ?>
 							</th>
-							<?php if ($is_interactive && in_array($product_attribute_key, [ 'weight', 'dimensions' ], true)) : ?>
-								<td class="wp-block-product-specifications-item__value" data-wp-interactive="woocommerce/product-elements" data-wp-text="state.productData.<?php echo esc_attr($product_attribute_key); ?>">
-									<?php echo wp_kses_post($product_attribute['value']); ?>
+							<?php 
+            if ($is_interactive && in_array($product_attribute_key, ['weight', 'dimensions'], true)) {
+                ?>
+								<td class="wp-block-product-specifications-item__value" data-wp-interactive="woocommerce/product-elements" data-wp-text="state.productData.<?php 
+                echo esc_attr($product_attribute_key);
+                ?>">
+									<?php 
+                echo wp_kses_post($product_attribute['value']);
+                ?>
 								</td>
-							<?php else : ?>	
+							<?php 
+            } else {
+                ?>	
 								<td class="wp-block-product-specifications-item__value">
-									<?php echo wp_kses_post($product_attribute['value']); ?>
+									<?php 
+                echo wp_kses_post($product_attribute['value']);
+                ?>
 								</td>
-							<?php endif; ?>
+							<?php 
+            }
+            ?>
 						</tr>
-					<?php endforeach; ?>
+					<?php 
+        }
+        ?>
 				</tbody>
 			</table>
 		</figure>
-		<?php
-
+		<?php 
         return ob_get_clean();
     }
-
     /**
      * Get the frontend style handle for this block type.
      *
@@ -179,11 +158,9 @@ class ProductSpecifications extends AbstractBlock
     protected function get_block_type_style(): array
     {
         $deps = parent::get_block_type_style();
-
-        if (! is_array($deps)) {
-            return [ 'wp-block-table' ];
+        if (!is_array($deps)) {
+            return ['wp-block-table'];
         }
-
-        return array_merge([ 'wp-block-table' ], $deps);
+        return array_merge(['wp-block-table'], $deps);
     }
 }

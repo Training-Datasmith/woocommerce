@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor that performs an OR operation on the rule's left and right
  * operands.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
 /**
  * Rule processor that performs an OR operation on the rule's left and right
  * operands.
  */
-class OrRuleProcessor implements RuleProcessorInterface
+class Or_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * Rule evaluator to use.
@@ -22,7 +20,6 @@ class OrRuleProcessor implements RuleProcessorInterface
      * @var RuleEvaluator
      */
     private $rule_evaluator;
-
     /**
      * Constructor.
      *
@@ -30,9 +27,8 @@ class OrRuleProcessor implements RuleProcessorInterface
      */
     public function __construct($rule_evaluator = null)
     {
-        $this->rule_evaluator = $rule_evaluator ?? new RuleEvaluator();
+        $this->rule_evaluator = $rule_evaluator ?? new Rule_Evaluator();
     }
-
     /**
      * Performs an OR operation on the rule's left and right operands.
      *
@@ -44,19 +40,13 @@ class OrRuleProcessor implements RuleProcessorInterface
     public function process($rule, $stored_state): bool
     {
         foreach ($rule->operands as $operand) {
-            $evaluated_operand = $this->rule_evaluator->evaluate(
-                $operand,
-                $stored_state
-            );
-
+            $evaluated_operand = $this->rule_evaluator->evaluate($operand, $stored_state);
             if ($evaluated_operand) {
                 return true;
             }
         }
-
         return false;
     }
-
     /**
      * Validates the rule.
      *
@@ -66,10 +56,9 @@ class OrRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->operands) || ! is_array($rule->operands)) {
+        if (!isset($rule->operands) || !is_array($rule->operands)) {
             return false;
         }
-
         return true;
     }
 }

@@ -1,14 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\CLI\Migrator\Interfaces;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\CLI\Migrator\Interfaces;
 
 /**
  * Defines the contract for classes responsible for transforming
  * raw platform data into a standardized format suitable for the WooCommerce Importer.
  */
-interface PlatformMapperInterface
+interface Platform_Mapper_Interface
 {
     /**
      * Maps raw platform product data to a standardized array format.

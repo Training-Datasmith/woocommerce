@@ -1,22 +1,20 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Class for WPPost to wc_order_address table migrator.
  */
+namespace Automattic\Woo_Commerce\Database\Migrations\Custom_Order_Table;
 
-namespace Automattic\WooCommerce\Database\Migrations\CustomOrderTable;
-
-use Automattic\WooCommerce\Database\Migrations\MetaToCustomTableMigrator;
-use Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore;
-
+use Automattic\Woo_Commerce\Database\Migrations\Meta_To_Custom_Table_Migrator;
+use Automattic\Woo_Commerce\Internal\Data_Stores\Orders\Orders_Table_Data_Store;
 /**
  * Helper class to migrate records from the WordPress post table
  * to the custom order addresses table.
  *
  * @package Automattic\WooCommerce\Database\Migrations\CustomOrderTable
  */
-class PostToOrderAddressTableMigrator extends MetaToCustomTableMigrator
+class Post_To_Order_Address_Table_Migrator extends Meta_To_Custom_Table_Migrator
 {
     /**
      * PostToOrderAddressTableMigrator constructor.
@@ -27,7 +25,6 @@ class PostToOrderAddressTableMigrator extends MetaToCustomTableMigrator
     {
         parent::__construct();
     }
-
     /**
      * Get schema config for wp_posts and wc_order_address table.
      *
@@ -36,32 +33,8 @@ class PostToOrderAddressTableMigrator extends MetaToCustomTableMigrator
     protected function get_schema_config(): array
     {
         global $wpdb;
-
-        return [
-            'source'      => [
-                'entity' => [
-                    'table_name'             => $wpdb->posts,
-                    'meta_rel_column'        => 'ID',
-                    'destination_rel_column' => 'ID',
-                    'primary_key'            => 'ID',
-                ],
-                'meta'   => [
-                    'table_name'        => $wpdb->postmeta,
-                    'meta_id_column'    => 'meta_id',
-                    'meta_key_column'   => 'meta_key',
-                    'meta_value_column' => 'meta_value',
-                    'entity_id_column'  => 'post_id',
-                ],
-            ],
-            'destination' => [
-                'table_name'        => OrdersTableDataStore::get_addresses_table_name(),
-                'source_rel_column' => 'order_id',
-                'primary_key'       => 'id',
-                'primary_key_type'  => 'int',
-            ],
-        ];
+        return ['source' => ['entity' => ['table_name' => $wpdb->posts, 'meta_rel_column' => 'ID', 'destination_rel_column' => 'ID', 'primary_key' => 'ID'], 'meta' => ['table_name' => $wpdb->postmeta, 'meta_id_column' => 'meta_id', 'meta_key_column' => 'meta_key', 'meta_value_column' => 'meta_value', 'entity_id_column' => 'post_id']], 'destination' => ['table_name' => Orders_Table_Data_Store::get_addresses_table_name(), 'source_rel_column' => 'order_id', 'primary_key' => 'id', 'primary_key_type' => 'int']];
     }
-
     /**
      * Get columns config.
      *
@@ -70,20 +43,8 @@ class PostToOrderAddressTableMigrator extends MetaToCustomTableMigrator
     protected function get_core_column_mapping(): array
     {
         $type = $this->type;
-
-        return [
-            'ID'   => [
-                'type'        => 'int',
-                'destination' => 'order_id',
-            ],
-            'type' => [
-                'type'          => 'string',
-                'destination'   => 'address_type',
-                'select_clause' => "'$type'",
-            ],
-        ];
+        return ['ID' => ['type' => 'int', 'destination' => 'order_id'], 'type' => ['type' => 'string', 'destination' => 'address_type', 'select_clause' => "'{$type}'"]];
     }
-
     /**
      * Get meta data config.
      *
@@ -92,55 +53,8 @@ class PostToOrderAddressTableMigrator extends MetaToCustomTableMigrator
     public function get_meta_column_config(): array
     {
         $type = $this->type;
-
-        return [
-            "_{$type}_first_name" => [
-                'type'        => 'string',
-                'destination' => 'first_name',
-            ],
-            "_{$type}_last_name"  => [
-                'type'        => 'string',
-                'destination' => 'last_name',
-            ],
-            "_{$type}_company"    => [
-                'type'        => 'string',
-                'destination' => 'company',
-            ],
-            "_{$type}_address_1"  => [
-                'type'        => 'string',
-                'destination' => 'address_1',
-            ],
-            "_{$type}_address_2"  => [
-                'type'        => 'string',
-                'destination' => 'address_2',
-            ],
-            "_{$type}_city"       => [
-                'type'        => 'string',
-                'destination' => 'city',
-            ],
-            "_{$type}_state"      => [
-                'type'        => 'string',
-                'destination' => 'state',
-            ],
-            "_{$type}_postcode"   => [
-                'type'        => 'string',
-                'destination' => 'postcode',
-            ],
-            "_{$type}_country"    => [
-                'type'        => 'string',
-                'destination' => 'country',
-            ],
-            "_{$type}_email"      => [
-                'type'        => 'string',
-                'destination' => 'email',
-            ],
-            "_{$type}_phone"      => [
-                'type'        => 'string',
-                'destination' => 'phone',
-            ],
-        ];
+        return ["_{$type}_first_name" => ['type' => 'string', 'destination' => 'first_name'], "_{$type}_last_name" => ['type' => 'string', 'destination' => 'last_name'], "_{$type}_company" => ['type' => 'string', 'destination' => 'company'], "_{$type}_address_1" => ['type' => 'string', 'destination' => 'address_1'], "_{$type}_address_2" => ['type' => 'string', 'destination' => 'address_2'], "_{$type}_city" => ['type' => 'string', 'destination' => 'city'], "_{$type}_state" => ['type' => 'string', 'destination' => 'state'], "_{$type}_postcode" => ['type' => 'string', 'destination' => 'postcode'], "_{$type}_country" => ['type' => 'string', 'destination' => 'country'], "_{$type}_email" => ['type' => 'string', 'destination' => 'email'], "_{$type}_phone" => ['type' => 'string', 'destination' => 'phone']];
     }
-
     /**
      * Additional WHERE clause to only fetch the addresses of the current type.
      *
@@ -151,7 +65,6 @@ class PostToOrderAddressTableMigrator extends MetaToCustomTableMigrator
     {
         return "AND destination.`address_type` = '{$this->type}'";
     }
-
     /**
      * Helper function to generate where clause for fetching data for verification.
      *
@@ -164,6 +77,6 @@ class PostToOrderAddressTableMigrator extends MetaToCustomTableMigrator
         global $wpdb;
         $query = parent::get_where_clause_for_verification($source_ids);
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $query should already be prepared, $schema_config is hardcoded.
-        return $wpdb->prepare("$query AND {$this->schema_config['destination']['table_name']}.address_type = %s", $this->type);
+        return $wpdb->prepare("{$query} AND {$this->schema_config['destination']['table_name']}.address_type = %s", $this->type);
     }
 }

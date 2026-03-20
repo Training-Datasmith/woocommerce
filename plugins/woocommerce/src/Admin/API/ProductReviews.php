@@ -1,23 +1,21 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Product Reviews Controller
  *
  * Handles requests to /products/reviews.
  */
-
-namespace Automattic\WooCommerce\Admin\API;
+namespace Automattic\Woo_Commerce\Admin\API;
 
 defined('ABSPATH') || exit;
-
 /**
  * Product reviews controller.
  *
  * @internal
  * @extends WC_REST_Product_Reviews_Controller
  */
-class ProductReviews extends \WC_REST_Product_Reviews_Controller
+class Product_Reviews extends \WC_REST_Product_Reviews_Controller
 {
     /**
      * Endpoint namespace.
@@ -25,7 +23,6 @@ class ProductReviews extends \WC_REST_Product_Reviews_Controller
      * @var string
      */
     protected $namespace = 'wc-analytics';
-
     /**
      * Prepare links for the request.
      *
@@ -34,25 +31,12 @@ class ProductReviews extends \WC_REST_Product_Reviews_Controller
      */
     protected function prepare_links($review): array
     {
-        $links = [
-            'self'       => [
-                'href' => rest_url(sprintf('/%s/%s/%d', $this->namespace, $this->rest_base, $review->comment_ID)),
-            ],
-            'collection' => [
-                'href' => rest_url(sprintf('/%s/%s', $this->namespace, $this->rest_base)),
-            ],
-        ];
+        $links = ['self' => ['href' => rest_url(sprintf('/%s/%s/%d', $this->namespace, $this->rest_base, $review->comment_ID))], 'collection' => ['href' => rest_url(sprintf('/%s/%s', $this->namespace, $this->rest_base))]];
         if (0 !== (int) $review->comment_post_ID) {
-            $links['up'] = [
-                'href'       => rest_url(sprintf('/%s/products/%d', $this->namespace, $review->comment_post_ID)),
-                'embeddable' => true,
-            ];
+            $links['up'] = ['href' => rest_url(sprintf('/%s/products/%d', $this->namespace, $review->comment_post_ID)), 'embeddable' => true];
         }
         if (0 !== (int) $review->user_id) {
-            $links['reviewer'] = [
-                'href'       => rest_url('wp/v2/users/' . $review->user_id),
-                'embeddable' => true,
-            ];
+            $links['reviewer'] = ['href' => rest_url('wp/v2/users/' . $review->user_id), 'embeddable' => true];
         }
         return $links;
     }

@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * ProductTag class.
  */
-class ProductTag extends AbstractProductGrid
+class Product_Tag extends Abstract_Product_Grid
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class ProductTag extends AbstractProductGrid
      * @var string
      */
     protected $block_name = 'product-tag';
-
     /**
      * Set args specific to this block.
      *
@@ -23,39 +21,17 @@ class ProductTag extends AbstractProductGrid
      */
     protected function set_block_query_args(&$query_args)
     {
-        if (! empty($this->attributes['tags'])) {
-            $query_args['tax_query'][] = [
-                'taxonomy' => 'product_tag',
-                'terms'    => array_map(absint(...), $this->attributes['tags']),
-                'field'    => 'term_id',
-                'operator' => isset($this->attributes['tagOperator']) && 'any' === $this->attributes['tagOperator'] ? 'IN' : 'AND',
-            ];
+        if (!empty($this->attributes['tags'])) {
+            $query_args['tax_query'][] = ['taxonomy' => 'product_tag', 'terms' => array_map(absint(...), $this->attributes['tags']), 'field' => 'term_id', 'operator' => isset($this->attributes['tagOperator']) && 'any' === $this->attributes['tagOperator'] ? 'IN' : 'AND'];
         }
     }
-
     /**
      * Get block attributes.
      */
     protected function get_block_type_attributes(): array
     {
-        return [
-            'className'         => $this->get_schema_string(),
-            'columns'           => $this->get_schema_number(wc_get_theme_support('product_blocks::default_columns', 3)),
-            'rows'              => $this->get_schema_number(wc_get_theme_support('product_blocks::default_rows', 3)),
-            'contentVisibility' => $this->get_schema_content_visibility(),
-            'align'             => $this->get_schema_align(),
-            'alignButtons'      => $this->get_schema_boolean(false),
-            'orderby'           => $this->get_schema_orderby(),
-            'tags'              => $this->get_schema_list_ids(),
-            'tagOperator'       => [
-                'type'    => 'string',
-                'default' => 'any',
-            ],
-            'isPreview'         => $this->get_schema_boolean(false),
-            'stockStatus'       => array_keys(wc_get_product_stock_status_options()),
-        ];
+        return ['className' => $this->get_schema_string(), 'columns' => $this->get_schema_number(wc_get_theme_support('product_blocks::default_columns', 3)), 'rows' => $this->get_schema_number(wc_get_theme_support('product_blocks::default_rows', 3)), 'contentVisibility' => $this->get_schema_content_visibility(), 'align' => $this->get_schema_align(), 'alignButtons' => $this->get_schema_boolean(false), 'orderby' => $this->get_schema_orderby(), 'tags' => $this->get_schema_list_ids(), 'tagOperator' => ['type' => 'string', 'default' => 'any'], 'isPreview' => $this->get_schema_boolean(false), 'stockStatus' => array_keys(wc_get_product_stock_status_options())];
     }
-
     /**
      * Extra data passed through from server to client for block.
      *
@@ -66,9 +42,7 @@ class ProductTag extends AbstractProductGrid
     protected function enqueue_data(array $attributes = [])
     {
         parent::enqueue_data($attributes);
-
         $tag_count = wp_count_terms('product_tag');
-
         $this->asset_data_registry->add('hasTags', $tag_count > 0);
         $this->asset_data_registry->add('limitTags', $tag_count > 100);
     }

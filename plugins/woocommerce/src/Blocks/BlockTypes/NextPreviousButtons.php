@@ -1,16 +1,15 @@
-<?php declare(strict_types=1);
+<?php
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * NextPreviousButtons class.
  */
-class NextPreviousButtons extends AbstractBlock
+class Next_Previous_Buttons extends Abstract_Block
 {
-    use EnableBlockJsonAssetsTrait;
-
+    use Enable_Block_Json_Assets_Trait;
     /**
      * Block name. Block has been initially created for Product Gallery Viewer block
      * hence the slug is related to this block. But it can be used for other blocks as well.
@@ -18,7 +17,6 @@ class NextPreviousButtons extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-gallery-large-image-next-previous';
-
     /**
      * Include and render the block.
      *
@@ -33,26 +31,26 @@ class NextPreviousButtons extends AbstractBlock
         if (empty($iapi_provider)) {
             return '';
         }
-        $classes_and_styles = StyleAttributesUtils::get_classes_and_styles_by_attributes($attributes, [], [ 'align' ]);
-        $vertical_alignment = StyleAttributesUtils::get_align_class_and_style($attributes);
-        $left_arrow_path  = 'M6.445 12.005.986 6 6.445-.005l1.11 1.01L3.014 6l4.54 4.995-1.109 1.01Z';
+        $classes_and_styles = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes, [], ['align']);
+        $vertical_alignment = Style_Attributes_Utils::get_align_class_and_style($attributes);
+        $left_arrow_path = 'M6.445 12.005.986 6 6.445-.005l1.11 1.01L3.014 6l4.54 4.995-1.109 1.01Z';
         $right_arrow_path = 'M1.555-.004 7.014 6l-5.459 6.005-1.11-1.01L4.986 6 .446 1.005l1.109-1.01Z';
         ob_start();
         ?>
 	<div
-			class="wc-block-next-previous-buttons <?php
+			class="wc-block-next-previous-buttons <?php 
         echo esc_attr($vertical_alignment['class']);
         ?>"
-			data-wp-interactive="<?php
+			data-wp-interactive="<?php 
         echo esc_attr($iapi_provider);
         ?>"
 			data-wp-bind--hidden="context.hideNextPreviousButtons"
 		>
 			<button
-				class="wc-block-next-previous-buttons__button <?php
+				class="wc-block-next-previous-buttons__button <?php 
         echo esc_attr($classes_and_styles['classes']);
         ?>"
-				style="<?php
+				style="<?php 
         echo esc_attr($classes_and_styles['styles']);
         ?>"
 				data-wp-on--click="actions.onClickPrevious"
@@ -70,7 +68,7 @@ class NextPreviousButtons extends AbstractBlock
 					<path
 						fill="currentColor"
 						fillRule="evenodd"
-						d="<?php
+						d="<?php 
         echo is_rtl() ? esc_attr($right_arrow_path) : esc_attr($left_arrow_path);
         ?>"
 						clipRule="evenodd"
@@ -78,10 +76,10 @@ class NextPreviousButtons extends AbstractBlock
 				</svg>
 			</button>
 			<button
-				class="wc-block-next-previous-buttons__button <?php
+				class="wc-block-next-previous-buttons__button <?php 
         echo esc_attr($classes_and_styles['classes']);
         ?>"
-				style="<?php
+				style="<?php 
         echo esc_attr($classes_and_styles['styles']);
         ?>"
 				data-wp-on--click="actions.onClickNext"
@@ -99,7 +97,7 @@ class NextPreviousButtons extends AbstractBlock
 					<path
 						fill="currentColor"
 						fillRule="evenodd"
-						d="<?php
+						d="<?php 
         echo is_rtl() ? esc_attr($left_arrow_path) : esc_attr($right_arrow_path);
         ?>"
 						clipRule="evenodd"
@@ -107,7 +105,7 @@ class NextPreviousButtons extends AbstractBlock
 				</svg>
 			</button>
 		</div>
-		<?php
+		<?php 
         return ob_get_clean();
     }
 }

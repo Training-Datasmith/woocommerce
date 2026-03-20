@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Coupons Controller
  *
  * Handles requests to /coupons/*
  */
-
-namespace Automattic\WooCommerce\Admin\API;
+namespace Automattic\Woo_Commerce\Admin\API;
 
 defined('ABSPATH') || exit;
-
 /**
  * Coupons controller.
  *
@@ -25,7 +23,6 @@ class Coupons extends \WC_REST_Coupons_Controller
      * @var string
      */
     protected $namespace = 'wc-analytics';
-
     /**
      * Get the query params for collections.
      *
@@ -33,15 +30,10 @@ class Coupons extends \WC_REST_Coupons_Controller
      */
     public function get_collection_params()
     {
-        $params           = parent::get_collection_params();
-        $params['search'] = [
-            'description'       => __('Limit results to coupons with codes matching a given string.', 'woocommerce'),
-            'type'              => 'string',
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
+        $params = parent::get_collection_params();
+        $params['search'] = ['description' => __('Limit results to coupons with codes matching a given string.', 'woocommerce'), 'type' => 'string', 'validate_callback' => 'rest_validate_request_arg'];
         return $params;
     }
-
     /**
      * Add coupon code searching to the WC API.
      *
@@ -51,15 +43,12 @@ class Coupons extends \WC_REST_Coupons_Controller
     protected function prepare_objects_query($request)
     {
         $args = parent::prepare_objects_query($request);
-
-        if (! empty($request['search'])) {
+        if (!empty($request['search'])) {
             $args['search'] = $request['search'];
-            $args['s']      = false;
+            $args['s'] = false;
         }
-
         return $args;
     }
-
     /**
      * Get a collection of posts and add the code search option to WP_Query.
      *
@@ -73,7 +62,6 @@ class Coupons extends \WC_REST_Coupons_Controller
         remove_filter('posts_where', self::add_wp_query_search_code_filter(...), 10);
         return $response;
     }
-
     /**
      * Add code searching to the WP Query
      *
@@ -85,13 +73,11 @@ class Coupons extends \WC_REST_Coupons_Controller
     public static function add_wp_query_search_code_filter($where, $wp_query)
     {
         global $wpdb;
-
         $search = $wp_query->get('search');
         if ($search) {
             $code_like = '%' . $wpdb->esc_like($search) . '%';
-            $where    .= $wpdb->prepare("AND {$wpdb->posts}.post_title LIKE %s", $code_like);
+            $where .= $wpdb->prepare("AND {$wpdb->posts}.post_title LIKE %s", $code_like);
         }
-
         return $where;
     }
 }

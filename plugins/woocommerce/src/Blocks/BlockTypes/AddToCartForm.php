@@ -1,27 +1,23 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AddToCartWithOptions\Utils;
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-use Automattic\WooCommerce\Enums\ProductType;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Add_To_Cart_With_Options\Utils;
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
+use Automattic\Woo_Commerce\Enums\Product_Type;
 /**
  * AddToCartForm class.
  */
-class AddToCartForm extends AbstractBlock
+class Add_To_Cart_Form extends Abstract_Block
 {
-    use EnableBlockJsonAssetsTrait;
-
+    use Enable_Block_Json_Assets_Trait;
     /**
      * Block name.
      *
      * @var string
      */
     protected $block_name = 'add-to-cart-form';
-
     /**
      * Get the block's attributes.
      *
@@ -31,13 +27,9 @@ class AddToCartForm extends AbstractBlock
     private function parse_attributes(array $attributes)
     {
         // These should match what's set in JS `registerBlockType`.
-        $defaults = [
-            'quantitySelectorStyle' => 'input',
-        ];
-
+        $defaults = ['quantitySelectorStyle' => 'input'];
         return wp_parse_args($attributes, $defaults);
     }
-
     /**
      * Enqueue assets specific to this block.
      * We enqueue frontend scripts only if the quantitySelectorStyle is set to 'stepper'.
@@ -52,10 +44,8 @@ class AddToCartForm extends AbstractBlock
         if ('stepper' !== $parsed_attributes['quantitySelectorStyle']) {
             return;
         }
-
         parent::enqueue_assets($attributes, $content, $block);
     }
-
     /**
      * Extra data passed through from server to client for block.
      *
@@ -68,7 +58,6 @@ class AddToCartForm extends AbstractBlock
         parent::enqueue_data($attributes);
         $this->asset_data_registry->add('isBlockTheme', wp_is_block_theme());
     }
-
     /**
      * Add increment and decrement buttons to the quantity input field.
      *
@@ -86,10 +75,9 @@ class AddToCartForm extends AbstractBlock
         // Replacement string to add button AFTER the matched <input> element.
         /* translators: %s refers to the item name in the cart. */
         $plus_button = '$1<button aria-label="' . esc_attr(sprintf(__('Increase quantity of %s', 'woocommerce'), $product_name)) . '" type="button" data-wp-on--click="actions.addQuantity" class="wc-block-components-quantity-selector__button wc-block-components-quantity-selector__button--plus">+</button>';
-        $new_html    = preg_replace($pattern, $plus_button, $product_html);
+        $new_html = preg_replace($pattern, $plus_button, $product_html);
         return preg_replace($pattern, $minus_button, (string) $new_html);
     }
-
     /**
      * Add classes to the Add to Cart form input needed for the stepper style.
      *
@@ -100,20 +88,16 @@ class AddToCartForm extends AbstractBlock
     private function add_stepper_classes_to_add_to_cart_form_input($product_html): string
     {
         $html = new \WP_HTML_Tag_Processor($product_html);
-
         // Add classes to the form.
         while ($html->next_tag()) {
             $html->add_class('wc-block-components-quantity-selector');
         }
-
         $html = new \WP_HTML_Tag_Processor($html->get_updated_html());
         while ($html->next_tag()) {
             $html->add_class('wc-block-components-quantity-selector__input');
         }
-
         return $html->get_updated_html();
     }
-
     /**
      * Check if a variation product has all attributes set.
      * Returns true if the product is not variation, or if all variation attributes have defined values.
@@ -125,26 +109,21 @@ class AddToCartForm extends AbstractBlock
     private function has_all_attributes_set(\WC_Product $product): bool
     {
         // If it's not a variation product, return true.
-        if (! $product->is_type(ProductType::VARIATION)) {
+        if (!$product->is_type(Product_Type::VARIATION)) {
             return true;
         }
-
         // Get all variation attributes.
         $variation_attributes = $product->get_variation_attributes();
-
         // If there are no variation attributes, return true.
         if (empty($variation_attributes)) {
             return true;
         }
-
         // Check if any attribute has an empty value (marked as 'any').
         if (in_array('', array_values($variation_attributes), true)) {
             return false;
         }
-
         return true;
     }
-
     /**
      * Render the block.
      *
@@ -157,123 +136,74 @@ class AddToCartForm extends AbstractBlock
     protected function render($attributes, $content, $block): string
     {
         global $product;
-
         $post_id = $block->context['postId'];
-
-        if (! isset($post_id)) {
+        if (!isset($post_id)) {
             return '';
         }
-
         $is_descendent_of_single_product_block = is_null($product) || $post_id !== $product->get_id();
-
         $previous_product = $product;
-        $product          = wc_get_product($post_id);
-        if (! $product instanceof \WC_Product) {
+        $product = wc_get_product($post_id);
+        if (!$product instanceof \WC_Product) {
             $product = $previous_product;
-
             return '';
         }
-
         // Check if all attributes are set for variation product.
-        if ($product->is_type(ProductType::VARIATION) && ! $this->has_all_attributes_set($product)) {
+        if ($product->is_type(Product_Type::VARIATION) && !$this->has_all_attributes_set($product)) {
             $product = $previous_product;
-
             return '';
         }
-
         $product instanceof \WC_Product_External && $product->get_product_url();
-        $managing_stock               = $product->managing_stock();
-        $stock_quantity               = $product->get_stock_quantity();
-
-        $should_hide_quantity_selector = $product->is_sold_individually() || Utils::is_min_max_quantity_same($product) || ($managing_stock && $stock_quantity <= 1);
-
+        $managing_stock = $product->managing_stock();
+        $stock_quantity = $product->get_stock_quantity();
+        $should_hide_quantity_selector = $product->is_sold_individually() || Utils::is_min_max_quantity_same($product) || $managing_stock && $stock_quantity <= 1;
         /**
          * The stepper buttons don't show when the product is sold individually or stock quantity is less or equal to 1 because the quantity input field is hidden.
          * Additionally, if min and max purchase quantity are the same, the buttons should not be rendered at all.
          */
-        $is_stepper_style = 'stepper' === $attributes['quantitySelectorStyle'] && ! $should_hide_quantity_selector;
-
+        $is_stepper_style = 'stepper' === $attributes['quantitySelectorStyle'] && !$should_hide_quantity_selector;
         if ($is_descendent_of_single_product_block) {
             add_filter('woocommerce_add_to_cart_form_action', $this->add_to_cart_form_action(...), 10);
         }
-
         ob_start();
-
         /**
          * Manage variations in the same way as simple products.
          */
         add_action('woocommerce_variation_add_to_cart', 'woocommerce_simple_add_to_cart', 10);
-
         /**
          * Trigger the single product add to cart action for each product type.
          *
          * @since 9.7.0
          */
         do_action('woocommerce_' . $product->get_type() . '_add_to_cart');
-
         /**
          * Remove the hook to prevent potential conflicts with existing code and extensions.
          */
         remove_action('woocommerce_variation_add_to_cart', 'woocommerce_simple_add_to_cart', 10);
-
         $product_html = ob_get_clean();
-
         if ($is_descendent_of_single_product_block) {
             remove_filter('woocommerce_add_to_cart_form_action', $this->add_to_cart_form_action(...), 10);
         }
-
-        if (! $product_html) {
+        if (!$product_html) {
             $product = $previous_product;
-
             return '';
         }
-
         // If the quantity input is hidden, don't render the stepper buttons and styles.
-        if ($is_stepper_style && ! Utils::has_visible_quantity_input($product_html)) {
+        if ($is_stepper_style && !Utils::has_visible_quantity_input($product_html)) {
             $is_stepper_style = false;
         }
-
         if ($is_stepper_style) {
             $product_name = $product->get_name();
             $product_html = $this->add_steppers($product_html, $product_name);
             $product_html = $this->add_stepper_classes_to_add_to_cart_form_input($product_html);
         }
-
-        $classes_and_styles = StyleAttributesUtils::get_classes_and_styles_by_attributes($attributes, [], [ 'extra_classes' ]);
-
+        $classes_and_styles = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes, [], ['extra_classes']);
         $product_classname = $is_descendent_of_single_product_block ? 'product' : '';
-
-        $classes = implode(
-            ' ',
-            array_filter(
-                [
-                    'wp-block-add-to-cart-form wc-block-add-to-cart-form',
-                    esc_attr($classes_and_styles['classes']),
-                    esc_attr($product_classname),
-                    $is_stepper_style ? 'wc-block-add-to-cart-form--stepper' : 'wc-block-add-to-cart-form--input',
-                ]
-            )
-        );
-
-        $wrapper_attributes = get_block_wrapper_attributes(
-            [
-                'class' => $classes,
-                'style' => esc_attr($classes_and_styles['styles']),
-            ]
-        );
-
-        $form = sprintf(
-            '<div %1$s %2$s>%3$s</div>',
-            $wrapper_attributes,
-            $is_stepper_style ? 'data-wp-interactive="woocommerce/add-to-cart-form"' : '',
-            $product_html
-        );
-
+        $classes = implode(' ', array_filter(['wp-block-add-to-cart-form wc-block-add-to-cart-form', esc_attr($classes_and_styles['classes']), esc_attr($product_classname), $is_stepper_style ? 'wc-block-add-to-cart-form--stepper' : 'wc-block-add-to-cart-form--input']));
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => $classes, 'style' => esc_attr($classes_and_styles['styles'])]);
+        $form = sprintf('<div %1$s %2$s>%3$s</div>', $wrapper_attributes, $is_stepper_style ? 'data-wp-interactive="woocommerce/add-to-cart-form"' : '', $product_html);
         $product = $previous_product;
-
         return $form;
     }
-
     /**
      * Use current url as the add to cart form action.
      *
@@ -282,6 +212,7 @@ class AddToCartForm extends AbstractBlock
     public function add_to_cart_form_action()
     {
         global $wp;
-        return home_url(add_query_arg($_GET, $wp->request)); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        return home_url(add_query_arg($_GET, $wp->request));
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     }
 }

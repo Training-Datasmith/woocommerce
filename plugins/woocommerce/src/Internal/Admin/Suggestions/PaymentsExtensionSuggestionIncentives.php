@@ -1,37 +1,30 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Suggestions;
 
-namespace Automattic\WooCommerce\Internal\Admin\Suggestions;
-
-use Automattic\WooCommerce\Internal\Admin\Suggestions\Incentives\Incentive;
-use Automattic\WooCommerce\Internal\Admin\Suggestions\Incentives\WooPayments;
-
+use Automattic\Woo_Commerce\Internal\Admin\Suggestions\Incentives\Incentive;
+use Automattic\Woo_Commerce\Internal\Admin\Suggestions\Incentives\Woo_Payments;
 defined('ABSPATH') || exit;
-
 /**
  * Partner payments extension suggestion incentives provider class.
  *
  * @internal
  */
-class PaymentsExtensionSuggestionIncentives
+class Payments_Extension_Suggestion_Incentives
 {
     /**
      * The map of suggestion IDs to their respective incentives provider classes.
      *
      * @var array|\class-string[]
      */
-    private array $suggestion_incentives_class_map = [
-        PaymentsExtensionSuggestions::WOOPAYMENTS => WooPayments::class,
-    ];
-
+    private array $suggestion_incentives_class_map = [Payments_Extension_Suggestions::WOOPAYMENTS => Woo_Payments::class];
     /**
      * The instances of the incentives providers.
      *
      * @var Incentive[]
      */
     private array $instances = [];
-
     /**
      * Get the first found incentive details for a specific payment extension suggestion.
      *
@@ -48,10 +41,8 @@ class PaymentsExtensionSuggestionIncentives
         if (empty($incentives)) {
             return null;
         }
-
         return reset($incentives);
     }
-
     /**
      * Get the incentives list for a specific payment extension suggestion.
      *
@@ -69,19 +60,12 @@ class PaymentsExtensionSuggestionIncentives
         if (null === $provider) {
             return [];
         }
-
         $incentives = $provider->get_all($country_code, $incentive_type);
-
-        if (! $skip_visibility_check) {
-            $incentives = array_filter(
-                $incentives,
-                fn (array $incentive): bool => $provider->is_visible($incentive['id'], $country_code)
-            );
+        if (!$skip_visibility_check) {
+            $incentives = array_filter($incentives, fn(array $incentive): bool => $provider->is_visible($incentive['id'], $country_code));
         }
-
         return array_values($incentives);
     }
-
     /**
      * Check if an incentive is visible.
      *
@@ -92,20 +76,14 @@ class PaymentsExtensionSuggestionIncentives
      *
      * @return bool Whether there is a visible incentive for the suggestion.
      */
-    public function is_incentive_visible(
-        string $incentive_id,
-        string $suggestion_id,
-        string $country_code,
-        bool $skip_extension_active_check = false
-    ): bool {
+    public function is_incentive_visible(string $incentive_id, string $suggestion_id, string $country_code, bool $skip_extension_active_check = false): bool
+    {
         $provider = $this->get_incentive_instance($suggestion_id);
         if (null === $provider) {
             return false;
         }
-
         return $provider->is_visible($incentive_id, $country_code, $skip_extension_active_check);
     }
-
     /**
      * Check if an incentive has been dismissed for a specific payment extension suggestion.
      *
@@ -121,10 +99,8 @@ class PaymentsExtensionSuggestionIncentives
         if (null === $provider) {
             return false;
         }
-
         return $provider->is_dismissed($incentive_id, $context);
     }
-
     /**
      * Get the dismissals (contexts) for an incentive.
      *
@@ -139,10 +115,8 @@ class PaymentsExtensionSuggestionIncentives
         if (null === $provider) {
             return [];
         }
-
         return $provider->get_dismissals($incentive_id);
     }
-
     /**
      * Dismiss an incentive for a specific payment extension suggestion.
      *
@@ -160,10 +134,8 @@ class PaymentsExtensionSuggestionIncentives
         if (null === $provider) {
             throw new \Exception('No incentives provider for the suggestion.');
         }
-
         return $provider->dismiss($incentive_id, $context);
     }
-
     /**
      * Get the incentive provider instance for a specific payment extension suggestion.
      *
@@ -174,24 +146,19 @@ class PaymentsExtensionSuggestionIncentives
      */
     public function get_incentive_instance(string $suggestion_id): ?Incentive
     {
-        if (isset($this->instances[ $suggestion_id ])) {
-            return $this->instances[ $suggestion_id ];
+        if (isset($this->instances[$suggestion_id])) {
+            return $this->instances[$suggestion_id];
         }
-
         // If the suggestion ID is not mapped to an incentives provider class, return null.
-        if (! isset($this->suggestion_incentives_class_map[ $suggestion_id ])) {
-            $this->instances[ $suggestion_id ] = null;
-
+        if (!isset($this->suggestion_incentives_class_map[$suggestion_id])) {
+            $this->instances[$suggestion_id] = null;
             return null;
         }
-
         // Create an instance of the incentives provider class.
-        $provider_class                    = $this->suggestion_incentives_class_map[ $suggestion_id ];
-        $this->instances[ $suggestion_id ] = new $provider_class($suggestion_id);
-
-        return $this->instances[ $suggestion_id ];
+        $provider_class = $this->suggestion_incentives_class_map[$suggestion_id];
+        $this->instances[$suggestion_id] = new $provider_class($suggestion_id);
+        return $this->instances[$suggestion_id];
     }
-
     /**
      * Check if a specific payment extension suggestion has an incentive provider registered.
      *

@@ -1,35 +1,30 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Admin Usage Tracking Opt In Note Provider.
  *
  * Adds a Usage Tracking Opt In extension note.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\Notes;
+namespace Automattic\Woo_Commerce\Internal\Admin\Notes;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\Notes\Note;
-use Automattic\WooCommerce\Admin\Notes\NoteTraits;
+use Automattic\Woo_Commerce\Admin\Notes\Note;
+use Automattic\Woo_Commerce\Admin\Notes\Note_Traits;
 use WC_Tracks;
-
 /**
  * Tracking_Opt_In
  */
-class TrackingOptIn
+class Tracking_Opt_In
 {
     /**
      * Note traits.
      */
-    use NoteTraits;
-
+    use Note_Traits;
     /**
      * Name of the note for use in the database.
      */
     public const NOTE_NAME = 'wc-admin-usage-tracking-opt-in';
-
     /**
      * Attach hooks.
      */
@@ -37,7 +32,6 @@ class TrackingOptIn
     {
         add_action('woocommerce_note_action_tracking-opt-in', $this->opt_in_to_tracking(...));
     }
-
     /**
      * Get the note.
      *
@@ -49,25 +43,13 @@ class TrackingOptIn
         if ('yes' === get_option('woocommerce_allow_tracking', 'no')) {
             return;
         }
-
         // We want to show the note after one week.
-        if (! self::is_wc_admin_active_in_date_range('week-1-4')) {
+        if (!self::is_wc_admin_active_in_date_range('week-1-4')) {
             return;
         }
-
         /* translators: 1: open link to WooCommerce.com settings, 2: open link to WooCommerce.com tracking documentation, 3: close link tag. */
-        $content_format = __(
-            'Gathering usage data allows us to improve WooCommerce. Your store will be considered as we evaluate new features, judge the quality of an update, or determine if an improvement makes sense. You can always visit the %1$sSettings%3$s and choose to stop sharing data. %2$sRead more%3$s about what data we collect.',
-            'woocommerce'
-        );
-
-        $note_content = sprintf(
-            $content_format,
-            '<a href="' . esc_url(admin_url('admin.php?page=wc-settings&tab=advanced&section=woocommerce_com')) . '" target="_blank">',
-            '<a href="https://woocommerce.com/usage-tracking?utm_medium=product" target="_blank">',
-            '</a>'
-        );
-
+        $content_format = __('Gathering usage data allows us to improve WooCommerce. Your store will be considered as we evaluate new features, judge the quality of an update, or determine if an improvement makes sense. You can always visit the %1$sSettings%3$s and choose to stop sharing data. %2$sRead more%3$s about what data we collect.', 'woocommerce');
+        $note_content = sprintf($content_format, '<a href="' . esc_url(admin_url('admin.php?page=wc-settings&tab=advanced&section=woocommerce_com')) . '" target="_blank">', '<a href="https://woocommerce.com/usage-tracking?utm_medium=product" target="_blank">', '</a>');
         $note = new Note();
         $note->set_title(__('Help WooCommerce improve with usage tracking', 'woocommerce'));
         $note->set_content($note_content);
@@ -78,7 +60,6 @@ class TrackingOptIn
         $note->add_action('tracking-opt-in', __('Activate usage tracking', 'woocommerce'), false, Note::E_WC_ADMIN_NOTE_ACTIONED, true, __('Usage tracking activated', 'woocommerce'));
         return $note;
     }
-
     /**
      * Opt in to usage tracking when note is actioned.
      *
@@ -89,17 +70,14 @@ class TrackingOptIn
         if (self::NOTE_NAME === $note->get_name()) {
             // Get the previous value of the tracking.
             $prev_value = get_option('woocommerce_allow_tracking', 'no');
-
             // Opt in to tracking and schedule the first data update.
             // Same mechanism as in WC_Admin_Setup_Wizard::wc_setup_store_setup_save().
             update_option('woocommerce_allow_tracking', 'yes');
-
             // Track woocommerce_allow_tracking_toggled in case was set as 'no' before.
             if (class_exists('WC_Tracks') && 'no' === $prev_value) {
                 WC_Tracks::track_woocommerce_allow_tracking_toggled($prev_value, 'yes', 'usage_tracking_note');
             }
-
-            wp_schedule_single_event(time() + 10, 'woocommerce_tracker_send_event', [ true ]);
+            wp_schedule_single_event(time() + 10, 'woocommerce_tracker_send_event', [true]);
         }
     }
 }

@@ -1,22 +1,19 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks;
 
-namespace Automattic\WooCommerce\Blocks;
-
-use Automattic\WooCommerce\Admin\Notes\Note;
-use Automattic\WooCommerce\Admin\Notes\Notes;
-
+use Automattic\Woo_Commerce\Admin\Notes\Note;
+use Automattic\Woo_Commerce\Admin\Notes\Notes;
 /**
  * A class used to display inbox messages to merchants in the WooCommerce Admin dashboard.
  *
  * @package Automattic\WooCommerce\Blocks
  * @since x.x.x
  */
-class InboxNotifications
+class Inbox_Notifications
 {
     public const SURFACE_CART_CHECKOUT_NOTE_NAME = 'surface_cart_checkout';
-
     /**
      * Deletes the note.
      */

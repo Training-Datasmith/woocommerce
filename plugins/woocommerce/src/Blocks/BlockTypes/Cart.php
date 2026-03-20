@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Cart_Checkout_Utils;
 /**
  * Cart class.
  *
  * @internal
  */
-class Cart extends AbstractBlock
+class Cart extends Abstract_Block
 {
     /**
      * Block name.
@@ -19,14 +17,12 @@ class Cart extends AbstractBlock
      * @var string
      */
     protected $block_name = 'cart';
-
     /**
      * Chunks build folder.
      *
      * @var string
      */
     protected $chunks_folder = 'cart-blocks';
-
     /**
      * Initialize this block type.
      *
@@ -38,7 +34,6 @@ class Cart extends AbstractBlock
         parent::initialize();
         add_action('wp_loaded', $this->register_patterns(...));
     }
-
     /**
      * Dequeues the scripts added by WC Core to the Cart page.
      */
@@ -49,51 +44,20 @@ class Cart extends AbstractBlock
         wp_dequeue_script('selectWoo');
         wp_dequeue_style('select2');
     }
-
     /**
      * Register block pattern for Empty Cart Message to make it translatable.
      */
     public function register_patterns(): void
     {
         $shop_permalink = wc_get_page_permalink('shop');
-
-        register_block_pattern(
-            'woocommerce/cart-heading',
-            [
-                'title'    => '',
-                'inserter' => false,
-                'content'  => '<!-- wp:heading {"align":"wide", "level":1} --><h1 class="wp-block-heading alignwide">' . esc_html__('Cart', 'woocommerce') . '</h1><!-- /wp:heading -->',
-            ]
-        );
-        register_block_pattern(
-            'woocommerce/cart-cross-sells-message',
-            [
-                'title'    => '',
-                'inserter' => false,
-                'content'  => '<!-- wp:heading {"fontSize":"large"} --><h2 class="wp-block-heading has-large-font-size">' . esc_html__('You may be interested in…', 'woocommerce') . '</h2><!-- /wp:heading -->',
-            ]
-        );
-        register_block_pattern(
-            'woocommerce/cart-empty-message',
-            [
-                'title'    => '',
-                'inserter' => false,
-                'content'  => '
+        register_block_pattern('woocommerce/cart-heading', ['title' => '', 'inserter' => false, 'content' => '<!-- wp:heading {"align":"wide", "level":1} --><h1 class="wp-block-heading alignwide">' . esc_html__('Cart', 'woocommerce') . '</h1><!-- /wp:heading -->']);
+        register_block_pattern('woocommerce/cart-cross-sells-message', ['title' => '', 'inserter' => false, 'content' => '<!-- wp:heading {"fontSize":"large"} --><h2 class="wp-block-heading has-large-font-size">' . esc_html__('You may be interested in…', 'woocommerce') . '</h2><!-- /wp:heading -->']);
+        register_block_pattern('woocommerce/cart-empty-message', ['title' => '', 'inserter' => false, 'content' => '
 					<!-- wp:heading {"textAlign":"center","className":"with-empty-cart-icon wc-block-cart__empty-cart__title"} --><h2 class="wp-block-heading has-text-align-center with-empty-cart-icon wc-block-cart__empty-cart__title">' . esc_html__('Your cart is currently empty!', 'woocommerce') . '</h2><!-- /wp:heading -->
 					<!-- wp:paragraph {"align":"center"} --><p class="has-text-align-center"><a href="' . esc_attr(esc_url($shop_permalink)) . '">' . esc_html__('Browse store', 'woocommerce') . '</a></p><!-- /wp:paragraph -->
-				',
-            ]
-        );
-        register_block_pattern(
-            'woocommerce/cart-new-in-store-message',
-            [
-                'title'    => '',
-                'inserter' => false,
-                'content'  => '<!-- wp:heading {"textAlign":"center"} --><h2 class="wp-block-heading has-text-align-center">' . esc_html__('New in store', 'woocommerce') . '</h2><!-- /wp:heading -->',
-            ]
-        );
+				']);
+        register_block_pattern('woocommerce/cart-new-in-store-message', ['title' => '', 'inserter' => false, 'content' => '<!-- wp:heading {"textAlign":"center"} --><h2 class="wp-block-heading has-text-align-center">' . esc_html__('New in store', 'woocommerce') . '</h2><!-- /wp:heading -->']);
     }
-
     /**
      * Get the editor script handle for this block type.
      *
@@ -102,14 +66,9 @@ class Cart extends AbstractBlock
      */
     protected function get_block_type_editor_script($key = null): string|array
     {
-        $script = [
-            'handle'       => 'wc-' . $this->block_name . '-block',
-            'path'         => $this->asset_api->get_block_asset_build_path($this->block_name),
-            'dependencies' => [ 'wc-blocks' ],
-        ];
-        return $key ? $script[ $key ] : $script;
+        $script = ['handle' => 'wc-' . $this->block_name . '-block', 'path' => $this->asset_api->get_block_asset_build_path($this->block_name), 'dependencies' => ['wc-blocks']];
+        return $key ? $script[$key] : $script;
     }
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -118,14 +77,9 @@ class Cart extends AbstractBlock
      */
     protected function get_block_type_script($key = null): string|array
     {
-        $script = [
-            'handle'       => 'wc-' . $this->block_name . '-block-frontend',
-            'path'         => $this->asset_api->get_block_asset_build_path($this->block_name . '-frontend'),
-            'dependencies' => [],
-        ];
-        return $key ? $script[ $key ] : $script;
+        $script = ['handle' => 'wc-' . $this->block_name . '-block-frontend', 'path' => $this->asset_api->get_block_asset_build_path($this->block_name . '-frontend'), 'dependencies' => []];
+        return $key ? $script[$key] : $script;
     }
-
     /**
      * Get the frontend style handle for this block type.
      *
@@ -133,9 +87,8 @@ class Cart extends AbstractBlock
      */
     protected function get_block_type_style(): array
     {
-        return array_merge(parent::get_block_type_style(), [ 'wc-blocks-packages-style' ]);
+        return array_merge(parent::get_block_type_style(), ['wc-blocks-packages-style']);
     }
-
     /**
      * Enqueue frontend assets for this block, just in time for rendering.
      *
@@ -159,7 +112,6 @@ class Cart extends AbstractBlock
          */
         do_action('woocommerce_blocks_enqueue_cart_block_scripts_after');
     }
-
     /**
      * Append frontend scripts when rendering the Cart block.
      *
@@ -172,17 +124,14 @@ class Cart extends AbstractBlock
     {
         // Dequeue the core scripts when rendering this block.
         add_action('wp_enqueue_scripts', $this->dequeue_woocommerce_core_scripts(...), 20);
-
         /**
          * We need to check if $content has any templates from prior iterations of the block, in order to update to the latest iteration.
          * We test the iteration version by searching for new blocks brought in by it.
          * The blocks used for testing should be always available in the block (not removable by the user).
          */
-
         $regex_for_filled_cart_block = '/<div[^<]*?data-block-name="woocommerce\/filled-cart-block"[^>]*?>/mi';
         // Filled Cart block was added in i2, so we search for it to see if we have a Cart i1 template.
-        $has_i1_template = ! preg_match($regex_for_filled_cart_block, $content);
-
+        $has_i1_template = !preg_match($regex_for_filled_cart_block, $content);
         if ($has_i1_template) {
             /**
              * This fallback structure needs to match the defaultTemplate variables defined in the block's edit.tsx files,
@@ -202,11 +151,9 @@ class Cart extends AbstractBlock
 			</div>
 			<div data-block-name="woocommerce/empty-cart-block" class="wp-block-woocommerce-empty-cart-block">
 			';
-
             $content = preg_replace('/<div class="[a-zA-Z0-9_\- ]*wp-block-woocommerce-cart[a-zA-Z0-9_\- ]*">/mi', $inner_blocks_html, $content);
             $content = $content . '</div>';
         }
-
         /**
          * Cart i3 added inner blocks for Order summary. We need to add them to Cart i2 templates.
          * The order needs to match the order in which these blocks were registered.
@@ -222,16 +169,13 @@ class Cart extends AbstractBlock
 		';
         // Order summary subtotal block was added in i3, so we search for it to see if we have a Cart i2 template.
         $regex_for_order_summary_subtotal = '/<div[^<]*?data-block-name="woocommerce\/cart-order-summary-subtotal-block"[^>]*?>/mi';
-        $regex_for_order_summary          = '/<div[^<]*?data-block-name="woocommerce\/cart-order-summary-block"[^>]*?>/mi';
-        $has_i2_template                  = ! preg_match($regex_for_order_summary_subtotal, $content);
-
+        $regex_for_order_summary = '/<div[^<]*?data-block-name="woocommerce\/cart-order-summary-block"[^>]*?>/mi';
+        $has_i2_template = !preg_match($regex_for_order_summary_subtotal, $content);
         if ($has_i2_template) {
             return preg_replace($regex_for_order_summary, $order_summary_with_inner_blocks, $content);
         }
-
         return $content;
     }
-
     /**
      * Extra data passed through from server to client for block.
      *
@@ -242,8 +186,7 @@ class Cart extends AbstractBlock
     protected function enqueue_data(array $attributes = [])
     {
         parent::enqueue_data($attributes);
-
-        $this->asset_data_registry->add('countryData', CartCheckoutUtils::get_country_data());
+        $this->asset_data_registry->add('countryData', Cart_Checkout_Utils::get_country_data());
         $this->asset_data_registry->add('displayItemizedTaxes', 'itemized' === get_option('woocommerce_tax_total_display'));
         $this->asset_data_registry->add('displayCartPricesIncludingTax', 'incl' === get_option('woocommerce_tax_display_cart'));
         $this->asset_data_registry->add('taxesEnabled', wc_tax_enabled());
@@ -252,13 +195,11 @@ class Cart extends AbstractBlock
         $this->asset_data_registry->add('hasDarkEditorStyleSupport', current_theme_supports('dark-editor-style'));
         $this->asset_data_registry->register_page_id($attributes['checkoutPageId'] ?? 0);
         $this->asset_data_registry->add('isBlockTheme', wp_is_block_theme());
-        $this->asset_data_registry->add('shippingMethodsExist', CartCheckoutUtils::shipping_methods_exist() > 0);
-
+        $this->asset_data_registry->add('shippingMethodsExist', Cart_Checkout_Utils::shipping_methods_exist() > 0);
         // Hydrate the following data depending on admin or frontend context.
-        if (! is_admin() && ! WC()->is_rest_api_request()) {
+        if (!is_admin() && !WC()->is_rest_api_request()) {
             $this->asset_data_registry->hydrate_api_request('/wc/store/v1/cart');
         }
-
         /**
          * Fires after cart block data is registered.
          *
@@ -266,7 +207,6 @@ class Cart extends AbstractBlock
          */
         do_action('woocommerce_blocks_cart_enqueue_data');
     }
-
     /**
      * Register script and style assets for the block type before it is registered.
      *
@@ -275,12 +215,11 @@ class Cart extends AbstractBlock
     protected function register_block_type_assets()
     {
         parent::register_block_type_assets();
-        $chunks        = $this->get_chunks_paths($this->chunks_folder);
+        $chunks = $this->get_chunks_paths($this->chunks_folder);
         $vendor_chunks = $this->get_chunks_paths('vendors--cart-blocks');
         $shared_chunks = [];
         $this->register_chunk_translations(array_merge($chunks, $vendor_chunks, $shared_chunks));
     }
-
     /**
      * Get list of Cart block & its inner-block types.
      *
@@ -288,27 +227,6 @@ class Cart extends AbstractBlock
      */
     public static function get_cart_block_types(): array
     {
-        return [
-            'Cart',
-            'CartOrderSummaryTaxesBlock',
-            'CartOrderSummarySubtotalBlock',
-            'CartOrderSummaryTotalsBlock',
-            'FilledCartBlock',
-            'EmptyCartBlock',
-            'CartTotalsBlock',
-            'CartItemsBlock',
-            'CartLineItemsBlock',
-            'CartOrderSummaryBlock',
-            'CartExpressPaymentBlock',
-            'ProceedToCheckoutBlock',
-            'CartAcceptedPaymentMethodsBlock',
-            'CartOrderSummaryCouponFormBlock',
-            'CartOrderSummaryDiscountBlock',
-            'CartOrderSummaryFeeBlock',
-            'CartOrderSummaryHeadingBlock',
-            'CartOrderSummaryShippingBlock',
-            'CartCrossSellsBlock',
-            'CartCrossSellsProductsBlock',
-        ];
+        return ['Cart', 'CartOrderSummaryTaxesBlock', 'CartOrderSummarySubtotalBlock', 'CartOrderSummaryTotalsBlock', 'FilledCartBlock', 'EmptyCartBlock', 'CartTotalsBlock', 'CartItemsBlock', 'CartLineItemsBlock', 'CartOrderSummaryBlock', 'CartExpressPaymentBlock', 'ProceedToCheckoutBlock', 'CartAcceptedPaymentMethodsBlock', 'CartOrderSummaryCouponFormBlock', 'CartOrderSummaryDiscountBlock', 'CartOrderSummaryFeeBlock', 'CartOrderSummaryHeadingBlock', 'CartOrderSummaryShippingBlock', 'CartCrossSellsBlock', 'CartCrossSellsProductsBlock'];
     }
 }

@@ -1,38 +1,35 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Admin: Feature plugin main class.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin;
+namespace Automattic\Woo_Commerce\Internal\Admin;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API;
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Admin\Notes\Notes;
-use Automattic\WooCommerce\Admin\PluginsHelper;
-use Automattic\WooCommerce\Admin\PluginsInstaller;
-use Automattic\WooCommerce\Admin\ReportExporter;
-use Automattic\WooCommerce\Admin\ReportsSync;
-use Automattic\WooCommerce\Internal\Admin\Notes\InstallJPAndWCSPlugins;
-use Automattic\WooCommerce\Internal\Admin\Notes\MagentoMigration;
-use Automattic\WooCommerce\Internal\Admin\Notes\OrderMilestones;
-use Automattic\WooCommerce\Internal\Admin\Notes\ScheduledUpdatesPromotion;
-use Automattic\WooCommerce\Internal\Admin\Notes\SellingOnlineCourses;
-use Automattic\WooCommerce\Internal\Admin\Notes\TrackingOptIn;
-use Automattic\WooCommerce\Internal\Admin\Notes\WooCommercePayments;
-use Automattic\WooCommerce\Internal\Admin\Notes\WooSubscriptionsNotes;
-use Automattic\WooCommerce\Internal\Admin\Onboarding\Onboarding;
-
+use Automattic\Woo_Commerce\Admin\API;
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Admin\Notes\Notes;
+use Automattic\Woo_Commerce\Admin\Plugins_Helper;
+use Automattic\Woo_Commerce\Admin\Plugins_Installer;
+use Automattic\Woo_Commerce\Admin\Report_Exporter;
+use Automattic\Woo_Commerce\Admin\Reports_Sync;
+use Automattic\Woo_Commerce\Internal\Admin\Notes\Install_Jp_And_Wcs_Plugins;
+use Automattic\Woo_Commerce\Internal\Admin\Notes\Magento_Migration;
+use Automattic\Woo_Commerce\Internal\Admin\Notes\Order_Milestones;
+use Automattic\Woo_Commerce\Internal\Admin\Notes\Scheduled_Updates_Promotion;
+use Automattic\Woo_Commerce\Internal\Admin\Notes\Selling_Online_Courses;
+use Automattic\Woo_Commerce\Internal\Admin\Notes\Tracking_Opt_In;
+use Automattic\Woo_Commerce\Internal\Admin\Notes\Woo_Commerce_Payments;
+use Automattic\Woo_Commerce\Internal\Admin\Notes\Woo_Subscriptions_Notes;
+use Automattic\Woo_Commerce\Internal\Admin\Onboarding\Onboarding;
 /**
  * Feature plugin main class.
  *
  * @internal This file will not be bundled with woo core, only the feature plugin.
  * @internal Note this is not called WC_Admin due to a class already existing in core with that name.
  */
-class FeaturePlugin
+class Feature_Plugin
 {
     /**
      * The single instance of the class.
@@ -40,19 +37,16 @@ class FeaturePlugin
      * @var object
      */
     protected static $instance;
-
     /**
      * Indicates if init has been invoked already.
      */
     private bool $initialized = false;
-
     /**
      * Constructor
      */
     protected function __construct()
     {
     }
-
     /**
      * Get class instance.
      *
@@ -65,22 +59,19 @@ class FeaturePlugin
         }
         return static::$instance;
     }
-
     /**
      * Init the feature plugin, only if we can detect both Gutenberg and WooCommerce.
      */
     public function init(): void
     {
         // Bail if WC isn't initialized (This can be called from WCAdmin's entrypoint).
-        if (! defined('WC_ABSPATH')) {
+        if (!defined('WC_ABSPATH')) {
             return;
         }
-
         if ($this->initialized) {
             return;
         }
         $this->initialized = true;
-
         // Load the page controller functions file first to prevent fatal errors when disabling WooCommerce Admin.
         $this->define_constants();
         require_once WC_ADMIN_ABSPATH . '/includes/react-admin/page-controller-functions.php';
@@ -89,7 +80,6 @@ class FeaturePlugin
         require_once WC_ADMIN_ABSPATH . '/includes/react-admin/feature-config.php';
         require_once WC_ADMIN_ABSPATH . '/includes/react-admin/wc-admin-update-functions.php';
         require_once WC_ADMIN_ABSPATH . '/includes/react-admin/class-experimental-abtest.php';
-
         if (did_action('plugins_loaded')) {
             self::on_plugins_loaded();
         } else {
@@ -100,7 +90,6 @@ class FeaturePlugin
             add_action('plugins_loaded', $this->on_plugins_loaded(...), 9);
         }
     }
-
     /**
      * Setup plugin once all other plugins are loaded.
      */
@@ -109,7 +98,6 @@ class FeaturePlugin
         $this->hooks();
         $this->includes();
     }
-
     /**
      * Define Constants.
      *
@@ -123,13 +111,12 @@ class FeaturePlugin
         $this->define('WC_ADMIN_DIST_JS_FOLDER', 'assets/client/admin/');
         $this->define('WC_ADMIN_DIST_CSS_FOLDER', 'assets/client/admin/');
         $this->define('WC_ADMIN_PLUGIN_FILE', WC_PLUGIN_FILE);
-
         /**
          * Define the WC Admin Images Folder URL.
          *
          * @deprecated 6.7.0
          */
-        if (! defined('WC_ADMIN_IMAGES_FOLDER_URL')) {
+        if (!defined('WC_ADMIN_IMAGES_FOLDER_URL')) {
             /**
              * Define the WC Admin Images Folder URL.
              *
@@ -137,13 +124,12 @@ class FeaturePlugin
              */
             define('WC_ADMIN_IMAGES_FOLDER_URL', plugins_url('assets/images', WC_PLUGIN_FILE));
         }
-
         /**
          * Define the current WC Admin version.
          *
          * @deprecated 6.4.0
          */
-        if (! defined('WC_ADMIN_VERSION_NUMBER')) {
+        if (!defined('WC_ADMIN_VERSION_NUMBER')) {
             /**
              * Define the current WC Admin version.
              *
@@ -152,7 +138,6 @@ class FeaturePlugin
             define('WC_ADMIN_VERSION_NUMBER', '3.3.0');
         }
     }
-
     /**
      * Include WC Admin classes.
      */
@@ -161,50 +146,41 @@ class FeaturePlugin
         // Initialize Database updates, option migrations, and Notes.
         Events::instance()->init();
         Notes::init();
-
         // Initialize Plugins Installer.
-        PluginsInstaller::init();
-        PluginsHelper::init();
-
+        Plugins_Installer::init();
+        Plugins_Helper::init();
         // Initialize API.
         API\Init::instance();
-
         if (Features::is_enabled('onboarding')) {
             Onboarding::init();
         }
-
         if (Features::is_enabled('analytics')) {
             // Initialize Reports syncing.
-            ReportsSync::init();
-            CategoryLookup::instance()->init();
-
+            Reports_Sync::init();
+            Category_Lookup::instance()->init();
             // Initialize Reports exporter.
-            ReportExporter::init();
+            Report_Exporter::init();
         }
-
         // Admin note providers.
         // @todo These should be bundled in the features/ folder, but loading them from there currently has a load order issue.
-        new WooSubscriptionsNotes();
-        new OrderMilestones();
-        new TrackingOptIn();
-        new WooCommercePayments();
-        new InstallJPAndWCSPlugins();
-        new SellingOnlineCourses();
-        new MagentoMigration();
-        new ScheduledUpdatesPromotion();
+        new Woo_Subscriptions_Notes();
+        new Order_Milestones();
+        new Tracking_Opt_In();
+        new Woo_Commerce_Payments();
+        new Install_Jp_And_Wcs_Plugins();
+        new Selling_Online_Courses();
+        new Magento_Migration();
+        new Scheduled_Updates_Promotion();
     }
-
     /**
      * Set up our admin hooks and plugin loader.
      */
     protected function hooks()
     {
         add_filter('woocommerce_admin_features', $this->replace_supported_features(...), 0);
-
         Loader::get_instance();
-        WCAdminAssets::get_instance();
+        Wc_Admin_Assets::get_instance();
     }
-
     /**
      * Overwrites the allowed features array using a local `feature-config.php` file.
      *
@@ -220,7 +196,6 @@ class FeaturePlugin
         $feature_config = apply_filters('woocommerce_admin_get_feature_config', wc_admin_get_feature_config());
         return array_keys(array_filter($feature_config));
     }
-
     /**
      * Define constant if not already set.
      *
@@ -229,23 +204,21 @@ class FeaturePlugin
      */
     protected function define($name, $value)
     {
-        if (! defined($name)) {
+        if (!defined($name)) {
             define($name, $value);
         }
     }
-
     /**
      * Prevent cloning.
      */
     private function __clone()
     {
     }
-
     /**
      * Prevent unserializing.
      */
     public function __wakeup()
     {
-        die();
+        die;
     }
 }

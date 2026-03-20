@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks;
 
 /**
  * Library class.
@@ -21,7 +20,6 @@ class Library
     {
         _deprecated_function('Library::init', '5.0.0');
     }
-
     /**
      * Register custom tables within $wpdb object.
      *
@@ -31,7 +29,6 @@ class Library
     {
         _deprecated_function('Library::define_tables', '5.0.0');
     }
-
     /**
      * Register blocks, hooking up assets and render functions as needed.
      *

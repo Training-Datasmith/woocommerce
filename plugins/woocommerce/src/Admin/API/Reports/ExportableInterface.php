@@ -1,22 +1,20 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Reports Exportable Controller Interface
  */
+namespace Automattic\Woo_Commerce\Admin\API\Reports;
 
-namespace Automattic\WooCommerce\Admin\API\Reports;
-
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit;
 }
-
 /**
  * WooCommerce Reports exportable controller interface.
  *
  * @since 3.5.0
  */
-interface ExportableInterface
+interface Exportable_Interface
 {
     /**
      * Get the column names for export.
@@ -24,7 +22,6 @@ interface ExportableInterface
      * @return array Key value pair of Column ID => Label.
      */
     public function get_export_columns();
-
     /**
      * Get the column values for export.
      *

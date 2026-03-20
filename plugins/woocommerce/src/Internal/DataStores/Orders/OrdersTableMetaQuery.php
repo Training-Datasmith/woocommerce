@@ -1,116 +1,79 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\DataStores\Orders;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Data_Stores\Orders;
 
 defined('ABSPATH') || exit;
-
 /**
  * Class used to implement meta queries for the orders table datastore via {@see OrdersTableQuery}.
  * Heavily inspired by WordPress' own `WP_Meta_Query` for backwards compatibility reasons.
  *
  * Parts of the implementation have been adapted from {@link https://core.trac.wordpress.org/browser/tags/6.0.1/src/wp-includes/class-wp-meta-query.php}.
  */
-class OrdersTableMetaQuery
+class Orders_Table_Meta_Query
 {
     /**
      * List of non-numeric SQL operators used for comparisons in meta queries.
      *
      * @var array
      */
-    private const NON_NUMERIC_OPERATORS = [
-        '=',
-        '!=',
-        'LIKE',
-        'NOT LIKE',
-        'IN',
-        'NOT IN',
-        'EXISTS',
-        'NOT EXISTS',
-        'RLIKE',
-        'REGEXP',
-        'NOT REGEXP',
-    ];
-
+    private const NON_NUMERIC_OPERATORS = ['=', '!=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'EXISTS', 'NOT EXISTS', 'RLIKE', 'REGEXP', 'NOT REGEXP'];
     /**
      * List of numeric SQL operators used for comparisons in meta queries.
      *
      * @var array
      */
-    private const NUMERIC_OPERATORS = [
-        '>',
-        '>=',
-        '<',
-        '<=',
-        'BETWEEN',
-        'NOT BETWEEN',
-
-    ];
-
+    private const NUMERIC_OPERATORS = ['>', '>=', '<', '<=', 'BETWEEN', 'NOT BETWEEN'];
     /**
      * Prefix used when generating aliases for the metadata table.
      *
      * @var string
      */
     private const ALIAS_PREFIX = 'meta';
-
     /**
      * Name of the main orders table.
      */
     private readonly string $meta_table;
-
     /**
      * Name of the metadata table.
      */
     private readonly string $orders_table;
-
     /**
      * Sanitized `meta_query`.
      */
     private readonly array $queries;
-
     /**
      * Flat list of clauses by name.
      */
     private array $flattened_clauses = [];
-
     /**
      * JOIN clauses to add to the main SQL query.
      */
     private array $join = [];
-
     /**
      * WHERE clauses to add to the main SQL query.
      */
     private array $where = [];
-
     /**
      * Table aliases in use by the meta query. Used to optimize JOINs when possible.
      */
     private array $table_aliases = [];
-
     /**
      * Constructor.
      *
      * @param OrdersTableQuery $q The main query being performed.
      */
-    public function __construct(OrdersTableQuery $q)
+    public function __construct(Orders_Table_Query $q)
     {
         $meta_query = $q->get('meta_query');
-
-        if (! $meta_query) {
+        if (!$meta_query) {
             return;
         }
-
         $this->queries = $this->sanitize_meta_query($meta_query);
-
-        $this->meta_table   = $q->get_table_name('meta');
+        $this->meta_table = $q->get_table_name('meta');
         $this->orders_table = $q->get_table_name('orders');
-
         $this->build_query();
     }
-
     /**
      * Returns JOIN and WHERE clauses to be appended to the main SQL query.
      *
@@ -121,12 +84,8 @@ class OrdersTableMetaQuery
      */
     public function get_sql_clauses(): array
     {
-        return [
-            'join'  => $this->sanitize_join($this->join),
-            'where' => $this->flatten_where_clauses($this->where),
-        ];
+        return ['join' => $this->sanitize_join($this->join), 'where' => $this->flatten_where_clauses($this->where)];
     }
-
     /**
      * Returns a list of names (corresponding to meta_query clauses) that can be used as an 'orderby' arg.
      *
@@ -134,25 +93,18 @@ class OrdersTableMetaQuery
      */
     public function get_orderby_keys(): array
     {
-        if (! $this->flattened_clauses) {
+        if (!$this->flattened_clauses) {
             return [];
         }
-
-        $keys   = [];
+        $keys = [];
         $keys[] = 'meta_value';
         $keys[] = 'meta_value_num';
-
         $first_clause = reset($this->flattened_clauses);
-        if ($first_clause && ! empty($first_clause['key'])) {
+        if ($first_clause && !empty($first_clause['key'])) {
             $keys[] = $first_clause['key'];
         }
-
-        return array_merge(
-            $keys,
-            array_keys($this->flattened_clauses)
-        );
+        return array_merge($keys, array_keys($this->flattened_clauses));
     }
-
     /**
      * Returns an SQL fragment for the given meta_query key that can be used in an ORDER BY clause.
      * Call {@see 'get_orderby_keys'} to obtain a list of valid keys.
@@ -166,31 +118,25 @@ class OrdersTableMetaQuery
     public function get_orderby_clause_for_key(string $key): string
     {
         $clause = false;
-
-        if (isset($this->flattened_clauses[ $key ])) {
-            $clause = $this->flattened_clauses[ $key ];
+        if (isset($this->flattened_clauses[$key])) {
+            $clause = $this->flattened_clauses[$key];
         } else {
             $first_clause = reset($this->flattened_clauses);
-
-            if ($first_clause && ! empty($first_clause['key'])) {
+            if ($first_clause && !empty($first_clause['key'])) {
                 if ('meta_value_num' === $key) {
                     return "{$first_clause['alias']}.meta_value+0";
                 }
-
                 if ('meta_value' === $key || $first_clause['key'] === $key) {
                     $clause = $first_clause;
                 }
             }
         }
-
-        if (! $clause) {
+        if (!$clause) {
             // translators: %s is a meta_query key.
             throw new \Exception(sprintf(__('Invalid meta_query clause key: %s.', 'woocommerce'), $key));
         }
-
         return "CAST({$clause['alias']}.meta_value AS {$clause['cast']})";
     }
-
     /**
      * Checks whether a given meta_query clause is atomic or not (i.e. not nested).
      *
@@ -201,7 +147,6 @@ class OrdersTableMetaQuery
     {
         return isset($arg['key']) || isset($arg['value']);
     }
-
     /**
      * Sanitizes the meta_query argument.
      *
@@ -211,46 +156,37 @@ class OrdersTableMetaQuery
     private function sanitize_meta_query(array $q): array
     {
         $sanitized = [];
-
         foreach ($q as $key => $arg) {
             if ('relation' === $key) {
                 $relation = $arg;
-            } elseif (! is_array($arg)) {
+            } elseif (!is_array($arg)) {
                 continue;
             } elseif ($this->is_atomic($arg)) {
                 if (isset($arg['value']) && [] === $arg['value']) {
                     unset($arg['value']);
                 }
-
-                $arg['compare']     = isset($arg['compare']) ? strtoupper($arg['compare']) : (isset($arg['value']) && is_array($arg['value']) ? 'IN' : '=');
+                $arg['compare'] = isset($arg['compare']) ? strtoupper($arg['compare']) : (isset($arg['value']) && is_array($arg['value']) ? 'IN' : '=');
                 $arg['compare_key'] = isset($arg['compare_key']) ? strtoupper($arg['compare_key']) : (isset($arg['key']) && is_array($arg['key']) ? 'IN' : '=');
-
-                if (! in_array($arg['compare'], self::NON_NUMERIC_OPERATORS, true) && ! in_array($arg['compare'], self::NUMERIC_OPERATORS, true)) {
+                if (!in_array($arg['compare'], self::NON_NUMERIC_OPERATORS, true) && !in_array($arg['compare'], self::NUMERIC_OPERATORS, true)) {
                     $arg['compare'] = '=';
                 }
-
-                if (! in_array($arg['compare_key'], self::NON_NUMERIC_OPERATORS, true)) {
+                if (!in_array($arg['compare_key'], self::NON_NUMERIC_OPERATORS, true)) {
                     $arg['compare_key'] = '=';
                 }
-
-                $sanitized[ $key ]          = $arg;
-                $sanitized[ $key ]['index'] = $key;
+                $sanitized[$key] = $arg;
+                $sanitized[$key]['index'] = $key;
             } else {
                 $sanitized_arg = $this->sanitize_meta_query($arg);
-
                 if ($sanitized_arg) {
-                    $sanitized[ $key ] = $sanitized_arg;
+                    $sanitized[$key] = $sanitized_arg;
                 }
             }
         }
-
         if ($sanitized) {
             $sanitized['relation'] = 1 === count($sanitized) ? 'OR' : $this->sanitize_relation($relation ?? 'AND');
         }
-
         return $sanitized;
     }
-
     /**
      * Makes sure we use an AND or OR relation. Defaults to AND.
      *
@@ -258,13 +194,11 @@ class OrdersTableMetaQuery
      */
     private function sanitize_relation(string $relation): string
     {
-        if (! empty($relation) && 'OR' === strtoupper($relation)) {
+        if (!empty($relation) && 'OR' === strtoupper($relation)) {
             return 'OR';
         }
-
         return 'AND';
     }
-
     /**
      * Returns the correct type for a given meta type.
      *
@@ -274,18 +208,14 @@ class OrdersTableMetaQuery
     private function sanitize_cast_type(string $type = ''): string
     {
         $meta_type = strtoupper($type);
-
-        if (! $meta_type || ! preg_match('/^(?:BINARY|CHAR|DATE|DATETIME|SIGNED|UNSIGNED|TIME|NUMERIC(?:\(\d+(?:,\s?\d+)?\))?|DECIMAL(?:\(\d+(?:,\s?\d+)?\))?)$/', $meta_type)) {
+        if (!$meta_type || !preg_match('/^(?:BINARY|CHAR|DATE|DATETIME|SIGNED|UNSIGNED|TIME|NUMERIC(?:\(\d+(?:,\s?\d+)?\))?|DECIMAL(?:\(\d+(?:,\s?\d+)?\))?)$/', $meta_type)) {
             return 'CHAR';
         }
-
         if ('NUMERIC' === $meta_type) {
             return 'SIGNED';
         }
-
         return $meta_type;
     }
-
     /**
      * Makes sure a JOIN array does not have duplicates.
      *
@@ -296,7 +226,6 @@ class OrdersTableMetaQuery
     {
         return array_filter(array_unique(array_map(trim(...), $join)));
     }
-
     /**
      * Flattens a nested WHERE array.
      *
@@ -308,41 +237,34 @@ class OrdersTableMetaQuery
         if (is_string($where)) {
             return trim($where);
         }
-
-        $chunks   = [];
+        $chunks = [];
         $operator = $this->sanitize_relation($where['operator'] ?? '');
-
         foreach ($where as $key => $w) {
             if ('operator' === $key) {
                 continue;
             }
-
             $flattened = $this->flatten_where_clauses($w);
             if ($flattened) {
                 $chunks[] = $flattened;
             }
         }
-
         if ($chunks) {
             return '(' . implode(" {$operator} ", $chunks) . ')';
         }
         return '';
     }
-
     /**
      * Builds all the required internal bits for this meta query.
      */
     private function build_query(): void
     {
-        if (! $this->queries) {
+        if (!$this->queries) {
             return;
         }
-
-        $queries     = $this->queries;
-        $sql_where   = $this->process($queries);
+        $queries = $this->queries;
+        $sql_where = $this->process($queries);
         $this->where = $sql_where;
     }
-
     /**
      * Processes meta_query entries and generates the necessary table aliases, JOIN statements and WHERE conditions.
      *
@@ -353,29 +275,19 @@ class OrdersTableMetaQuery
     private function process(array &$arg, ?array &$parent = null): array
     {
         $where = [];
-
         if ($this->is_atomic($arg)) {
             $arg['alias'] = $this->find_or_create_table_alias_for_clause($arg, $parent);
-            $arg['cast']  = $this->sanitize_cast_type($arg['type'] ?? '');
-
-            $where = array_filter(
-                [
-                    $this->generate_where_for_clause_key($arg),
-                    $this->generate_where_for_clause_value($arg),
-                ]
-            );
-
+            $arg['cast'] = $this->sanitize_cast_type($arg['type'] ?? '');
+            $where = array_filter([$this->generate_where_for_clause_key($arg), $this->generate_where_for_clause_value($arg)]);
             // Store clauses by their key for ORDER BY purposes.
             $flat_clause_key = is_int($arg['index']) ? $arg['alias'] : $arg['index'];
-
             $unique_flat_key = $flat_clause_key;
-            $i               = 1;
-            while (isset($this->flattened_clauses[ $unique_flat_key ])) {
+            $i = 1;
+            while (isset($this->flattened_clauses[$unique_flat_key])) {
                 $unique_flat_key = $flat_clause_key . '-' . $i;
                 ++$i;
             }
-
-            $this->flattened_clauses[ $unique_flat_key ] = & $arg;
+            $this->flattened_clauses[$unique_flat_key] =& $arg;
         } else {
             // Nested.
             $relation = $arg['relation'];
@@ -384,23 +296,15 @@ class OrdersTableMetaQuery
             foreach ($arg as &$clause) {
                 $chunks[] = $this->process($clause, $arg);
             }
-
             // Merge chunks of the form OR(m) with the surrounding clause.
             if (1 === count($chunks)) {
                 $where = $chunks[0];
             } else {
-                $where = array_merge(
-                    [
-                        'operator' => $relation,
-                    ],
-                    $chunks
-                );
+                $where = array_merge(['operator' => $relation], $chunks);
             }
         }
-
         return $where;
     }
-
     /**
      * Generates a JOIN clause to handle an atomic meta_query clause.
      *
@@ -411,22 +315,22 @@ class OrdersTableMetaQuery
     private function generate_join_for_clause(array $clause, string $alias): string
     {
         global $wpdb;
-
         if ('NOT EXISTS' !== $clause['compare']) {
             return "INNER JOIN {$this->meta_table} AS {$alias} ON ( {$this->orders_table}.id = {$alias}.order_id )";
         }
         if ('LIKE' === $clause['compare_key']) {
             return $wpdb->prepare(
-                "LEFT JOIN {$this->meta_table} AS {$alias} ON ( {$this->orders_table}.id = {$alias}.order_id AND {$alias}.meta_key LIKE %s )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                "LEFT JOIN {$this->meta_table} AS {$alias} ON ( {$this->orders_table}.id = {$alias}.order_id AND {$alias}.meta_key LIKE %s )",
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 '%' . $wpdb->esc_like($clause['key']) . '%'
             );
         }
         return $wpdb->prepare(
-            "LEFT JOIN {$this->meta_table} AS {$alias} ON ( {$this->orders_table}.id = {$alias}.order_id AND {$alias}.meta_key = %s )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            "LEFT JOIN {$this->meta_table} AS {$alias} ON ( {$this->orders_table}.id = {$alias}.order_id AND {$alias}.meta_key = %s )",
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $clause['key']
         );
     }
-
     /**
      * Finds a common table alias that the meta_query clause can use, or creates one.
      *
@@ -436,36 +340,27 @@ class OrdersTableMetaQuery
      */
     private function find_or_create_table_alias_for_clause(array $clause, array $parent_query): string
     {
-        if (! empty($clause['alias'])) {
+        if (!empty($clause['alias'])) {
             return $clause['alias'];
         }
-
-        $alias    = false;
-        $siblings = array_filter(
-            $parent_query,
-            [ self::class, 'is_atomic' ]
-        );
-
+        $alias = false;
+        $siblings = array_filter($parent_query, [self::class, 'is_atomic']);
         foreach ($siblings as $sibling) {
             if (empty($sibling['alias'])) {
                 continue;
             }
-
             if ($this->is_operator_compatible_with_shared_join($clause, $sibling, $parent_query['relation'] ?? 'AND')) {
                 $alias = $sibling['alias'];
                 break;
             }
         }
-
-        if (! $alias) {
-            $alias                 = self::ALIAS_PREFIX . count($this->table_aliases);
-            $this->join[]          = $this->generate_join_for_clause($clause, $alias);
+        if (!$alias) {
+            $alias = self::ALIAS_PREFIX . count($this->table_aliases);
+            $this->join[] = $this->generate_join_for_clause($clause, $alias);
             $this->table_aliases[] = $alias;
         }
-
         return $alias;
     }
-
     /**
      * Checks whether two meta_query clauses can share a JOIN.
      *
@@ -476,21 +371,17 @@ class OrdersTableMetaQuery
      */
     private function is_operator_compatible_with_shared_join(array $clause, array $sibling, string $relation = 'AND'): bool
     {
-        if (! $this->is_atomic($clause) || ! $this->is_atomic($sibling)) {
+        if (!$this->is_atomic($clause) || !$this->is_atomic($sibling)) {
             return false;
         }
-
         $valid_operators = [];
-
         if ('OR' === $relation) {
-            $valid_operators = [ '=', 'IN', 'BETWEEN', 'LIKE', 'REGEXP', 'RLIKE', '>', '>=', '<', '<=' ];
+            $valid_operators = ['=', 'IN', 'BETWEEN', 'LIKE', 'REGEXP', 'RLIKE', '>', '>=', '<', '<='];
         } elseif (isset($sibling['key']) && isset($clause['key']) && $sibling['key'] === $clause['key']) {
-            $valid_operators = [ '!=', 'NOT IN', 'NOT LIKE' ];
+            $valid_operators = ['!=', 'NOT IN', 'NOT LIKE'];
         }
-
         return in_array(strtoupper((string) $clause['compare']), $valid_operators, true) && in_array(strtoupper((string) $sibling['compare']), $valid_operators, true);
     }
-
     /**
      * Generates an SQL WHERE clause for a given meta_query atomic clause based on its meta key.
      * Adapted from WordPress' `WP_Meta_Query::get_sql_for_clause()` method.
@@ -501,44 +392,41 @@ class OrdersTableMetaQuery
     private function generate_where_for_clause_key(array $clause): string
     {
         global $wpdb;
-
-        if (! array_key_exists('key', $clause)) {
+        if (!array_key_exists('key', $clause)) {
             return '';
         }
-
         if ('NOT EXISTS' === $clause['compare']) {
             return "{$clause['alias']}.order_id IS NULL";
         }
-
         $alias = $clause['alias'];
-
         $meta_compare_string_start = '';
-        $meta_compare_string_end   = '';
-        $subquery_alias            = '';
-        if (in_array($clause['compare_key'], [ '!=', 'NOT IN', 'NOT LIKE', 'NOT EXISTS', 'NOT REGEXP' ], true)) {
-            $i                     = count($this->table_aliases);
-            $subquery_alias        = self::ALIAS_PREFIX . $i;
+        $meta_compare_string_end = '';
+        $subquery_alias = '';
+        if (in_array($clause['compare_key'], ['!=', 'NOT IN', 'NOT LIKE', 'NOT EXISTS', 'NOT REGEXP'], true)) {
+            $i = count($this->table_aliases);
+            $subquery_alias = self::ALIAS_PREFIX . $i;
             $this->table_aliases[] = $subquery_alias;
-
-            $meta_compare_string_start  = 'NOT EXISTS (';
+            $meta_compare_string_start = 'NOT EXISTS (';
             $meta_compare_string_start .= "SELECT 1 FROM {$this->meta_table} {$subquery_alias} ";
             $meta_compare_string_start .= "WHERE {$subquery_alias}.order_id = {$alias}.order_id ";
-            $meta_compare_string_end    = 'LIMIT 1';
-            $meta_compare_string_end   .= ')';
+            $meta_compare_string_end = 'LIMIT 1';
+            $meta_compare_string_end .= ')';
         }
-
         switch ($clause['compare_key']) {
             case '=':
             case 'EXISTS':
-                $where = $wpdb->prepare("$alias.meta_key = %s", trim((string) $clause['key'])); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                $where = $wpdb->prepare("{$alias}.meta_key = %s", trim((string) $clause['key']));
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 break;
             case 'LIKE':
                 $meta_compare_value = '%' . $wpdb->esc_like(trim((string) $clause['key'])) . '%';
-                $where              = $wpdb->prepare("$alias.meta_key LIKE %s", $meta_compare_value); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                $where = $wpdb->prepare("{$alias}.meta_key LIKE %s", $meta_compare_value);
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 break;
             case 'IN':
-                $meta_compare_string = "$alias.meta_key IN (" . substr(str_repeat(',%s', count((array) $clause['key'])), 1) . ')';
-                $where               = $wpdb->prepare($meta_compare_string, $clause['key']); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $meta_compare_string = "{$alias}.meta_key IN (" . substr(str_repeat(',%s', count((array) $clause['key'])), 1) . ')';
+                $where = $wpdb->prepare($meta_compare_string, $clause['key']);
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
                 break;
             case 'RLIKE':
             case 'REGEXP':
@@ -548,23 +436,26 @@ class OrdersTableMetaQuery
                 } else {
                     $cast = '';
                 }
-                $where = $wpdb->prepare("$alias.meta_key $operator $cast %s", trim((string) $clause['key'])); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                $where = $wpdb->prepare("{$alias}.meta_key {$operator} {$cast} %s", trim((string) $clause['key']));
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 break;
             case '!=':
             case 'NOT EXISTS':
-                $meta_compare_string = $meta_compare_string_start . "AND $subquery_alias.meta_key = %s " . $meta_compare_string_end;
-                $where               = $wpdb->prepare($meta_compare_string, $clause['key']); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $meta_compare_string = $meta_compare_string_start . "AND {$subquery_alias}.meta_key = %s " . $meta_compare_string_end;
+                $where = $wpdb->prepare($meta_compare_string, $clause['key']);
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
                 break;
             case 'NOT LIKE':
-                $meta_compare_string = $meta_compare_string_start . "AND $subquery_alias.meta_key LIKE %s " . $meta_compare_string_end;
-
+                $meta_compare_string = $meta_compare_string_start . "AND {$subquery_alias}.meta_key LIKE %s " . $meta_compare_string_end;
                 $meta_compare_value = '%' . $wpdb->esc_like(trim((string) $clause['key'])) . '%';
-                $where              = $wpdb->prepare($meta_compare_string, $meta_compare_value); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $where = $wpdb->prepare($meta_compare_string, $meta_compare_value);
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
                 break;
             case 'NOT IN':
-                $array_subclause     = '(' . substr(str_repeat(',%s', count((array) $clause['key'])), 1) . ') ';
-                $meta_compare_string = $meta_compare_string_start . "AND $subquery_alias.meta_key IN " . $array_subclause . $meta_compare_string_end;
-                $where               = $wpdb->prepare($meta_compare_string, $clause['key']); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $array_subclause = '(' . substr(str_repeat(',%s', count((array) $clause['key'])), 1) . ') ';
+                $meta_compare_string = $meta_compare_string_start . "AND {$subquery_alias}.meta_key IN " . $array_subclause . $meta_compare_string_end;
+                $where = $wpdb->prepare($meta_compare_string, $clause['key']);
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
                 break;
             case 'NOT REGEXP':
                 $operator = $clause['compare_key'];
@@ -573,18 +464,16 @@ class OrdersTableMetaQuery
                 } else {
                     $cast = '';
                 }
-
-                $meta_compare_string = $meta_compare_string_start . "AND $subquery_alias.meta_key REGEXP $cast %s " . $meta_compare_string_end;
-                $where               = $wpdb->prepare($meta_compare_string, $clause['key']); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $meta_compare_string = $meta_compare_string_start . "AND {$subquery_alias}.meta_key REGEXP {$cast} %s " . $meta_compare_string_end;
+                $where = $wpdb->prepare($meta_compare_string, $clause['key']);
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
                 break;
             default:
                 $where = '';
                 break;
         }
-
         return $where;
     }
-
     /**
      * Generates an SQL WHERE clause for a given meta_query atomic clause based on its meta value.
      * Adapted from WordPress' `WP_Meta_Query::get_sql_for_clause()` method.
@@ -595,62 +484,51 @@ class OrdersTableMetaQuery
     private function generate_where_for_clause_value(array $clause): string
     {
         global $wpdb;
-
-        if (! array_key_exists('value', $clause)) {
+        if (!array_key_exists('value', $clause)) {
             return '';
         }
-
         $meta_value = $clause['value'];
-
-        if (in_array($clause['compare'], [ 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN' ], true)) {
-            if (! is_array($meta_value)) {
+        if (in_array($clause['compare'], ['IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN'], true)) {
+            if (!is_array($meta_value)) {
                 $meta_value = preg_split('/[,\s]+/', (string) $meta_value);
             }
         } elseif (is_string($meta_value)) {
             $meta_value = trim($meta_value);
         }
-
         $meta_compare = $clause['compare'];
-
         switch ($meta_compare) {
             case 'IN':
             case 'NOT IN':
-                $where = $wpdb->prepare('(' . substr(str_repeat(',%s', count((array) $meta_value)), 1) . ')', $meta_value); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $where = $wpdb->prepare('(' . substr(str_repeat(',%s', count((array) $meta_value)), 1) . ')', $meta_value);
+                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
                 break;
-
             case 'BETWEEN':
             case 'NOT BETWEEN':
                 $where = $wpdb->prepare('%s AND %s', $meta_value[0], $meta_value[1]);
                 break;
-
             case 'LIKE':
             case 'NOT LIKE':
                 $where = $wpdb->prepare('%s', '%' . $wpdb->esc_like($meta_value) . '%');
                 break;
-
-                // EXISTS with a value is interpreted as '='.
+            // EXISTS with a value is interpreted as '='.
             case 'EXISTS':
                 $meta_compare = '=';
-                $where        = $wpdb->prepare('%s', $meta_value);
+                $where = $wpdb->prepare('%s', $meta_value);
                 break;
-
-                // 'value' is ignored for NOT EXISTS.
+            // 'value' is ignored for NOT EXISTS.
             case 'NOT EXISTS':
                 $where = '';
                 break;
-
             default:
                 $where = $wpdb->prepare('%s', $meta_value);
                 break;
         }
-
         if ($where) {
             if ('CHAR' === $clause['cast']) {
                 return "{$clause['alias']}.meta_value {$meta_compare} {$where}";
             }
             return "CAST({$clause['alias']}.meta_value AS {$clause['cast']}) {$meta_compare} {$where}";
         }
-
         return '';
     }
 }

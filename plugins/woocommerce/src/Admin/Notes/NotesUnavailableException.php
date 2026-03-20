@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Admin Notes Unavailable Exception Class
  *
  * Exception class thrown when an attempt to use notes is made but notes are unavailable.
  */
-
-namespace Automattic\WooCommerce\Admin\Notes;
+namespace Automattic\Woo_Commerce\Admin\Notes;
 
 defined('ABSPATH') || exit;
-
 /**
  * Notes\NotesUnavailableException class.
  */
-class NotesUnavailableException extends \WC_Data_Exception
+class Notes_Unavailable_Exception extends \WC_Data_Exception
 {
 }

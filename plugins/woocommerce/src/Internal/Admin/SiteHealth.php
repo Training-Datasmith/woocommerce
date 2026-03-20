@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Customize Site Health recommendations for WooCommerce.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin;
+namespace Automattic\Woo_Commerce\Internal\Admin;
 
 defined('ABSPATH') || exit;
-
 /**
  * SiteHealth class.
  */
-class SiteHealth
+class Site_Health
 {
     /**
      * Class instance.
@@ -20,18 +18,16 @@ class SiteHealth
      * @var SiteHealth instance
      */
     protected static $instance;
-
     /**
      * Get class instance.
      */
     public static function get_instance()
     {
-        if (! self::$instance) {
+        if (!self::$instance) {
             self::$instance = new self();
         }
         return self::$instance;
     }
-
     /**
      * Hook into WooCommerce.
      */
@@ -39,7 +35,6 @@ class SiteHealth
     {
         add_filter('site_status_should_suggest_persistent_object_cache', $this->should_suggest_persistent_object_cache(...));
     }
-
     /**
      * Counts specific types of WooCommerce entities to determine if a persistent object cache would be beneficial.
      *
@@ -56,39 +51,19 @@ class SiteHealth
         if (true === $check) {
             return $check;
         }
-
-        $thresholds = [
-            'orders'   => 100,
-            'products' => 100,
-        ];
-
+        $thresholds = ['orders' => 100, 'products' => 100];
         foreach ($thresholds as $key => $threshold) {
             try {
                 switch ($key) {
                     case 'orders':
-                        $orders_query   = new \WC_Order_Query(
-                            [
-                                'status'   => 'any',
-                                'limit'    => 1,
-                                'paginate' => true,
-                                'return'   => 'ids',
-                            ]
-                        );
+                        $orders_query = new \WC_Order_Query(['status' => 'any', 'limit' => 1, 'paginate' => true, 'return' => 'ids']);
                         $orders_results = $orders_query->get_orders();
                         if ($orders_results->total >= $threshold) {
                             $check = true;
                         }
                         break;
-
                     case 'products':
-                        $products_query   = new \WC_Product_Query(
-                            [
-                                'status'   => 'any',
-                                'limit'    => 1,
-                                'paginate' => true,
-                                'return'   => 'ids',
-                            ]
-                        );
+                        $products_query = new \WC_Product_Query(['status' => 'any', 'limit' => 1, 'paginate' => true, 'return' => 'ids']);
                         $products_results = $products_query->get_products();
                         if ($products_results->total >= $threshold) {
                             $check = true;
@@ -98,12 +73,10 @@ class SiteHealth
             } catch (\Exception) {
                 break;
             }
-
-            if (! is_null($check)) {
+            if (!is_null($check)) {
                 break;
             }
         }
-
         return $check;
     }
 }

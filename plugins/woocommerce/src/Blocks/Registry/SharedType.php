@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Registry;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Registry;
 
 /**
  * A definition for the SharedType dependency type.
  *
  * @since 2.5.0
  */
-class SharedType extends AbstractDependencyType
+class Shared_Type extends Abstract_Dependency_Type
 {
     /**
      * Holds a cached instance of the value stored (or returned) internally.
@@ -17,7 +16,6 @@ class SharedType extends AbstractDependencyType
      * @var mixed
      */
     private $shared_instance;
-
     /**
      * Returns the internal stored and shared value after initial generation.
      *

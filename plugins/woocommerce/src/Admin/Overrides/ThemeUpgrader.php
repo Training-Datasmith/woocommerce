@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Theme upgrader used in REST API response.
  */
-
-namespace Automattic\WooCommerce\Admin\Overrides;
+namespace Automattic\Woo_Commerce\Admin\Overrides;
 
 defined('ABSPATH') || exit;
-
 /**
  * Admin\Overrides\ThemeUpgrader Class.
  */
-class ThemeUpgrader extends \Theme_Upgrader
+class Theme_Upgrader extends \Theme_Upgrader
 {
     /**
      * Install a theme package.
@@ -29,43 +27,31 @@ class ThemeUpgrader extends \Theme_Upgrader
      */
     public function install($package, $args = [])
     {
-        $defaults    = [
-            'clear_update_cache' => true,
-        ];
+        $defaults = ['clear_update_cache' => true];
         $parsed_args = wp_parse_args($args, $defaults);
-
         $this->init();
         $this->install_strings();
-
-        add_filter('upgrader_source_selection', [ $this, 'check_package' ]);
-        add_filter('upgrader_post_install', [ $this, 'check_parent_theme_filter' ], 10, 3);
+        add_filter('upgrader_source_selection', [$this, 'check_package']);
+        add_filter('upgrader_post_install', [$this, 'check_parent_theme_filter'], 10, 3);
         if ($parsed_args['clear_update_cache']) {
             // Clear cache so wp_update_themes() knows about the new theme.
             add_action('upgrader_process_complete', 'wp_clean_themes_cache', 9, 0);
         }
-
-        $result = $this->run(
-            [
-                'package'           => $package,
-                'destination'       => get_theme_root(),
-                'clear_destination' => false, // Do not overwrite files.
-                'clear_working'     => true,
-                'hook_extra'        => [
-                    'type'   => 'theme',
-                    'action' => 'install',
-                ],
-            ]
-        );
-
+        $result = $this->run([
+            'package' => $package,
+            'destination' => get_theme_root(),
+            'clear_destination' => false,
+            // Do not overwrite files.
+            'clear_working' => true,
+            'hook_extra' => ['type' => 'theme', 'action' => 'install'],
+        ]);
         remove_action('upgrader_process_complete', 'wp_clean_themes_cache', 9);
-        remove_filter('upgrader_source_selection', [ $this, 'check_package' ]);
-        remove_filter('upgrader_post_install', [ $this, 'check_parent_theme_filter' ]);
-
-        if ($result && ! is_wp_error($result)) {
+        remove_filter('upgrader_source_selection', [$this, 'check_package']);
+        remove_filter('upgrader_post_install', [$this, 'check_parent_theme_filter']);
+        if ($result && !is_wp_error($result)) {
             // Refresh the Theme Update information.
             wp_clean_themes_cache($parsed_args['clear_update_cache']);
         }
-
         return $result;
     }
 }

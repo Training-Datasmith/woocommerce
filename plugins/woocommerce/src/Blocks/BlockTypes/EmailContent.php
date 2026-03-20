@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 // phpcs:ignore Generic.PHP.RequireStrictTypes.MissingDeclaration
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Internal\Admin\EmailPreview\EmailPreview;
-use Automattic\WooCommerce\Internal\EmailEditor\BlockEmailRenderer;
-use Automattic\WooCommerce\Internal\EmailEditor\WCTransactionalEmails\WCTransactionalEmailPostsManager;
-
+use Automattic\Woo_Commerce\Internal\Admin\Email_Preview\Email_Preview;
+use Automattic\Woo_Commerce\Internal\Email_Editor\Block_Email_Renderer;
+use Automattic\Woo_Commerce\Internal\Email_Editor\Wc_Transactional_Emails\Wc_Transactional_Email_Posts_Manager;
 /**
  * EmailContent class.
  */
-class EmailContent extends AbstractBlock
+class Email_Content extends Abstract_Block
 {
     /**
      * Block name.
@@ -20,7 +18,6 @@ class EmailContent extends AbstractBlock
      * @var string
      */
     protected $block_name = 'email-content';
-
     /**
      * Get the frontend style handle for this block type.
      */
@@ -28,7 +25,6 @@ class EmailContent extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the editor script handle for this block type.
      *
@@ -36,14 +32,9 @@ class EmailContent extends AbstractBlock
      */
     protected function get_block_type_editor_script($key = null): string|array
     {
-        $script = [
-            'handle'       => 'wc-' . $this->block_name . '-block',
-            'path'         => $this->asset_api->get_block_asset_build_path($this->block_name),
-            'dependencies' => [ 'wc-blocks' ],
-        ];
-        return $key ? $script[ $key ] : $script;
+        $script = ['handle' => 'wc-' . $this->block_name . '-block', 'path' => $this->asset_api->get_block_asset_build_path($this->block_name), 'dependencies' => ['wc-blocks']];
+        return $key ? $script[$key] : $script;
     }
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -53,7 +44,6 @@ class EmailContent extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Renders the block preview for the editor.
      *
@@ -67,17 +57,14 @@ class EmailContent extends AbstractBlock
          *
          * @var EmailPreview $email_preview - email preview instance
          */
-        $email_preview = wc_get_container()->get(EmailPreview::class);
-
-        $type_param = EmailPreview::DEFAULT_EMAIL_TYPE;
-
+        $email_preview = wc_get_container()->get(Email_Preview::class);
+        $type_param = Email_Preview::DEFAULT_EMAIL_TYPE;
         if (isset($attributes['postId'])) {
-            $email_type_class_name = WCTransactionalEmailPostsManager::get_instance()->get_email_type_class_name_from_post_id($attributes['postId']);
-            $type_param            = ! empty($email_type_class_name) ? $email_type_class_name : $type_param;
+            $email_type_class_name = Wc_Transactional_Email_Posts_Manager::get_instance()->get_email_type_class_name_from_post_id($attributes['postId']);
+            $type_param = !empty($email_type_class_name) ? $email_type_class_name : $type_param;
         } elseif (isset($attributes['emailType'])) {
             $type_param = sanitize_text_field(wp_unslash($attributes['emailType']));
         }
-
         try {
             return $email_preview->generate_placeholder_content($type_param);
         } catch (\Exception) {
@@ -85,7 +72,6 @@ class EmailContent extends AbstractBlock
             return esc_html__('There was an error rendering the email preview.', 'woocommerce');
         }
     }
-
     /**
      * Renders Woo content placeholder to be replaced by content during sending.
      *
@@ -101,7 +87,6 @@ class EmailContent extends AbstractBlock
             // Block is being rendered for ServerSideRender editor preview.
             return $this->render_preview($attributes);
         }
-
-        return BlockEmailRenderer::WOO_EMAIL_CONTENT_PLACEHOLDER;
+        return Block_Email_Renderer::WOO_EMAIL_CONTENT_PLACEHOLDER;
     }
 }

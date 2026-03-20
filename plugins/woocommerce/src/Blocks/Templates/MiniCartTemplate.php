@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Templates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Templates;
 
 /**
  * MiniCartTemplate class.
  *
  * @internal
  */
-class MiniCartTemplate extends AbstractTemplatePart
+class Mini_Cart_Template extends Abstract_Template_Part
 {
     /**
      * The slug of the template.
@@ -17,14 +16,12 @@ class MiniCartTemplate extends AbstractTemplatePart
      * @var string
      */
     public const SLUG = 'mini-cart';
-
     /**
      * The template part area where the template part belongs.
      *
      * @var string
      */
     public $template_area = 'mini-cart';
-
     /**
      * Initialization method.
      */
@@ -32,7 +29,6 @@ class MiniCartTemplate extends AbstractTemplatePart
     {
         add_filter('default_wp_template_part_areas', $this->register_mini_cart_template_part_area(...), 10, 1);
     }
-
     /**
      * Returns the title of the template.
      *
@@ -42,7 +38,6 @@ class MiniCartTemplate extends AbstractTemplatePart
     {
         return _x('Mini-Cart', 'Template name', 'woocommerce');
     }
-
     /**
      * Returns the description of the template.
      *
@@ -52,7 +47,6 @@ class MiniCartTemplate extends AbstractTemplatePart
     {
         return __('Template used to display the Mini-Cart drawer.', 'woocommerce');
     }
-
     /**
      * Add Mini-Cart to the default template part areas.
      *
@@ -61,13 +55,7 @@ class MiniCartTemplate extends AbstractTemplatePart
      */
     public function register_mini_cart_template_part_area($default_area_definitions): array
     {
-        $mini_cart_template_part_area = [
-            'area'        => 'mini-cart',
-            'label'       => __('Mini-Cart', 'woocommerce'),
-            'description' => __('The Mini-Cart template allows shoppers to see their cart items and provides access to the Cart and Checkout pages.', 'woocommerce'),
-            'icon'        => 'mini-cart',
-            'area_tag'    => 'mini-cart',
-        ];
-        return array_merge($default_area_definitions, [ $mini_cart_template_part_area ]);
+        $mini_cart_template_part_area = ['area' => 'mini-cart', 'label' => __('Mini-Cart', 'woocommerce'), 'description' => __('The Mini-Cart template allows shoppers to see their cart items and provides access to the Cart and Checkout pages.', 'woocommerce'), 'icon' => 'mini-cart', 'area_tag' => 'mini-cart'];
+        return array_merge($default_area_definitions, [$mini_cart_template_part_area]);
     }
 }

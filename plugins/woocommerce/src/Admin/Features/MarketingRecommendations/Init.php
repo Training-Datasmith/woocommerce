@@ -1,18 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Marketing_Recommendations;
 
-namespace Automattic\WooCommerce\Admin\Features\MarketingRecommendations;
-
-use Automattic\WooCommerce\Admin\RemoteSpecs\RemoteSpecsEngine;
-
+use Automattic\Woo_Commerce\Admin\Remote_Specs\Remote_Specs_Engine;
 defined('ABSPATH') || exit;
-
 /**
  * Marketing Recommendations engine.
  * This goes through the specs and gets marketing recommendations.
  */
-class Init extends RemoteSpecsEngine
+class Init extends Remote_Specs_Engine
 {
     /**
      * Slug of the category specifying marketing extensions on the WooCommerce.com store.
@@ -20,14 +17,12 @@ class Init extends RemoteSpecsEngine
      * @var string
      */
     public const MARKETING_EXTENSION_CATEGORY_SLUG = 'marketing';
-
     /**
      * Slug of the subcategory specifying marketing channels on the WooCommerce.com store.
      *
      * @var string
      */
     public const MARKETING_CHANNEL_SUBCATEGORY_SLUG = 'sales-channels';
-
     /**
      * Constructor.
      */
@@ -35,34 +30,29 @@ class Init extends RemoteSpecsEngine
     {
         add_action('woocommerce_updated', self::delete_specs_transient(...));
     }
-
     /**
      * Delete the specs transient.
      */
     public static function delete_specs_transient(): void
     {
-        MarketingRecommendationsDataSourcePoller::get_instance()->delete_specs_transient();
-        MiscRecommendationsDataSourcePoller::get_instance()->delete_specs_transient();
+        Marketing_Recommendations_Data_Source_Poller::get_instance()->delete_specs_transient();
+        Misc_Recommendations_Data_Source_Poller::get_instance()->delete_specs_transient();
     }
-
     /**
      * Get specs or fetch remotely if they don't exist.
      */
     public static function get_specs()
     {
         if ('no' === get_option('woocommerce_show_marketplace_suggestions', 'yes')) {
-            return DefaultMarketingRecommendations::get_all();
+            return Default_Marketing_Recommendations::get_all();
         }
-        $specs = MarketingRecommendationsDataSourcePoller::get_instance()->get_specs_from_data_sources();
-
+        $specs = Marketing_Recommendations_Data_Source_Poller::get_instance()->get_specs_from_data_sources();
         // Fetch specs if they don't yet exist.
-        if (! is_array($specs) || 0 === count($specs)) {
-            return DefaultMarketingRecommendations::get_all();
+        if (!is_array($specs) || 0 === count($specs)) {
+            return Default_Marketing_Recommendations::get_all();
         }
-
         return $specs;
     }
-
     /**
      * Get misc recommendations specs or fetch remotely if they don't exist.
      *
@@ -73,16 +63,13 @@ class Init extends RemoteSpecsEngine
         if ('no' === get_option('woocommerce_show_marketplace_suggestions', 'yes')) {
             return [];
         }
-        $specs = MiscRecommendationsDataSourcePoller::get_instance()->get_specs_from_data_sources();
-
+        $specs = Misc_Recommendations_Data_Source_Poller::get_instance()->get_specs_from_data_sources();
         // Return empty specs if they don't yet exist.
-        if (! is_array($specs)) {
+        if (!is_array($specs)) {
             return [];
         }
-
         return $specs;
     }
-
     /**
      * Process specs.
      *
@@ -91,8 +78,7 @@ class Init extends RemoteSpecsEngine
     protected static function evaluate_specs(?array $specs = null): array
     {
         $suggestions = [];
-        $errors      = [];
-
+        $errors = [];
         foreach ($specs as $spec) {
             try {
                 $suggestions[] = self::object_to_array($spec);
@@ -100,66 +86,48 @@ class Init extends RemoteSpecsEngine
                 $errors[] = $e;
             }
         }
-
-        return [
-            'suggestions' => $suggestions,
-            'errors'      => $errors,
-        ];
+        return ['suggestions' => $suggestions, 'errors' => $errors];
     }
-
     /**
      * Load recommended plugins from WooCommerce.com
      */
     public static function get_recommended_plugins(): array
     {
-        $specs   = self::get_specs();
+        $specs = self::get_specs();
         $results = self::evaluate_specs($specs);
-
         $specs_to_return = $results['suggestions'];
-        $specs_to_save   = null;
-
+        $specs_to_save = null;
         if (empty($specs_to_return)) {
             // When suggestions is empty, replace it with defaults and save for 3 hours.
-            $specs_to_save   = DefaultMarketingRecommendations::get_all();
+            $specs_to_save = Default_Marketing_Recommendations::get_all();
             $specs_to_return = self::evaluate_specs($specs_to_save)['suggestions'];
         } elseif (count($results['errors']) > 0) {
             // When suggestions is not empty but has errors, save it for 3 hours.
             $specs_to_save = $specs;
         }
-
         if ($specs_to_save) {
-            MarketingRecommendationsDataSourcePoller::get_instance()->set_specs_transient($specs_to_save, 3 * HOUR_IN_SECONDS);
+            Marketing_Recommendations_Data_Source_Poller::get_instance()->set_specs_transient($specs_to_save, 3 * HOUR_IN_SECONDS);
         }
         $errors = $results['errors'];
-        if (! empty($errors)) {
+        if (!empty($errors)) {
             self::log_errors($errors);
         }
-
         return $specs_to_return;
     }
-
     /**
      * Return only the recommended marketing channels from WooCommerce.com.
      */
     public static function get_recommended_marketing_channels(): array
     {
-        return array_filter(
-            self::get_recommended_plugins(),
-            fn (array $plugin_data) => self::is_marketing_channel_plugin($plugin_data)
-        );
+        return array_filter(self::get_recommended_plugins(), fn(array $plugin_data) => self::is_marketing_channel_plugin($plugin_data));
     }
-
     /**
      * Return all recommended marketing extensions EXCEPT the marketing channels from WooCommerce.com.
      */
     public static function get_recommended_marketing_extensions_excluding_channels(): array
     {
-        return array_filter(
-            self::get_recommended_plugins(),
-            fn (array $plugin_data) => self::is_marketing_plugin($plugin_data) && ! self::is_marketing_channel_plugin($plugin_data)
-        );
+        return array_filter(self::get_recommended_plugins(), fn(array $plugin_data) => self::is_marketing_plugin($plugin_data) && !self::is_marketing_channel_plugin($plugin_data));
     }
-
     /**
      * Load misc recommendations from WooCommerce.com
      *
@@ -167,12 +135,10 @@ class Init extends RemoteSpecsEngine
      */
     public static function get_misc_recommendations(): array
     {
-        $specs   = self::get_misc_recommendations_specs();
+        $specs = self::get_misc_recommendations_specs();
         $results = self::evaluate_specs($specs);
-
         $specs_to_return = $results['suggestions'];
-        $specs_to_save   = null;
-
+        $specs_to_save = null;
         if (empty($specs_to_return)) {
             // When misc_recommendations is empty, replace it with defaults and save for 3 hours.
             $specs_to_save = [];
@@ -180,18 +146,15 @@ class Init extends RemoteSpecsEngine
             // When misc_recommendations is not empty but has errors, save it for 3 hours.
             $specs_to_save = $specs;
         }
-
         if ($specs_to_save) {
-            MiscRecommendationsDataSourcePoller::get_instance()->set_specs_transient($specs_to_save, 3 * HOUR_IN_SECONDS);
+            Misc_Recommendations_Data_Source_Poller::get_instance()->set_specs_transient($specs_to_save, 3 * HOUR_IN_SECONDS);
         }
         $errors = $results['errors'];
-        if (! empty($errors)) {
+        if (!empty($errors)) {
             self::log_errors($errors);
         }
-
         return $specs_to_return;
     }
-
     /**
      * Returns whether a plugin is a marketing extension.
      *
@@ -200,10 +163,8 @@ class Init extends RemoteSpecsEngine
     protected static function is_marketing_plugin(array $plugin_data): bool
     {
         $categories = $plugin_data['categories'] ?? [];
-
         return in_array(self::MARKETING_EXTENSION_CATEGORY_SLUG, $categories, true);
     }
-
     /**
      * Returns whether a plugin is a marketing channel.
      *
@@ -211,20 +172,17 @@ class Init extends RemoteSpecsEngine
      */
     protected static function is_marketing_channel_plugin(array $plugin_data): bool
     {
-        if (! self::is_marketing_plugin($plugin_data)) {
+        if (!self::is_marketing_plugin($plugin_data)) {
             return false;
         }
-
         $subcategories = $plugin_data['subcategories'] ?? [];
         foreach ($subcategories as $subcategory) {
             if (isset($subcategory['slug']) && self::MARKETING_CHANNEL_SUBCATEGORY_SLUG === $subcategory['slug']) {
                 return true;
             }
         }
-
         return false;
     }
-
     /**
      * Convert an object to an array.
      * This is used to convert the specs to an array so that they can be returned by the API.
@@ -241,12 +199,12 @@ class Init extends RemoteSpecsEngine
                 return null;
             }
             $visited[] = $obj;
-            $obj       = (array) $obj;
+            $obj = (array) $obj;
         }
         if (is_array($obj)) {
             $new = [];
             foreach ($obj as $key => $val) {
-                $new[ $key ] = self::object_to_array($val, $visited);
+                $new[$key] = self::object_to_array($val, $visited);
             }
         } else {
             $new = $obj;

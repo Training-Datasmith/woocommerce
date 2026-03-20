@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * ProductDescription class.
  */
-class ProductDescription extends AbstractBlock
+class Product_Description extends Abstract_Block
 {
     /**
      * Block name.
@@ -15,12 +14,10 @@ class ProductDescription extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-description';
-
     /**
      * Keeps track of seen product IDs to prevent recursive rendering.
      */
     private static array $seen_ids = [];
-
     /**
      * Render the block.
      *
@@ -33,29 +30,24 @@ class ProductDescription extends AbstractBlock
     protected function render($attributes, $content, $block)
     {
         // Check if we have a product ID in context.
-        if (! isset($block->context['postId'])) {
+        if (!isset($block->context['postId'])) {
             return '';
         }
-
         $product_id = $block->context['postId'];
-
         // Prevent recursive rendering.
-        if (isset(self::$seen_ids[ $product_id ])) {
+        if (isset(self::$seen_ids[$product_id])) {
             if (defined('WP_DEBUG') && WP_DEBUG && defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY) {
                 return __('[product description rendering halted]', 'woocommerce');
             }
             return '';
         }
-
-        self::$seen_ids[ $product_id ] = true;
-
+        self::$seen_ids[$product_id] = true;
         // Get the product.
         $product = wc_get_product($product_id);
-        if (! $product) {
-            unset(self::$seen_ids[ $product_id ]);
+        if (!$product) {
+            unset(self::$seen_ids[$product_id]);
             return '';
         }
-
         // Get the description content.
         $description = $product->get_description();
         /**
@@ -65,25 +57,15 @@ class ProductDescription extends AbstractBlock
         // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment
         $description = apply_filters('the_content', str_replace(']]>', ']]&gt;', $description));
         if (empty($description)) {
-            unset(self::$seen_ids[ $product_id ]);
+            unset(self::$seen_ids[$product_id]);
             return '';
         }
-
         // Remove this product from the seen array.
-        unset(self::$seen_ids[ $product_id ]);
-
+        unset(self::$seen_ids[$product_id]);
         // Add wrapper with block attributes.
-        $wrapper_attributes = get_block_wrapper_attributes(
-            [ 'class' => 'wc-block-product-description' ]
-        );
-
-        return sprintf(
-            '<div %1$s>%2$s</div>',
-            $wrapper_attributes,
-            $description
-        );
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => 'wc-block-product-description']);
+        return sprintf('<div %1$s>%2$s</div>', $wrapper_attributes, $description);
     }
-
     /**
      * Disable the frontend stylesheet for this block type. It does not have one.
      */
@@ -91,7 +73,6 @@ class ProductDescription extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Disable the frontend script for this block type. It does not have one.
      *

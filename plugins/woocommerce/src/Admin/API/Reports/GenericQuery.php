@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\API\Reports;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\API\Reports;
 
 defined('ABSPATH') || exit;
-
 /**
  * A generic class for a report-specific query to be used in Analytics.
  *
@@ -25,7 +23,7 @@ defined('ABSPATH') || exit;
  *
  * @since 9.3.0
  */
-class GenericQuery extends \WC_Object_Query
+class Generic_Query extends \WC_Object_Query
 {
     /**
      * Specific query name.
@@ -35,7 +33,6 @@ class GenericQuery extends \WC_Object_Query
      * @var string
      */
     protected $name;
-
     /**
      * Create a new query.
      *
@@ -46,8 +43,8 @@ class GenericQuery extends \WC_Object_Query
     public function __construct($args, $name = null)
     {
         $this->name = $name ?? $this->name;
-
-        return parent::__construct($args); // phpcs:ignore Universal.CodeAnalysis.ConstructorDestructorReturn.ReturnValueFound
+        return parent::__construct($args);
+        // phpcs:ignore Universal.CodeAnalysis.ConstructorDestructorReturn.ReturnValueFound
     }
     /**
      * Valid fields for Products report.
@@ -56,7 +53,6 @@ class GenericQuery extends \WC_Object_Query
     {
         return [];
     }
-
     /**
      * Get data from `report-{$name}` store, based on the current query vars.
      * Filters query vars through `woocommerce_analytics_{snake_case(name)}_query_args` filter.
@@ -75,9 +71,8 @@ class GenericQuery extends \WC_Object_Query
          * @param array $query_args Query args.
          */
         $args = apply_filters("woocommerce_analytics_{$snake_name}_query_args", $this->get_query_vars());
-
         $data_store = \WC_Data_Store::load("report-{$this->name}");
-        $results    = $data_store->get_data($args);
+        $results = $data_store->get_data($args);
         /**
          * Filter report query results.
          *

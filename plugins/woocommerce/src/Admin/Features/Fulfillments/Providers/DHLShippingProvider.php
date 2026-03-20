@@ -1,25 +1,22 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments\Providers;
 
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments\Providers;
-
-use Automattic\WooCommerce\Admin\Features\Fulfillments\FulfillmentUtils;
-
+use Automattic\Woo_Commerce\Admin\Features\Fulfillments\Fulfillment_Utils;
 /**
  * DHL Shipping Provider implementation.
  *
  * Handles DHL tracking number detection and validation for all DHL services.
  */
-class DHLShippingProvider extends AbstractShippingProvider
+class Dhl_Shipping_Provider extends Abstract_Shipping_Provider
 {
     /**
      * List of countries where DHL has significant operations.
      *
      * @var array<string>
      */
-    private array $major_operation_countries = [ 'DE', 'US', 'CA', 'GB', 'SG', 'JP', 'HK', 'NL', 'FR', 'IT', 'AU', 'CN', 'IN', 'ES', 'BE', 'CH', 'AT', 'SE', 'DK', 'NO', 'PL', 'CZ', 'FI', 'IE', 'PT', 'GR', 'HU', 'RO', 'BG', 'HR', 'SK', 'SI', 'LT', 'LV', 'EE', 'CY', 'MT', 'LU' ];
-
+    private array $major_operation_countries = ['DE', 'US', 'CA', 'GB', 'SG', 'JP', 'HK', 'NL', 'FR', 'IT', 'AU', 'CN', 'IN', 'ES', 'BE', 'CH', 'AT', 'SE', 'DK', 'NO', 'PL', 'CZ', 'FI', 'IE', 'PT', 'GR', 'HU', 'RO', 'BG', 'HR', 'SK', 'SI', 'LT', 'LV', 'EE', 'CY', 'MT', 'LU'];
     /**
      * Gets the unique provider key.
      *
@@ -29,7 +26,6 @@ class DHLShippingProvider extends AbstractShippingProvider
     {
         return 'dhl';
     }
-
     /**
      * Gets the display name of the provider.
      *
@@ -39,7 +35,6 @@ class DHLShippingProvider extends AbstractShippingProvider
     {
         return 'DHL';
     }
-
     /**
      * Gets the path to the provider's icon.
      *
@@ -49,7 +44,6 @@ class DHLShippingProvider extends AbstractShippingProvider
     {
         return esc_url(WC()->plugin_url()) . '/assets/images/shipping_providers/dhl.png';
     }
-
     /**
      * Generates the appropriate tracking URL based on DHL service type.
      *
@@ -58,22 +52,19 @@ class DHLShippingProvider extends AbstractShippingProvider
      */
     public function get_tracking_url(string $tracking_number): string
     {
-        $tracking_number = strtoupper($tracking_number); // Uppercase for consistency.
-
+        $tracking_number = strtoupper($tracking_number);
+        // Uppercase for consistency.
         // DHL Global Mail and eCommerce prefixes.
         if (preg_match('/^(GM|LX|RX|CN|SG|MY|HK|AU|TH|420)/', $tracking_number)) {
             return 'https://webtrack.dhlglobalmail.com/?trackingnumber=' . rawurlencode($tracking_number);
         }
-
         // DHL Paket Germany (3S...).
         if (preg_match('/^3S[A-Z0-9]{8,12}$/', $tracking_number)) {
             return 'https://www.dhl.de/en/privatkunden/dhl-sendungsverfolgung.html?piececode=' . rawurlencode($tracking_number);
         }
-
         // Standard DHL Express tracking.
         return 'https://www.dhl.com/en/express/tracking.html?AWB=' . rawurlencode($tracking_number);
     }
-
     /**
      * Gets the list of origin countries supported by DHL.
      *
@@ -83,7 +74,6 @@ class DHLShippingProvider extends AbstractShippingProvider
     {
         return $this->major_operation_countries;
     }
-
     /**
      * Gets the list of destination countries supported by DHL.
      *
@@ -93,7 +83,6 @@ class DHLShippingProvider extends AbstractShippingProvider
     {
         return array_keys(wc()->countries->get_countries());
     }
-
     /**
      * Checks if DHL can ship between two countries.
      *
@@ -103,10 +92,8 @@ class DHLShippingProvider extends AbstractShippingProvider
      */
     public function can_ship_from_to(string $shipping_from, string $shipping_to): bool
     {
-        return in_array($shipping_from, $this->get_shipping_from_countries(), true) &&
-            in_array($shipping_to, $this->get_shipping_to_countries(), true);
+        return in_array($shipping_from, $this->get_shipping_from_countries(), true) && in_array($shipping_to, $this->get_shipping_to_countries(), true);
     }
-
     /**
      * Validates and parses a DHL tracking number.
      *
@@ -117,75 +104,55 @@ class DHLShippingProvider extends AbstractShippingProvider
      */
     public function try_parse_tracking_number(string $tracking_number, string $shipping_from, string $shipping_to): ?array
     {
-        if (empty($tracking_number) || ! $this->can_ship_from_to($shipping_from, $shipping_to)) {
+        if (empty($tracking_number) || !$this->can_ship_from_to($shipping_from, $shipping_to)) {
             return null;
         }
-
-        $tracking_number  = strtoupper((string) preg_replace('/\s+/', '', $tracking_number)); // Major operation region flag.
-
+        $tracking_number = strtoupper((string) preg_replace('/\s+/', '', $tracking_number));
+        // Major operation region flag.
         // DHL tracking number patterns with enhanced validation and comments.
         $patterns = [
             // DHL Express Air Waybill: 10 or 11 digits, with check digit validation.
-            '/^\d{10}$/'                                 => fn () => FulfillmentUtils::validate_mod11_check_digit($tracking_number) ? 98 : 90,
-            '/^\d{11}$/'                                 => fn () => FulfillmentUtils::validate_mod11_check_digit($tracking_number) ? 98 : 90,
-
+            '/^\d{10}$/' => fn() => Fulfillment_Utils::validate_mod11_check_digit($tracking_number) ? 98 : 90,
+            '/^\d{11}$/' => fn() => Fulfillment_Utils::validate_mod11_check_digit($tracking_number) ? 98 : 90,
             // DHL Express JJD and JVGL formats.
-            '/^JJD\d{10}$/'                              => 98,
-            '/^JVGL\d{10}$/'                             => 98,
-
+            '/^JJD\d{10}$/' => 98,
+            '/^JVGL\d{10}$/' => 98,
             // DHL Paket Germany: 12, 14, or 20 digits.
             // Only match 12/14-digit numeric for DHL if both from and to are DE (Germany).
-            '/^\d{12}$/'                                 => fn () => ('DE' === $shipping_from && 'DE' === $shipping_to) ? 92 : 60,
-            '/^\d{14}$/'                                 => fn () => ('DE' === $shipping_from && 'DE' === $shipping_to) ? 92 : 60,
-            '/^\d{20}$/'                                 => 90,
-
+            '/^\d{12}$/' => fn() => 'DE' === $shipping_from && 'DE' === $shipping_to ? 92 : 60,
+            '/^\d{14}$/' => fn() => 'DE' === $shipping_from && 'DE' === $shipping_to ? 92 : 60,
+            '/^\d{20}$/' => 90,
             // DHL Paket Germany: 3S + 8–12 alphanumeric.
-            '/^3S[A-Z0-9]{8,12}$/'                       => 95,
-
+            '/^3S[A-Z0-9]{8,12}$/' => 95,
             // DHL eCommerce North America: GM + 16–20 digits.
-            '/^GM\d{16,20}$/'                            => fn () => in_array($shipping_from, [ 'US', 'CA' ], true) ? 95 : 80,
-
+            '/^GM\d{16,20}$/' => fn() => in_array($shipping_from, ['US', 'CA'], true) ? 95 : 80,
             // DHL eCommerce Asia-Pacific: LX, RX, CN, SG, MY, HK, AU, TH + 9 digits + 2 letters.
             '/^(LX|RX|CN|SG|MY|HK|AU|TH)\d{9}[A-Z]{2}$/' => 92,
-
             // DHL eCommerce US consolidator: 420 + 27–31 digits.
-            '/^420\d{23,31}$/'                           => 90,
-
+            '/^420\d{23,31}$/' => 90,
             // DHL Global Forwarding: 7, 8, or 9 digits (numeric only).
-            '/^\d{7,9}$/'                                => 88,
-
+            '/^\d{7,9}$/' => 88,
             // DHL Global Forwarding: 1 digit + 2 letters + 4–6 digits.
-            '/^\d[A-Z]{2}\d{4,6}$/'                      => 90,
-
+            '/^\d[A-Z]{2}\d{4,6}$/' => 90,
             // DHL Global Forwarding: 3–4 letters + 4–8 digits.
-            '/^[A-Z]{3,4}\d{4,8}$/'                      => 88,
-
+            '/^[A-Z]{3,4}\d{4,8}$/' => 88,
             // DHL Same Day: DSD + 8–12 digits.
-            '/^DSD\d{8,12}$/'                            => 92,
-
+            '/^DSD\d{8,12}$/' => 92,
             // DHL Piece Numbers: JD + 11 digits.
-            '/^JD\d{11}$/'                               => 90,
-
+            '/^JD\d{11}$/' => 90,
             // DHL Supply Chain: DSC + 10–15 digits.
-            '/^DSC\d{10,15}$/'                           => 85,
-
+            '/^DSC\d{10,15}$/' => 85,
             // S10/UPU format: 2 letters + 9 digits + 2 letters (used for DHL eCommerce and Packet International).
-            '/^[A-Z]{2}\d{9}[A-Z]{2}$/'                  => fn () => FulfillmentUtils::check_s10_upu_format($tracking_number) ? 88 : 75,
-
+            '/^[A-Z]{2}\d{9}[A-Z]{2}$/' => fn() => Fulfillment_Utils::check_s10_upu_format($tracking_number) ? 88 : 75,
             // Fallback: 22 digit numeric (legacy/rare).
-            '/^\d{22}$/'                                 => 70,
+            '/^\d{22}$/' => 70,
         ];
-
         foreach ($patterns as $pattern => $base_score) {
             if (preg_match($pattern, $tracking_number)) {
                 $score = is_callable($base_score) ? $base_score() : $base_score;
-                return [
-                        'url'             => $this->get_tracking_url($tracking_number),
-                        'ambiguity_score' => $score,
-                    ];
+                return ['url' => $this->get_tracking_url($tracking_number), 'ambiguity_score' => $score];
             }
         }
-
         return null;
     }
 }

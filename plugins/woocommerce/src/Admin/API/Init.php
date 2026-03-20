@@ -1,25 +1,21 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API bootstrap.
  */
+namespace Automattic\Woo_Commerce\Admin\API;
 
-namespace Automattic\WooCommerce\Admin\API;
-
-use AllowDynamicProperties;
-use Automattic\WooCommerce\Admin\Features\Features;
-
+use Allow_Dynamic_Properties;
+use Automattic\Woo_Commerce\Admin\Features\Features;
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Utilities\RestApiUtil;
-
+use Automattic\Woo_Commerce\Utilities\Rest_Api_Util;
 /**
  * Init class.
  *
  * @internal
  */
-#[AllowDynamicProperties]
+#[Allow_Dynamic_Properties]
 class Init
 {
     /**
@@ -28,7 +24,6 @@ class Init
      * @var object
      */
     protected static $instance;
-
     /**
      * Get class instance.
      *
@@ -41,7 +36,6 @@ class Init
         }
         return static::$instance;
     }
-
     /**
      * Bootstrap REST API.
      */
@@ -51,13 +45,10 @@ class Init
         add_filter('woocommerce_data_stores', self::add_data_stores(...));
         // REST API extensions init.
         add_action('rest_api_init', $this->rest_api_init(...));
-
         // Add currency symbol to orders endpoint response.
         add_filter('woocommerce_rest_prepare_shop_order_object', self::add_currency_symbol_to_order_response(...));
-
         include_once WC_ABSPATH . 'includes/admin/class-wc-admin-upload-downloadable-product.php';
     }
-
     /**
      * Initialize the API namespaces under WooCommerce Admin.
      */
@@ -66,49 +57,21 @@ class Init
         if (wc_rest_should_load_namespace('wc-admin')) {
             $this->rest_api_init_wc_admin();
         }
-
-        $rest_api_util = wc_get_container()->get(RestApiUtil::class);
+        $rest_api_util = wc_get_container()->get(Rest_Api_Util::class);
         $rest_api_util->lazy_load_namespace('wc-analytics', $this->rest_api_init_wc_analytics(...));
-
         if (Features::is_enabled('launch-your-store')) {
-            $controller        = \Automattic\WooCommerce\Admin\API\LaunchYourStore::class;
-            $this->$controller = new $controller();
-            $this->$controller->register_routes();
+            $controller = \Automattic\Woo_Commerce\Admin\API\Launch_Your_Store::class;
+            $this->{$controller} = new $controller();
+            $this->{$controller}->register_routes();
         }
     }
-
     /**
      * Load the wc-admin namespace controllers.
      */
     public function rest_api_init_wc_admin(): void
     {
-        $controllers = [
-            \Automattic\WooCommerce\Admin\API\Notice::class,
-            \Automattic\WooCommerce\Admin\API\Features::class,
-            \Automattic\WooCommerce\Admin\API\Experiments::class,
-            \Automattic\WooCommerce\Admin\API\Marketing::class,
-            \Automattic\WooCommerce\Admin\API\MarketingOverview::class,
-            \Automattic\WooCommerce\Admin\API\MarketingRecommendations::class,
-            \Automattic\WooCommerce\Admin\API\MarketingChannels::class,
-            \Automattic\WooCommerce\Admin\API\MarketingCampaigns::class,
-            \Automattic\WooCommerce\Admin\API\MarketingCampaignTypes::class,
-            \Automattic\WooCommerce\Admin\API\Options::class,
-            \Automattic\WooCommerce\Admin\API\Settings::class,
-            \Automattic\WooCommerce\Admin\API\PaymentGatewaySuggestions::class,
-            \Automattic\WooCommerce\Admin\API\Themes::class,
-            \Automattic\WooCommerce\Admin\API\Plugins::class,
-            \Automattic\WooCommerce\Admin\API\OnboardingFreeExtensions::class,
-            \Automattic\WooCommerce\Admin\API\OnboardingProductTypes::class,
-            \Automattic\WooCommerce\Admin\API\OnboardingProfile::class,
-            \Automattic\WooCommerce\Admin\API\OnboardingTasks::class,
-            \Automattic\WooCommerce\Admin\API\OnboardingThemes::class,
-            \Automattic\WooCommerce\Admin\API\OnboardingPlugins::class,
-            \Automattic\WooCommerce\Admin\API\OnboardingProducts::class,
-            \Automattic\WooCommerce\Admin\API\MobileAppMagicLink::class,
-            \Automattic\WooCommerce\Admin\API\ShippingPartnerSuggestions::class,
-        ];
-
-        if (! did_action('woocommerce_admin_rest_controllers')) {
+        $controllers = [\Automattic\Woo_Commerce\Admin\API\Notice::class, \Automattic\Woo_Commerce\Admin\API\Features::class, \Automattic\Woo_Commerce\Admin\API\Experiments::class, \Automattic\Woo_Commerce\Admin\API\Marketing::class, \Automattic\Woo_Commerce\Admin\API\Marketing_Overview::class, \Automattic\Woo_Commerce\Admin\API\Marketing_Recommendations::class, \Automattic\Woo_Commerce\Admin\API\Marketing_Channels::class, \Automattic\Woo_Commerce\Admin\API\Marketing_Campaigns::class, \Automattic\Woo_Commerce\Admin\API\Marketing_Campaign_Types::class, \Automattic\Woo_Commerce\Admin\API\Options::class, \Automattic\Woo_Commerce\Admin\API\Settings::class, \Automattic\Woo_Commerce\Admin\API\Payment_Gateway_Suggestions::class, \Automattic\Woo_Commerce\Admin\API\Themes::class, \Automattic\Woo_Commerce\Admin\API\Plugins::class, \Automattic\Woo_Commerce\Admin\API\Onboarding_Free_Extensions::class, \Automattic\Woo_Commerce\Admin\API\Onboarding_Product_Types::class, \Automattic\Woo_Commerce\Admin\API\Onboarding_Profile::class, \Automattic\Woo_Commerce\Admin\API\Onboarding_Tasks::class, \Automattic\Woo_Commerce\Admin\API\Onboarding_Themes::class, \Automattic\Woo_Commerce\Admin\API\Onboarding_Plugins::class, \Automattic\Woo_Commerce\Admin\API\Onboarding_Products::class, \Automattic\Woo_Commerce\Admin\API\Mobile_App_Magic_Link::class, \Automattic\Woo_Commerce\Admin\API\Shipping_Partner_Suggestions::class];
+        if (!did_action('woocommerce_admin_rest_controllers')) {
             /**
              * Filter for the WooCommerce Admin REST controllers.
              *
@@ -121,84 +84,36 @@ class Init
              * @since 3.5.0
              */
             $controllers = apply_filters('woocommerce_admin_rest_controllers', $controllers);
-            if (! is_array($controllers)) {
+            if (!is_array($controllers)) {
                 return;
             }
         }
-
         $controllers = array_values(array_unique($controllers));
         foreach ($controllers as $controller) {
             if (is_string($controller)) {
-                $this->$controller = new $controller();
-                $this->$controller->register_routes();
+                $this->{$controller} = new $controller();
+                $this->{$controller}->register_routes();
             }
         }
     }
-
     /**
      * Load the wc-analytics namespace controllers.
      */
     public function rest_api_init_wc_analytics(): void
     {
         // Controllers in wc-analytics namespace, but loaded irrespective of analytics feature value.
-        $controllers = [
-            \Automattic\WooCommerce\Admin\API\Notes::class,
-            \Automattic\WooCommerce\Admin\API\NoteActions::class,
-            \Automattic\WooCommerce\Admin\API\Coupons::class,
-            \Automattic\WooCommerce\Admin\API\Data::class,
-            \Automattic\WooCommerce\Admin\API\DataCountries::class,
-            \Automattic\WooCommerce\Admin\API\DataDownloadIPs::class,
-            \Automattic\WooCommerce\Admin\API\Orders::class,
-            \Automattic\WooCommerce\Admin\API\Products::class,
-            \Automattic\WooCommerce\Admin\API\ProductAttributes::class,
-            \Automattic\WooCommerce\Admin\API\ProductAttributeTerms::class,
-            \Automattic\WooCommerce\Admin\API\ProductCategories::class,
-            \Automattic\WooCommerce\Admin\API\ProductVariations::class,
-            \Automattic\WooCommerce\Admin\API\ProductReviews::class,
-            \Automattic\WooCommerce\Admin\API\ProductsLowInStock::class,
-            \Automattic\WooCommerce\Admin\API\SettingOptions::class,
-            \Automattic\WooCommerce\Admin\API\Taxes::class,
-        ];
-
+        $controllers = [\Automattic\Woo_Commerce\Admin\API\Notes::class, \Automattic\Woo_Commerce\Admin\API\Note_Actions::class, \Automattic\Woo_Commerce\Admin\API\Coupons::class, \Automattic\Woo_Commerce\Admin\API\Data::class, \Automattic\Woo_Commerce\Admin\API\Data_Countries::class, \Automattic\Woo_Commerce\Admin\API\Data_Download_I_Ps::class, \Automattic\Woo_Commerce\Admin\API\Orders::class, \Automattic\Woo_Commerce\Admin\API\Products::class, \Automattic\Woo_Commerce\Admin\API\Product_Attributes::class, \Automattic\Woo_Commerce\Admin\API\Product_Attribute_Terms::class, \Automattic\Woo_Commerce\Admin\API\Product_Categories::class, \Automattic\Woo_Commerce\Admin\API\Product_Variations::class, \Automattic\Woo_Commerce\Admin\API\Product_Reviews::class, \Automattic\Woo_Commerce\Admin\API\Products_Low_In_Stock::class, \Automattic\Woo_Commerce\Admin\API\Setting_Options::class, \Automattic\Woo_Commerce\Admin\API\Taxes::class];
         $analytics_controllers = [];
         if (Features::is_enabled('analytics')) {
-            $analytics_controllers = [
-                \Automattic\WooCommerce\Admin\API\Customers::class,
-                \Automattic\WooCommerce\Admin\API\Leaderboards::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Import\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Export\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Products\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Variations\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Products\Stats\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Variations\Stats\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Revenue\Stats\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Orders\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Orders\Stats\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Categories\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Taxes\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Taxes\Stats\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Coupons\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Coupons\Stats\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Stock\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Stock\Stats\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Downloads\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Downloads\Stats\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Customers\Controller::class,
-                \Automattic\WooCommerce\Admin\API\Reports\Customers\Stats\Controller::class,
-            ];
-
+            $analytics_controllers = [\Automattic\Woo_Commerce\Admin\API\Customers::class, \Automattic\Woo_Commerce\Admin\API\Leaderboards::class, \Automattic\Woo_Commerce\Admin\API\Reports\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Import\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Export\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Products\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Variations\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Products\Stats\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Variations\Stats\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Revenue\Stats\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Orders\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Orders\Stats\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Categories\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Taxes\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Taxes\Stats\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Coupons\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Coupons\Stats\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Stock\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Stock\Stats\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Downloads\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Downloads\Stats\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Customers\Controller::class, \Automattic\Woo_Commerce\Admin\API\Reports\Customers\Stats\Controller::class];
             if (Features::is_enabled('analytics-scheduled-import')) {
-                $analytics_controllers[] = \Automattic\WooCommerce\Admin\API\AnalyticsImports::class;
+                $analytics_controllers[] = \Automattic\Woo_Commerce\Admin\API\Analytics_Imports::class;
             }
-
             // The performance indicators controllerq must be registered last, after other /stats endpoints have been registered.
-            $analytics_controllers[] = \Automattic\WooCommerce\Admin\API\Reports\PerformanceIndicators\Controller::class;
+            $analytics_controllers[] = \Automattic\Woo_Commerce\Admin\API\Reports\Performance_Indicators\Controller::class;
         }
-
         $controllers = array_merge($analytics_controllers, $controllers);
-
-        if (! did_action('woocommerce_admin_rest_controllers')) {
+        if (!did_action('woocommerce_admin_rest_controllers')) {
             /**
              * Filter for the WooCommerce Admin REST controllers.
              *
@@ -209,20 +124,18 @@ class Init
              * @see   self::rest_api_init_wc_admin() for extended documentation.
              */
             $controllers = apply_filters('woocommerce_admin_rest_controllers', $controllers);
-            if (! is_array($controllers)) {
+            if (!is_array($controllers)) {
                 return;
             }
         }
-
         $controllers = array_values(array_unique($controllers));
         foreach ($controllers as $controller) {
             if (is_string($controller)) {
-                $this->$controller = new $controller();
-                $this->$controller->register_routes();
+                $this->{$controller} = new $controller();
+                $this->{$controller}->register_routes();
             }
         }
     }
-
     /**
      * Adds data stores.
      *
@@ -231,31 +144,8 @@ class Init
      */
     public static function add_data_stores($data_stores): array
     {
-        return array_merge(
-            $data_stores,
-            [
-                'report-revenue-stats'    => \Automattic\WooCommerce\Admin\API\Reports\Orders\Stats\DataStore::class,
-                'report-orders'           => \Automattic\WooCommerce\Admin\API\Reports\Orders\DataStore::class,
-                'report-orders-stats'     => \Automattic\WooCommerce\Admin\API\Reports\Orders\Stats\DataStore::class,
-                'report-products'         => \Automattic\WooCommerce\Admin\API\Reports\Products\DataStore::class,
-                'report-variations'       => \Automattic\WooCommerce\Admin\API\Reports\Variations\DataStore::class,
-                'report-products-stats'   => \Automattic\WooCommerce\Admin\API\Reports\Products\Stats\DataStore::class,
-                'report-variations-stats' => \Automattic\WooCommerce\Admin\API\Reports\Variations\Stats\DataStore::class,
-                'report-categories'       => \Automattic\WooCommerce\Admin\API\Reports\Categories\DataStore::class,
-                'report-taxes'            => \Automattic\WooCommerce\Admin\API\Reports\Taxes\DataStore::class,
-                'report-taxes-stats'      => \Automattic\WooCommerce\Admin\API\Reports\Taxes\Stats\DataStore::class,
-                'report-coupons'          => \Automattic\WooCommerce\Admin\API\Reports\Coupons\DataStore::class,
-                'report-coupons-stats'    => \Automattic\WooCommerce\Admin\API\Reports\Coupons\Stats\DataStore::class,
-                'report-downloads'        => \Automattic\WooCommerce\Admin\API\Reports\Downloads\DataStore::class,
-                'report-downloads-stats'  => \Automattic\WooCommerce\Admin\API\Reports\Downloads\Stats\DataStore::class,
-                'admin-note'              => \Automattic\WooCommerce\Admin\Notes\DataStore::class,
-                'report-customers'        => \Automattic\WooCommerce\Admin\API\Reports\Customers\DataStore::class,
-                'report-customers-stats'  => \Automattic\WooCommerce\Admin\API\Reports\Customers\Stats\DataStore::class,
-                'report-stock-stats'      => \Automattic\WooCommerce\Admin\API\Reports\Stock\Stats\DataStore::class,
-            ]
-        );
+        return array_merge($data_stores, ['report-revenue-stats' => \Automattic\Woo_Commerce\Admin\API\Reports\Orders\Stats\Data_Store::class, 'report-orders' => \Automattic\Woo_Commerce\Admin\API\Reports\Orders\Data_Store::class, 'report-orders-stats' => \Automattic\Woo_Commerce\Admin\API\Reports\Orders\Stats\Data_Store::class, 'report-products' => \Automattic\Woo_Commerce\Admin\API\Reports\Products\Data_Store::class, 'report-variations' => \Automattic\Woo_Commerce\Admin\API\Reports\Variations\Data_Store::class, 'report-products-stats' => \Automattic\Woo_Commerce\Admin\API\Reports\Products\Stats\Data_Store::class, 'report-variations-stats' => \Automattic\Woo_Commerce\Admin\API\Reports\Variations\Stats\Data_Store::class, 'report-categories' => \Automattic\Woo_Commerce\Admin\API\Reports\Categories\Data_Store::class, 'report-taxes' => \Automattic\Woo_Commerce\Admin\API\Reports\Taxes\Data_Store::class, 'report-taxes-stats' => \Automattic\Woo_Commerce\Admin\API\Reports\Taxes\Stats\Data_Store::class, 'report-coupons' => \Automattic\Woo_Commerce\Admin\API\Reports\Coupons\Data_Store::class, 'report-coupons-stats' => \Automattic\Woo_Commerce\Admin\API\Reports\Coupons\Stats\Data_Store::class, 'report-downloads' => \Automattic\Woo_Commerce\Admin\API\Reports\Downloads\Data_Store::class, 'report-downloads-stats' => \Automattic\Woo_Commerce\Admin\API\Reports\Downloads\Stats\Data_Store::class, 'admin-note' => \Automattic\Woo_Commerce\Admin\Notes\Data_Store::class, 'report-customers' => \Automattic\Woo_Commerce\Admin\API\Reports\Customers\Data_Store::class, 'report-customers-stats' => \Automattic\Woo_Commerce\Admin\API\Reports\Customers\Stats\Data_Store::class, 'report-stock-stats' => \Automattic\Woo_Commerce\Admin\API\Reports\Stock\Stats\Data_Store::class]);
     }
-
     /**
      * Add the currency symbol (in addition to currency code) to each Order
      * object in REST API responses. For use in formatAmount().
@@ -266,12 +156,11 @@ class Init
      */
     public static function add_currency_symbol_to_order_response($response)
     {
-        $response_data                    = $response->get_data();
-        $currency_code                    = $response_data['currency'];
-        $currency_symbol                  = get_woocommerce_currency_symbol($currency_code);
+        $response_data = $response->get_data();
+        $currency_code = $response_data['currency'];
+        $currency_symbol = get_woocommerce_currency_symbol($currency_code);
         $response_data['currency_symbol'] = html_entity_decode($currency_symbol);
         $response->set_data($response_data);
-
         return $response;
     }
 }

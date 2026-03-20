@@ -1,23 +1,20 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * SingleProduct class.
  */
-class SingleProduct extends AbstractBlock
+class Single_Product extends Abstract_Block
 {
-    use EnableBlockJsonAssetsTrait;
-
+    use Enable_Block_Json_Assets_Trait;
     /**
      * Block name.
      *
      * @var string
      */
     protected $block_name = 'single-product';
-
     /**
      * Product ID of the current product to be displayed in the Single Product block.
      * This is used to replace the global post for the Single Product inner blocks.
@@ -25,7 +22,6 @@ class SingleProduct extends AbstractBlock
      * @var int
      */
     protected $product_id = 0;
-
     /**
      * Single Product inner blocks names.
      * This is used to map all the inner blocks for a Single Product block.
@@ -33,7 +29,6 @@ class SingleProduct extends AbstractBlock
      * @var array
      */
     protected $single_product_inner_blocks_names = [];
-
     /**
      * Initialize the block and Hook into the `render_block_context` filter
      * to update the context with the correct data.
@@ -47,7 +42,6 @@ class SingleProduct extends AbstractBlock
         add_filter('render_block_core/post-excerpt', $this->restore_global_post(...), 10, 3);
         add_filter('render_block_core/post-title', $this->restore_global_post(...), 10, 3);
     }
-
     /**
      * Restore the global post variable right before generating the render output for the post title and/or post excerpt blocks.
      *
@@ -68,10 +62,8 @@ class SingleProduct extends AbstractBlock
         if (isset($block_instance->context['singleProduct']) && $block_instance->context['singleProduct']) {
             wp_reset_postdata();
         }
-
         return $block_content;
     }
-
     /**
      * Update the context by injecting the correct post data
      * for each one of the Single Product inner blocks.
@@ -84,20 +76,13 @@ class SingleProduct extends AbstractBlock
      */
     public function update_context($context, array $block, $parent_block)
     {
-        if ('woocommerce/single-product' === $block['blockName']
-            && isset($block['attrs']['productId'])) {
+        if ('woocommerce/single-product' === $block['blockName'] && isset($block['attrs']['productId'])) {
             $this->product_id = $block['attrs']['productId'];
-
-            $this->single_product_inner_blocks_names = array_reverse(
-                $this->extract_single_product_inner_block_names($block)
-            );
+            $this->single_product_inner_blocks_names = array_reverse($this->extract_single_product_inner_block_names($block));
         }
-
         $this->replace_post_for_single_product_inner_block($block, $context);
-
         return $context;
     }
-
     /**
      * Extract the inner block names for the Single Product block. This way it's possible
      * to map all the inner blocks for a Single Product block and manipulate the data as needed.
@@ -112,11 +97,9 @@ class SingleProduct extends AbstractBlock
         if (isset($block['blockName'])) {
             $result[] = $block['blockName'];
         }
-
         if ('woocommerce/product-template' === $block['blockName'] || 'core/post-template' === $block['blockName']) {
             return $result;
         }
-
         if (isset($block['innerBlocks'])) {
             foreach ($block['innerBlocks'] as $inner_block) {
                 $this->extract_single_product_inner_block_names($inner_block, $result);
@@ -124,7 +107,6 @@ class SingleProduct extends AbstractBlock
         }
         return $result;
     }
-
     /**
      * Replace the global post for the Single Product inner blocks and reset it after.
      *
@@ -139,7 +121,6 @@ class SingleProduct extends AbstractBlock
     {
         if ($this->single_product_inner_blocks_names) {
             $block_name = end($this->single_product_inner_blocks_names);
-
             if ($block_name === $block['blockName']) {
                 array_pop($this->single_product_inner_blocks_names);
                 /**
@@ -155,18 +136,15 @@ class SingleProduct extends AbstractBlock
                     global $post;
                     // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
                     $post = get_post($this->product_id);
-
                     if ($post instanceof \WP_Post) {
                         setup_postdata($post);
                     }
                 }
-
-                $context['postId']        = $this->product_id;
+                $context['postId'] = $this->product_id;
                 $context['singleProduct'] = true;
             }
         }
     }
-
     /**
      * Render the Single Product block.
      *
@@ -179,28 +157,18 @@ class SingleProduct extends AbstractBlock
     protected function render($attributes, $content, $block)
     {
         $product = wc_get_product($block->context['postId']);
-
-        if (! $product instanceof \WC_Product) {
+        if (!$product instanceof \WC_Product) {
             return '';
         }
-
-        $interactivity_context = [
-            'productId'   => $product->get_id(),
-            'variationId' => null,
-        ];
-
+        $interactivity_context = ['productId' => $product->get_id(), 'variationId' => null];
         $html = new \WP_HTML_Tag_Processor($content);
-
         if ($html->next_tag()) {
             $html->set_attribute('data-wp-interactive', $this->get_full_block_name());
             $html->set_attribute('data-wp-context', wp_json_encode($interactivity_context, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP));
         }
-
         $updated_html = $html->get_updated_html();
-
         return parent::render($attributes, $updated_html, $block);
     }
-
     /**
      * Get the frontend script handle for this block type.
      *

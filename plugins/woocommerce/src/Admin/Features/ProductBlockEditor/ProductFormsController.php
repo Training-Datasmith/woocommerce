@@ -1,31 +1,27 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Product Forms Controller
  */
-
-namespace Automattic\WooCommerce\Admin\Features\ProductBlockEditor;
+namespace Automattic\Woo_Commerce\Admin\Features\Product_Block_Editor;
 
 /**
  * Handle retrieval of product forms.
  */
-class ProductFormsController
+class Product_Forms_Controller
 {
     /**
      * Product form templates.
      */
-    private array $product_form_templates = [
-        'simple',
-    ];
-
+    private array $product_form_templates = ['simple'];
     /**
      * Set up the product forms controller.
      */
-    public function init(): void // phpcs:ignore WooCommerce.Functions.InternalInjectionMethod.MissingFinal, WooCommerce.Functions.InternalInjectionMethod.MissingInternalTag -- Not an injection.
-    {add_action('upgrader_process_complete', $this->migrate_templates_when_plugin_updated(...), 10, 2);
+    public function init(): void
+    {
+        add_action('upgrader_process_complete', $this->migrate_templates_when_plugin_updated(...), 10, 2);
     }
-
     /**
      * Migrate form templates after WooCommerce plugin update.
      *
@@ -39,25 +35,19 @@ class ProductFormsController
         if ('plugin' !== $type) {
             return;
         }
-
         // If it is not the WooCommerce plugin, bail early.
         $plugins = $hook_extra['plugins'] ?? [];
-        if (
-            ! in_array('woocommerce/woocommerce.php', $plugins, true)
-        ) {
+        if (!in_array('woocommerce/woocommerce.php', $plugins, true)) {
             return;
         }
-
         // If the action is not install or update, bail early.
         $action = $hook_extra['action'] ?? '';
         if ('install' !== $action && 'update' !== $action) {
             return;
         }
-
         // Trigger the migration process.
         $this->migrate_product_form_posts($action);
     }
-
     /**
      * Create or update a product_form post for each product form template.
      * If the post already exists, it will be updated.
@@ -73,65 +63,31 @@ class ProductFormsController
          * @since 9.1.0
          * @param array $templates List of templates to auto-generate.
          */
-        $templates = apply_filters(
-            'woocommerce_product_form_templates',
-            $this->product_form_templates
-        );
-
+        $templates = apply_filters('woocommerce_product_form_templates', $this->product_form_templates);
         foreach ($templates as $slug) {
-            $file_path = BlockTemplateUtils::get_block_template_path($slug);
-
-            if (! $file_path) {
+            $file_path = Block_Template_Utils::get_block_template_path($slug);
+            if (!$file_path) {
                 continue;
             }
-
-            $file_data = BlockTemplateUtils::get_template_file_data($file_path);
-
-            $posts = get_posts(
-                [
-                    'name'           => $slug,
-                    'post_type'      => 'product_form',
-                    'post_status'    => 'any',
-                    'posts_per_page' => 1,
-                ]
-            );
-
+            $file_data = Block_Template_Utils::get_template_file_data($file_path);
+            $posts = get_posts(['name' => $slug, 'post_type' => 'product_form', 'post_status' => 'any', 'posts_per_page' => 1]);
             /*
              * Update the the CPT post if it already exists,
              * and the action is `update`.
              */
             if ('update' === $action) {
                 $post = $posts[0] ?? null;
-
-                if (! empty($post)) {
-                    wp_update_post(
-                        [
-                            'ID'           => $post->ID,
-                            'post_title'   => $file_data['title'],
-                            'post_content' => BlockTemplateUtils::get_template_content($file_path),
-                            'post_excerpt' => $file_data['description'],
-                        ]
-                    );
+                if (!empty($post)) {
+                    wp_update_post(['ID' => $post->ID, 'post_title' => $file_data['title'], 'post_content' => Block_Template_Utils::get_template_content($file_path), 'post_excerpt' => $file_data['description']]);
                 }
             }
-
             /*
              * Skip the post creation if the post already exists.
              */
-            if (! empty($posts)) {
+            if (!empty($posts)) {
                 continue;
             }
-
-            $post = wp_insert_post(
-                [
-                    'post_title'   => $file_data['title'],
-                    'post_name'    => $slug,
-                    'post_status'  => 'publish',
-                    'post_type'    => 'product_form',
-                    'post_content' => BlockTemplateUtils::get_template_content($file_path),
-                    'post_excerpt' => $file_data['description'],
-                ]
-            );
+            $post = wp_insert_post(['post_title' => $file_data['title'], 'post_name' => $slug, 'post_status' => 'publish', 'post_type' => 'product_form', 'post_content' => Block_Template_Utils::get_template_content($file_path), 'post_excerpt' => $file_data['description']]);
         }
     }
 }

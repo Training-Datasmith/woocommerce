@@ -1,6 +1,6 @@
 <?php
 
-namespace Automattic\WooCommerce\Internal\Admin\Orders;
+namespace Automattic\Woo_Commerce\Internal\Admin\Orders;
 
 /**
  * This class takes care of the edit lock logic when HPOS is enabled.
@@ -9,10 +9,9 @@ namespace Automattic\WooCommerce\Internal\Admin\Orders;
  *
  * @since 7.8.0
  */
-class EditLock
+class Edit_Lock
 {
     public const META_KEY_NAME = '_edit_lock';
-
     /**
      * Obtains lock information for a given order. If the lock has expired or it's assigned to an invalid user,
      * the order is no longer considered locked.
@@ -22,31 +21,26 @@ class EditLock
     public function get_lock(\WC_Order $order): false|array
     {
         $lock = $order->get_meta(self::META_KEY_NAME, true, 'edit');
-        if (! $lock) {
+        if (!$lock) {
             return false;
         }
-
         $lock = explode(':', (string) $lock);
         if (2 !== count($lock)) {
             return false;
         }
-
-        $time    = absint($lock[0]);
+        $time = absint($lock[0]);
         $user_id = isset($lock[1]) ? absint($lock[1]) : 0;
-
-        if (! $time || ! get_user_by('id', $user_id)) {
+        if (!$time || !get_user_by('id', $user_id)) {
             return false;
         }
-
         /** This filter is documented in WP's wp-admin/includes/ajax-actions.php */
-        $time_window = apply_filters('wp_check_post_lock_window', 150); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingSinceComment
-        if (time() >= ($time + $time_window)) {
+        $time_window = apply_filters('wp_check_post_lock_window', 150);
+        // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingSinceComment
+        if (time() >= $time + $time_window) {
             return false;
         }
-
         return compact('time', 'user_id');
     }
-
     /**
      * Checks whether the order is being edited (i.e. locked) by another user.
      *
@@ -56,9 +50,8 @@ class EditLock
     public function is_locked_by_another_user(\WC_Order $order): bool
     {
         $lock = $this->get_lock($order);
-        return $lock && (get_current_user_id() !== $lock['user_id']);
+        return $lock && get_current_user_id() !== $lock['user_id'];
     }
-
     /**
      * Checks whether the order is being edited by any user.
      *
@@ -69,7 +62,6 @@ class EditLock
     {
         return (bool) $this->get_lock($order);
     }
-
     /**
      * Assigns an order's edit lock to the current user.
      *
@@ -79,17 +71,13 @@ class EditLock
     public function lock(\WC_Order $order)
     {
         $user_id = get_current_user_id();
-
-        if (! $user_id) {
+        if (!$user_id) {
             return false;
         }
-
         $order->update_meta_data(self::META_KEY_NAME, time() . ':' . $user_id);
         $order->save_meta_data();
-
         return $order->get_meta(self::META_KEY_NAME, true, 'edit');
     }
-
     /**
      * Hooked to 'heartbeat_received' on the edit order page to refresh the lock on an order being edited by the current user.
      *
@@ -100,37 +88,30 @@ class EditLock
     public function refresh_lock_ajax(array $response, array $data): array
     {
         $order_id = absint($data['wc-refresh-order-lock'] ?? 0);
-        if (! $order_id) {
+        if (!$order_id) {
             return $response;
         }
-
         unset($response['wp-refresh-post-lock']);
-
         $order = wc_get_order($order_id);
-        if (! $order || ! is_a($order, \WC_Order::class) || (! current_user_can(get_post_type_object($order->get_type())->cap->edit_post, $order->get_id()) && ! current_user_can('manage_woocommerce'))) {
+        if (!$order || !is_a($order, \WC_Order::class) || !current_user_can(get_post_type_object($order->get_type())->cap->edit_post, $order->get_id()) && !current_user_can('manage_woocommerce')) {
             return $response;
         }
-
         $response['wc-refresh-order-lock'] = [];
-
-        if (! $this->is_locked_by_another_user($order)) {
+        if (!$this->is_locked_by_another_user($order)) {
             $response['wc-refresh-order-lock']['lock'] = $this->lock($order);
         } else {
             $current_lock = $this->get_lock($order);
-            $user         = get_user_by('id', $current_lock['user_id']);
-
+            $user = get_user_by('id', $current_lock['user_id']);
             $response['wc-refresh-order-lock']['error'] = [
                 // translators: %s is a user's name.
-                'message'            => sprintf(__('%s has taken over and is currently editing.', 'woocommerce'), $user->display_name),
-                'user_name'          => $user->display_name,
-                'user_avatar_src'    => get_option('show_avatars') ? get_avatar_url($user->ID, [ 'size' => 64 ]) : '',
-                'user_avatar_src_2x' => get_option('show_avatars') ? get_avatar_url($user->ID, [ 'size' => 128 ]) : '',
+                'message' => sprintf(__('%s has taken over and is currently editing.', 'woocommerce'), $user->display_name),
+                'user_name' => $user->display_name,
+                'user_avatar_src' => get_option('show_avatars') ? get_avatar_url($user->ID, ['size' => 64]) : '',
+                'user_avatar_src_2x' => get_option('show_avatars') ? get_avatar_url($user->ID, ['size' => 128]) : '',
             ];
         }
-
         return $response;
     }
-
     /**
      * Hooked to 'heartbeat_received' on the orders screen to refresh the locked status of orders in the list table.
      *
@@ -140,34 +121,29 @@ class EditLock
      */
     public function check_locked_orders_ajax(array $response, array $data): array
     {
-        if (empty($data['wc-check-locked-orders']) || ! is_array($data['wc-check-locked-orders'])) {
+        if (empty($data['wc-check-locked-orders']) || !is_array($data['wc-check-locked-orders'])) {
             return $response;
         }
-
         $response['wc-check-locked-orders'] = [];
-
         $order_ids = array_unique(array_map(absint(...), $data['wc-check-locked-orders']));
         foreach ($order_ids as $order_id) {
             $order = wc_get_order($order_id);
-            if (! $order) {
+            if (!$order) {
                 continue;
             }
-            if (! is_a($order, \WC_Order::class)) {
+            if (!is_a($order, \WC_Order::class)) {
                 continue;
             }
-            if (! $this->is_locked_by_another_user($order)) {
+            if (!$this->is_locked_by_another_user($order)) {
                 continue;
             }
-            if (! current_user_can(get_post_type_object($order->get_type())->cap->edit_post, $order->get_id()) && ! current_user_can('manage_woocommerce')) {
+            if (!current_user_can(get_post_type_object($order->get_type())->cap->edit_post, $order->get_id()) && !current_user_can('manage_woocommerce')) {
                 continue;
             }
-
-            $response['wc-check-locked-orders'][ $order_id ] = true;
+            $response['wc-check-locked-orders'][$order_id] = true;
         }
-
         return $response;
     }
-
     /**
      * Outputs HTML for the lock dialog based on the status of the lock on the order (if any).
      * Depending on who owns the lock, this could be a message with the chance to take over or a message indicating that
@@ -177,48 +153,66 @@ class EditLock
      */
     public function render_dialog(\WC_Order $order): void
     {
-        $lock   = $this->get_lock($order);
-        $user   = $lock ? get_user_by('id', $lock['user_id']) : false;
-        $locked = $user && (get_current_user_id() !== $user->ID);
-
-        $edit_url = wc_get_container()->get(\Automattic\WooCommerce\Internal\Admin\Orders\PageController::class)->get_edit_url($order->get_id());
-
+        $lock = $this->get_lock($order);
+        $user = $lock ? get_user_by('id', $lock['user_id']) : false;
+        $locked = $user && get_current_user_id() !== $user->ID;
+        $edit_url = wc_get_container()->get(\Automattic\Woo_Commerce\Internal\Admin\Orders\Page_Controller::class)->get_edit_url($order->get_id());
         $sendback_url = wp_get_referer();
-        if (! $sendback_url) {
-            $sendback_url = wc_get_container()->get(\Automattic\WooCommerce\Internal\Admin\Orders\PageController::class)->get_base_page_url($order->get_type());
+        if (!$sendback_url) {
+            $sendback_url = wc_get_container()->get(\Automattic\Woo_Commerce\Internal\Admin\Orders\Page_Controller::class)->get_base_page_url($order->get_type());
         }
-
         $sendback_text = __('Go back', 'woocommerce');
         ?>
-		<div id="post-lock-dialog" class="notification-dialog-wrap <?php echo $locked ? '' : 'hidden'; ?> order-lock-dialog">
+		<div id="post-lock-dialog" class="notification-dialog-wrap <?php 
+        echo $locked ? '' : 'hidden';
+        ?> order-lock-dialog">
 			<div class="notification-dialog-background"></div>
 			<div class="notification-dialog">
-			<?php if ($locked) : ?>
+			<?php 
+        if ($locked) {
+            ?>
 			<div class="post-locked-message">
-				<div class="post-locked-avatar"><?php echo get_avatar($user->ID, 64); ?></div>
+				<div class="post-locked-avatar"><?php 
+            echo get_avatar($user->ID, 64);
+            ?></div>
 				<p class="currently-editing wp-tab-first" tabindex="0">
-				<?php
-                // translators: %s is a user's name.
-                echo esc_html(sprintf(__('%s is currently editing this order. Do you want to take over?', 'woocommerce'), esc_html($user->display_name)));
-			    ?>
+				<?php 
+            // translators: %s is a user's name.
+            echo esc_html(sprintf(__('%s is currently editing this order. Do you want to take over?', 'woocommerce'), esc_html($user->display_name)));
+            ?>
 				</p>
 				<p>
-					<a class="button" href="<?php echo esc_url($sendback_url); ?>"><?php echo esc_html($sendback_text); ?></a>
-					<a class="button button-primary wp-tab-last" href="<?php echo esc_url(add_query_arg('claim-lock', '1', wp_nonce_url($edit_url, 'claim-lock-' . $order->get_id()))); ?>"><?php esc_html_e('Take over', 'woocommerce'); ?></a>
+					<a class="button" href="<?php 
+            echo esc_url($sendback_url);
+            ?>"><?php 
+            echo esc_html($sendback_text);
+            ?></a>
+					<a class="button button-primary wp-tab-last" href="<?php 
+            echo esc_url(add_query_arg('claim-lock', '1', wp_nonce_url($edit_url, 'claim-lock-' . $order->get_id())));
+            ?>"><?php 
+            esc_html_e('Take over', 'woocommerce');
+            ?></a>
 				</p>
 			</div>
-			<?php else : ?>
+			<?php 
+        } else {
+            ?>
 			<div class="post-taken-over">
 				<div class="post-locked-avatar"></div>
 				<p class="wp-tab-first" tabindex="0">
 				<span class="currently-editing"></span><br />
 				</p>
-				<p><a class="button button-primary wp-tab-last" href="<?php echo esc_url($sendback_url); ?>"><?php echo esc_html($sendback_text); ?></a></p>
+				<p><a class="button button-primary wp-tab-last" href="<?php 
+            echo esc_url($sendback_url);
+            ?>"><?php 
+            echo esc_html($sendback_text);
+            ?></a></p>
 			</div>
-			<?php endif; ?>
+			<?php 
+        }
+        ?>
 			</div>
 		</div>
-		<?php
+		<?php 
     }
-
 }

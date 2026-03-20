@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Templates;
 
-namespace Automattic\WooCommerce\Blocks\Templates;
-
-use Automattic\WooCommerce\Blocks\Utils\BlockTemplateUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Block_Template_Utils;
 /**
  * ProductSearchResultsTemplate class.
  *
  * @internal
  */
-class ProductSearchResultsTemplate extends AbstractTemplate
+class Product_Search_Results_Template extends Abstract_Template
 {
     /**
      * The slug of the template.
@@ -19,7 +17,6 @@ class ProductSearchResultsTemplate extends AbstractTemplate
      * @var string
      */
     public const SLUG = 'product-search-results';
-
     /**
      * Initialization method.
      */
@@ -28,7 +25,6 @@ class ProductSearchResultsTemplate extends AbstractTemplate
         add_action('template_redirect', $this->render_block_template(...));
         add_filter('search_template_hierarchy', $this->update_search_template_hierarchy(...), 10, 3);
     }
-
     /**
      * Returns the title of the template.
      *
@@ -38,7 +34,6 @@ class ProductSearchResultsTemplate extends AbstractTemplate
     {
         return _x('Product Search Results', 'Template name', 'woocommerce');
     }
-
     /**
      * Returns the description of the template.
      *
@@ -48,24 +43,20 @@ class ProductSearchResultsTemplate extends AbstractTemplate
     {
         return __('Displays search results for your store.', 'woocommerce');
     }
-
     /**
      * Run template-specific logic when the query matches this template.
      */
     public function render_block_template(): void
     {
-        if (! is_embed() && is_post_type_archive('product') && is_search()) {
-            $compatibility_layer = new ArchiveProductTemplatesCompatibility();
+        if (!is_embed() && is_post_type_archive('product') && is_search()) {
+            $compatibility_layer = new Archive_Product_Templates_Compatibility();
             $compatibility_layer->init();
-
-            $templates = get_block_templates([ 'slug__in' => [ self::SLUG ] ]);
-
-            if (isset($templates[0]) && BlockTemplateUtils::template_has_legacy_template_block($templates[0])) {
+            $templates = get_block_templates(['slug__in' => [self::SLUG]]);
+            if (isset($templates[0]) && Block_Template_Utils::template_has_legacy_template_block($templates[0])) {
                 add_filter('woocommerce_disable_compatibility_layer', '__return_true');
             }
         }
     }
-
     /**
      * When the search is for products and a block theme is active, render the Product Search Template.
      *
@@ -73,7 +64,7 @@ class ProductSearchResultsTemplate extends AbstractTemplate
      */
     public function update_search_template_hierarchy($templates)
     {
-        if ((is_search() && is_post_type_archive('product')) && wp_is_block_theme()) {
+        if (is_search() && is_post_type_archive('product') && wp_is_block_theme()) {
             array_unshift($templates, self::SLUG);
         }
         return $templates;

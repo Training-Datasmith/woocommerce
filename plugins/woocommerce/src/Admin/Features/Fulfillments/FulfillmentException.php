@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments;
 
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments;
-
-use Automattic\WooCommerce\Internal\Admin\Settings\Exceptions\ApiException;
-
+use Automattic\Woo_Commerce\Internal\Admin\Settings\Exceptions\Api_Exception;
 /**
  * FulfillmentException class.
  * This exception is thrown when there is an issue with fulfillment operations,
  * such as creating, updating, or deleting fulfillments.
  */
-class FulfillmentException extends ApiException
+class Fulfillment_Exception extends Api_Exception
 {
     /**
      * Setup exception.

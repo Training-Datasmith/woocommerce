@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Domain\Services;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Domain\Services;
 
 use Exception;
 use WC_Order;
-
 /**
  * Service class for adding DraftOrder functionality to WooCommerce core.
  *
@@ -14,13 +12,11 @@ use WC_Order;
  *
  * @internal
  */
-class DraftOrders
+class Draft_Orders
 {
     public const DB_STATUS = 'wc-checkout-draft';
-    public const STATUS    = 'checkout-draft';
-
+    public const STATUS = 'checkout-draft';
     public const DRAFT_CLEANUP_EVENT_HOOK = 'woocommerce_cleanup_draft_orders';
-
     /**
      * Set all hooks related to adding Checkout Draft order functionality to Woo Core.
      */
@@ -35,12 +31,10 @@ class DraftOrders
         add_action('woocommerce_my_account_my_orders_query', $this->delete_draft_order_post_status_from_args(...));
         add_action(self::DRAFT_CLEANUP_EVENT_HOOK, $this->delete_expired_draft_orders(...));
         add_action('admin_init', $this->install(...));
-
         if (defined('WC_PLUGIN_BASENAME')) {
             add_action('deactivate_' . WC_PLUGIN_BASENAME, $this->unschedule_cronjobs(...));
         }
     }
-
     /**
      * Installation related logic for Draft order functionality.
      *
@@ -50,7 +44,6 @@ class DraftOrders
     {
         $this->maybe_create_cronjobs();
     }
-
     /**
      * Unschedule recurring actions when plugin is deactivated.
      *
@@ -61,7 +54,6 @@ class DraftOrders
     {
         WC()->queue()->cancel_all(self::DRAFT_CLEANUP_EVENT_HOOK);
     }
-
     /**
      * Maybe create cron events.
      */
@@ -75,7 +67,6 @@ class DraftOrders
             }
         }
     }
-
     /**
      * Register custom order status for orders created via the API during checkout.
      *
@@ -86,10 +77,9 @@ class DraftOrders
      */
     public function register_draft_order_status(array $statuses): array
     {
-        $statuses[ self::DB_STATUS ] = _x('Draft', 'Order status', 'woocommerce');
+        $statuses[self::DB_STATUS] = _x('Draft', 'Order status', 'woocommerce');
         return $statuses;
     }
-
     /**
      * Register custom order post status for orders created via the API during checkout.
      *
@@ -98,26 +88,24 @@ class DraftOrders
      */
     public function register_draft_order_post_status(array $statuses): array
     {
-        $statuses[ self::DB_STATUS ] = $this->get_post_status_properties();
+        $statuses[self::DB_STATUS] = $this->get_post_status_properties();
         return $statuses;
     }
-
     /**
      * Returns the properties of this post status for registration.
      */
     private function get_post_status_properties(): array
     {
         return [
-            'label'                     => _x('Draft', 'Order status', 'woocommerce'),
-            'public'                    => false,
-            'exclude_from_search'       => false,
-            'show_in_admin_all_list'    => false,
+            'label' => _x('Draft', 'Order status', 'woocommerce'),
+            'public' => false,
+            'exclude_from_search' => false,
+            'show_in_admin_all_list' => false,
             'show_in_admin_status_list' => true,
             /* translators: %s: number of orders */
-            'label_count'               => _n_noop('Drafts <span class="count">(%s)</span>', 'Drafts <span class="count">(%s)</span>', 'woocommerce'),
+            'label_count' => _n_noop('Drafts <span class="count">(%s)</span>', 'Drafts <span class="count">(%s)</span>', 'woocommerce'),
         ];
     }
-
     /**
      * Remove draft status from the 'status' argument of an $args array.
      *
@@ -126,7 +114,7 @@ class DraftOrders
      */
     public function delete_draft_order_post_status_from_args(array $args): array
     {
-        if (! array_key_exists('status', $args)) {
+        if (!array_key_exists('status', $args)) {
             $statuses = [];
             foreach (wc_get_order_statuses() as $key => $label) {
                 if (self::DB_STATUS !== $key) {
@@ -137,18 +125,15 @@ class DraftOrders
         } elseif (self::DB_STATUS === $args['status']) {
             $args['status'] = '';
         } elseif (is_array($args['status'])) {
-            $args['status'] = array_diff_key($args['status'], [ self::STATUS => null ]);
+            $args['status'] = array_diff_key($args['status'], [self::STATUS => null]);
         }
-
         return $args;
     }
-
     /**
      * Append draft status to a list of statuses.
      *
      * @param array $statuses Array of statuses.
      * @internal
-
      * @return array
      */
     public function append_draft_order_post_status($statuses)
@@ -156,7 +141,6 @@ class DraftOrders
         $statuses[] = self::STATUS;
         return $statuses;
     }
-
     /**
      * Delete draft orders older than a day in batches of 20.
      *
@@ -166,18 +150,10 @@ class DraftOrders
      */
     public function delete_expired_draft_orders(): void
     {
-        $count      = 0;
+        $count = 0;
         $batch_size = 20;
         $this->ensure_draft_status_registered();
-        $orders = wc_get_orders(
-            [
-                'date_modified' => '<=' . strtotime('-1 DAY'),
-                'limit'         => $batch_size,
-                'status'        => self::DB_STATUS,
-                'type'          => 'shop_order',
-            ]
-        );
-
+        $orders = wc_get_orders(['date_modified' => '<=' . strtotime('-1 DAY'), 'limit' => $batch_size, 'status' => self::DB_STATUS, 'type' => 'shop_order']);
         // do we bail because the query results are unexpected?
         try {
             $this->assert_order_results($orders);
@@ -194,7 +170,6 @@ class DraftOrders
             wc_caught_exception($error, __METHOD__);
         }
     }
-
     /**
      * Since it's possible for third party code to clobber the `$wp_post_statuses` global,
      * we need to do a final check here to make sure the draft post status is
@@ -203,15 +178,11 @@ class DraftOrders
      */
     private function ensure_draft_status_registered(): void
     {
-        $is_registered = get_post_stati([ 'name' => self::DB_STATUS ]);
+        $is_registered = get_post_stati(['name' => self::DB_STATUS]);
         if (empty($is_registered)) {
-            register_post_status(
-                self::DB_STATUS,
-                $this->get_post_status_properties()
-            );
+            register_post_status(self::DB_STATUS, $this->get_post_status_properties());
         }
     }
-
     /**
      * Asserts whether incoming order results are expected given the query
      * this service class executes.
@@ -223,23 +194,20 @@ class DraftOrders
     {
         // if not an array, then just return because it won't get handled
         // anyways.
-        if (! is_array($order_results)) {
+        if (!is_array($order_results)) {
             return;
         }
-
         $suffix = ' This is an indicator that something is filtering WooCommerce or WordPress queries and modifying the query parameters.';
-
         // if count is greater than our expected batch size, then that's a problem.
         if (count($order_results) > 20) {
             throw new Exception('There are an unexpected number of results returned from the query.' . $suffix);
         }
-
         // if any of the returned orders are not draft (or not a WC_Order), then that's a problem.
         foreach ($order_results as $order) {
-            if (! ($order instanceof WC_Order)) {
+            if (!$order instanceof WC_Order) {
                 throw new Exception('The returned results contain a value that is not a WC_Order.' . $suffix);
             }
-            if (! $order->has_status(self::STATUS)) {
+            if (!$order->has_status(self::STATUS)) {
                 throw new Exception('The results contain an order that is not a `wc-checkout-draft` status in the results.' . $suffix);
             }
         }

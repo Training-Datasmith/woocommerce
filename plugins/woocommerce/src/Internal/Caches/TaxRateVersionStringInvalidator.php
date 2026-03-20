@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Caches;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Caches;
 
 /**
  * Tax rate version string invalidation handler.
@@ -13,7 +12,7 @@ namespace Automattic\WooCommerce\Internal\Caches;
  *
  * @since 10.6.0
  */
-class TaxRateVersionStringInvalidator
+class Tax_Rate_Version_String_Invalidator
 {
     /**
      * Initialize the invalidator and register hooks.
@@ -34,12 +33,10 @@ class TaxRateVersionStringInvalidator
         if ('yes' !== get_option('woocommerce_feature_rest_api_caching_enabled')) {
             return;
         }
-
         if ('yes' === get_option('woocommerce_rest_api_enable_backend_caching', 'no')) {
             $this->register_hooks();
         }
     }
-
     /**
      * Register all tax rate-related hooks.
      *
@@ -51,7 +48,6 @@ class TaxRateVersionStringInvalidator
         add_action('woocommerce_tax_rate_updated', $this->handle_woocommerce_tax_rate_updated(...), 10, 1);
         add_action('woocommerce_tax_rate_deleted', $this->handle_woocommerce_tax_rate_deleted(...), 10, 1);
     }
-
     /**
      * Handle the woocommerce_tax_rate_added hook.
      *
@@ -66,7 +62,6 @@ class TaxRateVersionStringInvalidator
         $this->invalidate((int) $tax_rate_id);
         $this->invalidate_tax_rates_list();
     }
-
     /**
      * Handle the woocommerce_tax_rate_updated hook.
      *
@@ -81,7 +76,6 @@ class TaxRateVersionStringInvalidator
         $this->invalidate((int) $tax_rate_id);
         $this->invalidate_tax_rates_list();
     }
-
     /**
      * Handle the woocommerce_tax_rate_deleted hook.
      *
@@ -96,7 +90,6 @@ class TaxRateVersionStringInvalidator
         $this->invalidate((int) $tax_rate_id);
         $this->invalidate_tax_rates_list();
     }
-
     /**
      * Invalidate the tax rates list version string.
      *
@@ -105,9 +98,8 @@ class TaxRateVersionStringInvalidator
      */
     private function invalidate_tax_rates_list(): void
     {
-        wc_get_container()->get(VersionStringGenerator::class)->delete_version('list_tax_rates');
+        wc_get_container()->get(Version_String_Generator::class)->delete_version('list_tax_rates');
     }
-
     /**
      * Invalidate a tax rate version string.
      *
@@ -118,6 +110,6 @@ class TaxRateVersionStringInvalidator
      */
     public function invalidate(int $tax_rate_id): void
     {
-        wc_get_container()->get(VersionStringGenerator::class)->delete_version("tax_rate_{$tax_rate_id}");
+        wc_get_container()->get(Version_String_Generator::class)->delete_version("tax_rate_{$tax_rate_id}");
     }
 }

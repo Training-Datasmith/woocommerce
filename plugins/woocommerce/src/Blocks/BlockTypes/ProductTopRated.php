@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * ProductTopRated class.
  */
-class ProductTopRated extends AbstractProductGrid
+class Product_Top_Rated extends Abstract_Product_Grid
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class ProductTopRated extends AbstractProductGrid
      * @var string
      */
     protected $block_name = 'product-top-rated';
-
     /**
      * Force orderby to rating.
      *

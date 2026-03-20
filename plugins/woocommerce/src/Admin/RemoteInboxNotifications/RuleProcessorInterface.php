@@ -1,22 +1,20 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Interface for a rule processor.
  *
  * @deprecated 9.4.0 Use \Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\RuleProcessorInterface instead.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteInboxNotifications;
+namespace Automattic\Woo_Commerce\Admin\Remote_Inbox_Notifications;
 
 defined('ABSPATH') || exit;
-
 /**
  * Rule processor interface
  *
  * @deprecated 9.4.0 Use \Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\RuleProcessorInterface instead.
  */
-interface RuleProcessorInterface
+interface Rule_Processor_Interface
 {
     /**
      * Processes a rule, returning the boolean result of the processing.
@@ -27,7 +25,6 @@ interface RuleProcessorInterface
      * @return bool The result of the processing.
      */
     public function process($rule, $stored_state);
-
     /**
      * Validates the rule.
      *

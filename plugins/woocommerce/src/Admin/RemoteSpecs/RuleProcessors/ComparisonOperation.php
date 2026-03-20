@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Compare two operands using the specified operation.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
 /**
  * Compare two operands using the specified operation.
  */
-class ComparisonOperation
+class Comparison_Operation
 {
     /**
      * Compare two operands using the specified operation.
@@ -46,7 +44,7 @@ class ComparisonOperation
                 break;
             case '!contains':
                 if (is_array($left_operand) && is_string($right_operand)) {
-                    return ! in_array($right_operand, $left_operand, true);
+                    return !in_array($right_operand, $left_operand, true);
                 }
                 if (is_string($right_operand) && is_string($left_operand)) {
                     return !str_contains($right_operand, $left_operand);
@@ -62,19 +60,18 @@ class ComparisonOperation
                 break;
             case '!in':
                 if (is_array($right_operand) && is_string($left_operand)) {
-                    return ! in_array($left_operand, $right_operand, true);
+                    return !in_array($left_operand, $right_operand, true);
                 }
                 if (is_string($left_operand) && is_string($right_operand)) {
                     return !str_contains($left_operand, $right_operand);
                 }
                 break;
             case 'range':
-                if (! is_array($right_operand) || count($right_operand) !== 2) {
+                if (!is_array($right_operand) || count($right_operand) !== 2) {
                     return false;
                 }
                 return $left_operand >= $right_operand[0] && $left_operand <= $right_operand[1];
         }
-
         return false;
     }
 }

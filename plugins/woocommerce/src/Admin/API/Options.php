@@ -15,13 +15,10 @@
  * - Add proper documentation
  * See Automattic\WooCommerce\Admin\API\OnboardingProfile for examples.
  */
-
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\API;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\API;
 
 defined('ABSPATH') || exit;
-
 /**
  * Options Controller.
  *
@@ -37,46 +34,20 @@ class Options extends \WC_REST_Data_Controller
      * @var string
      */
     protected $namespace = 'wc-admin';
-
     /**
      * Route base.
      *
      * @var string
      */
     protected $rest_base = 'options';
-
     /**
      * Register routes.
      */
     public function register_routes(): void
     {
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base,
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_options(...),
-                    'permission_callback' => $this->get_item_permissions_check(...),
-                ],
-                'schema' => $this->get_item_schema(...),
-            ]
-        );
-
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base,
-            [
-                [
-                    'methods'             => \WP_REST_Server::EDITABLE,
-                    'callback'            => $this->update_options(...),
-                    'permission_callback' => $this->update_item_permissions_check(...),
-                ],
-                'schema' => $this->get_item_schema(...),
-            ]
-        );
+        register_rest_route($this->namespace, '/' . $this->rest_base, [['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_options(...), 'permission_callback' => $this->get_item_permissions_check(...)], 'schema' => $this->get_item_schema(...)]);
+        register_rest_route($this->namespace, '/' . $this->rest_base, [['methods' => \WP_REST_Server::EDITABLE, 'callback' => $this->update_options(...), 'permission_callback' => $this->update_item_permissions_check(...)], 'schema' => $this->get_item_schema(...)]);
     }
-
     /**
      * Check if a given request has access to get options.
      *
@@ -85,21 +56,17 @@ class Options extends \WC_REST_Data_Controller
      */
     public function get_item_permissions_check($request): \WP_Error|true
     {
-        $params = (isset($request['options']) && is_string($request['options'])) ? explode(',', $request['options']) : [];
-
-        if (! $params) {
+        $params = isset($request['options']) && is_string($request['options']) ? explode(',', $request['options']) : [];
+        if (!$params) {
             return new \WP_Error('woocommerce_rest_cannot_view', __('You must supply an array of options.', 'woocommerce'), 500);
         }
-
         foreach ($params as $option) {
-            if (! $this->user_has_permission($option, $request)) {
-                return new \WP_Error('woocommerce_rest_cannot_view', __('Sorry, you cannot view these options.', 'woocommerce'), [ 'status' => rest_authorization_required_code() ]);
+            if (!$this->user_has_permission($option, $request)) {
+                return new \WP_Error('woocommerce_rest_cannot_view', __('Sorry, you cannot view these options.', 'woocommerce'), ['status' => rest_authorization_required_code()]);
             }
         }
-
         return true;
     }
-
     /**
      * Check if the user has permission given an option name.
      *
@@ -111,21 +78,16 @@ class Options extends \WC_REST_Data_Controller
     public function user_has_permission($option, $request, $is_update = false)
     {
         $permissions = $this->get_option_permissions($request);
-
-        if (isset($permissions[ $option ])) {
-            return $permissions[ $option ];
+        if (isset($permissions[$option])) {
+            return $permissions[$option];
         }
-
         wc_deprecated_function('Automattic\WooCommerce\Admin\API\Options::' . ($is_update ? 'update_options' : 'get_options'), '6.3');
-
         // Disallow option updates in non-production environments unless the option is whitelisted, prompting developers to create specific endpoints in case they miss the deprecation notice.
         if ('production' !== wp_get_environment_type()) {
             return false;
         }
-
         return current_user_can('manage_options');
     }
-
     /**
      * Check if a given request has access to update options.
      *
@@ -135,20 +97,16 @@ class Options extends \WC_REST_Data_Controller
     public function update_item_permissions_check($request)
     {
         $params = $request->get_json_params();
-
-        if (! is_array($params)) {
+        if (!is_array($params)) {
             return new \WP_Error('woocommerce_rest_cannot_update', __('You must supply an array of options and values.', 'woocommerce'), 500);
         }
-
         foreach ($params as $option_name => $option_value) {
-            if (! $this->user_has_permission($option_name, $request, true)) {
-                return new \WP_Error('woocommerce_rest_cannot_update', __('Sorry, you cannot manage these options.', 'woocommerce'), [ 'status' => rest_authorization_required_code() ]);
+            if (!$this->user_has_permission($option_name, $request, true)) {
+                return new \WP_Error('woocommerce_rest_cannot_update', __('Sorry, you cannot manage these options.', 'woocommerce'), ['status' => rest_authorization_required_code()]);
             }
         }
-
         return true;
     }
-
     /**
      * Get an array of options and respective permissions for the current user.
      *
@@ -158,9 +116,8 @@ class Options extends \WC_REST_Data_Controller
     public function get_option_permissions($request)
     {
         $permissions = self::get_default_option_permissions();
-        return apply_filters_deprecated('woocommerce_rest_api_option_permissions', [ $permissions, $request ], '6.3.0');
+        return apply_filters_deprecated('woocommerce_rest_api_option_permissions', [$permissions, $request], '6.3.0');
     }
-
     /**
      * Get the default available option permissions.
      *
@@ -168,8 +125,7 @@ class Options extends \WC_REST_Data_Controller
      */
     public static function get_default_option_permissions()
     {
-        $is_woocommerce_admin = \Automattic\WooCommerce\Internal\Admin\Homescreen::is_admin_user();
-
+        $is_woocommerce_admin = \Automattic\Woo_Commerce\Internal\Admin\Homescreen::is_admin_user();
         /**
          * IMPORTANT: This list is frozen for legacy support.
          * New options MUST use dedicated endpoints instead of being added here.
@@ -248,18 +204,9 @@ class Options extends \WC_REST_Data_Controller
             'wc-admin-test-helper-rest-api-filters',
             'wc_admin_helper_feature_values',
         ];
-
-        $theme_permissions = [
-            'theme_mods_' . get_stylesheet() => current_user_can('edit_theme_options'),
-            'stylesheet'                     => current_user_can('edit_theme_options'),
-        ];
-
-        return array_merge(
-            array_fill_keys($theme_permissions, current_user_can('edit_theme_options')),
-            array_fill_keys($legacy_whitelisted_options, $is_woocommerce_admin)
-        );
+        $theme_permissions = ['theme_mods_' . get_stylesheet() => current_user_can('edit_theme_options'), 'stylesheet' => current_user_can('edit_theme_options')];
+        return array_merge(array_fill_keys($theme_permissions, current_user_can('edit_theme_options')), array_fill_keys($legacy_whitelisted_options, $is_woocommerce_admin));
     }
-
     /**
      * Gets an array of options and respective values.
      *
@@ -269,19 +216,15 @@ class Options extends \WC_REST_Data_Controller
     public function get_options($request)
     {
         $options = [];
-
-        if (empty($request['options']) || ! is_string($request['options'])) {
+        if (empty($request['options']) || !is_string($request['options'])) {
             return $options;
         }
-
         $params = explode(',', $request['options']);
         foreach ($params as $option) {
-            $options[ $option ] = get_option($option);
+            $options[$option] = get_option($option);
         }
-
         return $options;
     }
-
     /**
      * Updates an array of objects.
      *
@@ -290,20 +233,16 @@ class Options extends \WC_REST_Data_Controller
      */
     public function update_options($request)
     {
-        $params  = $request->get_json_params();
+        $params = $request->get_json_params();
         $updated = [];
-
-        if (! is_array($params)) {
+        if (!is_array($params)) {
             return [];
         }
-
         foreach ($params as $key => $value) {
-            $updated[ $key ] = update_option($key, $value);
+            $updated[$key] = update_option($key, $value);
         }
-
         return $updated;
     }
-
     /**
      * Get the schema, conforming to JSON Schema.
      *
@@ -311,20 +250,7 @@ class Options extends \WC_REST_Data_Controller
      */
     public function get_item_schema()
     {
-        $schema = [
-            '$schema'    => 'http://json-schema.org/draft-04/schema#',
-            'title'      => 'options',
-            'type'       => 'object',
-            'properties' => [
-                'options' => [
-                    'type'        => 'array',
-                    'description' => __('Array of options with associated values.', 'woocommerce'),
-                    'context'     => [ 'view' ],
-                    'readonly'    => true,
-                ],
-            ],
-        ];
-
+        $schema = ['$schema' => 'http://json-schema.org/draft-04/schema#', 'title' => 'options', 'type' => 'object', 'properties' => ['options' => ['type' => 'array', 'description' => __('Array of options with associated values.', 'woocommerce'), 'context' => ['view'], 'readonly' => true]]];
         return $this->add_additional_fields_schema($schema);
     }
 }

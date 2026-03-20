@@ -1,11 +1,10 @@
 <?php
-declare(strict_types=1);
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\ProductCollection;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Product_Collection;
 
-use Automattic\WooCommerce\Blocks\BlockTypes\ProductCollection\Utils as ProductCollectionUtils;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Product_Collection\Utils as ProductCollectionUtils;
 use WP_HTML_Tag_Processor;
-
 /**
  * Renderer class.
  * Handles rendering of the block and adds interactivity.
@@ -15,18 +14,13 @@ class Renderer
     /**
      * The render state of the product collection block.
      */
-    private array $render_state = [
-        'has_results'          => false,
-        'has_no_results_block' => false,
-    ];
-
+    private array $render_state = ['has_results' => false, 'has_no_results_block' => false];
     /**
      * The Block with its attributes before it gets rendered
      *
      * @var array
      */
     protected $parsed_block;
-
     /**
      * Constructor.
      */
@@ -34,32 +28,19 @@ class Renderer
     {
         // Interactivity API: Add navigation directives to the product collection block.
         add_filter('render_block_woocommerce/product-collection', $this->handle_rendering(...), 10, 2);
-
         // Disable block render if the ProductTemplate block is empty.
-        add_filter(
-            'render_block_woocommerce/product-template',
-            function ($html) {
-                $this->render_state['has_results'] = ! empty($html);
-                return $html;
-            },
-            100,
-            1
-        );
-
+        add_filter('render_block_woocommerce/product-template', function ($html) {
+            $this->render_state['has_results'] = !empty($html);
+            return $html;
+        }, 100, 1);
         // Enable block render if the NoResults block is rendered.
-        add_filter(
-            'render_block_woocommerce/product-collection-no-results',
-            function ($html) {
-                $this->render_state['has_no_results_block'] = ! empty($html);
-                return $html;
-            },
-            100,
-            1
-        );
+        add_filter('render_block_woocommerce/product-collection-no-results', function ($html) {
+            $this->render_state['has_no_results_block'] = !empty($html);
+            return $html;
+        }, 100, 1);
         add_filter('render_block_core/query-pagination', $this->add_navigation_link_directives(...), 10, 3);
         add_filter('render_block_context', $this->extend_context_for_inner_blocks(...), 11, 1);
     }
-
     /**
      * Set the parsed block.
      *
@@ -69,7 +50,6 @@ class Renderer
     {
         $this->parsed_block = $block;
     }
-
     /**
      * Handle the rendering of the block.
      *
@@ -81,34 +61,27 @@ class Renderer
     public function handle_rendering($block_content, $block)
     {
         if ($this->should_prevent_render()) {
-            return ''; // Prevent rendering.
+            return '';
+            // Prevent rendering.
         }
-
         // Reset the render state for the next render.
         $this->reset_render_state();
-
         return $this->enhance_product_collection_with_interactivity($block_content, $block);
     }
-
     /**
      * Check if the block should be prevented from rendering.
      */
     private function should_prevent_render(): bool
     {
-        return ! $this->render_state['has_results'] && ! $this->render_state['has_no_results_block'];
+        return !$this->render_state['has_results'] && !$this->render_state['has_no_results_block'];
     }
-
     /**
      * Reset the render state.
      */
     private function reset_render_state(): void
     {
-        $this->render_state = [
-            'has_results'          => false,
-            'has_no_results_block' => false,
-        ];
+        $this->render_state = ['has_results' => false, 'has_no_results_block' => false];
     }
-
     /**
      * Enhances the Product Collection block with client-side pagination.
      *
@@ -123,50 +96,38 @@ class Renderer
     public function enhance_product_collection_with_interactivity($block_content, array $block)
     {
         $is_product_collection_block = $block['attrs']['query']['isProductCollectionBlock'] ?? false;
-
         if ($is_product_collection_block) {
             wp_enqueue_script_module('woocommerce/product-collection');
-
-            $collection                     = $block['attrs']['collection'] ?? '';
-            $is_enhanced_pagination_enabled = ! ($block['attrs']['forcePageReload'] ?? false);
-            $context                        = [
-                'notices'                 => [],
+            $collection = $block['attrs']['collection'] ?? '';
+            $is_enhanced_pagination_enabled = !($block['attrs']['forcePageReload'] ?? false);
+            $context = [
+                'notices' => [],
                 // Next/Previous Buttons block context.
                 'hideNextPreviousButtons' => false,
-                'isDisabledPrevious'      => true,
-                'isDisabledNext'          => false,
-                'ariaLabelPrevious'       => __('Previous products', 'woocommerce'),
-                'ariaLabelNext'           => __('Next products', 'woocommerce'),
+                'isDisabledPrevious' => true,
+                'isDisabledNext' => false,
+                'ariaLabelPrevious' => __('Previous products', 'woocommerce'),
+                'ariaLabelNext' => __('Next products', 'woocommerce'),
             ];
-
             if ($collection) {
                 $context['collection'] = $collection;
             }
-
             $p = new \WP_HTML_Tag_Processor($block_content);
             if ($p->next_tag()) {
                 $p->set_attribute('data-wp-interactive', 'woocommerce/product-collection');
                 $p->set_attribute('data-wp-init', 'callbacks.onRender');
                 $p->set_attribute('data-wp-context', wp_json_encode($context, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP));
-
                 if ($is_enhanced_pagination_enabled && isset($this->parsed_block)) {
-                    $p->set_attribute(
-                        'data-wp-router-region',
-                        'wc-product-collection-' . $this->parsed_block['attrs']['queryId']
-                    );
+                    $p->set_attribute('data-wp-router-region', 'wc-product-collection-' . $this->parsed_block['attrs']['queryId']);
                 }
             }
-
             // Check if dimensions need to be set and handle accordingly.
             $this->handle_block_dimensions($p, $block);
-
             $block_content = $p->get_updated_html();
             $block_content = $this->add_store_notices_fallback($block_content);
         }
-
         return $block_content;
     }
-
     /**
      * Add a fallback store notices div to the block content.
      *
@@ -177,7 +138,6 @@ class Renderer
     {
         return preg_replace('/(<div[^>]+>)/', '$1' . $this->render_interactivity_notices_region(), $block_content, 1);
     }
-
     /**
      * Render interactivity API powered notices that can be added client-side. This reuses classes
      * from the woocommerce/store-notices block to ensure style consistency.
@@ -186,13 +146,7 @@ class Renderer
      */
     protected function render_interactivity_notices_region(): string|false
     {
-        wp_interactivity_state(
-            'woocommerce/store-notices',
-            [
-                'notices' => [],
-            ]
-        );
-
+        wp_interactivity_state('woocommerce/store-notices', ['notices' => []]);
         ob_start();
         ?>
 		<div data-wp-interactive="woocommerce/store-notices" class="wc-block-components-notices alignwide">
@@ -213,7 +167,9 @@ class Renderer
 					<button
 						data-wp-bind--hidden="!context.notice.dismissible"
 						class="wc-block-components-button wp-element-button wc-block-components-notice-banner__dismiss contained"
-						aria-label="<?php esc_attr_e('Dismiss this notice', 'woocommerce'); ?>"
+						aria-label="<?php 
+        esc_attr_e('Dismiss this notice', 'woocommerce');
+        ?>"
 						data-wp-on--click="actions.removeNotice"
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -223,10 +179,9 @@ class Renderer
 				</div>
 			</template>
 		</div>
-		<?php
+		<?php 
         return ob_get_clean();
     }
-
     /**
      * Get the styles for the list element (fixed width).
      *
@@ -235,14 +190,12 @@ class Renderer
     protected function get_list_styles($fixed_width): string
     {
         $style = '';
-
-        if (isset($fixed_width) && ! empty($fixed_width)) {
+        if (isset($fixed_width) && !empty($fixed_width)) {
             $style .= sprintf('width:%s;', esc_attr($fixed_width));
             $style .= 'margin: 0 auto;';
         }
         return $style;
     }
-
     /**
      * Set the style attribute for fixed width.
      *
@@ -253,7 +206,6 @@ class Renderer
     {
         $p->set_attribute('style', $this->get_list_styles($fixed_width));
     }
-
     /**
      * Handle block dimensions if width type is set to 'fixed'.
      *
@@ -268,7 +220,6 @@ class Renderer
             }
         }
     }
-
     /**
      * Add interactive links to all anchors inside the Query Pagination block.
      * This enabled client-side navigation for the product collection block.
@@ -279,27 +230,20 @@ class Renderer
      */
     public function add_navigation_link_directives($block_content, $block, $instance)
     {
-        $query_context                  = $instance->context['query'] ?? [];
-        $is_product_collection_block    = $query_context['isProductCollectionBlock'] ?? false;
-        $query_id                       = $instance->context['queryId'] ?? null;
-        $parsed_query_id                = $this->parsed_block['attrs']['queryId'] ?? null;
-        $is_enhanced_pagination_enabled = ! ($this->parsed_block['attrs']['forcePageReload'] ?? false);
-
+        $query_context = $instance->context['query'] ?? [];
+        $is_product_collection_block = $query_context['isProductCollectionBlock'] ?? false;
+        $query_id = $instance->context['queryId'] ?? null;
+        $parsed_query_id = $this->parsed_block['attrs']['queryId'] ?? null;
+        $is_enhanced_pagination_enabled = !($this->parsed_block['attrs']['forcePageReload'] ?? false);
         // Only proceed if the block is a product collection block,
         // enhanced pagination is enabled and query IDs match.
         if ($is_product_collection_block && $is_enhanced_pagination_enabled && $query_id === $parsed_query_id) {
             $p = new \WP_HTML_Tag_Processor($block_content);
             $p->next_tag();
-
             while ($p->next_tag()) {
                 if ($p->has_class('wp-block-query-pagination-next') || $p->has_class('wp-block-query-pagination-previous')) {
                     $p->set_attribute('data-wp-on--click', 'woocommerce/product-collection::actions.navigate');
-                    $p->set_attribute(
-                        'data-wp-key',
-                        $p->has_class('wp-block-query-pagination-next')
-                            ? 'product-collection-pagination--next'
-                            : 'product-collection-pagination--previous'
-                    );
+                    $p->set_attribute('data-wp-key', $p->has_class('wp-block-query-pagination-next') ? 'product-collection-pagination--next' : 'product-collection-pagination--previous');
                     $p->set_attribute('data-wp-watch', 'woocommerce/product-collection::callbacks.prefetch');
                     $p->set_attribute('data-wp-on--mouseenter', 'woocommerce/product-collection::actions.prefetchOnHover');
                 } elseif ($p->has_class('page-numbers')) {
@@ -307,13 +251,10 @@ class Renderer
                     $p->set_attribute('data-wp-key', 'product-collection-pagination-numbers--' . $p->get_attribute('aria-label'));
                 }
             }
-
             return $p->get_updated_html();
         }
-
         return $block_content;
     }
-
     /**
      * Provides the location context to each inner block of the product collection block.
      * Hint: Only blocks using the 'query' context will be affected.
@@ -347,26 +288,16 @@ class Renderer
         if (is_admin() || \WC()->is_rest_api_request()) {
             return $context;
         }
-
         // Add iapi/provider to inner blocks so they can run this store's Interactivity API actions.
         $context['iapi/provider'] = 'woocommerce/product-collection';
-
         // Target only product collection's inner blocks that use the 'query' context.
-        if (! isset($context['query']) || ! isset($context['query']['isProductCollectionBlock']) || ! $context['query']['isProductCollectionBlock']) {
+        if (!isset($context['query']) || !isset($context['query']['isProductCollectionBlock']) || !$context['query']['isProductCollectionBlock']) {
             return $context;
         }
-
-        $is_in_single_product                 = isset($context['singleProduct']) && ! empty($context['postId']);
-        $context['productCollectionLocation'] = $is_in_single_product ? [
-            'type'       => 'product',
-            'sourceData' => [
-                'productId' => absint($context['postId']),
-            ],
-        ] : $this->get_location_context();
-
+        $is_in_single_product = isset($context['singleProduct']) && !empty($context['postId']);
+        $context['productCollectionLocation'] = $is_in_single_product ? ['type' => 'product', 'sourceData' => ['productId' => absint($context['postId'])]] : $this->get_location_context();
         return $context;
     }
-
     /**
      * Get the global location context.
      * Serve as a runtime cache for the location context.
@@ -379,7 +310,7 @@ class Renderer
     {
         static $location_context = null;
         if (null === $location_context) {
-            $location_context = ProductCollectionUtils::parse_frontend_location_context();
+            $location_context = Product_Collection_Utils::parse_frontend_location_context();
         }
         return $location_context;
     }

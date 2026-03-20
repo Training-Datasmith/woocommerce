@@ -1,37 +1,33 @@
 <?php
-declare(strict_types=1);
 
-namespace Automattic\WooCommerce\Internal\Admin\Logging;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Logging;
 
-use Automattic\WooCommerce\Internal\Admin\Logging\FileV2\{ File, FileController, FileListTable, SearchListTable };
+use Automattic\Woo_Commerce\Internal\Admin\Logging\File_V2\{File, File_Controller, File_List_Table, Search_List_Table};
 use WC_Admin_Status;
 use WC_Log_Handler_DB;
 use WC_Log_Handler_File;
 use WC_Log_Levels;
 use WP_List_Table;
-
 /**
  * PageController class.
  */
-class PageController
+class Page_Controller
 {
     /**
      * Instance of FileController.
      */
-    private ?\Automattic\WooCommerce\Internal\Admin\Logging\FileV2\FileController $file_controller = null;
-
+    private ?\Automattic\Woo_Commerce\Internal\Admin\Logging\File_V2\File_Controller $file_controller = null;
     /**
      * Instance of Settings.
      */
-    private ?\Automattic\WooCommerce\Internal\Admin\Logging\Settings $settings = null;
-
+    private ?\Automattic\Woo_Commerce\Internal\Admin\Logging\Settings $settings = null;
     /**
      * Instance of FileListTable or SearchListTable.
      *
      * @var FileListTable|SearchListTable
      */
-    private \Automattic\WooCommerce\Internal\Admin\Logging\FileV2\FileListTable|\Automattic\WooCommerce\Internal\Admin\Logging\FileV2\SearchListTable|null $list_table = null;
-
+    private \Automattic\Woo_Commerce\Internal\Admin\Logging\File_V2\File_List_Table|\Automattic\Woo_Commerce\Internal\Admin\Logging\File_V2\Search_List_Table|null $list_table = null;
     /**
      * Initialize dependencies.
      *
@@ -40,28 +36,22 @@ class PageController
      * @param FileController $file_controller Instance of FileController.
      * @param Settings       $settings        Instance of Settings.
      */
-    final public function init(
-        FileController $file_controller,
-        Settings $settings
-    ): void {
+    final public function init(File_Controller $file_controller, Settings $settings): void
+    {
         $this->file_controller = $file_controller;
-        $this->settings        = $settings;
-
+        $this->settings = $settings;
         $this->init_hooks();
     }
-
     /**
      * Add callbacks to hooks.
      */
     private function init_hooks(): void
     {
         add_action('load-woocommerce_page_wc-status', $this->maybe_do_logs_tab_action(...), 2);
-
         add_action('wc_logs_load_tab', $this->setup_screen_options(...));
         add_action('wc_logs_load_tab', $this->handle_list_table_bulk_actions(...));
         add_action('wc_logs_load_tab', $this->notices(...));
     }
-
     /**
      * Determine if the current tab on the Status page is Logs, and if so, fire an action.
      *
@@ -71,10 +61,8 @@ class PageController
     public function maybe_do_logs_tab_action(): void
     {
         $is_logs_tab = 'logs' === filter_input(INPUT_GET, 'tab');
-
         if ($is_logs_tab) {
-            $params = $this->get_query_params([ 'view' ]);
-
+            $params = $this->get_query_params(['view']);
             /**
              * Action fires when the Logs tab starts loading.
              *
@@ -85,7 +73,6 @@ class PageController
             do_action('wc_logs_load_tab', $params['view']);
         }
     }
-
     /**
      * Notices to display on Logs screens.
      *
@@ -94,60 +81,45 @@ class PageController
      */
     public function notices(): void
     {
-        if (! $this->settings->logging_is_enabled()) {
-            add_action(
-                'admin_notices',
-                function (): void {
-                    ?>
+        if (!$this->settings->logging_is_enabled()) {
+            add_action('admin_notices', function (): void {
+                ?>
 					<div class="notice notice-warning">
 						<p>
-							<?php
-                            printf(
-                                // translators: %s is a URL to another admin screen.
-                                wp_kses_post(__('Logging is disabled. It can be enabled in <a href="%s">Logs Settings</a>.', 'woocommerce')),
-                                esc_url(add_query_arg('view', 'settings', $this->get_logs_tab_url()))
-                            );
-                    ?>
+							<?php 
+                printf(
+                    // translators: %s is a URL to another admin screen.
+                    wp_kses_post(__('Logging is disabled. It can be enabled in <a href="%s">Logs Settings</a>.', 'woocommerce')),
+                    esc_url(add_query_arg('view', 'settings', $this->get_logs_tab_url()))
+                );
+                ?>
 						</p>
 					</div>
-					<?php
-                }
-            );
+					<?php 
+            });
         }
     }
-
     /**
      * Get the canonical URL for the Logs tab of the Status admin page.
      */
     public function get_logs_tab_url(): string
     {
-        return add_query_arg(
-            [
-                'page' => 'wc-status',
-                'tab'  => 'logs',
-            ],
-            admin_url('admin.php')
-        );
+        return add_query_arg(['page' => 'wc-status', 'tab' => 'logs'], admin_url('admin.php'));
     }
-
     /**
      * Render the "Logs" tab, depending on the current default log handler.
      */
     public function render(): void
     {
         $handler = $this->settings->get_default_handler();
-        $params  = $this->get_query_params([ 'view' ]);
-
+        $params = $this->get_query_params(['view']);
         $this->render_section_nav();
-
         if ('settings' === $params['view']) {
             $this->settings->render_form();
-
             return;
         }
-
         switch ($handler) {
-            case LogHandlerFileV2::class:
+            case Log_Handler_File_V2::class:
                 $this->render_filev2();
                 return;
             case WC_Log_Handler_DB::class:
@@ -157,7 +129,6 @@ class PageController
                 WC_Admin_Status::status_logs_file();
                 return;
         }
-
         /**
          * Action fires only if there is not a built-in rendering method for the current default log handler.
          *
@@ -169,216 +140,189 @@ class PageController
          */
         do_action('wc_logs_render_page', $handler);
     }
-
     /**
      * Render navigation to switch between logs browsing and settings.
      */
     private function render_section_nav(): void
     {
-        $params       = $this->get_query_params([ 'view' ]);
-        $browse_url   = $this->get_logs_tab_url();
+        $params = $this->get_query_params(['view']);
+        $browse_url = $this->get_logs_tab_url();
         $settings_url = add_query_arg('view', 'settings', $this->get_logs_tab_url());
-
         ?>
 		<ul class="subsubsub">
 			<li>
-				<?php
-                printf(
-                    '<a href="%1$s"%2$s>%3$s</a>',
-                    esc_url($browse_url),
-                    'settings' !== $params['view'] ? ' class="current"' : '',
-                    esc_html__('Browse', 'woocommerce')
-                );
+				<?php 
+        printf('<a href="%1$s"%2$s>%3$s</a>', esc_url($browse_url), 'settings' !== $params['view'] ? ' class="current"' : '', esc_html__('Browse', 'woocommerce'));
         ?>
 				|
 			</li>
 			<li>
-				<?php
-        printf(
-            '<a href="%1$s"%2$s>%3$s</a>',
-            esc_url($settings_url),
-            'settings' === $params['view'] ? ' class="current"' : '',
-            esc_html__('Settings', 'woocommerce')
-        );
+				<?php 
+        printf('<a href="%1$s"%2$s>%3$s</a>', esc_url($settings_url), 'settings' === $params['view'] ? ' class="current"' : '', esc_html__('Settings', 'woocommerce'));
         ?>
 			</li>
 		</ul>
 		<br class="clear">
-		<?php
+		<?php 
     }
-
     /**
      * Render the views for the FileV2 log handler.
      */
     private function render_filev2(): void
     {
-        $params = $this->get_query_params([ 'view' ]);
-
+        $params = $this->get_query_params(['view']);
         match ($params['view']) {
             'search_results' => $this->render_search_results_view(),
             'single_file' => $this->render_single_file_view(),
             default => $this->render_list_files_view(),
         };
     }
-
     /**
      * Render the file list view.
      */
     private function render_list_files_view(): void
     {
-        $params     = $this->get_query_params([ 'order', 'orderby', 'source', 'view' ]);
-        $defaults   = $this->get_query_param_defaults();
+        $params = $this->get_query_params(['order', 'orderby', 'source', 'view']);
+        $defaults = $this->get_query_param_defaults();
         $list_table = $this->get_list_table($params['view']);
-
         $list_table->prepare_items();
-
         ?>
 		<header id="logs-header" class="wc-logs-header">
 			<h2>
-				<?php esc_html_e('Browse log files', 'woocommerce'); ?>
+				<?php 
+        esc_html_e('Browse log files', 'woocommerce');
+        ?>
 			</h2>
-			<?php $this->render_search_field(); ?>
+			<?php 
+        $this->render_search_field();
+        ?>
 		</header>
 		<form id="logs-list-table-form" method="get">
 			<input type="hidden" name="page" value="wc-status" />
 			<input type="hidden" name="tab" value="logs" />
-			<?php foreach ($params as $key => $value) : ?>
-				<?php if ($value !== $defaults[ $key ]) : ?>
+			<?php 
+        foreach ($params as $key => $value) {
+            ?>
+				<?php 
+            if ($value !== $defaults[$key]) {
+                ?>
 					<input
 						type="hidden"
-						name="<?php echo esc_attr($key); ?>"
-						value="<?php echo esc_attr($value); ?>"
+						name="<?php 
+                echo esc_attr($key);
+                ?>"
+						value="<?php 
+                echo esc_attr($value);
+                ?>"
 					/>
-				<?php endif; ?>
-			<?php endforeach; ?>
-			<?php $list_table->display(); ?>
+				<?php 
+            }
+            ?>
+			<?php 
+        }
+        ?>
+			<?php 
+        $list_table->display();
+        ?>
 		</form>
-		<?php
+		<?php 
     }
-
     /**
      * Render the single file view.
      */
     private function render_single_file_view(): void
     {
-        $params = $this->get_query_params([ 'file_id', 'view' ]);
-        $file   = $this->file_controller->get_file_by_id($params['file_id']);
-
+        $params = $this->get_query_params(['file_id', 'view']);
+        $file = $this->file_controller->get_file_by_id($params['file_id']);
         if (is_wp_error($file)) {
             ?>
 			<div class="notice notice-error notice-inline">
-				<?php echo wp_kses_post(wpautop($file->get_error_message())); ?>
-				<?php
-                printf(
-                    '<p><a href="%1$s">%2$s</a></p>',
-                    esc_url($this->get_logs_tab_url()),
-                    esc_html__('Return to the file list.', 'woocommerce')
-                );
+				<?php 
+            echo wp_kses_post(wpautop($file->get_error_message()));
+            ?>
+				<?php 
+            printf('<p><a href="%1$s">%2$s</a></p>', esc_url($this->get_logs_tab_url()), esc_html__('Return to the file list.', 'woocommerce'));
             ?>
 			</div>
-			<?php
-
+			<?php 
             return;
         }
-
-        $rotations         = $this->file_controller->get_file_rotations($file->get_file_id());
+        $rotations = $this->file_controller->get_file_rotations($file->get_file_id());
         $rotation_url_base = add_query_arg('view', 'single_file', $this->get_logs_tab_url());
-
-        $download_url           = add_query_arg(
-            [
-                'action'  => 'export',
-                'file_id' => [ $file->get_file_id() ],
-            ],
-            wp_nonce_url($this->get_logs_tab_url(), 'bulk-log-files')
-        );
-        $delete_url             = add_query_arg(
-            [
-                'action'  => 'delete',
-                'file_id' => [ $file->get_file_id() ],
-            ],
-            wp_nonce_url($this->get_logs_tab_url(), 'bulk-log-files')
-        );
-        $delete_confirmation_js = sprintf(
-            "return window.confirm( '%s' )",
-            esc_js(__('Delete this log file permanently?', 'woocommerce'))
-        );
-
-        $stream      = $file->get_stream();
+        $download_url = add_query_arg(['action' => 'export', 'file_id' => [$file->get_file_id()]], wp_nonce_url($this->get_logs_tab_url(), 'bulk-log-files'));
+        $delete_url = add_query_arg(['action' => 'delete', 'file_id' => [$file->get_file_id()]], wp_nonce_url($this->get_logs_tab_url(), 'bulk-log-files'));
+        $delete_confirmation_js = sprintf("return window.confirm( '%s' )", esc_js(__('Delete this log file permanently?', 'woocommerce')));
+        $stream = $file->get_stream();
         $line_number = 1;
-
         ?>
 		<header id="logs-header" class="wc-logs-header">
 			<h2>
-				<?php
-                printf(
-                    // translators: %s is the name of a log file.
-                    esc_html__('Viewing log file %s', 'woocommerce'),
-                    sprintf(
-                        '<span class="file-id">%s</span>',
-                        esc_html($file->get_file_id())
-                    )
-                );
+				<?php 
+        printf(
+            // translators: %s is the name of a log file.
+            esc_html__('Viewing log file %s', 'woocommerce'),
+            sprintf('<span class="file-id">%s</span>', esc_html($file->get_file_id()))
+        );
         ?>
 			</h2>
-			<?php if (count($rotations) > 1) : ?>
+			<?php 
+        if (count($rotations) > 1) {
+            ?>
 				<nav class="wc-logs-single-file-rotations">
-					<h3><?php esc_html_e('File rotations:', 'woocommerce'); ?></h3>
+					<h3><?php 
+            esc_html_e('File rotations:', 'woocommerce');
+            ?></h3>
 					<ul class="wc-logs-rotation-links">
-						<?php if (isset($rotations['current'])) : ?>
-							<?php
-                    printf(
-                        '<li><a href="%1$s" class="button button-small button-%2$s">%3$s</a></li>',
-                        esc_url(add_query_arg('file_id', $rotations['current']->get_file_id(), $rotation_url_base)),
-                        $file->get_file_id() === $rotations['current']->get_file_id() ? 'primary' : 'secondary',
-                        esc_html__('Current', 'woocommerce')
-                    );
-						    unset($rotations['current']);
-						    ?>
-						<?php endif; ?>
-						<?php foreach ($rotations as $rotation) : ?>
-							<?php
-						    printf(
-						        '<li><a href="%1$s" class="button button-small button-%2$s">%3$s</a></li>',
-						        esc_url(add_query_arg('file_id', $rotation->get_file_id(), $rotation_url_base)),
-						        $file->get_file_id() === $rotation->get_file_id() ? 'primary' : 'secondary',
-						        absint($rotation->get_rotation())
-						    );
-						    ?>
-						<?php endforeach; ?>
+						<?php 
+            if (isset($rotations['current'])) {
+                ?>
+							<?php 
+                printf('<li><a href="%1$s" class="button button-small button-%2$s">%3$s</a></li>', esc_url(add_query_arg('file_id', $rotations['current']->get_file_id(), $rotation_url_base)), $file->get_file_id() === $rotations['current']->get_file_id() ? 'primary' : 'secondary', esc_html__('Current', 'woocommerce'));
+                unset($rotations['current']);
+                ?>
+						<?php 
+            }
+            ?>
+						<?php 
+            foreach ($rotations as $rotation) {
+                ?>
+							<?php 
+                printf('<li><a href="%1$s" class="button button-small button-%2$s">%3$s</a></li>', esc_url(add_query_arg('file_id', $rotation->get_file_id(), $rotation_url_base)), $file->get_file_id() === $rotation->get_file_id() ? 'primary' : 'secondary', absint($rotation->get_rotation()));
+                ?>
+						<?php 
+            }
+            ?>
 					</ul>
 				</nav>
-			<?php endif; ?>
-			<div class="wc-logs-single-file-actions">
-				<?php
-                // Download button.
-                printf(
-                    '<a href="%1$s" class="button button-secondary">%2$s</a>',
-                    esc_url($download_url),
-                    esc_html__('Download', 'woocommerce')
-                );
+			<?php 
+        }
         ?>
-				<?php
+			<div class="wc-logs-single-file-actions">
+				<?php 
+        // Download button.
+        printf('<a href="%1$s" class="button button-secondary">%2$s</a>', esc_url($download_url), esc_html__('Download', 'woocommerce'));
+        ?>
+				<?php 
         // Delete button.
-        printf(
-            '<a href="%1$s" class="button button-secondary" onclick="%2$s">%3$s</a>',
-            esc_url($delete_url),
-            esc_attr($delete_confirmation_js),
-            esc_html__('Delete permanently', 'woocommerce')
-        );
+        printf('<a href="%1$s" class="button button-secondary" onclick="%2$s">%3$s</a>', esc_url($delete_url), esc_attr($delete_confirmation_js), esc_html__('Delete permanently', 'woocommerce'));
         ?>
 			</div>
 		</header>
 		<section id="logs-entries" class="wc-logs-entries">
-			<?php while (! feof($stream)) : ?>
-				<?php
-        $line = fgets($stream);
-			    if (is_string($line)) {
-			        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- format_line does the escaping.
-			        echo $this->format_line($line, $line_number);
-			        ++$line_number;
-			    }
-			    ?>
-			<?php endwhile; ?>
+			<?php 
+        while (!feof($stream)) {
+            ?>
+				<?php 
+            $line = fgets($stream);
+            if (is_string($line)) {
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- format_line does the escaping.
+                echo $this->format_line($line, $line_number);
+                ++$line_number;
+            }
+            ?>
+			<?php 
+        }
+        ?>
 		</section>
 		<script>
 			// Clear the line number hash and highlight with a click.
@@ -391,28 +335,30 @@ class PageController
 				}
 			} );
 		</script>
-		<?php
+		<?php 
     }
-
     /**
      * Render the search results view.
      */
     private function render_search_results_view(): void
     {
-        $params     = $this->get_query_params([ 'view' ]);
+        $params = $this->get_query_params(['view']);
         $list_table = $this->get_list_table($params['view']);
-
         $list_table->prepare_items();
-
         ?>
 		<header id="logs-header" class="wc-logs-header">
-			<h2><?php esc_html_e('Search results', 'woocommerce'); ?></h2>
-			<?php $this->render_search_field(); ?>
+			<h2><?php 
+        esc_html_e('Search results', 'woocommerce');
+        ?></h2>
+			<?php 
+        $this->render_search_field();
+        ?>
 		</header>
-		<?php $list_table->display(); ?>
-		<?php
+		<?php 
+        $list_table->display();
+        ?>
+		<?php 
     }
-
     /**
      * Get the default values for URL query params for FileV2 views.
      *
@@ -420,16 +366,8 @@ class PageController
      */
     public function get_query_param_defaults(): array
     {
-        return [
-            'file_id' => '',
-            'order'   => $this->file_controller::DEFAULTS_GET_FILES['order'],
-            'orderby' => $this->file_controller::DEFAULTS_GET_FILES['orderby'],
-            'search'  => '',
-            'source'  => $this->file_controller::DEFAULTS_GET_FILES['source'],
-            'view'    => 'list_files',
-        ];
+        return ['file_id' => '', 'order' => $this->file_controller::DEFAULTS_GET_FILES['order'], 'orderby' => $this->file_controller::DEFAULTS_GET_FILES['orderby'], 'search' => '', 'source' => $this->file_controller::DEFAULTS_GET_FILES['source'], 'view' => 'list_files'];
     }
-
     /**
      * Get and validate URL query params for FileV2 views.
      *
@@ -438,54 +376,13 @@ class PageController
     public function get_query_params(array $param_keys = []): array
     {
         $defaults = $this->get_query_param_defaults();
-        $params   = filter_input_array(
-            INPUT_GET,
-            [
-                'file_id' => [
-                    'filter'  => FILTER_CALLBACK,
-                    'options' => fn ($file_id) => sanitize_file_name(wp_unslash($file_id)),
-                ],
-                'order'   => [
-                    'filter'  => FILTER_VALIDATE_REGEXP,
-                    'options' => [
-                        'regexp'  => '/^(asc|desc)$/i',
-                        'default' => $defaults['order'],
-                    ],
-                ],
-                'orderby' => [
-                    'filter'  => FILTER_VALIDATE_REGEXP,
-                    'options' => [
-                        'regexp'  => '/^(created|modified|source|size)$/',
-                        'default' => $defaults['orderby'],
-                    ],
-                ],
-                'search'  => [
-                    'filter'  => FILTER_CALLBACK,
-                    'options' => fn ($search) => esc_html(wp_unslash($search)),
-                ],
-                'source'  => [
-                    'filter'  => FILTER_CALLBACK,
-                    'options' => fn ($source) => File::sanitize_source(wp_unslash($source)),
-                ],
-                'view'    => [
-                    'filter'  => FILTER_VALIDATE_REGEXP,
-                    'options' => [
-                        'regexp'  => '/^(list_files|single_file|search_results|settings)$/',
-                        'default' => $defaults['view'],
-                    ],
-                ],
-            ],
-            false
-        );
-        $params   = wp_parse_args($params, $defaults);
-
+        $params = filter_input_array(INPUT_GET, ['file_id' => ['filter' => FILTER_CALLBACK, 'options' => fn($file_id) => sanitize_file_name(wp_unslash($file_id))], 'order' => ['filter' => FILTER_VALIDATE_REGEXP, 'options' => ['regexp' => '/^(asc|desc)$/i', 'default' => $defaults['order']]], 'orderby' => ['filter' => FILTER_VALIDATE_REGEXP, 'options' => ['regexp' => '/^(created|modified|source|size)$/', 'default' => $defaults['orderby']]], 'search' => ['filter' => FILTER_CALLBACK, 'options' => fn($search) => esc_html(wp_unslash($search))], 'source' => ['filter' => FILTER_CALLBACK, 'options' => fn($source) => File::sanitize_source(wp_unslash($source))], 'view' => ['filter' => FILTER_VALIDATE_REGEXP, 'options' => ['regexp' => '/^(list_files|single_file|search_results|settings)$/', 'default' => $defaults['view']]]], false);
+        $params = wp_parse_args($params, $defaults);
         if (count($param_keys) > 0) {
             return array_intersect_key($params, array_flip($param_keys));
         }
-
         return $params;
     }
-
     /**
      * Get and cache an instance of the list table.
      *
@@ -498,16 +395,13 @@ class PageController
         if ($this->list_table instanceof WP_List_Table) {
             return $this->list_table;
         }
-
         $this->list_table = match ($view) {
-            'list_files' => new FileListTable($this->file_controller, $this),
-            'search_results' => new SearchListTable($this->file_controller, $this),
+            'list_files' => new File_List_Table($this->file_controller, $this),
+            'search_results' => new Search_List_Table($this->file_controller, $this),
             default => $this->list_table,
         };
-
         return $this->list_table;
     }
-
     /**
      * Register screen options for the logging views.
      *
@@ -518,12 +412,11 @@ class PageController
      */
     public function setup_screen_options(string $view): void
     {
-        $handler    = $this->settings->get_default_handler();
+        $handler = $this->settings->get_default_handler();
         $list_table = null;
-
         switch ($handler) {
-            case LogHandlerFileV2::class:
-                if (in_array($view, [ 'list_files', 'search_results' ], true)) {
+            case Log_Handler_File_V2::class:
+                if (in_array($view, ['list_files', 'search_results'], true)) {
                     $list_table = $this->get_list_table($view);
                 }
                 break;
@@ -531,21 +424,12 @@ class PageController
                 $list_table = WC_Admin_Status::get_db_log_list_table();
                 break;
         }
-
         if ($list_table instanceof WP_List_Table) {
             // Ensure list table columns are initialized early enough to enable column hiding, if available.
             $list_table->prepare_column_headers();
-
-            add_screen_option(
-                'per_page',
-                [
-                    'default' => $list_table->get_per_page_default(),
-                    'option'  => $list_table::PER_PAGE_USER_OPTION_KEY,
-                ]
-            );
+            add_screen_option('per_page', ['default' => $list_table->get_per_page_default(), 'option' => $list_table::PER_PAGE_USER_OPTION_KEY]);
         }
     }
-
     /**
      * Process bulk actions initiated from the log file list table.
      *
@@ -557,30 +441,26 @@ class PageController
     public function handle_list_table_bulk_actions(string $view): void
     {
         // Bail if we're not using the file handler.
-        if (LogHandlerFileV2::class !== $this->settings->get_default_handler()) {
+        if (Log_Handler_File_V2::class !== $this->settings->get_default_handler()) {
             return;
         }
-
-        $params = $this->get_query_params([ 'file_id' ]);
-
+        $params = $this->get_query_params(['file_id']);
         // Bail if this is not the list table view.
         if ('list_files' !== $view) {
             return;
         }
-
         $action = $this->get_list_table($view)->current_action();
-
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : $this->get_logs_tab_url();
         if ($action) {
             check_admin_referer('bulk-log-files');
-            if (! current_user_can('manage_woocommerce')) {
+            if (!current_user_can('manage_woocommerce')) {
                 wp_die(esc_html__('You do not have permission to manage log files.', 'woocommerce'));
             }
-            $sendback = remove_query_arg([ 'deleted' ], wp_get_referer());
+            $sendback = remove_query_arg(['deleted'], wp_get_referer());
             // Multiple file_id[] params will be filtered separately, but assigned to $files as an array.
             $file_ids = $params['file_id'];
-            if (! is_array($file_ids) || count($file_ids) < 1) {
+            if (!is_array($file_ids) || count($file_ids) < 1) {
                 wp_safe_redirect($sendback);
                 exit;
             }
@@ -591,57 +471,48 @@ class PageController
                     } else {
                         $export_error = $this->file_controller->export_multiple_files($file_ids);
                     }
-
                     if (is_wp_error($export_error)) {
                         wp_die(wp_kses_post($export_error->get_error_message()));
                     }
                     break;
                 case 'delete':
-                    $deleted  = $this->file_controller->delete_files($file_ids);
+                    $deleted = $this->file_controller->delete_files($file_ids);
                     $sendback = add_query_arg('deleted', $deleted, $sendback);
-
                     /**
                      * If the delete action was triggered on the single file view, don't redirect back there
                      * since the file doesn't exist anymore.
                      */
-                    $sendback = remove_query_arg([ 'view', 'file_id' ], $sendback);
+                    $sendback = remove_query_arg(['view', 'file_id'], $sendback);
                     break;
             }
-            $sendback = remove_query_arg([ 'action', 'action2' ], $sendback);
+            $sendback = remove_query_arg(['action', 'action2'], $sendback);
             wp_safe_redirect($sendback);
             exit;
         }
-
-        if (! empty($_REQUEST['_wp_http_referer'])) {
-            $removable_args = [ '_wp_http_referer', '_wpnonce', 'action', 'action2', 'filter_action' ];
+        if (!empty($_REQUEST['_wp_http_referer'])) {
+            $removable_args = ['_wp_http_referer', '_wpnonce', 'action', 'action2', 'filter_action'];
             wp_safe_redirect(remove_query_arg($removable_args, $request_uri));
             exit;
         }
-
         $deleted = filter_input(INPUT_GET, 'deleted', FILTER_VALIDATE_INT);
-
         if (is_numeric($deleted)) {
-            add_action(
-                'admin_notices',
-                function () use ($deleted): void {
-                    ?>
+            add_action('admin_notices', function () use ($deleted): void {
+                ?>
 					<div class="notice notice-info is-dismissible">
 						<p>
-							<?php
-                            printf(
-                                // translators: %s is a number of files.
-                                esc_html(_n('%s log file deleted.', '%s log files deleted.', $deleted, 'woocommerce')),
-                                esc_html(number_format_i18n($deleted))
-                            );
-                    ?>
+							<?php 
+                printf(
+                    // translators: %s is a number of files.
+                    esc_html(_n('%s log file deleted.', '%s log files deleted.', $deleted, 'woocommerce')),
+                    esc_html(number_format_i18n($deleted))
+                );
+                ?>
 						</p>
 					</div>
-					<?php
-                }
-            );
+					<?php 
+            });
         }
     }
-
     /**
      * Format a log file line.
      *
@@ -650,91 +521,55 @@ class PageController
      */
     private function format_line(string $line, int $line_number): string
     {
-        $classes = [ 'line' ];
-
+        $classes = ['line'];
         $line = esc_html($line);
         if (empty($line)) {
             $line = '&nbsp;';
         }
-
-        $segments      = explode(' ', $line, 3);
+        $segments = explode(' ', $line, 3);
         $has_timestamp = false;
-        $has_level     = false;
-
+        $has_level = false;
         if (isset($segments[0]) && false !== strtotime($segments[0])) {
-            $classes[]     = 'log-entry';
-            $segments[0]   = sprintf(
-                '<span class="log-timestamp">%s</span>',
-                $segments[0]
-            );
+            $classes[] = 'log-entry';
+            $segments[0] = sprintf('<span class="log-timestamp">%s</span>', $segments[0]);
             $has_timestamp = true;
         }
-
         if (isset($segments[1]) && WC_Log_Levels::is_valid_level(strtolower($segments[1]))) {
-            $segments[1] = sprintf(
-                '<span class="%1$s">%2$s</span>',
-                esc_attr('log-level log-level--' . strtolower($segments[1])),
-                esc_html(WC_Log_Levels::get_level_label(strtolower($segments[1])))
-            );
-            $has_level   = true;
+            $segments[1] = sprintf('<span class="%1$s">%2$s</span>', esc_attr('log-level log-level--' . strtolower($segments[1])), esc_html(WC_Log_Levels::get_level_label(strtolower($segments[1]))));
+            $has_level = true;
         }
-
         if (isset($segments[2]) && $has_timestamp && $has_level) {
             $message_chunks = explode('CONTEXT:', $segments[2], 2);
             if (isset($message_chunks[1])) {
                 try {
                     $maybe_json = html_entity_decode(addslashes(trim($message_chunks[1])));
-
                     // Decode for validation.
                     $context = json_decode($maybe_json, false, 512, JSON_THROW_ON_ERROR);
-
                     // Re-encode to make it pretty.
                     $context = wp_json_encode($context, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-
-                    $message_chunks[1] = sprintf(
-                        '<details><summary>%1$s</summary>%2$s</details>',
-                        esc_html__('Additional context', 'woocommerce'),
-                        stripslashes($context)
-                    );
-
+                    $message_chunks[1] = sprintf('<details><summary>%1$s</summary>%2$s</details>', esc_html__('Additional context', 'woocommerce'), stripslashes($context));
                     $segments[2] = implode(' ', $message_chunks);
-                    $classes[]   = 'has-context';
-                } catch (\JsonException) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+                    $classes[] = 'has-context';
+                } catch (\Json_Exception) {
+                    // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
                     // It's not valid JSON so don't do anything with it.
                 }
             }
         }
-
         if (count($segments) > 1) {
             $line = implode(' ', $segments);
         }
-
         $classes = implode(' ', $classes);
-
-        return sprintf(
-            '<span id="L%1$d" class="%2$s">%3$s%4$s</span>',
-            absint($line_number),
-            esc_attr($classes),
-            sprintf(
-                '<a href="#L%1$d" class="line-anchor"></a>',
-                absint($line_number)
-            ),
-            sprintf(
-                '<span class="line-content">%s</span>',
-                wp_kses_post($line)
-            )
-        );
+        return sprintf('<span id="L%1$d" class="%2$s">%3$s%4$s</span>', absint($line_number), esc_attr($classes), sprintf('<a href="#L%1$d" class="line-anchor"></a>', absint($line_number)), sprintf('<span class="line-content">%s</span>', wp_kses_post($line)));
     }
-
     /**
      * Render a form for searching within log files.
      */
     private function render_search_field(): void
     {
-        $params     = $this->get_query_params([ 'date_end', 'date_filter', 'date_start', 'search', 'source' ]);
-        $defaults   = $this->get_query_param_defaults();
+        $params = $this->get_query_params(['date_end', 'date_filter', 'date_start', 'search', 'source']);
+        $defaults = $this->get_query_param_defaults();
         $file_count = $this->file_controller->get_files($params, true);
-
         if ($file_count > 0) {
             ?>
 			<form id="logs-search" class="wc-logs-search" method="get">
@@ -742,43 +577,62 @@ class PageController
 					<input type="hidden" name="page" value="wc-status" />
 					<input type="hidden" name="tab" value="logs" />
 					<input type="hidden" name="view" value="search_results" />
-					<?php foreach ($params as $key => $value) : ?>
-						<?php if ($value !== $defaults[ $key ]) : ?>
+					<?php 
+            foreach ($params as $key => $value) {
+                ?>
+						<?php 
+                if ($value !== $defaults[$key]) {
+                    ?>
 							<input
 								type="hidden"
-								name="<?php echo esc_attr($key); ?>"
-								value="<?php echo esc_attr($value); ?>"
+								name="<?php 
+                    echo esc_attr($key);
+                    ?>"
+								value="<?php 
+                    echo esc_attr($value);
+                    ?>"
 							/>
-						<?php endif; ?>
-					<?php endforeach; ?>
+						<?php 
+                }
+                ?>
+					<?php 
+            }
+            ?>
 					<label for="logs-search-field">
-						<?php esc_html_e('Search within these files', 'woocommerce'); ?>
+						<?php 
+            esc_html_e('Search within these files', 'woocommerce');
+            ?>
 						<input
 							id="logs-search-field"
 							class="wc-logs-search-field"
 							type="text"
 							name="search"
-							value="<?php echo esc_attr($params['search']); ?>"
+							value="<?php 
+            echo esc_attr($params['search']);
+            ?>"
 						/>
 					</label>
-					<?php submit_button(__('Search', 'woocommerce'), 'secondary', null, false); ?>
+					<?php 
+            submit_button(__('Search', 'woocommerce'), 'secondary', null, false);
+            ?>
 				</fieldset>
-				<?php if ($file_count >= $this->file_controller::SEARCH_MAX_FILES) : ?>
+				<?php 
+            if ($file_count >= $this->file_controller::SEARCH_MAX_FILES) {
+                ?>
 					<div class="wc-logs-search-notice">
-						<?php
-                        printf(
-                            // translators: %s is a number.
-                            esc_html__(
-                                '⚠️ Only %s files can be searched at one time. Try filtering the file list before searching.',
-                                'woocommerce'
-                            ),
-                            esc_html(number_format_i18n($this->file_controller::SEARCH_MAX_FILES))
-                        );
-				    ?>
+						<?php 
+                printf(
+                    // translators: %s is a number.
+                    esc_html__('⚠️ Only %s files can be searched at one time. Try filtering the file list before searching.', 'woocommerce'),
+                    esc_html(number_format_i18n($this->file_controller::SEARCH_MAX_FILES))
+                );
+                ?>
 					</div>
-				<?php endif; ?>
+				<?php 
+            }
+            ?>
 			</form>
-			<?php
+			<?php 
         }
     }
 }

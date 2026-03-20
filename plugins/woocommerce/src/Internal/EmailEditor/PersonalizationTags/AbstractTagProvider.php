@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Email_Editor\Personalization_Tags;
 
-namespace Automattic\WooCommerce\Internal\EmailEditor\PersonalizationTags;
-
-use Automattic\WooCommerce\EmailEditor\Engine\PersonalizationTags\Personalization_Tags_Registry;
-
+use Automattic\Woo_Commerce\Email_Editor\Engine\Personalization_Tags\Personalization_Tags_Registry;
 /**
  * Abstract class for personalization tag providers.
  *
  * @internal
  */
-abstract class AbstractTagProvider
+abstract class Abstract_Tag_Provider
 {
     /**
      * Register tags with the registry.

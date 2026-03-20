@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * AbstractDynamicBlock class.
  */
-abstract class AbstractDynamicBlock extends AbstractBlock
+abstract class Abstract_Dynamic_Block extends Abstract_Block
 {
     /**
      * Get the frontend script handle for this block type.
@@ -18,7 +17,6 @@ abstract class AbstractDynamicBlock extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get block attributes.
      *
@@ -28,7 +26,6 @@ abstract class AbstractDynamicBlock extends AbstractBlock
     {
         return [];
     }
-
     /**
      * Get the schema for the alignment property.
      *
@@ -36,12 +33,8 @@ abstract class AbstractDynamicBlock extends AbstractBlock
      */
     protected function get_schema_align()
     {
-        return [
-            'type' => 'string',
-            'enum' => [ 'left', 'center', 'right', 'wide', 'full' ],
-        ];
+        return ['type' => 'string', 'enum' => ['left', 'center', 'right', 'wide', 'full']];
     }
-
     /**
      * Get the schema for a list of IDs.
      *
@@ -49,15 +42,8 @@ abstract class AbstractDynamicBlock extends AbstractBlock
      */
     protected function get_schema_list_ids()
     {
-        return [
-            'type'    => 'array',
-            'items'   => [
-                'type' => 'number',
-            ],
-            'default' => [],
-        ];
+        return ['type' => 'array', 'items' => ['type' => 'number'], 'default' => []];
     }
-
     /**
      * Get the schema for a boolean value.
      *
@@ -66,12 +52,8 @@ abstract class AbstractDynamicBlock extends AbstractBlock
      */
     protected function get_schema_boolean($default = true)
     {
-        return [
-            'type'    => 'boolean',
-            'default' => $default,
-        ];
+        return ['type' => 'boolean', 'default' => $default];
     }
-
     /**
      * Get the schema for a numeric value.
      *
@@ -80,12 +62,8 @@ abstract class AbstractDynamicBlock extends AbstractBlock
      */
     protected function get_schema_number($default)
     {
-        return [
-            'type'    => 'number',
-            'default' => $default,
-        ];
+        return ['type' => 'number', 'default' => $default];
     }
-
     /**
      * Get the schema for a string value.
      *
@@ -94,9 +72,6 @@ abstract class AbstractDynamicBlock extends AbstractBlock
      */
     protected function get_schema_string($default = '')
     {
-        return [
-            'type'    => 'string',
-            'default' => $default,
-        ];
+        return ['type' => 'string', 'default' => $default];
     }
 }

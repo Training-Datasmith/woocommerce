@@ -1,21 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
 
-namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
-
-use Automattic\WooCommerce\Internal\Logging\SafeGlobalFunctionProxy;
+use Automattic\Woo_Commerce\Internal\Logging\Safe_Global_Function_Proxy;
 use Throwable;
 use WC_Payment_Gateway;
-
 defined('ABSPATH') || exit;
-
 /**
  * Paytrail payment gateway provider class.
  *
  * This class handles all the custom logic for the Paytrail payment gateway provider.
  */
-class Paytrail extends PaymentGateway
+class Paytrail extends Payment_Gateway
 {
     /**
      * Try to determine if the payment gateway is in test mode.
@@ -33,19 +30,10 @@ class Paytrail extends PaymentGateway
             return wc_string_to_bool($payment_gateway->get_option('enable_test_mode', 'no'));
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway is in test mode: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway is in test mode: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         return parent::is_in_test_mode($payment_gateway);
     }
-
     /**
      * Check if the payment gateway has a payments processor account connected.
      *
@@ -61,24 +49,13 @@ class Paytrail extends PaymentGateway
             if ($this->is_in_test_mode_onboarding($payment_gateway)) {
                 return true;
             }
-
-            return ! empty($payment_gateway->get_option('merchant_id')) &&
-                ! empty($payment_gateway->get_option('secret_key'));
+            return !empty($payment_gateway->get_option('merchant_id')) && !empty($payment_gateway->get_option('secret_key'));
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway has an account connected: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway has an account connected: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         return parent::is_account_connected($payment_gateway);
     }
-
     /**
      * Try to determine if the payment gateway is in test mode onboarding (aka sandbox or test-drive).
      *

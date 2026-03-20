@@ -1,23 +1,21 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * PriceFilter class.
  */
-class PriceFilter extends AbstractBlock
+class Price_Filter extends Abstract_Block
 {
     /**
      * Block name.
      *
      * @var string
      */
-    protected $block_name     = 'price-filter';
+    protected $block_name = 'price-filter';
     public const MIN_PRICE_QUERY_VAR = 'min_price';
     public const MAX_PRICE_QUERY_VAR = 'max_price';
-
     /**
      * Extra data passed through from server to client for block.
      *
@@ -29,18 +27,15 @@ class PriceFilter extends AbstractBlock
     {
         parent::enqueue_data($attributes);
         $this->asset_data_registry->add('attributes', array_values(wc_get_attribute_taxonomies()));
-
         // Enqueue any `queryState` that the UI will need to be aware of
         // (Ex: the category id if we're on a category page, the tag id if we're on a tag page/etc).
         $query_state = [];
-
         if (is_product_category()) {
             $query_state['category'] = get_queried_object_id();
         }
         if (is_product_tag()) {
             $query_state['tag'] = get_queried_object()->term_id;
         }
-
         $this->asset_data_registry->add('queryState', $query_state);
     }
 }

@@ -1,22 +1,20 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Transient Notices
  */
-
-namespace Automattic\WooCommerce\Admin\Features;
+namespace Automattic\Woo_Commerce\Admin\Features;
 
 /**
  * Shows print shipping label banner on edit order page.
  */
-class TransientNotices
+class Transient_Notices
 {
     /**
      * Option name for the queue.
      */
     public const QUEUE_OPTION = 'woocommerce_admin_transient_notices_queue';
-
     /**
      * Constructor
      */
@@ -24,7 +22,6 @@ class TransientNotices
     {
         add_filter('woocommerce_admin_preload_options', $this->preload_options(...));
     }
-
     /**
      * Get all notices in the queue.
      *
@@ -34,7 +31,6 @@ class TransientNotices
     {
         return get_option(self::QUEUE_OPTION, []);
     }
-
     /**
      * Get all notices in the queue by a given user ID.
      *
@@ -43,15 +39,8 @@ class TransientNotices
     public static function get_queue_by_user($user_id): array
     {
         $notices = self::get_queue();
-
-        return array_filter(
-            $notices,
-            fn (array $notice) => ! isset($notice['user_id']) ||
-                    null === $notice['user_id'] ||
-                    $user_id === $notice['user_id']
-        );
+        return array_filter($notices, fn(array $notice) => !isset($notice['user_id']) || null === $notice['user_id'] || $user_id === $notice['user_id']);
     }
-
     /**
      * Get a notice by ID.
      *
@@ -61,10 +50,8 @@ class TransientNotices
     public static function get($notice_id)
     {
         $queue = self::get_queue();
-
-        return $queue[ $notice_id ] ?? null;
+        return $queue[$notice_id] ?? null;
     }
-
     /**
      * Add a notice to be shown.
      *
@@ -81,19 +68,12 @@ class TransientNotices
     public static function add(array $notice): void
     {
         $queue = self::get_queue();
-
-        $defaults               = [
-            'user_id' => null,
-            'status'  => 'info',
-            'options' => [],
-        ];
-        $notice_data            = array_merge($defaults, $notice);
+        $defaults = ['user_id' => null, 'status' => 'info', 'options' => []];
+        $notice_data = array_merge($defaults, $notice);
         $notice_data['options'] = (object) $notice_data['options'];
-
-        $queue[ $notice['id'] ] = $notice_data;
+        $queue[$notice['id']] = $notice_data;
         update_option(self::QUEUE_OPTION, $queue);
     }
-
     /**
      * Remove a notice by ID.
      *
@@ -102,10 +82,9 @@ class TransientNotices
     public static function remove($notice_id): void
     {
         $queue = self::get_queue();
-        unset($queue[ $notice_id ]);
+        unset($queue[$notice_id]);
         update_option(self::QUEUE_OPTION, $queue);
     }
-
     /**
      * Preload options to prime state of the application.
      *
@@ -115,8 +94,6 @@ class TransientNotices
     public function preload_options($options)
     {
         $options[] = self::QUEUE_OPTION;
-
         return $options;
     }
-
 }

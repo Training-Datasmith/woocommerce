@@ -8,15 +8,11 @@
  * @package WooCommerce\Classes
  * @version 9.9.0
  */
-
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments;
 
 use WC_Meta_Data;
-
 defined('ABSPATH') || exit;
-
 /**
  * WC Order Fulfillment Class
  *
@@ -32,28 +28,25 @@ class Fulfillment extends \WC_Data
     public function __construct($data = '')
     {
         parent::__construct($data);
-
         if ($data instanceof Fulfillment) {
             $this->set_id(absint($data->get_id()));
         } elseif (is_numeric($data)) {
             $this->set_id(absint($data));
         } elseif (is_array($data) && isset($data['id'])) {
             $this->set_id(absint($data['id']));
-        } elseif (is_string($data) && ! empty($data)) {
+        } elseif (is_string($data) && !empty($data)) {
             $this->set_id(absint($data));
         } elseif (is_object($data) && isset($data->id)) {
             $this->set_id(absint($data->id));
         } else {
             $this->set_object_read(true);
         }
-
         // Load the items array.
         $this->data_store = \WC_Data_Store::load('order-fulfillment');
         if ($this->get_id() > 0) {
             $this->data_store->read($this);
         }
     }
-
     /**
      * Get the fulfillment ID.
      *
@@ -63,7 +56,6 @@ class Fulfillment extends \WC_Data
     {
         return $this->data['id'] ?? 0;
     }
-
     /**
      * Set the fulfillment ID.
      *
@@ -74,7 +66,6 @@ class Fulfillment extends \WC_Data
         $this->data['id'] = is_numeric($id) ? absint($id) : 0;
         parent::set_id($this->data['id']);
     }
-
     /**
      * Get the entity type.
      *
@@ -84,7 +75,6 @@ class Fulfillment extends \WC_Data
     {
         return $this->data['entity_type'] ?? null;
     }
-
     /**
      * Set the entity type.
      *
@@ -94,7 +84,6 @@ class Fulfillment extends \WC_Data
     {
         $this->data['entity_type'] = $entity_type;
     }
-
     /**
      * Get the entity ID.
      *
@@ -104,7 +93,6 @@ class Fulfillment extends \WC_Data
     {
         return $this->data['entity_id'] ?? null;
     }
-
     /**
      * Set the entity ID.
      *
@@ -114,7 +102,6 @@ class Fulfillment extends \WC_Data
     {
         $this->data['entity_id'] = $entity_id;
     }
-
     /**
      * Set fulfillment status.
      *
@@ -125,17 +112,16 @@ class Fulfillment extends \WC_Data
      */
     public function set_status(?string $status): void
     {
-        $statuses = FulfillmentUtils::get_fulfillment_statuses();
-        if (! isset($statuses[ $status ])) {
+        $statuses = Fulfillment_Utils::get_fulfillment_statuses();
+        if (!isset($statuses[$status])) {
             // Change the status to an existing one if the provided status is not valid.
             $status = $this->get_is_fulfilled() ? 'fulfilled' : 'unfulfilled';
         }
         // Set the fulfillment status.
-        $this->set_is_fulfilled($statuses[ $status ]['is_fulfilled'] ?? false);
+        $this->set_is_fulfilled($statuses[$status]['is_fulfilled'] ?? false);
         // Set the status in the data array.
         $this->data['status'] = $status;
     }
-
     /**
      * Get the fulfillment status.
      *
@@ -145,7 +131,6 @@ class Fulfillment extends \WC_Data
     {
         return $this->data['status'] ?? null;
     }
-
     /**
      * Set if the fulfillment is fulfilled. This is an internal method which is bound to the fulfillment status.
      *
@@ -155,7 +140,6 @@ class Fulfillment extends \WC_Data
     {
         $this->data['is_fulfilled'] = $is_fulfilled;
     }
-
     /**
      * Get if the fulfillment is fulfilled.
      *
@@ -165,7 +149,6 @@ class Fulfillment extends \WC_Data
     {
         return $this->data['is_fulfilled'] ?? false;
     }
-
     /**
      * Check if the fulfillment is locked.
      *
@@ -175,7 +158,6 @@ class Fulfillment extends \WC_Data
     {
         return boolval($this->get_meta('_is_locked'));
     }
-
     /**
      * Get the lock message.
      *
@@ -185,7 +167,6 @@ class Fulfillment extends \WC_Data
     {
         return $this->get_meta('_lock_message') ?? '';
     }
-
     /**
      * Set the lock status and message.
      *
@@ -202,7 +183,6 @@ class Fulfillment extends \WC_Data
             $this->delete_meta_data('_lock_message');
         }
     }
-
     /**
      * Get the date updated.
      *
@@ -212,7 +192,6 @@ class Fulfillment extends \WC_Data
     {
         return $this->data['date_updated'] ?? null;
     }
-
     /**
      * Set the date updated.
      *
@@ -222,7 +201,6 @@ class Fulfillment extends \WC_Data
     {
         $this->data['date_updated'] = $date_updated;
     }
-
     /**
      * Get the date the fulfillment was fulfilled.
      */
@@ -230,7 +208,6 @@ class Fulfillment extends \WC_Data
     {
         return $this->meta_exists('_date_fulfilled') ? $this->get_meta('_date_fulfilled', true) : null;
     }
-
     /**
      * Set the date the fulfillment was fulfilled.
      *
@@ -240,7 +217,6 @@ class Fulfillment extends \WC_Data
     {
         $this->add_meta_data('_date_fulfilled', $date_fulfilled, true);
     }
-
     /**
      * Get the date deleted.
      *
@@ -250,7 +226,6 @@ class Fulfillment extends \WC_Data
     {
         return $this->data['date_deleted'] ?? null;
     }
-
     /**
      * Set the date deleted.
      *
@@ -260,7 +235,6 @@ class Fulfillment extends \WC_Data
     {
         $this->data['date_deleted'] = $date_deleted;
     }
-
     /**
      * Get the fulfillment items.
      *
@@ -271,7 +245,6 @@ class Fulfillment extends \WC_Data
         $items = $this->get_meta('_items');
         return $items ?: [];
     }
-
     /**
      * Set the fulfillment items.
      *
@@ -281,7 +254,6 @@ class Fulfillment extends \WC_Data
     {
         $this->update_meta_data('_items', array_values($items));
     }
-
     /**
      * Get the order associated with this fulfillment.
      *
@@ -293,35 +265,30 @@ class Fulfillment extends \WC_Data
     public function get_order(): ?\WC_Order
     {
         $entity_type = $this->get_entity_type();
-        $entity_id   = $this->get_entity_id();
-
-        if (! $entity_type || ! $entity_id) {
+        $entity_id = $this->get_entity_id();
+        if (!$entity_type || !$entity_id) {
             return null;
         }
-
         if (\WC_Order::class === $entity_type) {
             $order = wc_get_order((int) $entity_id);
             if ($order instanceof \WC_Order) {
                 return $order;
             }
         }
-
         return null;
     }
-
     /**
      * Returns all data for this object as an associative array.
      */
     public function get_raw_data(): array
     {
-        return array_merge([ 'id' => $this->get_id() ], $this->data, [ 'meta_data' => $this->get_raw_meta_data() ]);
+        return array_merge(['id' => $this->get_id()], $this->data, ['meta_data' => $this->get_raw_meta_data()]);
     }
-
     /**
      * Returns the meta data as array for this object.
      */
     public function get_raw_meta_data(): array
     {
-        return array_map(fn (WC_Meta_Data $meta): array => (array) $meta->get_data(), $this->get_meta_data());
+        return array_map(fn(WC_Meta_Data $meta): array => (array) $meta->get_data(), $this->get_meta_data());
     }
 }

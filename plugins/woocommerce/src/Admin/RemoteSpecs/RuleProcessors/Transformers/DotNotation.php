@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors\Transformers;
 
 use InvalidArgumentException;
 use stdClass;
-
 /**
  * Find an array value by dot notation.
  *
  * @package Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers
  */
-class DotNotation implements TransformerInterface
+class Dot_Notation implements Transformer_Interface
 {
     /**
      * Find given path from the given value.
@@ -31,10 +29,8 @@ class DotNotation implements TransformerInterface
             // if the value is an object, convert it to an array.
             $value = json_decode(wp_json_encode($value), true);
         }
-
         return $this->get($value, $arguments->path, $default_value);
     }
-
     /**
      * Find the given $path in $array_to_search by dot notation.
      *
@@ -46,25 +42,20 @@ class DotNotation implements TransformerInterface
      */
     public function get($array_to_search, $path, $default_value = null)
     {
-        if (! is_array($array_to_search)) {
+        if (!is_array($array_to_search)) {
             return $default_value;
         }
-
-        if (isset($array_to_search[ $path ])) {
-            return $array_to_search[ $path ];
+        if (isset($array_to_search[$path])) {
+            return $array_to_search[$path];
         }
-
         foreach (explode('.', $path) as $segment) {
-            if (! is_array($array_to_search) || ! array_key_exists($segment, $array_to_search)) {
+            if (!is_array($array_to_search) || !array_key_exists($segment, $array_to_search)) {
                 return $default_value;
             }
-
-            $array_to_search = $array_to_search[ $segment ];
+            $array_to_search = $array_to_search[$segment];
         }
-
         return $array_to_search;
     }
-
     /**
      * Validate Transformer arguments.
      *
@@ -72,10 +63,9 @@ class DotNotation implements TransformerInterface
      */
     public function validate(?stdClass $arguments = null): bool
     {
-        if (! isset($arguments->path)) {
+        if (!isset($arguments->path)) {
             return false;
         }
-
         return true;
     }
 }

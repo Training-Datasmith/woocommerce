@@ -1,280 +1,206 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments\Providers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments\Providers;
 
 /**
  * DPD Shipping Provider class.
  *
  * Provides DPD tracking number validation, supported countries, and tracking URL generation.
  */
-class DPDShippingProvider extends AbstractShippingProvider
+class Dpd_Shipping_Provider extends Abstract_Shipping_Provider
 {
     /**
      * DPD tracking number patterns by country with service differentiation.
      *
      * @var array<string, array{patterns: array<int, string>, confidence: int, services?: array<string, int>}>
      */
-    private const TRACKING_PATTERNS = [
-        'DE' => [ // Germany.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-                '/^02\d{12}$/', // DPD Classic.
-                '/^05\d{12}$/', // DPD Express.
-                '/^09\d{12}$/', // DPD Predict.
-                '/^[A-Z]{2}\d{9}[A-Z]{2}$/', // S10/UPU international.
-                '/^\d{24}$/', // 24-digit fallback.
-            ],
-            'confidence' => 80,
-            'services'   => [
-                'classic' => 80,
-                'express' => 85,
-                'predict' => 85,
-                's10'     => 90,
-            ],
+    private const TRACKING_PATTERNS = ['DE' => [
+        // Germany.
+        'patterns' => [
+            '/^\d{14}$/',
+            '/^\d{12}$/',
+            '/^02\d{12}$/',
+            // DPD Classic.
+            '/^05\d{12}$/',
+            // DPD Express.
+            '/^09\d{12}$/',
+            // DPD Predict.
+            '/^[A-Z]{2}\d{9}[A-Z]{2}$/',
+            // S10/UPU international.
+            '/^\d{24}$/',
         ],
-        'GB' => [ // United Kingdom.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{9}GB$/',
-                '/^03\d{12}$/', // DPD Next Day.
-                '/^06\d{12}$/', // DPD Express.
-                '/^1[56]\d{12}$/', // Predict/Return.
-                '/^[A-Z]{2}\d{9}[A-Z]{2}$/', // S10/UPU international.
-                '/^\d{24}$/', // 24-digit fallback.
-            ],
-            'confidence' => 90,
-            'services'   => [
-                'next_day' => 88,
-                'express'  => 88,
-                's10'      => 90,
-            ],
+        'confidence' => 80,
+        'services' => ['classic' => 80, 'express' => 85, 'predict' => 85, 's10' => 90],
+    ], 'GB' => [
+        // United Kingdom.
+        'patterns' => [
+            '/^\d{14}$/',
+            '/^[A-Z]{2}\d{9}GB$/',
+            '/^03\d{12}$/',
+            // DPD Next Day.
+            '/^06\d{12}$/',
+            // DPD Express.
+            '/^1[56]\d{12}$/',
+            // Predict/Return.
+            '/^[A-Z]{2}\d{9}[A-Z]{2}$/',
+            // S10/UPU international.
+            '/^\d{24}$/',
         ],
-        'FR' => [ // France.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-                '/^02\d{12}$/', // DPD Relais.
-                '/^04\d{12}$/', // DPD Predict.
-                '/^[A-Z]{2}\d{9}[A-Z]{2}$/', // S10/UPU international.
-                '/^\d{24}$/', // 24-digit fallback.
-            ],
-            'confidence' => 78,
-            'services'   => [
-                'relais'  => 82,
-                'predict' => 82,
-                's10'     => 90,
-            ],
+        'confidence' => 90,
+        'services' => ['next_day' => 88, 'express' => 88, 's10' => 90],
+    ], 'FR' => [
+        // France.
+        'patterns' => [
+            '/^\d{14}$/',
+            '/^\d{12}$/',
+            '/^02\d{12}$/',
+            // DPD Relais.
+            '/^04\d{12}$/',
+            // DPD Predict.
+            '/^[A-Z]{2}\d{9}[A-Z]{2}$/',
+            // S10/UPU international.
+            '/^\d{24}$/',
         ],
-        'NL' => [ // Netherlands.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-                '/^03\d{12}$/', // DPD Classic.
-                '/^07\d{12}$/', // DPD Express.
-                '/^[A-Z]{2}\d{9}[A-Z]{2}$/', // S10/UPU international.
-                '/^\d{24}$/', // 24-digit fallback.
-            ],
-            'confidence' => 78,
-            'services'   => [
-                'classic' => 82,
-                'express' => 85,
-                's10'     => 90,
-            ],
+        'confidence' => 78,
+        'services' => ['relais' => 82, 'predict' => 82, 's10' => 90],
+    ], 'NL' => [
+        // Netherlands.
+        'patterns' => [
+            '/^\d{14}$/',
+            '/^\d{12}$/',
+            '/^03\d{12}$/',
+            // DPD Classic.
+            '/^07\d{12}$/',
+            // DPD Express.
+            '/^[A-Z]{2}\d{9}[A-Z]{2}$/',
+            // S10/UPU international.
+            '/^\d{24}$/',
         ],
-        'BE' => [ // Belgium.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-                '/^03\d{12}$/', // DPD Classic.
-                '/^08\d{12}$/', // DPD Express.
-                '/^[A-Z]{2}\d{9}[A-Z]{2}$/', // S10/UPU international.
-                '/^\d{24}$/', // 24-digit fallback.
-            ],
-            'confidence' => 78,
-            'services'   => [
-                'classic' => 82,
-                'express' => 85,
-                's10'     => 90,
-            ],
+        'confidence' => 78,
+        'services' => ['classic' => 82, 'express' => 85, 's10' => 90],
+    ], 'BE' => [
+        // Belgium.
+        'patterns' => [
+            '/^\d{14}$/',
+            '/^\d{12}$/',
+            '/^03\d{12}$/',
+            // DPD Classic.
+            '/^08\d{12}$/',
+            // DPD Express.
+            '/^[A-Z]{2}\d{9}[A-Z]{2}$/',
+            // S10/UPU international.
+            '/^\d{24}$/',
         ],
-        'PL' => [ // Poland.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{10}$/',
-                '/^[A-Z]{2}\d{9}[A-Z]{2}$/', // S10/UPU international.
-                '/^\d{24}$/', // 24-digit fallback.
-            ],
-            'confidence' => 90,
+        'confidence' => 78,
+        'services' => ['classic' => 82, 'express' => 85, 's10' => 90],
+    ], 'PL' => [
+        // Poland.
+        'patterns' => [
+            '/^\d{14}$/',
+            '/^[A-Z]{2}\d{10}$/',
+            '/^[A-Z]{2}\d{9}[A-Z]{2}$/',
+            // S10/UPU international.
+            '/^\d{24}$/',
         ],
-        'IE' => [ // Ireland.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{9}IE$/',
-            ],
-            'confidence' => 85,
-        ],
-        'AT' => [ // Austria.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-            ],
-            'confidence' => 75, // Reduced: generic patterns.
-        ],
-        'CH' => [ // Switzerland.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{9}CH$/',
-            ],
-            'confidence' => 85,
-        ],
-        'ES' => [ // Spain.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{10}$/',
-            ],
-            'confidence' => 85,
-        ],
-        'IT' => [ // Italy.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{10}$/',
-            ],
-            'confidence' => 85,
-        ],
-        'LU' => [ // Luxembourg.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-            ],
-            'confidence' => 75, // Reduced: generic patterns.
-        ],
-        'CZ' => [ // Czech Republic.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{10}$/',
-            ],
-            'confidence' => 90,
-        ],
-        'SK' => [ // Slovakia.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{10}$/',
-            ],
-            'confidence' => 90,
-        ],
-        'HU' => [ // Hungary.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{10}$/',
-            ],
-            'confidence' => 90,
-        ],
-        'SI' => [ // Slovenia.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{10}$/',
-            ],
-            'confidence' => 80,
-        ],
-        'HR' => [ // Croatia.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{10}$/',
-            ],
-            'confidence' => 80,
-        ],
-        'RO' => [ // Romania.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{10}$/',
-            ],
-            'confidence' => 75,
-        ],
-        'BG' => [ // Bulgaria.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{10}$/',
-            ],
-            'confidence' => 70,
-        ],
-        'LT' => [ // Lithuania.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-            ],
-            'confidence' => 70, // Reduced: generic patterns, limited DPD presence.
-        ],
-        'LV' => [ // Latvia.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-            ],
-            'confidence' => 70, // Reduced: generic patterns, limited DPD presence.
-        ],
-        'EE' => [ // Estonia.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-            ],
-            'confidence' => 70, // Reduced: generic patterns, limited DPD presence.
-        ],
-        'FI' => [ // Finland.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-            ],
-            'confidence' => 65, // Reduced: partnership-based, not direct DPD.
-        ],
-        'DK' => [ // Denmark.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-            ],
-            'confidence' => 65, // Reduced: partnership-based, not direct DPD.
-        ],
-        'SE' => [ // Sweden.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-            ],
-            'confidence' => 65, // Reduced: partnership-based, not direct DPD.
-        ],
-        'NO' => [ // Norway.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^\d{12}$/',
-            ],
-            'confidence' => 60, // Reduced: limited DPD presence.
-        ],
-        'GR' => [ // Greece.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{10}$/',
-            ],
-            'confidence' => 85,
-        ],
-        'PT' => [ // Portugal.
-            'patterns'   => [
-                '/^\d{14}$/',
-                '/^[A-Z]{2}\d{10}$/',
-            ],
-            'confidence' => 85,
-        ],
-    ];
-
+        'confidence' => 90,
+    ], 'IE' => [
+        // Ireland.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{9}IE$/'],
+        'confidence' => 85,
+    ], 'AT' => [
+        // Austria.
+        'patterns' => ['/^\d{14}$/', '/^\d{12}$/'],
+        'confidence' => 75,
+    ], 'CH' => [
+        // Switzerland.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{9}CH$/'],
+        'confidence' => 85,
+    ], 'ES' => [
+        // Spain.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{10}$/'],
+        'confidence' => 85,
+    ], 'IT' => [
+        // Italy.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{10}$/'],
+        'confidence' => 85,
+    ], 'LU' => [
+        // Luxembourg.
+        'patterns' => ['/^\d{14}$/', '/^\d{12}$/'],
+        'confidence' => 75,
+    ], 'CZ' => [
+        // Czech Republic.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{10}$/'],
+        'confidence' => 90,
+    ], 'SK' => [
+        // Slovakia.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{10}$/'],
+        'confidence' => 90,
+    ], 'HU' => [
+        // Hungary.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{10}$/'],
+        'confidence' => 90,
+    ], 'SI' => [
+        // Slovenia.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{10}$/'],
+        'confidence' => 80,
+    ], 'HR' => [
+        // Croatia.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{10}$/'],
+        'confidence' => 80,
+    ], 'RO' => [
+        // Romania.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{10}$/'],
+        'confidence' => 75,
+    ], 'BG' => [
+        // Bulgaria.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{10}$/'],
+        'confidence' => 70,
+    ], 'LT' => [
+        // Lithuania.
+        'patterns' => ['/^\d{14}$/', '/^\d{12}$/'],
+        'confidence' => 70,
+    ], 'LV' => [
+        // Latvia.
+        'patterns' => ['/^\d{14}$/', '/^\d{12}$/'],
+        'confidence' => 70,
+    ], 'EE' => [
+        // Estonia.
+        'patterns' => ['/^\d{14}$/', '/^\d{12}$/'],
+        'confidence' => 70,
+    ], 'FI' => [
+        // Finland.
+        'patterns' => ['/^\d{14}$/', '/^\d{12}$/'],
+        'confidence' => 65,
+    ], 'DK' => [
+        // Denmark.
+        'patterns' => ['/^\d{14}$/', '/^\d{12}$/'],
+        'confidence' => 65,
+    ], 'SE' => [
+        // Sweden.
+        'patterns' => ['/^\d{14}$/', '/^\d{12}$/'],
+        'confidence' => 65,
+    ], 'NO' => [
+        // Norway.
+        'patterns' => ['/^\d{14}$/', '/^\d{12}$/'],
+        'confidence' => 60,
+    ], 'GR' => [
+        // Greece.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{10}$/'],
+        'confidence' => 85,
+    ], 'PT' => [
+        // Portugal.
+        'patterns' => ['/^\d{14}$/', '/^[A-Z]{2}\d{10}$/'],
+        'confidence' => 85,
+    ]];
     /**
      * International shipment pattern (28 digits)
      */
     private const INTERNATIONAL_PATTERN = '/^\d{28}$/';
-
     /**
      * S10/UPU international pattern.
      */
     private const S10_PATTERN = '/^[A-Z]{2}\d{9}[A-Z]{2}$/';
-
     /**
      * Get the unique key for this shipping provider.
      *
@@ -284,7 +210,6 @@ class DPDShippingProvider extends AbstractShippingProvider
     {
         return 'dpd';
     }
-
     /**
      * Get the name of this shipping provider.
      *
@@ -294,7 +219,6 @@ class DPDShippingProvider extends AbstractShippingProvider
     {
         return 'DPD';
     }
-
     /**
      * Get the icon URL for this shipping provider.
      *
@@ -304,7 +228,6 @@ class DPDShippingProvider extends AbstractShippingProvider
     {
         return esc_url(WC()->plugin_url()) . '/assets/images/shipping_providers/dpd.png';
     }
-
     /**
      * Get the description of this shipping provider.
      *
@@ -314,7 +237,6 @@ class DPDShippingProvider extends AbstractShippingProvider
     {
         return array_keys(self::TRACKING_PATTERNS);
     }
-
     /**
      * Get the countries this shipping provider can ship to.
      *
@@ -326,7 +248,6 @@ class DPDShippingProvider extends AbstractShippingProvider
     {
         return $this->get_shipping_from_countries();
     }
-
     /**
      * Get the tracking URL for a given tracking number.
      *
@@ -337,7 +258,6 @@ class DPDShippingProvider extends AbstractShippingProvider
     {
         return 'https://www.dpd.com/tracking/' . rawurlencode($tracking_number);
     }
-
     /**
      * Validate tracking number against country-specific patterns and determine service type.
      *
@@ -347,14 +267,12 @@ class DPDShippingProvider extends AbstractShippingProvider
      */
     private function validate_country_pattern(string $tracking_number, string $country_code): false|array
     {
-        if (! isset(self::TRACKING_PATTERNS[ $country_code ])) {
+        if (!isset(self::TRACKING_PATTERNS[$country_code])) {
             return false;
         }
-
-        $country_data     = self::TRACKING_PATTERNS[ $country_code ];
+        $country_data = self::TRACKING_PATTERNS[$country_code];
         $detected_service = null;
         $confidence_boost = 0;
-
         // Check service-specific patterns first.
         if (isset($country_data['services'])) {
             if (preg_match('/^02\d{12}$/', $tracking_number)) {
@@ -377,21 +295,14 @@ class DPDShippingProvider extends AbstractShippingProvider
                 $confidence_boost = $country_data['services']['s10'] ?? 90;
             }
         }
-
         // Check all patterns.
         foreach ($country_data['patterns'] as $pattern) {
             if (preg_match($pattern, $tracking_number)) {
-                return [
-                    'valid'            => true,
-                    'service'          => $detected_service,
-                    'confidence_boost' => $confidence_boost,
-                ];
+                return ['valid' => true, 'service' => $detected_service, 'confidence_boost' => $confidence_boost];
             }
         }
-
         return false;
     }
-
     /**
      * Try to parse a DPD tracking number.
      *
@@ -400,77 +311,50 @@ class DPDShippingProvider extends AbstractShippingProvider
      * @param string $shipping_to The country code of the shipping destination.
      * @return array|null An array with 'url' and 'ambiguity_score' if valid, null otherwise.
      */
-    public function try_parse_tracking_number(
-        string $tracking_number,
-        string $shipping_from,
-        string $shipping_to
-    ): ?array {
+    public function try_parse_tracking_number(string $tracking_number, string $shipping_from, string $shipping_to): ?array
+    {
         if (empty($tracking_number) || empty($shipping_from) || empty($shipping_to)) {
             return null;
         }
-
         $normalized = strtoupper((string) preg_replace('/\s+/', '', $tracking_number));
         if (empty($normalized)) {
             return null;
         }
-
         $shipping_from = strtoupper($shipping_from);
-        $shipping_to   = strtoupper($shipping_to);
-
+        $shipping_to = strtoupper($shipping_to);
         // 1. Check international 28-digit format first.
         if (preg_match(self::INTERNATIONAL_PATTERN, $normalized)) {
-            if (in_array($shipping_from, $this->get_shipping_from_countries(), true) &&
-                in_array($shipping_to, $this->get_shipping_to_countries(), true)) {
-                return [
-                    'url'             => $this->get_tracking_url($normalized),
-                    'ambiguity_score' => 95,
-                ];
+            if (in_array($shipping_from, $this->get_shipping_from_countries(), true) && in_array($shipping_to, $this->get_shipping_to_countries(), true)) {
+                return ['url' => $this->get_tracking_url($normalized), 'ambiguity_score' => 95];
             }
             return null;
         }
-
         // 2. Check S10/UPU format (international DPD).
         if (preg_match(self::S10_PATTERN, $normalized)) {
-            return [
-                'url'             => $this->get_tracking_url($normalized),
-                'ambiguity_score' => 90,
-            ];
+            return ['url' => $this->get_tracking_url($normalized), 'ambiguity_score' => 90];
         }
-
         // 3. Check country-specific patterns.
         $validation_result = $this->validate_country_pattern($normalized, $shipping_from);
         if ($validation_result && is_array($validation_result)) {
-            $confidence = self::TRACKING_PATTERNS[ $shipping_from ]['confidence'];
-
+            $confidence = self::TRACKING_PATTERNS[$shipping_from]['confidence'];
             // Apply service-specific confidence boost.
             if ($validation_result['confidence_boost'] > 0) {
                 $confidence = min(95, $validation_result['confidence_boost']);
             }
-
             // Boost confidence for intra-DPD shipments.
             if (in_array($shipping_to, $this->get_shipping_to_countries(), true)) {
                 $confidence = min(98, $confidence + 3);
             }
-
             // Additional boost for express services.
             if ('express' === $validation_result['service']) {
                 $confidence = min(98, $confidence + 2);
             }
-
-            return [
-                'url'             => $this->get_tracking_url($normalized),
-                'ambiguity_score' => $confidence,
-            ];
+            return ['url' => $this->get_tracking_url($normalized), 'ambiguity_score' => $confidence];
         }
-
         // 4. Fallback: 12–24 digit numeric.
         if (preg_match('/^\d{12,24}$/', $normalized)) {
-            return [
-                'url'             => $this->get_tracking_url($normalized),
-                'ambiguity_score' => 60,
-            ];
+            return ['url' => $this->get_tracking_url($normalized), 'ambiguity_score' => 60];
         }
-
         return null;
     }
 }

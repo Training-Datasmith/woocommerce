@@ -1,41 +1,35 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Caches;
 
-namespace Automattic\WooCommerce\Caches;
-
-use Automattic\WooCommerce\Enums\OrderStatus;
-use Automattic\WooCommerce\Utilities\OrderUtil;
+use Automattic\Woo_Commerce\Enums\Order_Status;
+use Automattic\Woo_Commerce\Utilities\Order_Util;
 use WC_Order;
-
 /**
  * A service class to help with updates to the aggregate orders cache.
  *
  * @internal
  */
-class OrderCountCacheService
+class Order_Count_Cache_Service
 {
     public const BACKGROUND_EVENT_HOOK = 'woocommerce_refresh_order_count_cache';
-
     /**
      * OrderCountCache instance.
      */
-    private ?\Automattic\WooCommerce\Caches\OrderCountCache $order_count_cache = null;
-
+    private ?\Automattic\Woo_Commerce\Caches\Order_Count_Cache $order_count_cache = null;
     /**
      * Array of order ids with their last transitioned status as key value pairs.
      *
      * @var array
      */
     private $order_statuses = [];
-
     /**
      * Array of order ids with their initial status as key value pairs.
      *
      * @var array
      */
     private $initial_order_statuses = [];
-
     /**
      * Class initialization, invoked by the DI container.
      *
@@ -43,19 +37,17 @@ class OrderCountCacheService
      */
     final public function init(): void
     {
-        $this->order_count_cache = new OrderCountCache();
+        $this->order_count_cache = new Order_Count_Cache();
         add_action('woocommerce_new_order', $this->update_on_new_order(...), 10, 2);
         add_action('woocommerce_order_status_changed', $this->update_on_order_status_changed(...), 10, 4);
         add_action('woocommerce_before_trash_order', $this->update_on_order_trashed(...), 10, 2);
         add_action('woocommerce_before_delete_order', $this->update_on_order_deleted(...), 10, 2);
         add_action(self::BACKGROUND_EVENT_HOOK, $this->refresh_cache(...));
         add_action('action_scheduler_ensure_recurring_actions', $this->schedule_background_actions(...));
-
         if (defined('WC_PLUGIN_BASENAME')) {
             add_action('deactivate_' . WC_PLUGIN_BASENAME, $this->unschedule_background_actions(...));
         }
     }
-
     /**
      * Refresh the cache for a given order type.
      *
@@ -64,21 +56,19 @@ class OrderCountCacheService
     public function refresh_cache($order_type): void
     {
         $this->order_count_cache->flush($order_type);
-        OrderUtil::get_count_for_type($order_type);
+        Order_Util::get_count_for_type($order_type);
     }
-
     /**
      * Register background caching for each order type.
      */
     public function schedule_background_actions(): void
     {
         $order_types = wc_get_order_types('order-count');
-        $frequency   = HOUR_IN_SECONDS * 12;
+        $frequency = HOUR_IN_SECONDS * 12;
         foreach ($order_types as $order_type) {
-            as_schedule_recurring_action(time() + $frequency, $frequency, self::BACKGROUND_EVENT_HOOK, [ $order_type ], 'count', true);
+            as_schedule_recurring_action(time() + $frequency, $frequency, self::BACKGROUND_EVENT_HOOK, [$order_type], 'count', true);
         }
     }
-
     /**
      * Unschedules background actions.
      *
@@ -89,7 +79,6 @@ class OrderCountCacheService
     {
         WC()->queue()->cancel_all(self::BACKGROUND_EVENT_HOOK);
     }
-
     /**
      * Update the cache when a new order is made.
      *
@@ -98,25 +87,21 @@ class OrderCountCacheService
      */
     public function update_on_new_order($order_id, $order): void
     {
-        if (! $this->order_count_cache->is_cached($order->get_type(), $this->get_prefixed_status($order->get_status()))) {
+        if (!$this->order_count_cache->is_cached($order->get_type(), $this->get_prefixed_status($order->get_status()))) {
             return;
         }
-
         // If the order status was updated, we need to increment the order count cache for the
         // initial status that was errantly decremented on order status change.
-        if (isset($this->initial_order_statuses[ $order_id ])) {
-            $this->order_count_cache->increment($order->get_type(), $this->get_prefixed_status($this->initial_order_statuses[ $order_id ]));
+        if (isset($this->initial_order_statuses[$order_id])) {
+            $this->order_count_cache->increment($order->get_type(), $this->get_prefixed_status($this->initial_order_statuses[$order_id]));
         }
-
         // If the order status count has already been incremented, we can skip incrementing it again.
-        if (isset($this->order_statuses[ $order->get_id() ]) && $this->order_statuses[ $order->get_id() ] === $order->get_status()) {
+        if (isset($this->order_statuses[$order->get_id()]) && $this->order_statuses[$order->get_id()] === $order->get_status()) {
             return;
         }
-
-        $this->order_statuses[ $order_id ] = $order->get_status();
+        $this->order_statuses[$order_id] = $order->get_status();
         $this->order_count_cache->increment($order->get_type(), $this->get_prefixed_status($order->get_status()));
     }
-
     /**
      * Update the cache when an order is trashed.
      *
@@ -125,16 +110,12 @@ class OrderCountCacheService
      */
     public function update_on_order_trashed($order_id, $order): void
     {
-        if (
-            ! $this->order_count_cache->is_cached($order->get_type(), $this->get_prefixed_status($order->get_status())) ||
-            ! $this->order_count_cache->is_cached($order->get_type(), OrderStatus::TRASH)) {
+        if (!$this->order_count_cache->is_cached($order->get_type(), $this->get_prefixed_status($order->get_status())) || !$this->order_count_cache->is_cached($order->get_type(), Order_Status::TRASH)) {
             return;
         }
-
         $this->order_count_cache->decrement($order->get_type(), $this->get_prefixed_status($order->get_status()));
-        $this->order_count_cache->increment($order->get_type(), OrderStatus::TRASH);
+        $this->order_count_cache->increment($order->get_type(), Order_Status::TRASH);
     }
-
     /**
      * Update the cache when an order is deleted.
      *
@@ -143,13 +124,11 @@ class OrderCountCacheService
      */
     public function update_on_order_deleted($order_id, $order): void
     {
-        if (! $this->order_count_cache->is_cached($order->get_type(), $this->get_prefixed_status($order->get_status()))) {
+        if (!$this->order_count_cache->is_cached($order->get_type(), $this->get_prefixed_status($order->get_status()))) {
             return;
         }
-
         $this->order_count_cache->decrement($order->get_type(), $this->get_prefixed_status($order->get_status()));
     }
-
     /**
      * Update the cache whenver an order status changes.
      *
@@ -160,28 +139,21 @@ class OrderCountCacheService
      */
     public function update_on_order_status_changed($order_id, $previous_status, $next_status, $order): void
     {
-        if (
-            ! $this->order_count_cache->is_cached($order->get_type(), $this->get_prefixed_status($next_status)) ||
-            ! $this->order_count_cache->is_cached($order->get_type(), $this->get_prefixed_status($previous_status))
-        ) {
+        if (!$this->order_count_cache->is_cached($order->get_type(), $this->get_prefixed_status($next_status)) || !$this->order_count_cache->is_cached($order->get_type(), $this->get_prefixed_status($previous_status))) {
             return;
         }
-
         // If the order status count has already been incremented, we can skip incrementing it again.
-        if (isset($this->order_statuses[ $order_id ]) && $this->order_statuses[ $order_id ] === $next_status) {
+        if (isset($this->order_statuses[$order_id]) && $this->order_statuses[$order_id] === $next_status) {
             return;
         }
-
-        $this->order_statuses[ $order_id ] = $next_status;
-        $was_decremented                   = $this->order_count_cache->decrement($order->get_type(), $this->get_prefixed_status($previous_status));
+        $this->order_statuses[$order_id] = $next_status;
+        $was_decremented = $this->order_count_cache->decrement($order->get_type(), $this->get_prefixed_status($previous_status));
         $this->order_count_cache->increment($order->get_type(), $this->get_prefixed_status($next_status));
-
         // Set the initial order status in case this is a new order and the previous status should not be decremented.
-        if (! isset($this->initial_order_statuses[ $order_id ]) && $was_decremented) {
-            $this->initial_order_statuses[ $order_id ] = $previous_status;
+        if (!isset($this->initial_order_statuses[$order_id]) && $was_decremented) {
+            $this->initial_order_statuses[$order_id] = $previous_status;
         }
     }
-
     /**
      * Get the prefixed status.
      *
@@ -190,12 +162,7 @@ class OrderCountCacheService
     private function get_prefixed_status($status): string
     {
         $status = 'wc-' . $status;
-
-        $special_statuses = [
-            'wc-' . OrderStatus::AUTO_DRAFT => OrderStatus::AUTO_DRAFT,
-            'wc-' . OrderStatus::TRASH      => OrderStatus::TRASH,
-        ];
-
-        return $special_statuses[ $status ] ?? $status;
+        $special_statuses = ['wc-' . Order_Status::AUTO_DRAFT => Order_Status::AUTO_DRAFT, 'wc-' . Order_Status::TRASH => Order_Status::TRASH];
+        return $special_statuses[$status] ?? $status;
     }
 }

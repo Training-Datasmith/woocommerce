@@ -1,36 +1,31 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Handles running payment gateway suggestion specs
  */
-
-namespace Automattic\WooCommerce\Admin\Features\PaymentGatewaySuggestions;
+namespace Automattic\Woo_Commerce\Admin\Features\Payment_Gateway_Suggestions;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\RemoteSpecs\RemoteSpecsEngine;
-
+use Automattic\Woo_Commerce\Admin\Remote_Specs\Remote_Specs_Engine;
 /**
  * Remote Payment Methods engine.
  * This goes through the specs and gets eligible payment gateways.
  */
-class Init extends RemoteSpecsEngine
+class Init extends Remote_Specs_Engine
 {
     /**
      * Option name for dismissed payment method suggestions.
      */
     public const RECOMMENDED_PAYMENT_PLUGINS_DISMISS_OPTION = 'woocommerce_setting_payments_recommendations_hidden';
-
     /**
      * Constructor.
      */
     public function __construct()
     {
-        PaymentGatewaysController::init();
+        Payment_Gateways_Controller::init();
         add_action('update_option_woocommerce_default_country', $this->delete_specs_transient(...));
     }
-
     /**
      * Go through the specs and run them.
      *
@@ -40,32 +35,26 @@ class Init extends RemoteSpecsEngine
     public static function get_suggestions(?array $specs = null)
     {
         $locale = get_user_locale();
-
-        $specs           = is_array($specs) ? $specs : self::get_specs();
-        $results         = EvaluateSuggestion::evaluate_specs($specs);
+        $specs = is_array($specs) ? $specs : self::get_specs();
+        $results = Evaluate_Suggestion::evaluate_specs($specs);
         $specs_to_return = $results['suggestions'];
-        $specs_to_save   = null;
-
+        $specs_to_save = null;
         if (empty($specs_to_return)) {
             // When suggestions is empty, replace it with defaults and save for 3 hours.
-            $specs_to_save   = DefaultPaymentGateways::get_all();
-            $specs_to_return = EvaluateSuggestion::evaluate_specs($specs_to_save)['suggestions'];
+            $specs_to_save = Default_Payment_Gateways::get_all();
+            $specs_to_return = Evaluate_Suggestion::evaluate_specs($specs_to_save)['suggestions'];
         } elseif (count($results['errors']) > 0) {
             // When suggestions is not empty but has errors, save it for 3 hours.
             $specs_to_save = $specs;
         }
-
         if (count($results['errors']) > 0) {
             self::log_errors($results['errors']);
         }
-
         if ($specs_to_save) {
-            PaymentGatewaySuggestionsDataSourcePoller::get_instance()->set_specs_transient([ $locale => $specs_to_save ], 3 * HOUR_IN_SECONDS);
+            Payment_Gateway_Suggestions_Data_Source_Poller::get_instance()->set_specs_transient([$locale => $specs_to_save], 3 * HOUR_IN_SECONDS);
         }
-
         return $specs_to_return;
     }
-
     /**
      * Gets either cached or default suggestions.
      *
@@ -73,12 +62,9 @@ class Init extends RemoteSpecsEngine
      */
     public static function get_cached_or_default_suggestions()
     {
-        $specs = 'no' === get_option('woocommerce_show_marketplace_suggestions', 'yes')
-            ? DefaultPaymentGateways::get_all()
-            : PaymentGatewaySuggestionsDataSourcePoller::get_instance()->get_cached_specs();
-
-        if (! is_array($specs) || 0 === count($specs)) {
-            $specs = DefaultPaymentGateways::get_all();
+        $specs = 'no' === get_option('woocommerce_show_marketplace_suggestions', 'yes') ? Default_Payment_Gateways::get_all() : Payment_Gateway_Suggestions_Data_Source_Poller::get_instance()->get_cached_specs();
+        if (!is_array($specs) || 0 === count($specs)) {
+            $specs = Default_Payment_Gateways::get_all();
         }
         /**
          * Allows filtering of payment gateway suggestion specs
@@ -87,37 +73,32 @@ class Init extends RemoteSpecsEngine
          *
          * @param array Gateway specs.
          */
-        $specs   = apply_filters('woocommerce_admin_payment_gateway_suggestion_specs', $specs);
-        $results = EvaluateSuggestion::evaluate_specs($specs);
+        $specs = apply_filters('woocommerce_admin_payment_gateway_suggestion_specs', $specs);
+        $results = Evaluate_Suggestion::evaluate_specs($specs);
         return $results['suggestions'];
     }
-
     /**
      * Delete the specs transient.
      */
     public static function delete_specs_transient(): void
     {
-        PaymentGatewaySuggestionsDataSourcePoller::get_instance()->delete_specs_transient();
+        Payment_Gateway_Suggestions_Data_Source_Poller::get_instance()->delete_specs_transient();
     }
-
     /**
      * Get specs or fetch remotely if they don't exist.
      */
     public static function get_specs()
     {
         if ('no' === get_option('woocommerce_show_marketplace_suggestions', 'yes')) {
-            return apply_filters('woocommerce_admin_payment_gateway_suggestion_specs', DefaultPaymentGateways::get_all());
+            return apply_filters('woocommerce_admin_payment_gateway_suggestion_specs', Default_Payment_Gateways::get_all());
         }
-        $specs = PaymentGatewaySuggestionsDataSourcePoller::get_instance()->get_specs_from_data_sources();
-
+        $specs = Payment_Gateway_Suggestions_Data_Source_Poller::get_instance()->get_specs_from_data_sources();
         // Fetch specs if they don't yet exist.
-        if (false === $specs || ! is_array($specs) || 0 === count($specs)) {
-            return apply_filters('woocommerce_admin_payment_gateway_suggestion_specs', DefaultPaymentGateways::get_all());
+        if (false === $specs || !is_array($specs) || 0 === count($specs)) {
+            return apply_filters('woocommerce_admin_payment_gateway_suggestion_specs', Default_Payment_Gateways::get_all());
         }
-
         return apply_filters('woocommerce_admin_payment_gateway_suggestion_specs', $specs);
     }
-
     /**
      * Check if suggestions should be shown in the settings screen.
      *
@@ -128,14 +109,11 @@ class Init extends RemoteSpecsEngine
         if ('yes' === get_option(self::RECOMMENDED_PAYMENT_PLUGINS_DISMISS_OPTION, 'no')) {
             return false;
         }
-
         if ('no' === get_option('woocommerce_show_marketplace_suggestions', 'yes')) {
             return false;
         }
-
         return apply_filters('woocommerce_allow_payment_recommendations', true);
     }
-
     /**
      * Dismiss the suggestions.
      */

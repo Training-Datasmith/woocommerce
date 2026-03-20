@@ -1,21 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Utils;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Utils;
 
 /**
  * StyleAttributesUtils class used for getting class and style from attributes.
  */
-class StyleAttributesUtils
+class Style_Attributes_Utils
 {
     // Empty style array.
-    public const EMPTY_STYLE = [
-        'class' => '',
-        'style' => '',
-        'value' => '',
-    ];
-
+    public const EMPTY_STYLE = ['class' => '', 'style' => '', 'value' => ''];
     /**
      * If color value is in preset format, convert it to a CSS var. Else return same value
      * For example:
@@ -32,10 +26,8 @@ class StyleAttributesUtils
             $color_value = str_replace('var:preset|color|', '', $color_value);
             return sprintf('var(--wp--preset--color--%s)', $color_value);
         }
-
         return $color_value;
     }
-
     /**
      * Get CSS value for color preset.
      *
@@ -45,9 +37,8 @@ class StyleAttributesUtils
      */
     public static function get_preset_value($preset_name): string
     {
-        return "var(--wp--preset--color--$preset_name)";
+        return "var(--wp--preset--color--{$preset_name})";
     }
-
     /**
      * Get CSS value for shadow preset. Returns the same value if it's not a preset.
      *
@@ -61,10 +52,8 @@ class StyleAttributesUtils
             $shadow_name = str_replace('var:preset|shadow|', '', $shadow_name);
             return "var(--wp--preset--shadow--{$shadow_name})";
         }
-
         return $shadow_name;
     }
-
     /**
      * If spacing value is in preset format, convert it to a CSS var. Else return same value
      * For example:
@@ -82,10 +71,8 @@ class StyleAttributesUtils
             $spacing_value = str_replace('var:preset|spacing|', '', $spacing_value);
             return sprintf('var(--wp--preset--spacing--%s)', $spacing_value);
         }
-
         return $spacing_value;
     }
-
     /**
      * Get class and style for align from attributes.
      *
@@ -94,45 +81,23 @@ class StyleAttributesUtils
     public static function get_align_class_and_style(array $attributes): array
     {
         $align_attribute = $attributes['align'] ?? null;
-
         if ('wide' === $align_attribute) {
-            return [
-                'class' => 'alignwide',
-                'style' => null,
-            ];
+            return ['class' => 'alignwide', 'style' => null];
         }
-
         if ('full' === $align_attribute) {
-            return [
-                'class' => 'alignfull',
-                'style' => null,
-            ];
+            return ['class' => 'alignfull', 'style' => null];
         }
-
         if ('left' === $align_attribute) {
-            return [
-                'class' => 'alignleft',
-                'style' => null,
-            ];
+            return ['class' => 'alignleft', 'style' => null];
         }
-
         if ('right' === $align_attribute) {
-            return [
-                'class' => 'alignright',
-                'style' => null,
-            ];
+            return ['class' => 'alignright', 'style' => null];
         }
-
         if ('center' === $align_attribute) {
-            return [
-                'class' => 'aligncenter',
-                'style' => null,
-            ];
+            return ['class' => 'aligncenter', 'style' => null];
         }
-
         return self::EMPTY_STYLE;
     }
-
     /**
      * Get class and style for background-color from attributes.
      *
@@ -140,38 +105,28 @@ class StyleAttributesUtils
      */
     public static function get_background_color_class_and_style(array $attributes): array
     {
-        $gradient                = $attributes['gradient'] ?? null;
-        $background_color        = $attributes['backgroundColor'] ?? '';
+        $gradient = $attributes['gradient'] ?? null;
+        $background_color = $attributes['backgroundColor'] ?? '';
         $custom_background_color = $attributes['style']['color']['background'] ?? '';
-        $classes                 = [ $gradient ];
-        $styles                  = [];
-        $value                   = null;
-
+        $classes = [$gradient];
+        $styles = [];
+        $value = null;
         if ($background_color || $custom_background_color || $gradient) {
             $classes[] = 'has-background';
         }
-
         if ($background_color) {
             $classes[] = sprintf('has-%s-background-color', $background_color);
-            $value     = self::get_preset_value($background_color);
+            $value = self::get_preset_value($background_color);
         }
-
         if ($custom_background_color) {
             $styles[] = sprintf('background-color: %s;', $custom_background_color);
-            $value    = $custom_background_color;
+            $value = $custom_background_color;
         }
-
         if ($gradient) {
             $classes[] = sprintf('has-%s-gradient-background', $gradient);
         }
-
-        return [
-            'class' => self::join_styles($classes),
-            'style' => self::join_styles($styles),
-            'value' => $value,
-        ];
+        return ['class' => self::join_styles($classes), 'style' => self::join_styles($styles), 'value' => $value];
     }
-
     /**
      * Join classes and styles while removing duplicates and null values.
      *
@@ -182,7 +137,6 @@ class StyleAttributesUtils
     {
         return implode(' ', array_unique(array_filter($rules)));
     }
-
     /**
      * Get class and style for border-color from attributes.
      *
@@ -198,12 +152,10 @@ class StyleAttributesUtils
     {
         $border_color_linked_preset = $attributes['borderColor'] ?? '';
         $border_color_linked_custom = $attributes['style']['border']['color'] ?? '';
-        $custom_border              = $attributes['style']['border'] ?? '';
-
+        $custom_border = $attributes['style']['border'] ?? '';
         $class = '';
         $style = '';
         $value = '';
-
         if ($border_color_linked_preset) {
             // Linked preset color.
             $class = sprintf('has-border-color has-%s-border-color', $border_color_linked_preset);
@@ -212,27 +164,20 @@ class StyleAttributesUtils
         } elseif ($border_color_linked_custom) {
             // Linked custom color.
             $style .= 'border-color:' . $border_color_linked_custom . ';';
-            $value  = $border_color_linked_custom;
+            $value = $border_color_linked_custom;
         } elseif (is_array($custom_border)) {
             // Unlinked.
             foreach ($custom_border as $border_color_key => $border_color_value) {
-                if (is_array($border_color_value) && array_key_exists('color', ($border_color_value))) {
+                if (is_array($border_color_value) && array_key_exists('color', $border_color_value)) {
                     $style .= 'border-' . $border_color_key . '-color:' . self::get_color_value($border_color_value['color']) . ';';
                 }
             }
         }
-
-        if (! $class && ! $style) {
+        if (!$class && !$style) {
             return self::EMPTY_STYLE;
         }
-
-        return [
-            'class' => $class,
-            'style' => $style,
-            'value' => $value,
-        ];
+        return ['class' => $class, 'style' => $style, 'value' => $value];
     }
-
     /**
      * Get class and style for border-radius from attributes.
      *
@@ -241,38 +186,28 @@ class StyleAttributesUtils
     public static function get_border_radius_class_and_style(array $attributes): array
     {
         $custom_border_radius = $attributes['style']['border']['radius'] ?? '';
-
         if ('' === $custom_border_radius) {
             return self::EMPTY_STYLE;
         }
-
         $style = '';
-
         if (is_string($custom_border_radius)) {
             // Linked sides.
             $style = 'border-radius:' . $custom_border_radius . ';';
         } else {
             // Unlinked sides.
             $border_radius = [];
-
-            $border_radius['border-top-left-radius']     = $custom_border_radius['topLeft'] ?? '';
-            $border_radius['border-top-right-radius']    = $custom_border_radius['topRight'] ?? '';
+            $border_radius['border-top-left-radius'] = $custom_border_radius['topLeft'] ?? '';
+            $border_radius['border-top-right-radius'] = $custom_border_radius['topRight'] ?? '';
             $border_radius['border-bottom-right-radius'] = $custom_border_radius['bottomRight'] ?? '';
-            $border_radius['border-bottom-left-radius']  = $custom_border_radius['bottomLeft'] ?? '';
-
+            $border_radius['border-bottom-left-radius'] = $custom_border_radius['bottomLeft'] ?? '';
             foreach ($border_radius as $border_radius_side => $border_radius_value) {
                 if ('' !== $border_radius_value) {
                     $style .= $border_radius_side . ':' . $border_radius_value . ';';
                 }
             }
         }
-
-        return [
-            'class' => null,
-            'style' => $style,
-        ];
+        return ['class' => null, 'style' => $style];
     }
-
     /**
      * Get class and style for border width from attributes.
      *
@@ -281,14 +216,11 @@ class StyleAttributesUtils
     public static function get_border_width_class_and_style(array $attributes): array
     {
         $custom_border = $attributes['style']['border'] ?? '';
-
         if ('' === $custom_border) {
             return self::EMPTY_STYLE;
         }
-
         $style = '';
-
-        if (array_key_exists('width', ($custom_border)) && ! empty($custom_border['width'])) {
+        if (array_key_exists('width', $custom_border) && !empty($custom_border['width'])) {
             // Linked sides.
             $style = 'border-width:' . $custom_border['width'] . ';';
         } else {
@@ -299,13 +231,8 @@ class StyleAttributesUtils
                 }
             }
         }
-
-        return [
-            'class' => null,
-            'style' => $style,
-        ];
+        return ['class' => null, 'style' => $style];
     }
-
     /**
      * Get class and style for border width from attributes.
      *
@@ -314,14 +241,11 @@ class StyleAttributesUtils
     public static function get_border_style_class_and_style(array $attributes): array
     {
         $custom_border = $attributes['style']['border'] ?? '';
-
         if ('' === $custom_border) {
             return self::EMPTY_STYLE;
         }
-
         $style = '';
-
-        if (array_key_exists('style', ($custom_border)) && ! empty($custom_border['style'])) {
+        if (array_key_exists('style', $custom_border) && !empty($custom_border['style'])) {
             $style = 'border-style:' . $custom_border['style'] . ';';
         } else {
             foreach ($custom_border as $side => $value) {
@@ -330,13 +254,8 @@ class StyleAttributesUtils
                 }
             }
         }
-
-        return [
-            'class' => null,
-            'style' => $style,
-        ];
+        return ['class' => null, 'style' => $style];
     }
-
     /**
      * Get space-separated classes from block attributes.
      *
@@ -348,10 +267,8 @@ class StyleAttributesUtils
     public static function get_classes_by_attributes($attributes, $properties = [])
     {
         $classes_and_styles = self::get_classes_and_styles_by_attributes($attributes, $properties);
-
         return $classes_and_styles['classes'];
     }
-
     /**
      * Get class and style for font-family from attributes.
      *
@@ -359,18 +276,12 @@ class StyleAttributesUtils
      */
     public static function get_font_family_class_and_style(array $attributes): array
     {
-
         $font_family = $attributes['fontFamily'] ?? '';
-
         if ($font_family) {
-            return [
-                'class' => sprintf('has-%s-font-family', $font_family),
-                'style' => null,
-            ];
+            return ['class' => sprintf('has-%s-font-family', $font_family), 'style' => null];
         }
         return self::EMPTY_STYLE;
     }
-
     /**
      * Get class and style for font-size from attributes.
      *
@@ -378,31 +289,19 @@ class StyleAttributesUtils
      */
     public static function get_font_size_class_and_style(array $attributes): array
     {
-
         $font_size = $attributes['fontSize'] ?? '';
-
         $custom_font_size = $attributes['style']['typography']['fontSize'] ?? '';
-
-        if (! $font_size && '' === $custom_font_size) {
+        if (!$font_size && '' === $custom_font_size) {
             return self::EMPTY_STYLE;
         }
         if ($font_size) {
-            return [
-                'class' => sprintf('has-font-size has-%s-font-size', $font_size),
-                'style' => null,
-            ];
+            return ['class' => sprintf('has-font-size has-%s-font-size', $font_size), 'style' => null];
         }
-
         if ('' !== $custom_font_size) {
-            return [
-                'class' => null,
-                'style' => sprintf('font-size: %s;', $custom_font_size),
-            ];
+            return ['class' => null, 'style' => sprintf('font-size: %s;', $custom_font_size)];
         }
-
         return self::EMPTY_STYLE;
     }
-
     /**
      * Get class and style for font-style from attributes.
      *
@@ -410,18 +309,12 @@ class StyleAttributesUtils
      */
     public static function get_font_style_class_and_style(array $attributes): array
     {
-
         $custom_font_style = $attributes['style']['typography']['fontStyle'] ?? '';
-
         if ('' !== $custom_font_style) {
-            return [
-                'class' => null,
-                'style' => sprintf('font-style: %s;', $custom_font_style),
-            ];
+            return ['class' => null, 'style' => sprintf('font-style: %s;', $custom_font_style)];
         }
         return self::EMPTY_STYLE;
     }
-
     /**
      * Get class and style for font-weight from attributes.
      *
@@ -429,18 +322,12 @@ class StyleAttributesUtils
      */
     public static function get_font_weight_class_and_style(array $attributes): array
     {
-
         $custom_font_weight = $attributes['style']['typography']['fontWeight'] ?? '';
-
         if ('' !== $custom_font_weight) {
-            return [
-                'class' => null,
-                'style' => sprintf('font-weight: %s;', $custom_font_weight),
-            ];
+            return ['class' => null, 'style' => sprintf('font-weight: %s;', $custom_font_weight)];
         }
         return self::EMPTY_STYLE;
     }
-
     /**
      * Get class and style for letter-spacing from attributes.
      *
@@ -448,18 +335,12 @@ class StyleAttributesUtils
      */
     public static function get_letter_spacing_class_and_style(array $attributes): array
     {
-
         $custom_letter_spacing = $attributes['style']['typography']['letterSpacing'] ?? '';
-
         if ('' !== $custom_letter_spacing) {
-            return [
-                'class' => null,
-                'style' => sprintf('letter-spacing: %s;', $custom_letter_spacing),
-            ];
+            return ['class' => null, 'style' => sprintf('letter-spacing: %s;', $custom_letter_spacing)];
         }
         return self::EMPTY_STYLE;
     }
-
     /**
      * Get class and style for line height from attributes.
      *
@@ -467,19 +348,12 @@ class StyleAttributesUtils
      */
     public static function get_line_height_class_and_style(array $attributes): array
     {
-
         $line_height = $attributes['style']['typography']['lineHeight'] ?? '';
-
-        if (! $line_height) {
+        if (!$line_height) {
             return self::EMPTY_STYLE;
         }
-
-        return [
-            'class' => null,
-            'style' => sprintf('line-height: %s;', $line_height),
-        ];
+        return ['class' => null, 'style' => sprintf('line-height: %s;', $line_height)];
     }
-
     /**
      * Get a value from an array based on a path e.g style.elements.link
      *
@@ -491,18 +365,16 @@ class StyleAttributesUtils
     protected static function array_get_value_by_path(array &$array, $path, $delimiter = '.')
     {
         $array_path = explode($delimiter, $path);
-        $ref        = &$array;
-
+        $ref =& $array;
         foreach ($array_path as $key) {
             if (is_array($ref) && array_key_exists($key, $ref)) {
-                $ref = &$ref[ $key ];
+                $ref =& $ref[$key];
             } else {
                 return null;
             }
         }
         return $ref;
     }
-
     /**
      * Get class and style for link-color from attributes.
      *
@@ -511,26 +383,18 @@ class StyleAttributesUtils
     public static function get_link_color_class_and_style(array $attributes): array
     {
         $link_color = self::array_get_value_by_path($attributes, 'style.elements.link.color.text');
-
         if (empty($link_color)) {
             return self::EMPTY_STYLE;
         }
-
         // If the link color is selected from the theme color picker, the value of $link_color is var:preset|color|slug.
         // If the link color is selected from the core color picker, the value of $link_color is an hex value.
         // When the link color is a string var:preset|color|slug we parsed it for get the slug, otherwise we use the hex value.
         if (strstr((string) $link_color, '|')) {
             $link_color_parts = explode('|', (string) $link_color);
-            $link_color       = self::get_preset_value(end($link_color_parts));
+            $link_color = self::get_preset_value(end($link_color_parts));
         }
-
-        return [
-            'class' => 'has-link-color',
-            'style' => sprintf('color: %s;', $link_color),
-            'value' => $link_color,
-        ];
+        return ['class' => 'has-link-color', 'style' => sprintf('color: %s;', $link_color), 'value' => $link_color];
     }
-
     /**
      * Get class and style for link-hover-color from attributes.
      *
@@ -539,26 +403,18 @@ class StyleAttributesUtils
     public static function get_link_hover_color_class_and_style(array $attributes): array
     {
         $link_color = self::array_get_value_by_path($attributes, 'style.elements.link.:hover.color.text');
-
         if (empty($link_color)) {
             return self::EMPTY_STYLE;
         }
-
         // If the link color is selected from the theme color picker, the value of $link_color is var:preset|color|slug.
         // If the link color is selected from the core color picker, the value of $link_color is an hex value.
         // When the link color is a string var:preset|color|slug we parsed it for get the slug, otherwise we use the hex value.
         if (strstr((string) $link_color, '|')) {
             $link_color_parts = explode('|', (string) $link_color);
-            $link_color       = self::get_preset_value(end($link_color_parts));
+            $link_color = self::get_preset_value(end($link_color_parts));
         }
-
-        return [
-            'class' => 'has-link-color',
-            'style' => sprintf('color: %s;', $link_color),
-            'value' => $link_color,
-        ];
+        return ['class' => 'has-link-color', 'style' => sprintf('color: %s;', $link_color), 'value' => $link_color];
     }
-
     /**
      * Get class and style for margin from attributes.
      *
@@ -567,23 +423,15 @@ class StyleAttributesUtils
     public static function get_margin_class_and_style(array $attributes): array
     {
         $margin = $attributes['style']['spacing']['margin'] ?? null;
-
-        if (! $margin) {
+        if (!$margin) {
             return self::EMPTY_STYLE;
         }
-
         $spacing_values_css = '';
-
         foreach ($margin as $margin_side => $margin_value) {
             $spacing_values_css .= 'margin-' . $margin_side . ':' . self::get_spacing_value($margin_value) . ';';
         }
-
-        return [
-            'class' => null,
-            'style' => $spacing_values_css,
-        ];
+        return ['class' => null, 'style' => $spacing_values_css];
     }
-
     /**
      * Get class and style for padding from attributes.
      *
@@ -592,23 +440,15 @@ class StyleAttributesUtils
     public static function get_padding_class_and_style(array $attributes): array
     {
         $padding = $attributes['style']['spacing']['padding'] ?? null;
-
-        if (! $padding) {
+        if (!$padding) {
             return self::EMPTY_STYLE;
         }
-
         $spacing_values_css = '';
-
         foreach ($padding as $padding_side => $padding_value) {
             $spacing_values_css .= 'padding-' . $padding_side . ':' . self::get_spacing_value($padding_value) . ';';
         }
-
-        return [
-            'class' => null,
-            'style' => $spacing_values_css,
-        ];
+        return ['class' => null, 'style' => $spacing_values_css];
     }
-
     /**
      * Get class and style for shadow from attributes.
      *
@@ -617,17 +457,11 @@ class StyleAttributesUtils
     public static function get_shadow_class_and_style(array $attributes): array
     {
         $shadow = $attributes['style']['shadow'] ?? null;
-
-        if (! $shadow) {
+        if (!$shadow) {
             return self::EMPTY_STYLE;
         }
-
-        return [
-            'class' => null,
-            'style' => sprintf('box-shadow: %s;', self::get_shadow_value($shadow)),
-        ];
+        return ['class' => null, 'style' => sprintf('box-shadow: %s;', self::get_shadow_value($shadow))];
     }
-
     /**
      * Get space-separated style rules from block attributes.
      *
@@ -639,10 +473,8 @@ class StyleAttributesUtils
     public static function get_styles_by_attributes($attributes, $properties = [])
     {
         $classes_and_styles = self::get_classes_and_styles_by_attributes($attributes, $properties);
-
         return $classes_and_styles['styles'];
     }
-
     /**
      * Get class and style for text align from attributes.
      *
@@ -652,16 +484,11 @@ class StyleAttributesUtils
     {
         // Check if the text align is set in the attributes manually (legacy) or in the global styles.
         $text_align = $attributes['textAlign'] ?? $attributes['style']['typography']['textAlign'] ?? null;
-
         if ($text_align) {
-            return [
-                'class' => 'has-text-align-' . $text_align,
-                'style' => null,
-            ];
+            return ['class' => 'has-text-align-' . $text_align, 'style' => null];
         }
         return self::EMPTY_STYLE;
     }
-
     /**
      * Get class and style for text-color from attributes.
      *
@@ -669,33 +496,19 @@ class StyleAttributesUtils
      */
     public static function get_text_color_class_and_style(array $attributes): array
     {
-
         $text_color = $attributes['textColor'] ?? '';
-
         $custom_text_color = $attributes['style']['color']['text'] ?? '';
-
-        if (! $text_color && ! $custom_text_color) {
+        if (!$text_color && !$custom_text_color) {
             return self::EMPTY_STYLE;
         }
         if ($text_color) {
-            return [
-                'class' => sprintf('has-text-color has-%s-color', $text_color),
-                'style' => null,
-                'value' => self::get_preset_value($text_color),
-            ];
+            return ['class' => sprintf('has-text-color has-%s-color', $text_color), 'style' => null, 'value' => self::get_preset_value($text_color)];
         }
-
         if ($custom_text_color) {
-            return [
-                'class' => null,
-                'style' => sprintf('color: %s;', $custom_text_color),
-                'value' => $custom_text_color,
-            ];
+            return ['class' => null, 'style' => sprintf('color: %s;', $custom_text_color), 'value' => $custom_text_color];
         }
-
         return self::EMPTY_STYLE;
     }
-
     /**
      * Get class and style for text-decoration from attributes.
      *
@@ -703,19 +516,12 @@ class StyleAttributesUtils
      */
     public static function get_text_decoration_class_and_style(array $attributes): array
     {
-
         $custom_text_decoration = $attributes['style']['typography']['textDecoration'] ?? '';
-
         if ('' !== $custom_text_decoration) {
-            return [
-                'class' => null,
-                'style' => sprintf('text-decoration: %s;', $custom_text_decoration),
-            ];
+            return ['class' => null, 'style' => sprintf('text-decoration: %s;', $custom_text_decoration)];
         }
-
         return self::EMPTY_STYLE;
     }
-
     /**
      * Get class and style for text-transform from attributes.
      *
@@ -723,18 +529,12 @@ class StyleAttributesUtils
      */
     public static function get_text_transform_class_and_style(array $attributes): array
     {
-
         $custom_text_transform = $attributes['style']['typography']['textTransform'] ?? '';
-
         if ('' !== $custom_text_transform) {
-            return [
-                'class' => null,
-                'style' => sprintf('text-transform: %s;', $custom_text_transform),
-            ];
+            return ['class' => null, 'style' => sprintf('text-transform: %s;', $custom_text_transform)];
         }
         return self::EMPTY_STYLE;
     }
-
     /**
      * Get extra CSS classes from attributes.
      *
@@ -742,18 +542,12 @@ class StyleAttributesUtils
      */
     public static function get_classes_from_attributes(array $attributes): array
     {
-
         $extra_css_classes = $attributes['className'] ?? '';
-
         if ('' !== $extra_css_classes) {
-            return [
-                'class' => esc_attr($extra_css_classes),
-                'style' => null,
-            ];
+            return ['class' => esc_attr($extra_css_classes), 'style' => null];
         }
         return self::EMPTY_STYLE;
     }
-
     /**
      * Get classes and styles from attributes.
      *
@@ -765,67 +559,30 @@ class StyleAttributesUtils
      */
     public static function get_classes_and_styles_by_attributes($attributes, $properties = [], $exclude = []): array
     {
-        $classes_and_styles = [
-            'align'            => self::get_align_class_and_style($attributes),
-            'background_color' => self::get_background_color_class_and_style($attributes),
-            'border_color'     => self::get_border_color_class_and_style($attributes),
-            'border_radius'    => self::get_border_radius_class_and_style($attributes),
-            'border_width'     => self::get_border_width_class_and_style($attributes),
-            'border_style'     => self::get_border_style_class_and_style($attributes),
-            'font_family'      => self::get_font_family_class_and_style($attributes),
-            'font_size'        => self::get_font_size_class_and_style($attributes),
-            'font_style'       => self::get_font_style_class_and_style($attributes),
-            'font_weight'      => self::get_font_weight_class_and_style($attributes),
-            'letter_spacing'   => self::get_letter_spacing_class_and_style($attributes),
-            'line_height'      => self::get_line_height_class_and_style($attributes),
-            'margin'           => self::get_margin_class_and_style($attributes),
-            'padding'          => self::get_padding_class_and_style($attributes),
-            'shadow'           => self::get_shadow_class_and_style($attributes),
-            'text_align'       => self::get_text_align_class_and_style($attributes),
-            'text_color'       => self::get_text_color_class_and_style($attributes),
-            'text_decoration'  => self::get_text_decoration_class_and_style($attributes),
-            'text_transform'   => self::get_text_transform_class_and_style($attributes),
-            'extra_classes'    => self::get_classes_from_attributes($attributes),
-        ];
-
-        if (! empty($properties)) {
+        $classes_and_styles = ['align' => self::get_align_class_and_style($attributes), 'background_color' => self::get_background_color_class_and_style($attributes), 'border_color' => self::get_border_color_class_and_style($attributes), 'border_radius' => self::get_border_radius_class_and_style($attributes), 'border_width' => self::get_border_width_class_and_style($attributes), 'border_style' => self::get_border_style_class_and_style($attributes), 'font_family' => self::get_font_family_class_and_style($attributes), 'font_size' => self::get_font_size_class_and_style($attributes), 'font_style' => self::get_font_style_class_and_style($attributes), 'font_weight' => self::get_font_weight_class_and_style($attributes), 'letter_spacing' => self::get_letter_spacing_class_and_style($attributes), 'line_height' => self::get_line_height_class_and_style($attributes), 'margin' => self::get_margin_class_and_style($attributes), 'padding' => self::get_padding_class_and_style($attributes), 'shadow' => self::get_shadow_class_and_style($attributes), 'text_align' => self::get_text_align_class_and_style($attributes), 'text_color' => self::get_text_color_class_and_style($attributes), 'text_decoration' => self::get_text_decoration_class_and_style($attributes), 'text_transform' => self::get_text_transform_class_and_style($attributes), 'extra_classes' => self::get_classes_from_attributes($attributes)];
+        if (!empty($properties)) {
             foreach ($classes_and_styles as $key => $value) {
-                if (! in_array($key, $properties, true)) {
-                    unset($classes_and_styles[ $key ]);
+                if (!in_array($key, $properties, true)) {
+                    unset($classes_and_styles[$key]);
                 }
             }
         }
-
-        if (! empty($exclude)) {
+        if (!empty($exclude)) {
             foreach ($classes_and_styles as $key => $value) {
                 if (in_array($key, $exclude, true)) {
-                    unset($classes_and_styles[ $key ]);
+                    unset($classes_and_styles[$key]);
                 }
             }
         }
-
         $classes_and_styles = array_filter($classes_and_styles);
-
-        $classes = array_map(
-            fn (array $item) => $item['class'],
-            $classes_and_styles
-        );
-
+        $classes = array_map(fn(array $item) => $item['class'], $classes_and_styles);
         $styles = array_map(
-            fn (array $item) => $item['style'],
+            fn(array $item) => $item['style'],
             // Exclude link color styles from parent to avoid conflict with text color.
-            array_diff_key(
-                $classes_and_styles,
-                array_flip([ 'link_color' ])
-            )
+            array_diff_key($classes_and_styles, array_flip(['link_color']))
         );
-
         $classes = array_filter($classes);
-        $styles  = array_filter($styles);
-
-        return [
-            'classes' => implode(' ', $classes),
-            'styles'  => implode(' ', $styles),
-        ];
+        $styles = array_filter($styles);
+        return ['classes' => implode(' ', $classes), 'styles' => implode(' ', $styles)];
     }
 }

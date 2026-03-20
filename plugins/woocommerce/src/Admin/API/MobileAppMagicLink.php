@@ -1,25 +1,22 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Data countries controller.
  *
  * Handles requests to the /mobile-app endpoint.
  */
-
-namespace Automattic\WooCommerce\Admin\API;
+namespace Automattic\Woo_Commerce\Admin\API;
 
 defined('ABSPATH') || exit;
-
 use Automattic\Jetpack\Connection\Manager as Jetpack_Connection_Manager;
-
 /**
  * REST API Data countries controller class.
  *
  * @internal
  * @extends WC_REST_Data_Controller
  */
-class MobileAppMagicLink extends \WC_REST_Data_Controller
+class Mobile_App_Magic_Link extends \WC_REST_Data_Controller
 {
     /**
      * Endpoint namespace.
@@ -27,14 +24,12 @@ class MobileAppMagicLink extends \WC_REST_Data_Controller
      * @var string
      */
     protected $namespace = 'wc-admin';
-
     /**
      * Route base.
      *
      * @var string
      */
     protected $rest_base = 'mobile-app';
-
     /**
      * Register routes.
      *
@@ -42,22 +37,9 @@ class MobileAppMagicLink extends \WC_REST_Data_Controller
      */
     public function register_routes(): void
     {
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/send-magic-link',
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->send_magic_link(...),
-                    'permission_callback' => $this->get_items_permissions_check(...),
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
-
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/send-magic-link', [['methods' => \WP_REST_Server::READABLE, 'callback' => $this->send_magic_link(...), 'permission_callback' => $this->get_items_permissions_check(...)], 'schema' => [$this, 'get_public_item_schema']]);
         parent::register_routes();
     }
-
     /**
      * Sends request to generate magic link email.
      *
@@ -70,33 +52,15 @@ class MobileAppMagicLink extends \WC_REST_Data_Controller
             $jetpack_connection_manager = new Jetpack_Connection_Manager();
             if ($jetpack_connection_manager->is_active()) {
                 if (class_exists('Jetpack_IXR_Client')) {
-                    $xml = new \Jetpack_IXR_Client(
-                        [
-                            'user_id' => get_current_user_id(),
-                        ]
-                    );
-
-                    $xml->query('jetpack.sendMobileMagicLink', [ 'app' => 'woocommerce' ]);
-                    if ($xml->isError()) {
-                        return new \WP_Error(
-                            'error_sending_mobile_magic_link',
-                            sprintf(
-                                '%s: %s',
-                                $xml->getErrorCode(),
-                                $xml->getErrorMessage()
-                            )
-                        );
+                    $xml = new \Jetpack_IXR_Client(['user_id' => get_current_user_id()]);
+                    $xml->query('jetpack.sendMobileMagicLink', ['app' => 'woocommerce']);
+                    if ($xml->is_error()) {
+                        return new \WP_Error('error_sending_mobile_magic_link', sprintf('%s: %s', $xml->get_error_code(), $xml->get_error_message()));
                     }
-
-                    return rest_ensure_response(
-                        [
-                            'code' => 'success',
-                        ]
-                    );
+                    return rest_ensure_response(['code' => 'success']);
                 }
             }
         }
-
         return new \WP_Error('jetpack_not_connected', __('Jetpack is not connected.', 'woocommerce'));
     }
 }

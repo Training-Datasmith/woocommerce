@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Import related abstract functions.
  */
+namespace Automattic\Woo_Commerce\Internal\Admin\Schedulers;
 
-namespace Automattic\WooCommerce\Internal\Admin\Schedulers;
-
-interface ImportInterface
+interface Import_Interface
 {
     /**
      * Get items based on query and return IDs along with total available.
@@ -19,12 +18,10 @@ interface ImportInterface
      * @param bool     $skip_existing Skip already imported items.
      */
     public static function get_items($limit, $page, $days, $skip_existing);
-
     /**
      * Get total number of items already imported.
      *
      * @internal
      */
     public static function get_total_imported();
-
 }

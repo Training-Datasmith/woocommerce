@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Tasks;
 
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
-
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
-
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task;
 /**
  * ExtendStore Task
  */
-class ExtendStore extends Task
+class Extend_Store extends Task
 {
     /**
      * ID.
@@ -18,7 +16,6 @@ class ExtendStore extends Task
     {
         return 'extend-store';
     }
-
     /**
      * Title.
      *
@@ -28,7 +25,6 @@ class ExtendStore extends Task
     {
         return __('Enhance your store with extensions', 'woocommerce');
     }
-
     /**
      * Content.
      */
@@ -36,7 +32,6 @@ class ExtendStore extends Task
     {
         return '';
     }
-
     /**
      * Additional info.
      */
@@ -44,7 +39,6 @@ class ExtendStore extends Task
     {
         return '';
     }
-
     /**
      * Time.
      */
@@ -52,7 +46,6 @@ class ExtendStore extends Task
     {
         return '';
     }
-
     /**
      * Task completion.
      *
@@ -62,7 +55,6 @@ class ExtendStore extends Task
     {
         return $this->is_visited();
     }
-
     /**
      * Always dismissable.
      */
@@ -70,7 +62,6 @@ class ExtendStore extends Task
     {
         return false;
     }
-
     /**
      * Action URL.
      *

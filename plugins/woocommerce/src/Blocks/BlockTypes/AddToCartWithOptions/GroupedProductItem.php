@@ -1,29 +1,25 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Add_To_Cart_With_Options;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\AddToCartWithOptions;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AbstractBlock;
-use Automattic\WooCommerce\Blocks\BlockTypes\AddToCartWithOptions\Utils as AddToCartWithOptionsUtils;
-use Automattic\WooCommerce\Blocks\BlockTypes\EnableBlockJsonAssetsTrait;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Abstract_Block;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Add_To_Cart_With_Options\Utils as AddToCartWithOptionsUtils;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Enable_Block_Json_Assets_Trait;
 use WP_Block;
-
 /**
  * Block type for grouped product selector item in add to cart with options.
  * It's responsible to render each child product in a form of a list item.
  */
-class GroupedProductItem extends AbstractBlock
+class Grouped_Product_Item extends Abstract_Block
 {
-    use EnableBlockJsonAssetsTrait;
-
+    use Enable_Block_Json_Assets_Trait;
     /**
      * Block name.
      *
      * @var string
      */
     protected $block_name = 'add-to-cart-with-options-grouped-product-item';
-
     /**
      * Modifies the block context for product price blocks when inside the Grouped Product Selector block.
      *
@@ -33,15 +29,11 @@ class GroupedProductItem extends AbstractBlock
      */
     public function set_is_descendant_of_grouped_product_selector_context(array $context, array $block): array
     {
-        if (
-            'woocommerce/product-price' === $block['blockName'] ||
-            'woocommerce/product-stock-indicator' === $block['blockName']
-        ) {
+        if ('woocommerce/product-price' === $block['blockName'] || 'woocommerce/product-stock-indicator' === $block['blockName']) {
             $context['isDescendantOfGroupedProductSelector'] = true;
         }
         return $context;
     }
-
     /**
      * Get product row HTML.
      *
@@ -52,34 +44,24 @@ class GroupedProductItem extends AbstractBlock
     private function get_product_row($product_id, $block): string
     {
         global $post, $product;
-        $previous_post    = $post;
+        $previous_post = $post;
         $previous_product = $product;
-
         // Since this template uses the core/post-title block to show the product name
         // a temporally replacement of the global post is needed. This is reverted back
         // to its initial post value that is stored in the $previous_post variable.
-        $post    = get_post($product_id); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+        $post = get_post($product_id);
+        // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
         $product = wc_get_product($product_id);
-
         add_filter('render_block_context', $this->set_is_descendant_of_grouped_product_selector_context(...), 10, 2);
-
         // Render the inner blocks of the Post Template block with `dynamic` set to `false` to prevent calling
         // `render_callback` and ensure that no wrapper markup is included.
-        $block_content = AddToCartWithOptionsUtils::render_block_with_context(
-            $block,
-            [
-                'postType' => 'product',
-                'postId'   => $post->ID,
-            ],
-        );
-
+        $block_content = Add_To_Cart_With_Options_Utils::render_block_with_context($block, ['postType' => 'product', 'postId' => $post->ID]);
         remove_filter('render_block_context', $this->set_is_descendant_of_grouped_product_selector_context(...));
-
-        $post    = $previous_post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+        $post = $previous_post;
+        // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
         $product = $previous_product;
         return $block_content;
     }
-
     /**
      * Render the block.
      *
@@ -91,19 +73,14 @@ class GroupedProductItem extends AbstractBlock
     protected function render($attributes, $content, $block): string
     {
         global $product;
-
-        if (! $product instanceof \WC_Product_Grouped) {
+        if (!$product instanceof \WC_Product_Grouped) {
             return '';
         }
-
         $content = '';
-
         $children = array_filter(array_map(wc_get_product(...), $product->get_children()), wc_products_array_filter_visible_grouped(...));
-
         foreach ($children as $child) {
             $content .= $this->get_product_row($child->get_id(), $block);
         }
-
         return $content;
     }
 }

@@ -1,49 +1,42 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\EmailEditor\WCTransactionalEmails;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Email_Editor\Wc_Transactional_Emails;
 
 /**
  * Class responsible for managing WooCommerce email editor post templates.
  */
-class WCTransactionalEmailPostsManager
+class Wc_Transactional_Email_Posts_Manager
 {
     public const WC_OPTION_NAME = 'woocommerce_email_templates_%_post_id';
-
     /**
      * Cache group for email template lookups.
      *
      * @var string
      */
     public const CACHE_GROUP = 'wc_block_email_templates';
-
     /**
      * Cache expiration time in seconds (1 week).
      *
      * @var int
      */
     public const CACHE_EXPIRATION = WEEK_IN_SECONDS;
-
     /**
      * Singleton instance of the class.
      */
-    private static ?\Automattic\WooCommerce\Internal\EmailEditor\WCTransactionalEmails\WCTransactionalEmailPostsManager $instance = null;
-
+    private static ?\Automattic\Woo_Commerce\Internal\Email_Editor\Wc_Transactional_Emails\Wc_Transactional_Email_Posts_Manager $instance = null;
     /**
      * In-memory cache for post_id to email_type lookups within the same request.
      *
      * @var array<int|string, string|null>
      */
     private $post_id_to_email_type_cache = [];
-
     /**
      * In-memory cache for email class name (e.g. 'WC_Email_Customer_New_Account') lookups within the same request.
      *
      * @var array<string, string|null>
      */
     private array $email_class_name_cache = [];
-
     /**
      * Gets the singleton instance of the class.
      *
@@ -56,7 +49,6 @@ class WCTransactionalEmailPostsManager
         }
         return self::$instance;
     }
-
     /**
      * Retrieves the email post by its type.
      *
@@ -68,20 +60,15 @@ class WCTransactionalEmailPostsManager
     public function get_email_post($email_type): ?\WP_Post
     {
         $post_id = $this->get_email_template_post_id($email_type);
-
-        if (! $post_id) {
+        if (!$post_id) {
             return null;
         }
-
         $post = get_post($post_id);
-
-        if (! $post instanceof \WP_Post) {
+        if (!$post instanceof \WP_Post) {
             return null;
         }
-
         return $post;
     }
-
     /**
      * Retrieves the WooCommerce email type from the options table when post ID is provided.
      *
@@ -100,49 +87,32 @@ class WCTransactionalEmailPostsManager
         if (empty($post_id)) {
             return null;
         }
-
-        $post_id   = (int) $post_id;
+        $post_id = (int) $post_id;
         $cache_key = $this->get_cache_key_for_post_id($post_id);
-
-        if (! $skip_cache) {
+        if (!$skip_cache) {
             // Check in-memory cache first (fastest).
             if (array_key_exists($post_id, $this->post_id_to_email_type_cache)) {
-                return $this->post_id_to_email_type_cache[ $post_id ];
+                return $this->post_id_to_email_type_cache[$post_id];
             }
-
             // Check WordPress object cache.
             $email_type = wp_cache_get($cache_key, self::CACHE_GROUP);
-
-            if (! empty($email_type)) {
-                $this->post_id_to_email_type_cache[ $post_id ] = $email_type;
+            if (!empty($email_type)) {
+                $this->post_id_to_email_type_cache[$post_id] = $email_type;
                 return $email_type;
             }
         }
-
         // Cache miss - perform database query.
         global $wpdb;
-
-        $option_name = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s AND option_value = %s LIMIT 1",
-                self::WC_OPTION_NAME,
-                $post_id
-            )
-        );
-
+        $option_name = $wpdb->get_var($wpdb->prepare("SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s AND option_value = %s LIMIT 1", self::WC_OPTION_NAME, $post_id));
         if (empty($option_name)) {
             return null;
         }
-
         $email_type = $this->get_email_type_from_option_name($option_name);
-
         // Store in both caches.
-        $this->post_id_to_email_type_cache[ $post_id ] = $email_type;
+        $this->post_id_to_email_type_cache[$post_id] = $email_type;
         wp_cache_set($cache_key, $email_type, self::CACHE_GROUP, self::CACHE_EXPIRATION);
-
         return $email_type;
     }
-
     /**
      * Checks if an email template exists for the given type.
      *
@@ -155,7 +125,6 @@ class WCTransactionalEmailPostsManager
     {
         return null !== $this->get_email_post($email_type);
     }
-
     /**
      * Saves the post ID for a specific email template type.
      *
@@ -165,24 +134,18 @@ class WCTransactionalEmailPostsManager
     public function save_email_template_post_id($email_type, int|string $post_id): void
     {
         $option_name = $this->get_option_name($email_type);
-
         $previous_id = get_option($option_name);
-
         update_option($option_name, $post_id);
-
         // Invalidate caches for the previous mapping (if any).
-        if (! empty($previous_id)) {
+        if (!empty($previous_id)) {
             $this->invalidate_cache_for_template((int) $previous_id, 'post_id');
         }
-
         // Invalidate cache for the new post_id.
         $this->invalidate_cache_for_template($email_type, 'email_type');
-
         // Update in-memory caches with the new values.
-        $this->post_id_to_email_type_cache[ $post_id ] = $email_type;
+        $this->post_id_to_email_type_cache[$post_id] = $email_type;
         wp_cache_set($this->get_cache_key_for_post_id($post_id), $email_type, self::CACHE_GROUP, self::CACHE_EXPIRATION);
     }
-
     /**
      * Gets the post ID for a specific email template type.
      *
@@ -198,20 +161,15 @@ class WCTransactionalEmailPostsManager
         if (false !== $post_id_from_cache) {
             return $post_id_from_cache;
         }
-
         $option_name = $this->get_option_name($email_type);
-        $post_id     = get_option($option_name);
-
-        if (! empty($post_id)) {
+        $post_id = get_option($option_name);
+        if (!empty($post_id)) {
             $post_id = (int) $post_id;
-
             // Store in in-memory cache.
-            $this->post_id_to_email_type_cache[ $post_id ] = $email_type;
+            $this->post_id_to_email_type_cache[$post_id] = $email_type;
         }
-
         return $post_id;
     }
-
     /**
      * Deletes the post ID for a specific email template type.
      *
@@ -220,18 +178,14 @@ class WCTransactionalEmailPostsManager
     public function delete_email_template($email_type): void
     {
         $option_name = $this->get_option_name($email_type);
-        $post_id     = get_option($option_name);
-
-        if (! $post_id) {
+        $post_id = get_option($option_name);
+        if (!$post_id) {
             return;
         }
-
         delete_option($option_name);
-
         // Invalidate cache.
         $this->invalidate_cache_for_template($post_id, 'post_id');
     }
-
     /**
      * Invalidates cache entries for a specific post ID or email type.
      *
@@ -247,16 +201,13 @@ class WCTransactionalEmailPostsManager
             // Get all the post IDs that map to the email type.
             $post_id_array = array_merge($post_id_array, array_unique(array_keys($this->post_id_to_email_type_cache, $value, true)));
         }
-
         foreach ($post_id_array as $post_id) {
-            unset($this->post_id_to_email_type_cache[ $post_id ]);
-
+            unset($this->post_id_to_email_type_cache[$post_id]);
             // Delete from WordPress object cache.
             $cache_key = $this->get_cache_key_for_post_id($post_id);
             wp_cache_delete($cache_key, self::CACHE_GROUP);
         }
     }
-
     /**
      * Clears all in-memory caches.
      *
@@ -266,9 +217,8 @@ class WCTransactionalEmailPostsManager
     public function clear_caches(): void
     {
         $this->post_id_to_email_type_cache = [];
-        $this->email_class_name_cache      = [];
+        $this->email_class_name_cache = [];
     }
-
     /**
      * Gets the cache key for a specific post ID.
      *
@@ -279,7 +229,6 @@ class WCTransactionalEmailPostsManager
     {
         return 'post_id_to_email_type_' . $post_id;
     }
-
     /**
      * Gets the option name for a specific email type.
      *
@@ -290,7 +239,6 @@ class WCTransactionalEmailPostsManager
     {
         return str_replace('%', $email_type, self::WC_OPTION_NAME);
     }
-
     /**
      * Gets the email type from the option name.
      *
@@ -299,16 +247,8 @@ class WCTransactionalEmailPostsManager
      */
     private function get_email_type_from_option_name($option_name): string
     {
-        return str_replace(
-            [
-                'woocommerce_email_templates_',
-                '_post_id',
-            ],
-            '',
-            $option_name
-        );
+        return str_replace(['woocommerce_email_templates_', '_post_id'], '', $option_name);
     }
-
     /**
      * Gets the email type class name, e.g. 'WC_Email_Customer_New_Account' from the email ID (e.g. 'customer_new_account' from the WC_Email->id property).
      *
@@ -323,28 +263,23 @@ class WCTransactionalEmailPostsManager
         if (empty($email_id)) {
             return null;
         }
-
         // Check in-memory cache first.
-        if (isset($this->email_class_name_cache[ $email_id ])) {
-            return $this->email_class_name_cache[ $email_id ];
+        if (isset($this->email_class_name_cache[$email_id])) {
+            return $this->email_class_name_cache[$email_id];
         }
-
         /**
          * Get all the emails registered in WooCommerce.
          *
          * @var \WC_Email[]
          */
         $emails = WC()->mailer()->get_emails();
-
         // Build the cache for all emails at once to avoid repeated iterations.
         foreach ($emails as $email) {
-            $this->email_class_name_cache[ $email->id ] = $email::class;
+            $this->email_class_name_cache[$email->id] = $email::class;
         }
-
         // Return the requested email class name if it exists.
-        return $this->email_class_name_cache[ $email_id ] ?? null;
+        return $this->email_class_name_cache[$email_id] ?? null;
     }
-
     /**
      * Gets the email type class name, e.g. 'WC_Email_Customer_New_Account' from the post ID.
      *
@@ -357,7 +292,6 @@ class WCTransactionalEmailPostsManager
         if (empty($post_id)) {
             return null;
         }
-
         return $this->get_email_type_class_name_from_email_id($this->get_email_type_from_post_id($post_id));
     }
 }

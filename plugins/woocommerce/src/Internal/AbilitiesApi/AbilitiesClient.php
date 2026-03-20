@@ -9,21 +9,18 @@
  * @package Automattic\WooCommerce\Internal\AbilitiesApi
  * @version 10.4.0
  */
-
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\AbilitiesApi;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Abilities_Api;
 
 /**
  * AbilitiesClient class.
  */
-class AbilitiesClient
+class Abilities_Client
 {
     /**
      * Whether the client has been enabled.
      */
     private static bool $enabled = false;
-
     /**
      * Enable the WordPress Abilities API client for admin pages.
      *
@@ -38,24 +35,20 @@ class AbilitiesClient
         if (self::$enabled) {
             return true;
         }
-
         // Hook into admin_enqueue_scripts to enqueue when needed.
         add_action('admin_enqueue_scripts', self::enqueue_for_admin(...));
-
         self::$enabled = true;
         return true;
     }
-
     /**
      * Internal method to handle script enqueueing.
      */
     public static function enqueue_for_admin(): void
     {
         // Only enqueue on admin pages.
-        if (! is_admin()) {
+        if (!is_admin()) {
             return;
         }
-
         // Enqueue the script if it's registered.
         if (wp_script_is('wp-abilities', 'registered')) {
             wp_enqueue_script('wp-abilities');

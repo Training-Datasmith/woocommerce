@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\AddressProvider;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Address_Provider;
 
 use WC_Address_Provider;
-
 /**
  * Service class for managing address providers.
  */
-class AddressProviderController
+class Address_Provider_Controller
 {
     /**
      * Registered provider instances.
@@ -17,14 +15,12 @@ class AddressProviderController
      * @var WC_Address_Provider[]
      */
     private array $providers = [];
-
     /**
      * Preferred provider from options.
      *
      * @var string ID of preferred address provider.
      */
     private $preferred_provider_option = '';
-
     /**
      * Constructor.
      *
@@ -34,7 +30,6 @@ class AddressProviderController
     {
         add_action('init', $this->init(...));
     }
-
     /**
      * Init function runs after this provider was added to DI container.
      *
@@ -43,9 +38,8 @@ class AddressProviderController
     final public function init(): void
     {
         $this->preferred_provider_option = get_option('woocommerce_address_autocomplete_provider', '');
-        $this->providers                 = $this->get_registered_providers();
+        $this->providers = $this->get_registered_providers();
     }
-
     /**
      * Get the registered providers.
      *
@@ -55,7 +49,6 @@ class AddressProviderController
     {
         return $this->providers;
     }
-
     /**
      * Get all registered providers.
      *
@@ -72,96 +65,55 @@ class AddressProviderController
          *                         Example: array( 'My_Provider_Class', new My_Other_Provider() )
          */
         $provider_items = apply_filters('woocommerce_address_providers', []);
-
         // The filter returned nothing but an empty array, so we can skip the rest of the function.
         if (empty($provider_items) && is_array($provider_items)) {
             return [];
         }
-
         $logger = wc_get_logger();
-
-        if (! is_array($provider_items)) {
-            $logger->error(
-                'Invalid return value for woocommerce_address_providers, expected an array of class names or instances.',
-                [
-                    'context' => 'address_provider_service',
-                ]
-            );
+        if (!is_array($provider_items)) {
+            $logger->error('Invalid return value for woocommerce_address_providers, expected an array of class names or instances.', ['context' => 'address_provider_service']);
             return [];
         }
-
         $providers = [];
-        $seen_ids  = [];
-
+        $seen_ids = [];
         foreach ($provider_items as $provider_item) {
             if (is_string($provider_item) && class_exists($provider_item)) {
                 $provider_item = new $provider_item();
             }
-
             // Providers need to be valid and extend WC_Address_Provider.
-            if (! is_a($provider_item, WC_Address_Provider::class)) {
-                $logger->error(
-                    sprintf(
-                        'Invalid address provider item "%s", expected a string class name or WC_Address_Provider instance.',
-                        get_debug_type($provider_item)
-                    ),
-                    [
-                        'context' => 'address_provider_service',
-                    ]
-                );
+            if (!is_a($provider_item, WC_Address_Provider::class)) {
+                $logger->error(sprintf('Invalid address provider item "%s", expected a string class name or WC_Address_Provider instance.', get_debug_type($provider_item)), ['context' => 'address_provider_service']);
                 continue;
             }
-
             // Validate the instance has the necessary properties.
             if (empty($provider_item->id) || empty($provider_item->name)) {
-                $logger->error(
-                    'Invalid address provider instance, id or name property is missing or empty: ' . $provider_item::class,
-                    [
-                        'context' => 'address_provider_service',
-                    ]
-                );
+                $logger->error('Invalid address provider instance, id or name property is missing or empty: ' . $provider_item::class, ['context' => 'address_provider_service']);
                 continue;
             }
-
             // Check for duplicate IDs.
-            if (isset($seen_ids[ $provider_item->id ])) {
-                $logger->error(
-                    sprintf(
-                        'Duplicate provider ID found. ID "%s" is used by both %s and %s.',
-                        $provider_item->id,
-                        $seen_ids[ $provider_item->id ],
-                        $provider_item::class
-                    ),
-                    [
-                        'context' => 'address_provider_service',
-                    ]
-                );
+            if (isset($seen_ids[$provider_item->id])) {
+                $logger->error(sprintf('Duplicate provider ID found. ID "%s" is used by both %s and %s.', $provider_item->id, $seen_ids[$provider_item->id], $provider_item::class), ['context' => 'address_provider_service']);
                 continue;
             }
-
             // Track the ID and its provider class for error reporting.
-            $seen_ids[ $provider_item->id ] = $provider_item::class;
-
+            $seen_ids[$provider_item->id] = $provider_item::class;
             // Add the provider instance to the array after all checks are completed.
             $providers[] = $provider_item;
         }
-
-        if (! empty($this->preferred_provider_option) && ! empty($providers)) {
+        if (!empty($this->preferred_provider_option) && !empty($providers)) {
             // Look for the preferred provider in the array.
             foreach ($providers as $key => $provider) {
                 if ($provider->id === $this->preferred_provider_option) {
                     // Found the preferred provider, move it to the beginning of the array.
                     $preferred_provider = $provider;
-                    unset($providers[ $key ]);
+                    unset($providers[$key]);
                     array_unshift($providers, $preferred_provider);
                     break;
                 }
             }
         }
-
         return $providers;
     }
-
     /**
      * Check if a specific provider is registered and available.
      *
@@ -169,16 +121,13 @@ class AddressProviderController
      */
     public function is_provider_available(string $provider_id): bool
     {
-
         foreach ($this->providers as $provider) {
             if ($provider->id === $provider_id) {
                 return true;
             }
         }
-
         return false;
     }
-
     /**
      * Get the preferred provider; this is what was selected in the WooCommerce "preferred provider" setting *or* the
      * first registered provider if no preference was set. If the provider selected in WC Settings is not registered
@@ -186,11 +135,9 @@ class AddressProviderController
      */
     public function get_preferred_provider(): string
     {
-
         if ($this->is_provider_available($this->preferred_provider_option)) {
             return $this->preferred_provider_option;
         }
-
         // Get the first provider's ID.
         return $this->providers[0]->id ?? '';
     }

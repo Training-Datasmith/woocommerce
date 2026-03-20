@@ -1,34 +1,29 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\CLI\Migrator\Commands;
 
-namespace Automattic\WooCommerce\Internal\CLI\Migrator\Commands;
-
-use Automattic\WooCommerce\Internal\CLI\Migrator\Core\CredentialManager;
-use Automattic\WooCommerce\Internal\CLI\Migrator\Core\PlatformRegistry;
-use Automattic\WooCommerce\Internal\CLI\Migrator\Core\ProductsController;
+use Automattic\Woo_Commerce\Internal\CLI\Migrator\Core\Credential_Manager;
+use Automattic\Woo_Commerce\Internal\CLI\Migrator\Core\Platform_Registry;
+use Automattic\Woo_Commerce\Internal\CLI\Migrator\Core\Products_Controller;
 use WP_CLI;
-
 /**
  * The products command.
  */
-final class ProductsCommand
+final class Products_Command
 {
     /**
      * The credential manager.
      */
-    private CredentialManager $credential_manager;
-
+    private Credential_Manager $credential_manager;
     /**
      * The platform registry.
      */
-    private PlatformRegistry $platform_registry;
-
+    private Platform_Registry $platform_registry;
     /**
      * The products controller.
      */
-    private ProductsController $products_controller;
-
+    private Products_Controller $products_controller;
     /**
      * Initialize the command with its dependencies.
      *
@@ -38,9 +33,10 @@ final class ProductsCommand
      *
      * @internal
      */
-    final public function init(CredentialManager $credential_manager, PlatformRegistry $platform_registry, ProductsController $products_controller): void // phpcs:ignore Generic.CodeAnalysis.UnnecessaryFinalModifier.Found -- Required by WooCommerce injection method rules
-    {$this->credential_manager  = $credential_manager;
-        $this->platform_registry   = $platform_registry;
+    final public function init(Credential_Manager $credential_manager, Platform_Registry $platform_registry, Products_Controller $products_controller): void
+    {
+        $this->credential_manager = $credential_manager;
+        $this->platform_registry = $platform_registry;
         $this->products_controller = $products_controller;
     }
     /**
@@ -113,34 +109,28 @@ final class ProductsCommand
     public function __invoke(array $args, array $assoc_args): void
     {
         // Resolve and validate the platform.
-        $platform              = $this->platform_registry->resolve_platform($assoc_args);
+        $platform = $this->platform_registry->resolve_platform($assoc_args);
         $platform_display_name = $this->platform_registry->get_platform_display_name($platform);
-
-        if (! $this->credential_manager->has_credentials($platform)) {
+        if (!$this->credential_manager->has_credentials($platform)) {
             WP_CLI::log("Credentials for '{$platform_display_name}' not found. Let's set them up.");
-
             // Get platform-specific credential fields and set them up.
             $required_fields = $this->platform_registry->get_platform_credential_fields($platform);
             if (empty($required_fields)) {
                 WP_CLI::error("The platform '{$platform_display_name}' does not have configured credential fields.");
                 return;
             }
-
             $this->credential_manager->setup_credentials($platform, $required_fields);
             WP_CLI::success('Credentials saved successfully. Please run the command again to begin the migration.');
             return;
         }
-
         // Handle count request if specified.
         if (isset($assoc_args['count'])) {
             $this->handle_count_request($platform, $platform_display_name, $assoc_args);
             return;
         }
-
         // Delegate actual migration logic to ProductsController with resolved platform.
         $this->products_controller->migrate_products($assoc_args, $platform);
     }
-
     /**
      * Handle the count request.
      *
@@ -151,13 +141,11 @@ final class ProductsCommand
     private function handle_count_request(string $platform, string $platform_display_name, array $assoc_args): void
     {
         WP_CLI::log("Fetching product count from {$platform_display_name}...");
-
         $fetcher = $this->platform_registry->get_fetcher($platform);
-        if (! $fetcher) {
+        if (!$fetcher) {
             WP_CLI::error("Could not get fetcher for platform '{$platform_display_name}'");
             return;
         }
-
         // Build filter arguments.
         $filter_args = [];
         if (isset($assoc_args['status'])) {
@@ -172,9 +160,7 @@ final class ProductsCommand
         if (isset($assoc_args['ids'])) {
             $filter_args['ids'] = $assoc_args['ids'];
         }
-
         $count = $fetcher->fetch_total_count($filter_args);
-
         if (0 === $count) {
             WP_CLI::log('No products found or unable to fetch count.');
         } else {
@@ -191,7 +177,6 @@ final class ProductsCommand
             if (isset($assoc_args['ids'])) {
                 $filters[] = "IDs '{$assoc_args['ids']}'";
             }
-
             $filter_description = empty($filters) ? '' : ' with ' . implode(', ', $filters);
             WP_CLI::success("Found {$count} products{$filter_description} on {$platform_display_name}.");
         }

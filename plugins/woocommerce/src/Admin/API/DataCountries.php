@@ -1,23 +1,21 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Data countries controller.
  *
  * Handles requests to the /data/countries endpoint.
  */
-
-namespace Automattic\WooCommerce\Admin\API;
+namespace Automattic\Woo_Commerce\Admin\API;
 
 defined('ABSPATH') || exit;
-
 /**
  * REST API Data countries controller class.
  *
  * @internal
  * @extends WC_REST_Data_Countries_Controller
  */
-class DataCountries extends \WC_REST_Data_Countries_Controller
+class Data_Countries extends \WC_REST_Data_Countries_Controller
 {
     /**
      * Endpoint namespace.
@@ -25,7 +23,6 @@ class DataCountries extends \WC_REST_Data_Countries_Controller
      * @var string
      */
     protected $namespace = 'wc-analytics';
-
     /**
      * Register routes.
      *
@@ -33,22 +30,9 @@ class DataCountries extends \WC_REST_Data_Countries_Controller
      */
     public function register_routes(): void
     {
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/locales',
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_locales(...),
-                    'permission_callback' => $this->get_items_permissions_check(...),
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
-
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/locales', [['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_locales(...), 'permission_callback' => $this->get_items_permissions_check(...)], 'schema' => [$this, 'get_public_item_schema']]);
         parent::register_routes();
     }
-
     /**
      * Get country fields.
      *

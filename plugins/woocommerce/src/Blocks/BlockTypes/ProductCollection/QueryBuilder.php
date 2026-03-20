@@ -1,22 +1,20 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Product_Collection;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\ProductCollection;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AttributeFilter;
-use Automattic\WooCommerce\Blocks\BlockTypes\PriceFilter;
-use Automattic\WooCommerce\Blocks\BlockTypes\RatingFilter;
-use Automattic\WooCommerce\Blocks\BlockTypes\StockFilter;
-use Automattic\WooCommerce\Enums\ProductStockStatus;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Attribute_Filter;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Price_Filter;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Rating_Filter;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Stock_Filter;
+use Automattic\Woo_Commerce\Enums\Product_Stock_Status;
 use WC_Tax;
 use WP_Query;
-
 /**
  * QueryBuilder class.
  * Responsible for constructing and modifying product queries.
  */
-class QueryBuilder
+class Query_Builder
 {
     /**
      * All query args from WP_Query.
@@ -24,28 +22,24 @@ class QueryBuilder
      * @var array
      */
     protected $valid_query_vars;
-
     /**
      * Orderby options not natively supported by WordPress REST API
      *
      * @var array
      */
-    protected $custom_order_opts = [ 'popularity', 'rating', 'post__in', 'price', 'sales', 'menu_order', 'random' ];
-
+    protected $custom_order_opts = ['popularity', 'rating', 'post__in', 'price', 'sales', 'menu_order', 'random'];
     /**
      * All the query args related to the filter by attributes block.
      *
      * @var array
      */
     protected $attributes_filter_query_args = [];
-
     /**
      * Collection handler store.
      *
      * @var array
      */
     protected $collection_handler_store = [];
-
     /**
      * Constructor.
      */
@@ -54,7 +48,6 @@ class QueryBuilder
         $this->valid_query_vars = $this->get_valid_query_vars();
         add_filter('posts_clauses', $this->add_price_range_filter_posts_clauses(...), 10, 2);
     }
-
     /**
      * Set the collection handler store.
      *
@@ -64,7 +57,6 @@ class QueryBuilder
     {
         $this->collection_handler_store = $collection_handler_store;
     }
-
     /**
      * Set collection handler.
      *
@@ -73,9 +65,8 @@ class QueryBuilder
      */
     public function set_collection_handler($collection_name, $handlers): void
     {
-        $this->collection_handler_store[ $collection_name ] = $handlers;
+        $this->collection_handler_store[$collection_name] = $handlers;
     }
-
     /**
      * Set attributes filter query args.
      *
@@ -85,7 +76,6 @@ class QueryBuilder
     {
         $this->attributes_filter_query_args = $args;
     }
-
     /**
      * Return or initialize $valid_query_vars.
      *
@@ -93,41 +83,17 @@ class QueryBuilder
      */
     private function get_valid_query_vars()
     {
-        if (! empty($this->valid_query_vars)) {
+        if (!empty($this->valid_query_vars)) {
             return $this->valid_query_vars;
         }
-
-        $valid_query_vars       = array_keys((new WP_Query())->fill_query_vars([]));
+        $valid_query_vars = array_keys((new WP_Query())->fill_query_vars([]));
         $this->valid_query_vars = array_merge(
             $valid_query_vars,
             // fill_query_vars doesn't include these vars so we need to add them manually.
-            [
-                'date_query',
-                'exact',
-                'ignore_sticky_posts',
-                'lazy_load_term_meta',
-                'meta_compare_key',
-                'meta_compare',
-                'meta_query',
-                'meta_type_key',
-                'meta_type',
-                'nopaging',
-                'offset',
-                'order',
-                'orderby',
-                'page',
-                'post_type',
-                'posts_per_page',
-                'suppress_filters',
-                'tax_query',
-                'isProductCollection',
-                'priceRange',
-            ]
+            ['date_query', 'exact', 'ignore_sticky_posts', 'lazy_load_term_meta', 'meta_compare_key', 'meta_compare', 'meta_query', 'meta_type_key', 'meta_type', 'nopaging', 'offset', 'order', 'orderby', 'page', 'post_type', 'posts_per_page', 'suppress_filters', 'tax_query', 'isProductCollection', 'priceRange']
         );
-
         return $this->valid_query_vars;
     }
-
     /**
      * Get custom order options.
      *
@@ -137,7 +103,6 @@ class QueryBuilder
     {
         return $this->custom_order_opts;
     }
-
     /**
      * Get the final query arguments for the frontend.
      *
@@ -149,60 +114,40 @@ class QueryBuilder
     public function get_final_frontend_query($collection_args, array $query, $page = 1, $is_exclude_applied_filters = false)
     {
         $product_ids = $query['post__in'] ?? [];
-        $offset      = $query['offset'] ?? 0;
-        $per_page    = $query['perPage'] ?? 9;
-        $order       = $query['order'] ?? 'asc';
-        $search      = $query['search'] ?? '';
-
+        $offset = $query['offset'] ?? 0;
+        $per_page = $query['perPage'] ?? 9;
+        $order = $query['order'] ?? 'asc';
+        $search = $query['search'] ?? '';
         $common_query_values = [
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-            'meta_query'     => [],
+            'meta_query' => [],
             'posts_per_page' => $per_page,
-            'order'          => $order,
-            'offset'         => ($per_page * ($page - 1)) + $offset,
-            'post__in'       => $product_ids,
-            'post_status'    => 'publish',
-            'post_type'      => 'product',
+            'order' => $order,
+            'offset' => $per_page * ($page - 1) + $offset,
+            'post__in' => $product_ids,
+            'post_status' => 'publish',
+            'post_type' => 'product',
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-            'tax_query'      => [],
-            'paged'          => $page,
-            's'              => $search,
+            'tax_query' => [],
+            'paged' => $page,
+            's' => $search,
         ];
-
-        $is_on_sale          = $query['woocommerceOnSale'] ?? false;
-        $order_by            = $query['orderBy'] ?? '';
-        $stock_status        = $query['woocommerceStockStatus'] ?? array_keys(wc_get_product_stock_status_options());
-        $product_attributes  = $query['woocommerceAttributes'] ?? [];
-        $taxonomies_query    = $this->get_filter_by_taxonomies_query($query['tax_query'] ?? []);
+        $is_on_sale = $query['woocommerceOnSale'] ?? false;
+        $order_by = $query['orderBy'] ?? '';
+        $stock_status = $query['woocommerceStockStatus'] ?? array_keys(wc_get_product_stock_status_options());
+        $product_attributes = $query['woocommerceAttributes'] ?? [];
+        $taxonomies_query = $this->get_filter_by_taxonomies_query($query['tax_query'] ?? []);
         $handpicked_products = $query['woocommerceHandPickedProducts'] ?? [];
-        $time_frame          = $query['timeFrame'] ?? null;
-        $price_range         = $query['priceRange'] ?? null;
-        $featured            = $query['featured'] ?? false;
-
+        $time_frame = $query['timeFrame'] ?? null;
+        $price_range = $query['priceRange'] ?? null;
+        $featured = $query['featured'] ?? false;
         // Allow collections to modify the collection arguments passed to the query builder.
-        $handlers = $this->collection_handler_store[ $collection_args['name'] ] ?? null;
+        $handlers = $this->collection_handler_store[$collection_args['name']] ?? null;
         if (isset($handlers['frontend_args'])) {
             $collection_args = call_user_func($handlers['frontend_args'], $collection_args, $query);
         }
-
-        return $this->get_final_query_args(
-            $collection_args,
-            $common_query_values,
-            [
-                'on_sale'             => $is_on_sale,
-                'stock_status'        => $stock_status,
-                'orderby'             => $order_by,
-                'product_attributes'  => $product_attributes,
-                'taxonomies_query'    => $taxonomies_query,
-                'handpicked_products' => $handpicked_products,
-                'featured'            => $featured,
-                'timeFrame'           => $time_frame,
-                'priceRange'          => $price_range,
-            ],
-            $is_exclude_applied_filters
-        );
+        return $this->get_final_query_args($collection_args, $common_query_values, ['on_sale' => $is_on_sale, 'stock_status' => $stock_status, 'orderby' => $order_by, 'product_attributes' => $product_attributes, 'taxonomies_query' => $taxonomies_query, 'handpicked_products' => $handpicked_products, 'featured' => $featured, 'timeFrame' => $time_frame, 'priceRange' => $price_range], $is_exclude_applied_filters);
     }
-
     /**
      * Return a query to filter products by taxonomies (product categories, product tags, etc.)
      *
@@ -227,24 +172,18 @@ class QueryBuilder
      */
     private function get_filter_by_taxonomies_query($tax_query): array
     {
-        if (! is_array($tax_query)) {
+        if (!is_array($tax_query)) {
             return [];
         }
-
         /**
          * Get an array of taxonomy names associated with the "product" post type because
          * we also want to include custom taxonomies associated with the "product" post type.
          */
-        $product_taxonomies = array_diff(get_object_taxonomies('product', 'names'), [ 'product_visibility', 'product_shipping_class' ]);
-        $result             = array_filter(
-            $tax_query,
-            fn (array $item) => isset($item['taxonomy']) && in_array($item['taxonomy'], $product_taxonomies, true)
-        );
-
+        $product_taxonomies = array_diff(get_object_taxonomies('product', 'names'), ['product_visibility', 'product_shipping_class']);
+        $result = array_filter($tax_query, fn(array $item) => isset($item['taxonomy']) && in_array($item['taxonomy'], $product_taxonomies, true));
         // phpcs:ignore WordPress.DB.SlowDBQuery
-        return ! empty($result) ? [ 'tax_query' => $result ] : [];
+        return !empty($result) ? ['tax_query' => $result] : [];
     }
-
     /**
      * Get final query args based on provided values
      *
@@ -253,55 +192,30 @@ class QueryBuilder
      * @param array $query                      Query from block context.
      * @param bool  $is_exclude_applied_filters Whether to exclude the applied filters or not.
      */
-    public function get_final_query_args(
-        array $collection_args,
-        $common_query_values,
-        array $query,
-        $is_exclude_applied_filters = false
-    ) {
-        $orderby_query    = $query['orderby'] ? $this->get_custom_orderby_query($query['orderby']) : [];
-        $on_sale_query    = $this->get_on_sale_products_query($query['on_sale']);
-        $stock_query      = $this->get_stock_status_query($query['stock_status']);
+    public function get_final_query_args(array $collection_args, $common_query_values, array $query, $is_exclude_applied_filters = false)
+    {
+        $orderby_query = $query['orderby'] ? $this->get_custom_orderby_query($query['orderby']) : [];
+        $on_sale_query = $this->get_on_sale_products_query($query['on_sale']);
+        $stock_query = $this->get_stock_status_query($query['stock_status']);
         $visibility_query = is_array($query['stock_status']) ? $this->get_product_visibility_query($stock_query, $query['stock_status']) : [];
-        $featured_query   = $this->get_featured_query($query['featured'] ?? false);
+        $featured_query = $this->get_featured_query($query['featured'] ?? false);
         $attributes_query = $this->get_product_attributes_query($query['product_attributes']);
         $taxonomies_query = $query['taxonomies_query'] ?? [];
-        $tax_query        = $this->merge_tax_queries($visibility_query, $attributes_query, $taxonomies_query, $featured_query);
-        $date_query       = $this->get_date_query($query['timeFrame'] ?? []);
+        $tax_query = $this->merge_tax_queries($visibility_query, $attributes_query, $taxonomies_query, $featured_query);
+        $date_query = $this->get_date_query($query['timeFrame'] ?? []);
         $price_query_args = $this->get_price_range_query_args($query['priceRange'] ?? []);
         $handpicked_query = $this->get_handpicked_query($query['handpicked_products'] ?? false);
-
         // We exclude applied filters to generate product ids for the filter blocks.
         $applied_filters_query = $is_exclude_applied_filters ? [] : $this->get_queries_by_applied_filters();
-
         // Allow collections to provide their own query parameters.
-        $handlers = $this->collection_handler_store[ $collection_args['name'] ] ?? null;
+        $handlers = $this->collection_handler_store[$collection_args['name']] ?? null;
         if (isset($handlers['build_query'])) {
-            $collection_query = call_user_func(
-                $handlers['build_query'],
-                $collection_args,
-                $common_query_values,
-                $query,
-                $is_exclude_applied_filters
-            );
+            $collection_query = call_user_func($handlers['build_query'], $collection_args, $common_query_values, $query, $is_exclude_applied_filters);
         } else {
             $collection_query = [];
         }
-
-        return $this->merge_queries(
-            $common_query_values,
-            $orderby_query,
-            $on_sale_query,
-            $stock_query,
-            $tax_query,
-            $applied_filters_query,
-            $date_query,
-            $price_query_args,
-            $handpicked_query,
-            $collection_query
-        );
+        return $this->merge_queries($common_query_values, $orderby_query, $on_sale_query, $stock_query, $tax_query, $applied_filters_query, $date_query, $price_query_args, $handpicked_query, $collection_query);
     }
-
     /**
      * Get query args for preview mode. These query args will be used with WP_Query to fetch the products.
      *
@@ -312,16 +226,14 @@ class QueryBuilder
     public function get_preview_query_args(array $collection_args, array $args, $request)
     {
         $collection_query = [];
-
         // Allow collections to override the preview mode behavior.
-        $handlers = $this->collection_handler_store[ $collection_args['name'] ] ?? null;
+        $handlers = $this->collection_handler_store[$collection_args['name']] ?? null;
         if (isset($handlers['preview_query'])) {
             $collection_query = call_user_func($handlers['preview_query'], $collection_args, $args, $request);
         }
         $orderby_query = $args['orderby'] ? $this->get_custom_orderby_query($args['orderby']) : [];
         return $this->merge_queries($args, $orderby_query, $collection_query);
     }
-
     /**
      * Return a query for products depending on their stock status.
      *
@@ -329,23 +241,17 @@ class QueryBuilder
      */
     private function get_stock_status_query($stock_statuses): array
     {
-        if (! is_array($stock_statuses)) {
+        if (!is_array($stock_statuses)) {
             return [];
         }
-
         $stock_status_options = array_keys(wc_get_product_stock_status_options());
-
         /**
          * If all available stock status are selected, we don't need to add the
          * meta query for stock status.
          */
-        if (
-            count($stock_statuses) === count($stock_status_options) &&
-            array_diff($stock_statuses, $stock_status_options) === array_diff($stock_status_options, $stock_statuses)
-        ) {
+        if (count($stock_statuses) === count($stock_status_options) && array_diff($stock_statuses, $stock_status_options) === array_diff($stock_status_options, $stock_statuses)) {
             return [];
         }
-
         /**
          * If all stock statuses are selected except 'outofstock', we use the
          * product visibility query to filter out out of stock products.
@@ -353,22 +259,14 @@ class QueryBuilder
          * @see get_product_visibility_query()
          */
         $diff = array_diff($stock_status_options, $stock_statuses);
-        if (count($diff) === 1 && in_array(ProductStockStatus::OUT_OF_STOCK, $diff, true)) {
+        if (count($diff) === 1 && in_array(Product_Stock_Status::OUT_OF_STOCK, $diff, true)) {
             return [];
         }
-
         return [
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-            'meta_query' => [
-                [
-                    'key'     => '_stock_status',
-                    'value'   => $stock_statuses,
-                    'compare' => 'IN',
-                ],
-            ],
+            'meta_query' => [['key' => '_stock_status', 'value' => $stock_statuses, 'compare' => 'IN']],
         ];
     }
-
     /**
      * Merge tax_queries from various queries.
      *
@@ -378,14 +276,13 @@ class QueryBuilder
     {
         $tax_query = [];
         foreach ($queries as $query) {
-            if (! empty($query['tax_query'])) {
+            if (!empty($query['tax_query'])) {
                 $tax_query = array_merge($tax_query, $query['tax_query']);
             }
         }
         // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-        return [ 'tax_query' => $tax_query ];
+        return ['tax_query' => $tax_query];
     }
-
     /**
      * Return the `tax_query` for the requested attributes
      *
@@ -396,34 +293,20 @@ class QueryBuilder
         if (empty($attributes)) {
             return [];
         }
-
-        $grouped_attributes = array_reduce(
-            $attributes,
-            function (array $carry, array $item): array {
-                $taxonomy = sanitize_title($item['taxonomy']);
-
-                if (! key_exists($taxonomy, $carry)) {
-                    $carry[ $taxonomy ] = [
-                        'field'    => 'term_id',
-                        'operator' => 'IN',
-                        'taxonomy' => $taxonomy,
-                        'terms'    => [ $item['termId'] ],
-                    ];
-                } else {
-                    $carry[ $taxonomy ]['terms'][] = $item['termId'];
-                }
-
-                return $carry;
-            },
-            []
-        );
-
+        $grouped_attributes = array_reduce($attributes, function (array $carry, array $item): array {
+            $taxonomy = sanitize_title($item['taxonomy']);
+            if (!key_exists($taxonomy, $carry)) {
+                $carry[$taxonomy] = ['field' => 'term_id', 'operator' => 'IN', 'taxonomy' => $taxonomy, 'terms' => [$item['termId']]];
+            } else {
+                $carry[$taxonomy]['terms'][] = $item['termId'];
+            }
+            return $carry;
+        }, []);
         return [
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
             'tax_query' => array_values($grouped_attributes),
         ];
     }
-
     /**
      * Generates a tax query to filter products based on their "featured" status.
      * If the `$featured` parameter is true, the function will return a tax query
@@ -439,108 +322,55 @@ class QueryBuilder
         if (true !== $featured && 'true' !== $featured) {
             return [];
         }
-
         return [
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-            'tax_query' => [
-                [
-                    'taxonomy' => 'product_visibility',
-                    'field'    => 'name',
-                    'terms'    => 'featured',
-                    'operator' => 'IN',
-                ],
-            ],
+            'tax_query' => [['taxonomy' => 'product_visibility', 'field' => 'name', 'terms' => 'featured', 'operator' => 'IN']],
         ];
     }
-
     /**
      * Return a query that filters products by price.
      */
     private function get_filter_by_price_query(): array
     {
-        $min_price = get_query_var(PriceFilter::MIN_PRICE_QUERY_VAR);
-        $max_price = get_query_var(PriceFilter::MAX_PRICE_QUERY_VAR);
-
-        $max_price_query = empty($max_price) ? [] : [
-            'key'     => '_price',
-            'value'   => $max_price,
-            'compare' => '<=',
-            'type'    => 'numeric',
-        ];
-
-        $min_price_query = empty($min_price) ? [] : [
-            'key'     => '_price',
-            'value'   => $min_price,
-            'compare' => '>=',
-            'type'    => 'numeric',
-        ];
-
+        $min_price = get_query_var(Price_Filter::MIN_PRICE_QUERY_VAR);
+        $max_price = get_query_var(Price_Filter::MAX_PRICE_QUERY_VAR);
+        $max_price_query = empty($max_price) ? [] : ['key' => '_price', 'value' => $max_price, 'compare' => '<=', 'type' => 'numeric'];
+        $min_price_query = empty($min_price) ? [] : ['key' => '_price', 'value' => $min_price, 'compare' => '>=', 'type' => 'numeric'];
         if (empty($min_price_query) && empty($max_price_query)) {
             return [];
         }
-
         return [
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-            'meta_query' => [
-                [
-                    'relation' => 'AND',
-                    $max_price_query,
-                    $min_price_query,
-                ],
-            ],
+            'meta_query' => [['relation' => 'AND', $max_price_query, $min_price_query]],
         ];
     }
-
     /**
      * Return a query that filters products by attributes.
      */
     private function get_filter_by_attributes_query(): array
     {
         $attributes_filter_query_args = $this->get_filter_by_attributes_query_vars();
-
-        $queries = array_reduce(
-            $attributes_filter_query_args,
-            function ($acc, array $query_args) {
-                $attribute_name       = $query_args['filter'];
-                $attribute_query_type = $query_args['query_type'];
-
-                $attribute_value = get_query_var($attribute_name);
-                $attribute_query = get_query_var($attribute_query_type);
-
-                if (empty($attribute_value)) {
-                    return $acc;
-                }
-
-                // It is necessary explode the value because $attribute_value can be a string with multiple values (e.g. "red,blue").
-                $attribute_value = explode(',', $attribute_value);
-
-                $acc[] = [
-                    'taxonomy' => str_replace(AttributeFilter::FILTER_QUERY_VAR_PREFIX, 'pa_', $attribute_name),
-                    'field'    => 'slug',
-                    'terms'    => $attribute_value,
-                    'operator' => 'and' === $attribute_query ? 'AND' : 'IN',
-                ];
-
+        $queries = array_reduce($attributes_filter_query_args, function ($acc, array $query_args) {
+            $attribute_name = $query_args['filter'];
+            $attribute_query_type = $query_args['query_type'];
+            $attribute_value = get_query_var($attribute_name);
+            $attribute_query = get_query_var($attribute_query_type);
+            if (empty($attribute_value)) {
                 return $acc;
-            },
-            []
-        );
-
+            }
+            // It is necessary explode the value because $attribute_value can be a string with multiple values (e.g. "red,blue").
+            $attribute_value = explode(',', $attribute_value);
+            $acc[] = ['taxonomy' => str_replace(Attribute_Filter::FILTER_QUERY_VAR_PREFIX, 'pa_', $attribute_name), 'field' => 'slug', 'terms' => $attribute_value, 'operator' => 'and' === $attribute_query ? 'AND' : 'IN'];
+            return $acc;
+        }, []);
         if (empty($queries)) {
             return [];
         }
-
         return [
             // phpcs:ignore WordPress.DB.SlowDBQuery
-            'tax_query' => [
-                [
-                    'relation' => 'AND',
-                    $queries,
-                ],
-            ],
+            'tax_query' => [['relation' => 'AND', $queries]],
         ];
     }
-
     /**
      * Get all the query args related to the filter by attributes block.
      *
@@ -560,94 +390,54 @@ class QueryBuilder
      */
     private function get_filter_by_attributes_query_vars()
     {
-        if (! empty($this->attributes_filter_query_args)) {
+        if (!empty($this->attributes_filter_query_args)) {
             return $this->attributes_filter_query_args;
         }
-
-        $this->attributes_filter_query_args = array_reduce(
-            wc_get_attribute_taxonomies(),
-            function (array $acc, $attribute): array {
-                $acc[ $attribute->attribute_name ] = [
-                    'filter'     => AttributeFilter::FILTER_QUERY_VAR_PREFIX . $attribute->attribute_name,
-                    'query_type' => AttributeFilter::QUERY_TYPE_QUERY_VAR_PREFIX . $attribute->attribute_name,
-                ];
-                return $acc;
-            },
-            []
-        );
-
+        $this->attributes_filter_query_args = array_reduce(wc_get_attribute_taxonomies(), function (array $acc, $attribute): array {
+            $acc[$attribute->attribute_name] = ['filter' => Attribute_Filter::FILTER_QUERY_VAR_PREFIX . $attribute->attribute_name, 'query_type' => Attribute_Filter::QUERY_TYPE_QUERY_VAR_PREFIX . $attribute->attribute_name];
+            return $acc;
+        }, []);
         return $this->attributes_filter_query_args;
     }
-
     /**
      * Return a query that filters products by stock status.
      */
     private function get_filter_by_stock_status_query(): array
     {
-        $filter_stock_status_values = get_query_var(StockFilter::STOCK_STATUS_QUERY_VAR);
-
+        $filter_stock_status_values = get_query_var(Stock_Filter::STOCK_STATUS_QUERY_VAR);
         if (empty($filter_stock_status_values)) {
             return [];
         }
-
-        $filtered_stock_status_values = array_filter(
-            explode(',', $filter_stock_status_values),
-            fn ($stock_status) => in_array($stock_status, StockFilter::get_stock_status_query_var_values(), true)
-        );
-
+        $filtered_stock_status_values = array_filter(explode(',', $filter_stock_status_values), fn($stock_status) => in_array($stock_status, Stock_Filter::get_stock_status_query_var_values(), true));
         if (empty($filtered_stock_status_values)) {
             return [];
         }
-
         return [
             // Ignoring the warning of not using meta queries.
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-            'meta_query' => [
-                [
-                    'key'      => '_stock_status',
-                    'value'    => $filtered_stock_status_values,
-                    'operator' => 'IN',
-                ],
-            ],
+            'meta_query' => [['key' => '_stock_status', 'value' => $filtered_stock_status_values, 'operator' => 'IN']],
         ];
     }
-
     /**
      * Return a query that filters products by rating.
      */
     private function get_filter_by_rating_query(): array
     {
-        $filter_rating_values = get_query_var(RatingFilter::RATING_QUERY_VAR);
+        $filter_rating_values = get_query_var(Rating_Filter::RATING_QUERY_VAR);
         if (empty($filter_rating_values)) {
             return [];
         }
-
         $parsed_filter_rating_values = explode(',', $filter_rating_values);
-        $product_visibility_terms    = wc_get_product_visibility_term_ids();
-
+        $product_visibility_terms = wc_get_product_visibility_term_ids();
         if (empty($product_visibility_terms)) {
             return [];
         }
-
-        $rating_terms = array_map(
-            fn ($rating) => $product_visibility_terms[ 'rated-' . $rating ],
-            $parsed_filter_rating_values
-        );
-
+        $rating_terms = array_map(fn($rating) => $product_visibility_terms['rated-' . $rating], $parsed_filter_rating_values);
         return [
             // phpcs:ignore WordPress.DB.SlowDBQuery
-            'tax_query' => [
-                [
-                    'field'         => 'term_taxonomy_id',
-                    'taxonomy'      => 'product_visibility',
-                    'terms'         => $rating_terms,
-                    'operator'      => 'IN',
-                    'rating_filter' => true,
-                ],
-            ],
+            'tax_query' => [['field' => 'term_taxonomy_id', 'taxonomy' => 'product_visibility', 'terms' => $rating_terms, 'operator' => 'IN', 'rating_filter' => true]],
         ];
     }
-
     /**
      * Return a query that filters products by taxonomy terms.
      *
@@ -655,60 +445,39 @@ class QueryBuilder
      */
     private function get_filter_by_taxonomy_query(): array
     {
-
-        $container       = wc_get_container();
-        $params_handler  = $container->get(\Automattic\WooCommerce\Internal\ProductFilters\Params::class);
+        $container = wc_get_container();
+        $params_handler = $container->get(\Automattic\Woo_Commerce\Internal\Product_Filters\Params::class);
         $taxonomy_params = $params_handler->get_param('taxonomy');
-
         if (empty($taxonomy_params)) {
             return [];
         }
-
         $tax_queries = [];
-
         foreach ($taxonomy_params as $taxonomy_slug => $param_key) {
             $param_value = get_query_var($param_key);
             // Adding is_string check to avoid invalid query parameters for the taxonomy.
-            if (! is_string($param_value)) {
+            if (!is_string($param_value)) {
                 continue;
             }
             if (empty($param_value)) {
                 continue;
             }
-
             // Define $term_values by exploding the string.
             $term_values = explode(',', $param_value);
-
             // Sanitize and filter (removes empty strings).
             $term_slugs = array_values(array_filter(array_map(sanitize_title(...), $term_values)));
-
             if (empty($term_slugs)) {
                 continue;
             }
-
-            $tax_queries[] = [
-                'taxonomy' => $taxonomy_slug,
-                'field'    => 'slug',
-                'terms'    => $term_slugs,
-                'operator' => 'IN',
-            ];
+            $tax_queries[] = ['taxonomy' => $taxonomy_slug, 'field' => 'slug', 'terms' => $term_slugs, 'operator' => 'IN'];
         }
-
         if (empty($tax_queries)) {
             return [];
         }
-
         return [
             // phpcs:ignore WordPress.DB.SlowDBQuery
-            'tax_query' => [
-                [
-                    'relation' => 'AND',
-                    ...$tax_queries,
-                ],
-            ],
+            'tax_query' => [['relation' => 'AND', ...$tax_queries]],
         ];
     }
-
     /**
      * Merge two array recursively but replace the non-array values instead of
      * merging them. The merging strategy:
@@ -763,32 +532,23 @@ class QueryBuilder
             if (is_numeric($key)) {
                 $base[] = $value;
             } elseif (is_array($value)) {
-                if (! isset($base[ $key ])) {
-                    $base[ $key ] = [];
+                if (!isset($base[$key])) {
+                    $base[$key] = [];
                 }
-                $base[ $key ] = $this->array_merge_recursive_replace_non_array_properties($base[ $key ], $value);
+                $base[$key] = $this->array_merge_recursive_replace_non_array_properties($base[$key], $value);
             } else {
-                $base[ $key ] = $value;
+                $base[$key] = $value;
             }
         }
-
         return $base;
     }
-
     /**
      * Return queries that are generated by query args.
      */
     private function get_queries_by_applied_filters(): array
     {
-        return [
-            'price_filter'        => $this->get_filter_by_price_query(),
-            'attributes_filter'   => $this->get_filter_by_attributes_query(),
-            'stock_status_filter' => $this->get_filter_by_stock_status_query(),
-            'rating_filter'       => $this->get_filter_by_rating_query(),
-            'taxonomy_filter'     => $this->get_filter_by_taxonomy_query(),
-        ];
+        return ['price_filter' => $this->get_filter_by_price_query(), 'attributes_filter' => $this->get_filter_by_attributes_query(), 'stock_status_filter' => $this->get_filter_by_stock_status_query(), 'rating_filter' => $this->get_filter_by_rating_query(), 'taxonomy_filter' => $this->get_filter_by_taxonomy_query()];
     }
-
     /**
      * Return a query for product visibility depending on their stock status.
      *
@@ -799,27 +559,17 @@ class QueryBuilder
      */
     private function get_product_visibility_query($stock_query, array $stock_status): array
     {
-        $product_visibility_terms  = wc_get_product_visibility_term_ids();
-        $product_visibility_not_in = [ is_search() ? $product_visibility_terms['exclude-from-search'] : $product_visibility_terms['exclude-from-catalog'] ];
-
+        $product_visibility_terms = wc_get_product_visibility_term_ids();
+        $product_visibility_not_in = [is_search() ? $product_visibility_terms['exclude-from-search'] : $product_visibility_terms['exclude-from-catalog']];
         // Hide out of stock products.
-        if (empty($stock_query) && ! in_array(ProductStockStatus::OUT_OF_STOCK, $stock_status, true)) {
-            $product_visibility_not_in[] = $product_visibility_terms[ ProductStockStatus::OUT_OF_STOCK ];
+        if (empty($stock_query) && !in_array(Product_Stock_Status::OUT_OF_STOCK, $stock_status, true)) {
+            $product_visibility_not_in[] = $product_visibility_terms[Product_Stock_Status::OUT_OF_STOCK];
         }
-
         return [
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-            'tax_query' => [
-                [
-                    'taxonomy' => 'product_visibility',
-                    'field'    => 'term_taxonomy_id',
-                    'terms'    => $product_visibility_not_in,
-                    'operator' => 'NOT IN',
-                ],
-            ],
+            'tax_query' => [['taxonomy' => 'product_visibility', 'field' => 'term_taxonomy_id', 'terms' => $product_visibility_not_in, 'operator' => 'NOT IN']],
         ];
     }
-
     /**
      * Constructs a date query for product filtering based on a specified time frame.
      *
@@ -837,22 +587,11 @@ class QueryBuilder
         if (empty($time_frame['operator']) || empty($time_frame['value'])) {
             return [];
         }
-
         // Determine the query operator based on the 'operator' value.
         $query_operator = 'in' === $time_frame['operator'] ? 'after' : 'before';
-
         // Construct and return the date query.
-        return [
-            'date_query' => [
-                [
-                    'column'        => 'post_date_gmt',
-                    $query_operator => $time_frame['value'],
-                    'inclusive'     => true,
-                ],
-            ],
-        ];
+        return ['date_query' => [['column' => 'post_date_gmt', $query_operator => $time_frame['value'], 'inclusive' => true]]];
     }
-
     /**
      * Get query arguments for price range filter.
      * We are adding these extra query arguments to be used in `posts_clauses`
@@ -872,13 +611,8 @@ class QueryBuilder
         if (empty($price_range)) {
             return [];
         }
-
-        return [
-            'isProductCollection' => true,
-            'priceRange'          => $price_range,
-        ];
+        return ['isProductCollection' => true, 'priceRange' => $price_range];
     }
-
     /**
      * Add the `posts_clauses` filter to the main query.
      *
@@ -887,21 +621,18 @@ class QueryBuilder
      */
     public function add_price_range_filter_posts_clauses(array $clauses, $query): array
     {
-        $query_vars                  = $query->query_vars;
+        $query_vars = $query->query_vars;
         $is_product_collection_block = $query_vars['isProductCollection'] ?? false;
-        if (! $is_product_collection_block) {
+        if (!$is_product_collection_block) {
             return $clauses;
         }
-
         $price_range = $query_vars['priceRange'] ?? null;
         if (empty($price_range)) {
             return $clauses;
         }
-
         global $wpdb;
         $adjust_for_taxes = $this->should_adjust_price_range_for_taxes();
-        $clauses['join']  = $this->append_product_sorting_table_join($clauses['join']);
-
+        $clauses['join'] = $this->append_product_sorting_table_join($clauses['join']);
         $min_price = $price_range['min'] ?? null;
         if ($min_price) {
             if ($adjust_for_taxes) {
@@ -910,7 +641,6 @@ class QueryBuilder
                 $clauses['where'] .= $wpdb->prepare(' AND wc_product_meta_lookup.max_price >= %f ', $min_price);
             }
         }
-
         $max_price = $price_range['max'] ?? null;
         if ($max_price) {
             if ($adjust_for_taxes) {
@@ -919,10 +649,8 @@ class QueryBuilder
                 $clauses['where'] .= $wpdb->prepare(' AND wc_product_meta_lookup.min_price <= %f ', $max_price);
             }
         }
-
         return $clauses;
     }
-
     /**
      * Get query for price filters when dealing with displayed taxes.
      *
@@ -934,37 +662,24 @@ class QueryBuilder
     protected function get_price_filter_query_for_displayed_taxes($price_filter, $column = 'min_price', $operator = '>=')
     {
         global $wpdb;
-
         // Select only used tax classes to avoid unwanted calculations.
         $product_tax_classes = $wpdb->get_col("SELECT DISTINCT tax_class FROM {$wpdb->wc_product_meta_lookup};");
-
         if (empty($product_tax_classes)) {
             return '';
         }
-
         $or_queries = [];
-
         // We need to adjust the filter for each possible tax class and combine the queries into one.
         foreach ($product_tax_classes as $tax_class) {
             $adjusted_price_filter = $this->adjust_price_filter_for_tax_class($price_filter, $tax_class);
-            $or_queries[]          = $wpdb->prepare(
-                '( wc_product_meta_lookup.tax_class = %s AND wc_product_meta_lookup.`' . esc_sql($column) . '` ' . esc_sql($operator) . ' %f )',
-                $tax_class,
-                $adjusted_price_filter
-            );
+            $or_queries[] = $wpdb->prepare('( wc_product_meta_lookup.tax_class = %s AND wc_product_meta_lookup.`' . esc_sql($column) . '` ' . esc_sql($operator) . ' %f )', $tax_class, $adjusted_price_filter);
         }
-
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
-        return $wpdb->prepare(
-            ' AND (
+        return $wpdb->prepare(' AND (
 				wc_product_meta_lookup.tax_status = "taxable" AND ( 0=1 OR ' . implode(' OR ', $or_queries) . ')
 				OR ( wc_product_meta_lookup.tax_status != "taxable" AND wc_product_meta_lookup.`' . esc_sql($column) . '` ' . esc_sql($operator) . ' %f )
-			) ',
-            $price_filter
-        );
+			) ', $price_filter);
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
     }
-
     /**
      * Adjusts a price filter based on a tax class and whether or not the amount includes or excludes taxes.
      *
@@ -976,10 +691,9 @@ class QueryBuilder
      */
     protected function adjust_price_filter_for_tax_class($price_filter, $tax_class): int|float
     {
-        $tax_display    = get_option('woocommerce_tax_display_shop');
-        $tax_rates      = WC_Tax::get_rates($tax_class);
+        $tax_display = get_option('woocommerce_tax_display_shop');
+        $tax_rates = WC_Tax::get_rates($tax_class);
         $base_tax_rates = WC_Tax::get_base_tax_rates($tax_class);
-
         // If prices are shown incl. tax, we want to remove the taxes from the filter amount to match prices stored excl. tax.
         if ('incl' === $tax_display) {
             /**
@@ -999,13 +713,10 @@ class QueryBuilder
             $taxes = apply_filters('woocommerce_adjust_non_base_location_prices', true) ? WC_Tax::calc_tax($price_filter, $base_tax_rates, true) : WC_Tax::calc_tax($price_filter, $tax_rates, true);
             return $price_filter - array_sum($taxes);
         }
-
         // If prices are shown excl. tax, add taxes to match the prices stored in the DB.
         $taxes = WC_Tax::calc_tax($price_filter, $tax_rates, false);
-
         return $price_filter + array_sum($taxes);
     }
-
     /**
      * Determines if price filters need adjustment based on the tax display settings.
      *
@@ -1018,12 +729,11 @@ class QueryBuilder
      */
     private function should_adjust_price_range_for_taxes(): bool
     {
-        $display_setting      = get_option('woocommerce_tax_display_shop'); // Tax display setting ('incl' or 'excl').
+        $display_setting = get_option('woocommerce_tax_display_shop');
+        // Tax display setting ('incl' or 'excl').
         $price_storage_method = wc_prices_include_tax() ? 'incl' : 'excl';
-
         return $display_setting !== $price_storage_method;
     }
-
     /**
      * Generates a post__in query to filter products to the set of provided IDs.
      *
@@ -1036,12 +746,8 @@ class QueryBuilder
         if (false === $handpicked_products) {
             return [];
         }
-
-        return [
-            'post__in' => $handpicked_products,
-        ];
+        return ['post__in' => $handpicked_products];
     }
-
     /**
      * Return a query for on sale products.
      *
@@ -1049,15 +755,11 @@ class QueryBuilder
      */
     private function get_on_sale_products_query($is_on_sale): array
     {
-        if (! $is_on_sale) {
+        if (!$is_on_sale) {
             return [];
         }
-
-        return [
-            'post__in' => wc_get_product_ids_on_sale(),
-        ];
+        return ['post__in' => wc_get_product_ids_on_sale()];
     }
-
     /**
      * Merge in the first parameter the keys "post_in", "meta_query" and "tax_query" of the second parameter.
      *
@@ -1067,42 +769,29 @@ class QueryBuilder
     private function merge_queries(...$queries)
     {
         // Rather than a simple merge, some query vars should be held aside and merged differently.
-        $special_query_vars = [
-            'post__in' => [],
-        ];
+        $special_query_vars = ['post__in' => []];
         $special_query_keys = array_keys($special_query_vars);
-
-        $merged_query = array_reduce(
-            $queries,
-            function ($acc, array $query) use ($special_query_keys, &$special_query_vars) {
-                if (! is_array($query)) {
-                    return $acc;
+        $merged_query = array_reduce($queries, function ($acc, array $query) use ($special_query_keys, &$special_query_vars) {
+            if (!is_array($query)) {
+                return $acc;
+            }
+            // When the $query has keys but doesn't contain any valid query keys, we unpack/spread it then merge.
+            if (!empty($query) && empty(array_intersect($this->get_valid_query_vars(), array_keys($query)))) {
+                return $this->merge_queries($acc, ...array_values($query));
+            }
+            // Pull out the special query vars so we can merge them separately.
+            foreach ($special_query_keys as $query_var) {
+                if (isset($query[$query_var])) {
+                    $special_query_vars[$query_var][] = $query[$query_var];
+                    unset($query[$query_var]);
                 }
-
-                // When the $query has keys but doesn't contain any valid query keys, we unpack/spread it then merge.
-                if (! empty($query) && empty(array_intersect($this->get_valid_query_vars(), array_keys($query)))) {
-                    return $this->merge_queries($acc, ...array_values($query));
-                }
-
-                // Pull out the special query vars so we can merge them separately.
-                foreach ($special_query_keys as $query_var) {
-                    if (isset($query[ $query_var ])) {
-                        $special_query_vars[ $query_var ][] = $query[ $query_var ];
-                        unset($query[ $query_var ]);
-                    }
-                }
-
-                return $this->array_merge_recursive_replace_non_array_properties($acc, $query);
-            },
-            []
-        );
-
+            }
+            return $this->array_merge_recursive_replace_non_array_properties($acc, $query);
+        }, []);
         // Perform any necessary special merges.
         $merged_query['post__in'] = $this->merge_post__in(...$special_query_vars['post__in']);
-
         return $merged_query;
     }
-
     /**
      * Return query params to support custom sort values
      *
@@ -1110,52 +799,32 @@ class QueryBuilder
      */
     private function get_custom_orderby_query($orderby): array
     {
-        if (! in_array($orderby, $this->custom_order_opts, true) || 'post__in' === $orderby) {
-            return [ 'orderby' => $orderby ];
+        if (!in_array($orderby, $this->custom_order_opts, true) || 'post__in' === $orderby) {
+            return ['orderby' => $orderby];
         }
-
         if ('price' === $orderby) {
             add_filter('posts_clauses', $this->add_price_sorting_posts_clauses(...), 10, 2);
-            return [
-                'isProductCollection' => true,
-                'orderby'             => $orderby,
-            ];
+            return ['isProductCollection' => true, 'orderby' => $orderby];
         }
-
         // The popularity orderby value here is for backwards compatibility as we have since removed the filter option.
         if ('sales' === $orderby || 'popularity' === $orderby) {
             add_filter('posts_clauses', $this->add_sales_sorting_posts_clauses(...), 10, 2);
-            return [
-                'isProductCollection' => true,
-                'orderby'             => $orderby,
-            ];
+            return ['isProductCollection' => true, 'orderby' => $orderby];
         }
-
         if ('menu_order' === $orderby) {
             add_filter('posts_clauses', $this->add_menu_order_with_title_fallback_posts_clauses(...), 10, 2);
-            return [
-                'isProductCollection' => true,
-                'orderby'             => $orderby,
-            ];
+            return ['isProductCollection' => true, 'orderby' => $orderby];
         }
-
         if ('random' === $orderby) {
-            return [
-                'orderby' => 'rand',
-            ];
+            return ['orderby' => 'rand'];
         }
-
-        $meta_keys = [
-            'rating' => '_wc_average_rating',
-        ];
-
+        $meta_keys = ['rating' => '_wc_average_rating'];
         return [
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-            'meta_key' => $meta_keys[ $orderby ],
-            'orderby'  => 'meta_value_num',
+            'meta_key' => $meta_keys[$orderby],
+            'orderby' => 'meta_value_num',
         ];
     }
-
     /**
      * Add the `posts_clauses` filter to add price-based sorting
      *
@@ -1165,28 +834,20 @@ class QueryBuilder
      */
     public function add_price_sorting_posts_clauses(array $clauses, $query): array
     {
-        $query_vars                  = $query->query_vars;
+        $query_vars = $query->query_vars;
         $is_product_collection_block = $query_vars['isProductCollection'] ?? false;
-
-        if (! $is_product_collection_block) {
+        if (!$is_product_collection_block) {
             return $clauses;
         }
-
         $orderby = $query_vars['orderby'] ?? null;
         if ('price' !== $orderby) {
             return $clauses;
         }
-
-        $clauses['join']    = $this->append_product_sorting_table_join($clauses['join']);
+        $clauses['join'] = $this->append_product_sorting_table_join($clauses['join']);
         $is_ascending_order = 'asc' === strtolower($query_vars['order'] ?? 'desc');
-
-        $clauses['orderby'] = $is_ascending_order ?
-            'wc_product_meta_lookup.min_price ASC, wc_product_meta_lookup.product_id ASC' :
-            'wc_product_meta_lookup.max_price DESC, wc_product_meta_lookup.product_id DESC';
-
+        $clauses['orderby'] = $is_ascending_order ? 'wc_product_meta_lookup.min_price ASC, wc_product_meta_lookup.product_id ASC' : 'wc_product_meta_lookup.max_price DESC, wc_product_meta_lookup.product_id DESC';
         return $clauses;
     }
-
     /**
      * Add the `posts_clauses` filter to add sales-based sorting
      *
@@ -1196,30 +857,21 @@ class QueryBuilder
      */
     public function add_sales_sorting_posts_clauses(array $clauses, $query): array
     {
-        $query_vars                  = $query->query_vars;
+        $query_vars = $query->query_vars;
         $is_product_collection_block = $query_vars['isProductCollection'] ?? false;
-
-        if (! $is_product_collection_block) {
+        if (!$is_product_collection_block) {
             return $clauses;
         }
-
         $orderby = $query_vars['orderby'] ?? null;
-
         // The popularity orderby value here is for backwards compatibility as we have since removed the filter option.
         if ('sales' !== $orderby && 'popularity' !== $orderby) {
             return $clauses;
         }
-
-        $clauses['join']    = $this->append_product_sorting_table_join($clauses['join']);
+        $clauses['join'] = $this->append_product_sorting_table_join($clauses['join']);
         $is_ascending_order = 'asc' === strtolower($query_vars['order'] ?? 'desc');
-
-        $clauses['orderby'] = $is_ascending_order ?
-            'wc_product_meta_lookup.total_sales ASC, wc_product_meta_lookup.product_id ASC' :
-            'wc_product_meta_lookup.total_sales DESC, wc_product_meta_lookup.product_id DESC';
-
+        $clauses['orderby'] = $is_ascending_order ? 'wc_product_meta_lookup.total_sales ASC, wc_product_meta_lookup.product_id ASC' : 'wc_product_meta_lookup.total_sales DESC, wc_product_meta_lookup.product_id DESC';
         return $clauses;
     }
-
     /**
      * Join wc_product_meta_lookup to posts if not already joined.
      *
@@ -1228,13 +880,11 @@ class QueryBuilder
     protected function append_product_sorting_table_join(string $sql): string
     {
         global $wpdb;
-
-        if (! strstr($sql, 'wc_product_meta_lookup')) {
-            $sql .= " LEFT JOIN {$wpdb->wc_product_meta_lookup} wc_product_meta_lookup ON $wpdb->posts.ID = wc_product_meta_lookup.product_id ";
+        if (!strstr($sql, 'wc_product_meta_lookup')) {
+            $sql .= " LEFT JOIN {$wpdb->wc_product_meta_lookup} wc_product_meta_lookup ON {$wpdb->posts}.ID = wc_product_meta_lookup.product_id ";
         }
         return $sql;
     }
-
     /**
      * Merge all of the 'post__in' values and return an array containing only values that are present in all arrays.
      *
@@ -1247,18 +897,13 @@ class QueryBuilder
         if (empty($post__in)) {
             return [];
         }
-
         // Since we're using array_intersect, any array that is empty will result
         // in an empty output array. To avoid this we need to make sure every
         // argument is a non-empty array.
-        $post__in = array_filter(
-            $post__in,
-            fn ($val) => is_array($val) && ! empty($val)
-        );
+        $post__in = array_filter($post__in, fn($val) => is_array($val) && !empty($val));
         if (empty($post__in)) {
             return [];
         }
-
         // Since the 'post__in' filter is exclusionary we need to use an intersection of
         // all of the arrays. This ensures one query doesn't add options that another
         // has otherwise excluded from the results.
@@ -1267,15 +912,13 @@ class QueryBuilder
             // An empty array means that there was no overlap between the filters and so
             // the query should return no results.
             if (empty($post__in)) {
-                return [ -1 ];
+                return [-1];
             }
         } else {
             $post__in = reset($post__in);
         }
-
         return array_values(array_unique($post__in, SORT_NUMERIC));
     }
-
     /**
      * Add the `posts_clauses` filter to add menu order with title fallback sorting
      *
@@ -1285,24 +928,17 @@ class QueryBuilder
      */
     public function add_menu_order_with_title_fallback_posts_clauses(array $clauses, $query): array
     {
-        $query_vars                  = $query->query_vars;
+        $query_vars = $query->query_vars;
         $is_product_collection_block = $query_vars['isProductCollection'] ?? false;
-
-        if (! $is_product_collection_block) {
+        if (!$is_product_collection_block) {
             return $clauses;
         }
-
         $orderby = $query_vars['orderby'] ?? null;
         if ('menu_order' !== $orderby) {
             return $clauses;
         }
-
-        $is_ascending_order = ! isset($query_vars['order']) || 'asc' === strtolower($query_vars['order']);
-
-        $clauses['orderby'] = $is_ascending_order ?
-            'menu_order ASC, post_title ASC' :
-            'menu_order DESC, post_title DESC';
-
+        $is_ascending_order = !isset($query_vars['order']) || 'asc' === strtolower($query_vars['order']);
+        $clauses['orderby'] = $is_ascending_order ? 'menu_order ASC, post_title ASC' : 'menu_order DESC, post_title DESC';
         return $clauses;
     }
 }

@@ -1,20 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
 
-namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
-
-use Automattic\WooCommerce\Internal\Logging\SafeGlobalFunctionProxy;
+use Automattic\Woo_Commerce\Internal\Logging\Safe_Global_Function_Proxy;
 use WC_Payment_Gateway;
-
 defined('ABSPATH') || exit;
-
 /**
  * Paymob payment gateway provider class.
  *
  * This class handles all the custom logic for the Paymob payment gateway provider.
  */
-class Paymob extends PaymentGateway
+class Paymob extends Payment_Gateway
 {
     /**
      * Check if the payment gateway needs setup.
@@ -32,11 +29,9 @@ class Paymob extends PaymentGateway
         if ($needs_setup) {
             return true;
         }
-
         // If we reach here, just assume that the gateway does not need setup.
         return false;
     }
-
     /**
      * Try to determine if the payment gateway is in test mode.
      *
@@ -51,7 +46,6 @@ class Paymob extends PaymentGateway
     {
         return $this->is_paymob_in_sandbox_mode($payment_gateway) ?? parent::is_in_test_mode($payment_gateway);
     }
-
     /**
      * Check if the payment gateway has a payments processor account connected.
      *
@@ -63,9 +57,8 @@ class Paymob extends PaymentGateway
     public function is_account_connected(WC_Payment_Gateway $payment_gateway): bool
     {
         // The Paymob gateway ties needs_setup only to the API keys, so if they are set, we consider the account connected.
-        return ! $this->needs_setup($payment_gateway);
+        return !$this->needs_setup($payment_gateway);
     }
-
     /**
      * Try to determine if the payment gateway is in test mode onboarding (aka sandbox or test-drive).
      *
@@ -80,7 +73,6 @@ class Paymob extends PaymentGateway
     {
         return $this->is_paymob_in_sandbox_mode($payment_gateway) ?? parent::is_in_test_mode_onboarding($payment_gateway);
     }
-
     /**
      * Check if the Paymob payment gateway is in sandbox mode.
      *
@@ -97,16 +89,8 @@ class Paymob extends PaymentGateway
             return 'test' === ($options['mode'] ?? 'test');
         } catch (\Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway is in sandbox mode: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway is in sandbox mode: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         // Let the caller know that we couldn't determine the environment.
         return null;
     }

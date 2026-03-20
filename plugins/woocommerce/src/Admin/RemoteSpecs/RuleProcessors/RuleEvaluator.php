@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Evaluate the given rules as an AND operation - return false early if a
  * rule evaluates to false.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
 /**
  * Evaluate the given rules as an AND operation - return false early if a
  * rule evaluates to false.
  */
-class RuleEvaluator
+class Rule_Evaluator
 {
     /**
      * GetRuleProcessor to use.
@@ -22,7 +20,6 @@ class RuleEvaluator
      * @var GetRuleProcessor
      */
     private $get_rule_processor;
-
     /**
      * Constructor.
      *
@@ -30,9 +27,8 @@ class RuleEvaluator
      */
     public function __construct($get_rule_processor = null)
     {
-        $this->get_rule_processor = $get_rule_processor ?? new GetRuleProcessor();
+        $this->get_rule_processor = $get_rule_processor ?? new Get_Rule_Processor();
     }
-
     /**
      * Evaluate the given rules as an AND operation - return false early if a
      * rule evaluates to false.
@@ -47,51 +43,38 @@ class RuleEvaluator
      */
     public function evaluate($rules, $stored_state = null, array $logger_args = [])
     {
-
         if (is_bool($rules)) {
             return $rules;
         }
-
-        if (! is_array($rules)) {
-            $rules = [ $rules ];
+        if (!is_array($rules)) {
+            $rules = [$rules];
         }
-
         if (0 === count($rules)) {
             return false;
         }
-
         $evaluation_logger = null;
-
         if (count($logger_args)) {
-            if (! array_key_exists('slug', $logger_args)) {
+            if (!array_key_exists('slug', $logger_args)) {
                 throw new \InvalidArgumentException('Missing required field: slug in $logger_args.');
             }
-
             $source = $logger_args['source'] ?? null;
-
-            $evaluation_logger = new EvaluationLogger($logger_args['slug'], $source);
+            $evaluation_logger = new Evaluation_Logger($logger_args['slug'], $source);
         }
-
         foreach ($rules as $rule) {
-            if (! is_object($rule)) {
+            if (!is_object($rule)) {
                 $evaluation_logger && $evaluation_logger->add_result('rule not an object', false);
                 $evaluation_logger && $evaluation_logger->log();
-
                 return false;
             }
-
-            $processor        = $this->get_rule_processor->get_processor($rule->type);
+            $processor = $this->get_rule_processor->get_processor($rule->type);
             $processor_result = $processor->process($rule, $stored_state);
             $evaluation_logger && $evaluation_logger->add_result($rule->type, $processor_result);
-
-            if (! $processor_result) {
+            if (!$processor_result) {
                 $evaluation_logger && $evaluation_logger->log();
                 return false;
             }
         }
-
         $evaluation_logger && $evaluation_logger->log();
-
         return true;
     }
 }

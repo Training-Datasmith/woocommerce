@@ -1,20 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Marketing Controller
  *
  * Handles requests to /marketing.
  */
+namespace Automattic\Woo_Commerce\Admin\API;
 
-namespace Automattic\WooCommerce\Admin\API;
-
-use Automattic\WooCommerce\Admin\Features\MarketingRecommendations\Init as MarketingRecommendationsInit;
-use Automattic\WooCommerce\Admin\PluginsHelper;
-use Automattic\WooCommerce\Internal\Admin\Marketing\MarketingSpecs;
-
+use Automattic\Woo_Commerce\Admin\Features\Marketing_Recommendations\Init as MarketingRecommendationsInit;
+use Automattic\Woo_Commerce\Admin\Plugins_Helper;
+use Automattic\Woo_Commerce\Internal\Admin\Marketing\Marketing_Specs;
 defined('ABSPATH') || exit;
-
 /**
  * Marketing Controller.
  *
@@ -29,74 +26,21 @@ class Marketing extends \WC_REST_Data_Controller
      * @var string
      */
     protected $namespace = 'wc-admin';
-
     /**
      * Route base.
      *
      * @var string
      */
     protected $rest_base = 'marketing';
-
     /**
      * Register routes.
      */
     public function register_routes(): void
     {
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/recommended',
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_recommended_plugins(...),
-                    'permission_callback' => $this->get_recommended_plugins_permissions_check(...),
-                    'args'                => [
-                        'per_page' => $this->get_collection_params()['per_page'],
-                        'category' => [
-                            'type'              => 'string',
-                            'validate_callback' => 'rest_validate_request_arg',
-                            'sanitize_callback' => 'sanitize_title_with_dashes',
-                        ],
-                    ],
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
-
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/knowledge-base',
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_knowledge_base_posts(...),
-                    'permission_callback' => $this->get_items_permissions_check(...),
-                    'args'                => [
-                        'category' => [
-                            'type'              => 'string',
-                            'validate_callback' => 'rest_validate_request_arg',
-                            'sanitize_callback' => 'sanitize_title_with_dashes',
-                        ],
-                    ],
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
-
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/misc-recommendations',
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_misc_recommendations(...),
-                    'permission_callback' => $this->get_recommended_plugins_permissions_check(...),
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/recommended', [['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_recommended_plugins(...), 'permission_callback' => $this->get_recommended_plugins_permissions_check(...), 'args' => ['per_page' => $this->get_collection_params()['per_page'], 'category' => ['type' => 'string', 'validate_callback' => 'rest_validate_request_arg', 'sanitize_callback' => 'sanitize_title_with_dashes']]], 'schema' => [$this, 'get_public_item_schema']]);
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/knowledge-base', [['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_knowledge_base_posts(...), 'permission_callback' => $this->get_items_permissions_check(...), 'args' => ['category' => ['type' => 'string', 'validate_callback' => 'rest_validate_request_arg', 'sanitize_callback' => 'sanitize_title_with_dashes']]], 'schema' => [$this, 'get_public_item_schema']]);
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/misc-recommendations', [['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_misc_recommendations(...), 'permission_callback' => $this->get_recommended_plugins_permissions_check(...)], 'schema' => [$this, 'get_public_item_schema']]);
     }
-
     /**
      * Check whether a given request has permission to install plugins.
      *
@@ -105,13 +49,11 @@ class Marketing extends \WC_REST_Data_Controller
      */
     public function get_recommended_plugins_permissions_check($request)
     {
-        if (! current_user_can('install_plugins')) {
-            return new \WP_Error('woocommerce_rest_cannot_update', __('Sorry, you cannot manage plugins.', 'woocommerce'), [ 'status' => rest_authorization_required_code() ]);
+        if (!current_user_can('install_plugins')) {
+            return new \WP_Error('woocommerce_rest_cannot_update', __('Sorry, you cannot manage plugins.', 'woocommerce'), ['status' => rest_authorization_required_code()]);
         }
-
         return true;
     }
-
     /**
      * Return installed marketing extensions data.
      *
@@ -122,24 +64,19 @@ class Marketing extends \WC_REST_Data_Controller
     public function get_recommended_plugins($request)
     {
         // Default to marketing category (if no category set).
-        $category      = (! empty($request->get_param('category'))) ? $request->get_param('category') : 'marketing';
-        $all_plugins   = MarketingRecommendationsInit::get_recommended_plugins();
+        $category = !empty($request->get_param('category')) ? $request->get_param('category') : 'marketing';
+        $all_plugins = Marketing_Recommendations_Init::get_recommended_plugins();
         $valid_plugins = [];
-        $per_page      = $request->get_param('per_page');
-
+        $per_page = $request->get_param('per_page');
         foreach ($all_plugins as $plugin) {
-
             // default to marketing if 'categories' is empty on the plugin object (support for legacy api while testing).
-            $plugin_categories = (! empty($plugin['categories'])) ? $plugin['categories'] : [ 'marketing' ];
-
-            if (! PluginsHelper::is_plugin_installed($plugin['plugin']) && in_array($category, $plugin_categories, true)) {
+            $plugin_categories = !empty($plugin['categories']) ? $plugin['categories'] : ['marketing'];
+            if (!Plugins_Helper::is_plugin_installed($plugin['plugin']) && in_array($category, $plugin_categories, true)) {
                 $valid_plugins[] = $plugin;
             }
         }
-
         return rest_ensure_response(array_slice($valid_plugins, 0, $per_page));
     }
-
     /**
      * Return installed marketing extensions data.
      *
@@ -154,12 +91,10 @@ class Marketing extends \WC_REST_Data_Controller
          *
          * @var MarketingSpecs $marketing_specs
          */
-        $marketing_specs = wc_get_container()->get(MarketingSpecs::class);
-
+        $marketing_specs = wc_get_container()->get(Marketing_Specs::class);
         $category = $request->get_param('category');
         return rest_ensure_response($marketing_specs->get_knowledge_base_posts($category));
     }
-
     /**
      * Return misc recommendations.
      *
@@ -171,8 +106,7 @@ class Marketing extends \WC_REST_Data_Controller
      */
     public function get_misc_recommendations($request)
     {
-        $misc_recommendations = MarketingRecommendationsInit::get_misc_recommendations();
-
+        $misc_recommendations = Marketing_Recommendations_Init::get_misc_recommendations();
         return rest_ensure_response($misc_recommendations);
     }
 }

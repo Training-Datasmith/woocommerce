@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Tasks;
 
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
-
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
-
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task;
 /**
  * Review Shipping Options Task
  */
-class ReviewShippingOptions extends Task
+class Review_Shipping_Options extends Task
 {
     /**
      * ID.
@@ -18,7 +16,6 @@ class ReviewShippingOptions extends Task
     {
         return 'review-shipping';
     }
-
     /**
      * Title.
      *
@@ -28,7 +25,6 @@ class ReviewShippingOptions extends Task
     {
         return __('Review shipping options', 'woocommerce');
     }
-
     /**
      * Content.
      */
@@ -36,7 +32,6 @@ class ReviewShippingOptions extends Task
     {
         return '';
     }
-
     /**
      * Time.
      */
@@ -44,7 +39,6 @@ class ReviewShippingOptions extends Task
     {
         return '';
     }
-
     /**
      * Task completion.
      */
@@ -52,7 +46,6 @@ class ReviewShippingOptions extends Task
     {
         return get_option('woocommerce_admin_reviewed_default_shipping_zones') === 'yes';
     }
-
     /**
      * Task visibility.
      */
@@ -60,7 +53,6 @@ class ReviewShippingOptions extends Task
     {
         return get_option('woocommerce_admin_created_default_shipping_zones') === 'yes';
     }
-
     /**
      * Action URL.
      *

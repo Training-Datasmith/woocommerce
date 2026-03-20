@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Reviews;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\Reviews;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AbstractBlock;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Abstract_Block;
 /**
  * ProductReviewsPagination class.
  */
-class ProductReviewsPagination extends AbstractBlock
+class Product_Reviews_Pagination extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,7 +15,6 @@ class ProductReviewsPagination extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-reviews-pagination';
-
     /**
      * Render the block.
      *
@@ -31,31 +28,17 @@ class ProductReviewsPagination extends AbstractBlock
         if (empty(trim($content))) {
             return '';
         }
-
         if (post_password_required()) {
             return;
         }
-
-        $classes            = (isset($attributes['style']['elements']['link']['color']['text'])) ? 'has-link-color' : '';
-        $wrapper_attributes = get_block_wrapper_attributes(
-            [
-                'class'               => $classes,
-                'data-wp-interactive' => 'woocommerce/product-reviews',
-            ]
-        );
-
+        $classes = isset($attributes['style']['elements']['link']['color']['text']) ? 'has-link-color' : '';
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => $classes, 'data-wp-interactive' => 'woocommerce/product-reviews']);
         $p = new \WP_HTML_Tag_Processor($content);
         while ($p->next_tag()) {
             $p->set_attribute('data-wp-on--click', 'actions.navigate');
         }
-
-        return sprintf(
-            '<div %1$s>%2$s</div>',
-            $wrapper_attributes,
-            $p->get_updated_html()
-        );
+        return sprintf('<div %1$s>%2$s</div>', $wrapper_attributes, $p->get_updated_html());
     }
-
     /**
      * Get the frontend script handle for this block type.
      *

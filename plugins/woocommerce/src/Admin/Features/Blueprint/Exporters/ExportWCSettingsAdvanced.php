@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Blueprint\Exporters;
 
-namespace Automattic\WooCommerce\Admin\Features\Blueprint\Exporters;
-
-use Automattic\WooCommerce\Blueprint\UseWPFunctions;
-
+use Automattic\Woo_Commerce\Blueprint\Use_Wp_Functions;
 /**
  * Class ExportWCSettingsAdvanced
  *
@@ -13,10 +11,9 @@ use Automattic\WooCommerce\Blueprint\UseWPFunctions;
  *
  * @package Automattic\WooCommerce\Admin\Features\Blueprint\Exporters
  */
-class ExportWCSettingsAdvanced extends ExportWCSettings
+class Export_Wc_Settings_Advanced extends Export_Wc_Settings
 {
-    use UseWPFunctions;
-
+    use Use_Wp_Functions;
     /**
      * Get the alias for this exporter.
      */
@@ -24,7 +21,6 @@ class ExportWCSettingsAdvanced extends ExportWCSettings
     {
         return 'setWCSettingsAdvanced';
     }
-
     /**
      * Return label used in the frontend.
      *
@@ -34,7 +30,6 @@ class ExportWCSettingsAdvanced extends ExportWCSettings
     {
         return __('Advanced', 'woocommerce');
     }
-
     /**
      * Return description used in the frontend.
      *
@@ -44,7 +39,6 @@ class ExportWCSettingsAdvanced extends ExportWCSettings
     {
         return __('Includes all settings in WooCommerce | Settings | Advanced.', 'woocommerce');
     }
-
     /**
      * Get the page ID for the settings page.
      */

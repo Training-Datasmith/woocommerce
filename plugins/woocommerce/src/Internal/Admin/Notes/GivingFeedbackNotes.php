@@ -1,35 +1,30 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Admin (Dashboard) Giving feedback notes provider
  *
  * Adds notes to the merchant's inbox about giving feedback.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\Notes;
+namespace Automattic\Woo_Commerce\Internal\Admin\Notes;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\Notes\Note;
-use Automattic\WooCommerce\Admin\Notes\NoteTraits;
-use Automattic\WooCommerce\Internal\Admin\Survey;
-
+use Automattic\Woo_Commerce\Admin\Notes\Note;
+use Automattic\Woo_Commerce\Admin\Notes\Note_Traits;
+use Automattic\Woo_Commerce\Internal\Admin\Survey;
 /**
  * Giving_Feedback_Notes
  */
-class GivingFeedbackNotes
+class Giving_Feedback_Notes
 {
     /**
      * Note traits.
      */
-    use NoteTraits;
-
+    use Note_Traits;
     /**
      * Name of the note for use in the database.
      */
     public const NOTE_NAME = 'wc-admin-store-notice-giving-feedback-2';
-
     /**
      * Get the note.
      *
@@ -37,10 +32,9 @@ class GivingFeedbackNotes
      */
     public static function get_note()
     {
-        if (! self::is_wc_admin_active_in_date_range('week-1-4')) {
+        if (!self::is_wc_admin_active_in_date_range('week-1-4')) {
             return;
         }
-
         // Otherwise, create our new note.
         $note = new Note();
         $note->set_title(__('You\'re invited to share your experience', 'woocommerce'));
@@ -49,11 +43,7 @@ class GivingFeedbackNotes
         $note->set_type(Note::E_WC_ADMIN_NOTE_INFORMATIONAL);
         $note->set_name(self::NOTE_NAME);
         $note->set_source('woocommerce-admin');
-        $note->add_action(
-            'share-feedback',
-            __('Share feedback', 'woocommerce'),
-            Survey::get_url('/store-setup-survey')
-        );
+        $note->add_action('share-feedback', __('Share feedback', 'woocommerce'), Survey::get_url('/store-setup-survey'));
         return $note;
     }
 }

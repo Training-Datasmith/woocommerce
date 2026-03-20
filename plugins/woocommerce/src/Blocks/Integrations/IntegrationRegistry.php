@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Integrations;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Integrations;
 
 /**
  * Class used for tracking registered integrations with various Block types.
  */
-class IntegrationRegistry
+class Integration_Registry
 {
     /**
      * Integration identifier is used to construct hook names and is given when the integration registry is initialized.
@@ -15,14 +14,12 @@ class IntegrationRegistry
      * @var string
      */
     protected $registry_identifier = '';
-
     /**
      * Registered integrations, as `$name => $instance` pairs.
      *
      * @var IntegrationInterface[]
      */
     protected $registered_integrations = [];
-
     /**
      * Initializes all registered integrations.
      *
@@ -35,12 +32,10 @@ class IntegrationRegistry
         if ($registry_identifier) {
             $this->registry_identifier = $registry_identifier;
         }
-
         if (empty($this->registry_identifier)) {
             _doing_it_wrong(__METHOD__, esc_html__('Integration registry requires an identifier.', 'woocommerce'), '4.6.0');
             return false;
         }
-
         /**
          * Fires when the IntegrationRegistry is initialized.
          *
@@ -53,12 +48,10 @@ class IntegrationRegistry
          * @param IntegrationRegistry $this Instance of the IntegrationRegistry class which exposes the IntegrationRegistry::register() method.
          */
         do_action('woocommerce_blocks_' . $this->registry_identifier . '_registration', $this);
-
         foreach ($this->get_all_registered() as $registered_integration) {
             $registered_integration->initialize();
         }
     }
-
     /**
      * Registers an integration.
      *
@@ -66,20 +59,17 @@ class IntegrationRegistry
      *
      * @return boolean True means registered successfully.
      */
-    public function register(IntegrationInterface $integration): bool
+    public function register(Integration_Interface $integration): bool
     {
         $name = $integration->get_name();
-
         if ($this->is_registered($name)) {
             /* translators: %s: Integration name. */
             _doing_it_wrong(__METHOD__, esc_html(sprintf(__('"%s" is already registered.', 'woocommerce'), $name)), '4.6.0');
             return false;
         }
-
-        $this->registered_integrations[ $name ] = $integration;
+        $this->registered_integrations[$name] = $integration;
         return true;
     }
-
     /**
      * Checks if an integration is already registered.
      *
@@ -88,9 +78,8 @@ class IntegrationRegistry
      */
     public function is_registered($name): bool
     {
-        return isset($this->registered_integrations[ $name ]);
+        return isset($this->registered_integrations[$name]);
     }
-
     /**
      * Un-register an integration.
      *
@@ -99,21 +88,18 @@ class IntegrationRegistry
      */
     public function unregister($name)
     {
-        if ($name instanceof IntegrationInterface) {
+        if ($name instanceof Integration_Interface) {
             $name = $name->get_name();
         }
-
-        if (! $this->is_registered($name)) {
+        if (!$this->is_registered($name)) {
             /* translators: %s: Integration name. */
             _doing_it_wrong(__METHOD__, esc_html(sprintf(__('Integration "%s" is not registered.', 'woocommerce'), $name)), '4.6.0');
             return false;
         }
-
-        $unregistered = $this->registered_integrations[ $name ];
-        unset($this->registered_integrations[ $name ]);
+        $unregistered = $this->registered_integrations[$name];
+        unset($this->registered_integrations[$name]);
         return $unregistered;
     }
-
     /**
      * Retrieves a registered Integration by name.
      *
@@ -122,9 +108,8 @@ class IntegrationRegistry
      */
     public function get_registered($name)
     {
-        return $this->is_registered($name) ? $this->registered_integrations[ $name ] : null;
+        return $this->is_registered($name) ? $this->registered_integrations[$name] : null;
     }
-
     /**
      * Retrieves all registered integrations.
      *
@@ -134,7 +119,6 @@ class IntegrationRegistry
     {
         return $this->registered_integrations;
     }
-
     /**
      * Gets an array of all registered integration's script handles for the editor.
      *
@@ -142,19 +126,13 @@ class IntegrationRegistry
      */
     public function get_all_registered_editor_script_handles(): array
     {
-        $script_handles          = [];
+        $script_handles = [];
         $registered_integrations = $this->get_all_registered();
-
         foreach ($registered_integrations as $registered_integration) {
-            $script_handles = array_merge(
-                $script_handles,
-                $registered_integration->get_editor_script_handles()
-            );
+            $script_handles = array_merge($script_handles, $registered_integration->get_editor_script_handles());
         }
-
         return array_unique(array_filter($script_handles));
     }
-
     /**
      * Gets an array of all registered integration's script handles.
      *
@@ -162,31 +140,23 @@ class IntegrationRegistry
      */
     public function get_all_registered_script_handles(): array
     {
-        $script_handles          = [];
+        $script_handles = [];
         $registered_integrations = $this->get_all_registered();
-
         foreach ($registered_integrations as $registered_integration) {
-            $script_handles = array_merge(
-                $script_handles,
-                $registered_integration->get_script_handles()
-            );
+            $script_handles = array_merge($script_handles, $registered_integration->get_script_handles());
         }
-
         return array_unique(array_filter($script_handles));
     }
-
     /**
      * Gets an array of all registered integration's script data.
      */
     public function get_all_registered_script_data(): array
     {
-        $script_data             = [];
+        $script_data = [];
         $registered_integrations = $this->get_all_registered();
-
         foreach ($registered_integrations as $registered_integration) {
-            $script_data[ $registered_integration->get_name() . '_data' ] = $registered_integration->get_script_data();
+            $script_data[$registered_integration->get_name() . '_data'] = $registered_integration->get_script_data();
         }
-
         return array_filter($script_data);
     }
 }

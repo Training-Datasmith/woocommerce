@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Tasks;
 
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
-
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
-use Automattic\WooCommerce\Admin\PluginsHelper;
-use Automattic\WooCommerce\Internal\Jetpack\JetpackConnection;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task;
+use Automattic\Woo_Commerce\Admin\Plugins_Helper;
+use Automattic\Woo_Commerce\Internal\Jetpack\Jetpack_Connection;
 /**
  * Shipping Task
  */
-class ExperimentalShippingRecommendation extends Task
+class Experimental_Shipping_Recommendation extends Task
 {
     /**
      * ID.
@@ -21,7 +19,6 @@ class ExperimentalShippingRecommendation extends Task
     {
         return 'shipping-recommendation';
     }
-
     /**
      * Title.
      *
@@ -31,7 +28,6 @@ class ExperimentalShippingRecommendation extends Task
     {
         return __('Get your products shipped', 'woocommerce');
     }
-
     /**
      * Content.
      */
@@ -39,7 +35,6 @@ class ExperimentalShippingRecommendation extends Task
     {
         return '';
     }
-
     /**
      * Time.
      */
@@ -47,7 +42,6 @@ class ExperimentalShippingRecommendation extends Task
     {
         return '';
     }
-
     /**
      * Task completion.
      */
@@ -55,7 +49,6 @@ class ExperimentalShippingRecommendation extends Task
     {
         return self::has_plugins_active() && self::has_jetpack_connected();
     }
-
     /**
      * Task visibility.
      */
@@ -63,7 +56,6 @@ class ExperimentalShippingRecommendation extends Task
     {
         return Features::is_enabled('shipping-smart-defaults');
     }
-
     /**
      * Action URL.
      */
@@ -71,7 +63,6 @@ class ExperimentalShippingRecommendation extends Task
     {
         return '';
     }
-
     /**
      * Check if the store has any shipping zones.
      *
@@ -79,16 +70,14 @@ class ExperimentalShippingRecommendation extends Task
      */
     public static function has_plugins_active()
     {
-        return PluginsHelper::is_plugin_active('woocommerce-shipping');
+        return Plugins_Helper::is_plugin_active('woocommerce-shipping');
     }
-
     /**
      * Check if the Jetpack is connected.
      */
     public static function has_jetpack_connected(): bool
     {
-        $jetpack_connection_manager = JetpackConnection::get_manager();
-
+        $jetpack_connection_manager = Jetpack_Connection::get_manager();
         return $jetpack_connection_manager->is_connected() && $jetpack_connection_manager->has_connected_owner();
     }
 }

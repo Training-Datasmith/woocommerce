@@ -1,13 +1,12 @@
 <?php
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-use Automattic\WooCommerce\Admin\Features\Features;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
 /**
  * MiniCartShoppingButtonBlock class.
  */
-class MiniCartShoppingButtonBlock extends AbstractInnerBlock
+class Mini_Cart_Shopping_Button_Block extends Abstract_Inner_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class MiniCartShoppingButtonBlock extends AbstractInnerBlock
      * @var string
      */
     protected $block_name = 'mini-cart-shopping-button-block';
-
     /**
      * Render the markup for the Mini-Cart Shopping Button block.
      *
@@ -29,10 +27,8 @@ class MiniCartShoppingButtonBlock extends AbstractInnerBlock
         if (Features::is_enabled('experimental-iapi-mini-cart')) {
             return $this->render_experimental_iapi_markup($attributes, $content, $block);
         }
-
         return $content;
     }
-
     /**
      * Render experimental iAPI powered  markup for the Mini-Cart Contents block.
      *
@@ -44,22 +40,29 @@ class MiniCartShoppingButtonBlock extends AbstractInnerBlock
     protected function render_experimental_iapi_markup(array $attributes, $content, $block): string|false
     {
         ob_start();
-        $shop_url                     = wc_get_page_permalink('shop');
+        $shop_url = wc_get_page_permalink('shop');
         $default_start_shopping_label = __('Start shopping', 'woocommerce');
-        $start_shopping_label         = $attributes['startShoppingButtonLabel'] ?: $default_start_shopping_label;
-        $wrapper_attributes           = get_block_wrapper_attributes([ 'class' => 'wc-block-components-button wp-element-button wc-block-mini-cart__shopping-button' ]);
+        $start_shopping_label = $attributes['startShoppingButtonLabel'] ?: $default_start_shopping_label;
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => 'wc-block-components-button wp-element-button wc-block-mini-cart__shopping-button']);
         ?>
 		<div class="wp-block-button has-text-align-center">
 			<a
-				href="<?php echo esc_attr($shop_url); ?>"
-				<?php echo $wrapper_attributes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
+				href="<?php 
+        echo esc_attr($shop_url);
+        ?>"
+				<?php 
+        echo $wrapper_attributes;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
 			>
 				<div class="wc-block-components-button__text">
-					<?php echo esc_html($start_shopping_label); ?>
+					<?php 
+        echo esc_html($start_shopping_label);
+        ?>
 				</div>
 			</a>
 		</div>
-		<?php
+		<?php 
         return ob_get_clean();
     }
 }

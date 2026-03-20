@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Templates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Templates;
 
 /**
  * CheckoutHeader Template class.
  *
  * @internal
  */
-class CheckoutHeaderTemplate extends AbstractTemplatePart
+class Checkout_Header_Template extends Abstract_Template_Part
 {
     /**
      * The slug of the template.
@@ -17,21 +16,18 @@ class CheckoutHeaderTemplate extends AbstractTemplatePart
      * @var string
      */
     public const SLUG = 'checkout-header';
-
     /**
      * The template part area where the template part belongs.
      *
      * @var string
      */
     public $template_area = 'header';
-
     /**
      * Initialization method.
      */
     public function init()
     {
     }
-
     /**
      * Returns the title of the template.
      *
@@ -41,7 +37,6 @@ class CheckoutHeaderTemplate extends AbstractTemplatePart
     {
         return _x('Checkout Header', 'Template name', 'woocommerce');
     }
-
     /**
      * Returns the description of the template.
      *

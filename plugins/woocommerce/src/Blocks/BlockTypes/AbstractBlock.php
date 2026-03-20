@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Blocks\Assets\Api as AssetApi;
-use Automattic\WooCommerce\Blocks\Assets\AssetDataRegistry;
-use Automattic\WooCommerce\Blocks\Integrations\IntegrationRegistry;
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Blocks\Assets\Api as AssetApi;
+use Automattic\Woo_Commerce\Blocks\Assets\Asset_Data_Registry;
+use Automattic\Woo_Commerce\Blocks\Integrations\Integration_Registry;
 use WP_Block;
-
 /**
  * AbstractBlock class.
  */
-abstract class AbstractBlock
+abstract class Abstract_Block
 {
     /**
      * Block namespace.
@@ -21,21 +19,18 @@ abstract class AbstractBlock
      * @var string
      */
     protected $namespace = 'woocommerce';
-
     /**
      * Block name within this namespace.
      *
      * @var string
      */
     protected $block_name = '';
-
     /**
      * Tracks if assets have been enqueued.
      *
      * @var boolean
      */
     protected $enqueued_assets = false;
-
     /**
      * Constructor.
      *
@@ -44,28 +39,27 @@ abstract class AbstractBlock
      * @param IntegrationRegistry $integration_registry Instance of the integration registry.
      * @param string              $block_name Optionally set block name during construct.
      */
-    public function __construct(/**
-     * Instance of the asset API.
-     */
-        protected \Automattic\WooCommerce\Blocks\Assets\Api $asset_api,
-        protected \Automattic\WooCommerce\Blocks\Assets\AssetDataRegistry $asset_data_registry,
-        protected \Automattic\WooCommerce\Blocks\Integrations\IntegrationRegistry $integration_registry,
+    public function __construct(
+        /**
+         * Instance of the asset API.
+         */
+        protected \Automattic\Woo_Commerce\Blocks\Assets\Api $asset_api,
+        protected \Automattic\Woo_Commerce\Blocks\Assets\Asset_Data_Registry $asset_data_registry,
+        protected \Automattic\Woo_Commerce\Blocks\Integrations\Integration_Registry $integration_registry,
         $block_name = ''
-    ) {
-        $this->block_name           = $block_name ?: $this->block_name;
+    )
+    {
+        $this->block_name = $block_name ?: $this->block_name;
         $this->initialize();
     }
-
     /**
      * Get the interactivity namespace. Only used when utilizing the interactivity API.
-
      * @return string The interactivity namespace, used to namespace interactivity API actions and state.
      */
     protected function get_full_block_name()
     {
         return $this->namespace . '/' . $this->block_name;
     }
-
     /**
      * The default render_callback for all blocks. This will ensure assets are enqueued just in time, then render
      * the block (if applicable).
@@ -78,13 +72,12 @@ abstract class AbstractBlock
     public function render_callback($attributes = [], $content = '', $block = null)
     {
         $render_callback_attributes = $this->parse_render_callback_attributes($attributes);
-        if (! is_admin() && ! WC()->is_rest_api_request()) {
+        if (!is_admin() && !WC()->is_rest_api_request()) {
             $this->register_block_type_assets();
             $this->enqueue_assets($render_callback_attributes, $content, $block);
         }
         return $this->render($render_callback_attributes, $content, $block);
     }
-
     /**
      * Enqueue assets used for rendering the block in editor context.
      *
@@ -98,20 +91,17 @@ abstract class AbstractBlock
         $this->register_block_type_assets();
         $this->enqueue_data();
     }
-
     /**
      * Are we currently on the admin block editor screen?
      */
     protected function is_block_editor()
     {
-        if (! is_admin() || ! function_exists('get_current_screen')) {
+        if (!is_admin() || !function_exists('get_current_screen')) {
             return false;
         }
         $screen = get_current_screen();
-
         return $screen && $screen->is_block_editor();
     }
-
     /**
      * Initialize this block type.
      *
@@ -128,7 +118,6 @@ abstract class AbstractBlock
         $this->register_block_type();
         add_action('enqueue_block_editor_assets', $this->enqueue_editor_assets(...));
     }
-
     /**
      * Register script and style assets for the block type before it is registered.
      *
@@ -137,35 +126,16 @@ abstract class AbstractBlock
     protected function register_block_type_assets()
     {
         if (null !== $this->get_block_type_editor_script()) {
-            $data     = $this->asset_api->get_script_data($this->get_block_type_editor_script('path'));
+            $data = $this->asset_api->get_script_data($this->get_block_type_editor_script('path'));
             $has_i18n = in_array('wp-i18n', $data['dependencies'], true);
-
-            $this->asset_api->register_script(
-                $this->get_block_type_editor_script('handle'),
-                $this->get_block_type_editor_script('path'),
-                array_merge(
-                    $this->get_block_type_editor_script('dependencies'),
-                    $this->integration_registry->get_all_registered_editor_script_handles()
-                ),
-                $has_i18n
-            );
+            $this->asset_api->register_script($this->get_block_type_editor_script('handle'), $this->get_block_type_editor_script('path'), array_merge($this->get_block_type_editor_script('dependencies'), $this->integration_registry->get_all_registered_editor_script_handles()), $has_i18n);
         }
         if (null !== $this->get_block_type_script()) {
-            $data     = $this->asset_api->get_script_data($this->get_block_type_script('path'));
+            $data = $this->asset_api->get_script_data($this->get_block_type_script('path'));
             $has_i18n = in_array('wp-i18n', $data['dependencies'], true);
-
-            $this->asset_api->register_script(
-                $this->get_block_type_script('handle'),
-                $this->get_block_type_script('path'),
-                array_merge(
-                    $this->get_block_type_script('dependencies'),
-                    $this->integration_registry->get_all_registered_script_handles()
-                ),
-                $has_i18n
-            );
+            $this->asset_api->register_script($this->get_block_type_script('handle'), $this->get_block_type_script('path'), array_merge($this->get_block_type_script('dependencies'), $this->integration_registry->get_all_registered_script_handles()), $has_i18n);
         }
     }
-
     /**
      * Injects Chunk Translations into the page so translations work for lazy loaded components.
      *
@@ -178,15 +148,10 @@ abstract class AbstractBlock
         foreach ($chunks as $chunk) {
             $handle = 'wc-blocks-' . $chunk . '-chunk';
             $this->asset_api->register_script($handle, $this->asset_api->get_block_asset_build_path($chunk), [], true);
-            wp_add_inline_script(
-                $this->get_block_type_script('handle'),
-                wp_scripts()->print_translations($handle, false),
-                'before'
-            );
+            wp_add_inline_script($this->get_block_type_script('handle'), wp_scripts()->print_translations($handle, false), 'before');
             wp_deregister_script($handle);
         }
     }
-
     /**
      * Generate an array of chunks paths for loading translation.
      *
@@ -195,12 +160,12 @@ abstract class AbstractBlock
      */
     protected function get_chunks_paths(string $chunks_folder)
     {
-        $build_path = \Automattic\WooCommerce\Blocks\Package::get_path() . 'assets/client/blocks/';
-        $blocks     = [];
-        if (! is_dir($build_path . $chunks_folder)) {
+        $build_path = \Automattic\Woo_Commerce\Blocks\Package::get_path() . 'assets/client/blocks/';
+        $blocks = [];
+        if (!is_dir($build_path . $chunks_folder)) {
             return [];
         }
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($build_path . $chunks_folder, \FilesystemIterator::UNIX_PATHS | \FilesystemIterator::SKIP_DOTS)) as $block_name) {
+        foreach (new \Recursive_Iterator_Iterator(new \Recursive_Directory_Iterator($build_path . $chunks_folder, \Filesystem_Iterator::UNIX_PATHS | \Filesystem_Iterator::SKIP_DOTS)) as $block_name) {
             $blocks[] = str_replace($build_path, '', $block_name);
         }
         return preg_filter('/.js/', '', $blocks);
@@ -212,50 +177,33 @@ abstract class AbstractBlock
      */
     protected function register_block_type()
     {
-        $block_settings = [
-            'render_callback' => $this->get_block_type_render_callback(),
-            'editor_script'   => $this->get_block_type_editor_script('handle'),
-        ];
-
+        $block_settings = ['render_callback' => $this->get_block_type_render_callback(), 'editor_script' => $this->get_block_type_editor_script('handle')];
         // Conditionally override these, otherwise rely on block.json metadata.
         if ($this->get_block_type_style()) {
             $block_settings['style'] = $this->get_block_type_style();
         }
-
         if ($this->get_block_type_editor_style()) {
             $block_settings['editor_style'] = $this->get_block_type_editor_style();
         }
-
         if (isset($this->api_version)) {
             $block_settings['api_version'] = intval($this->api_version);
         }
-
         $metadata_path = $this->asset_api->get_block_metadata_path($this->block_name);
-
         // Prefer to register with metadata if the path is set in the block's class.
-        if (! empty($metadata_path)) {
-            register_block_type_from_metadata(
-                $metadata_path,
-                $block_settings
-            );
+        if (!empty($metadata_path)) {
+            register_block_type_from_metadata($metadata_path, $block_settings);
             return;
         }
-
         /*
          * Insert attributes and supports if we're not registering the block using metadata.
          * These are left unset until now and only added here because if they were set when registering with metadata,
          * the attributes and supports from $block_settings would override the values from metadata.
          */
-        $block_settings['attributes']   = $this->get_block_type_attributes();
-        $block_settings['supports']     = $this->get_block_type_supports();
+        $block_settings['attributes'] = $this->get_block_type_attributes();
+        $block_settings['supports'] = $this->get_block_type_supports();
         $block_settings['uses_context'] = $this->get_block_type_uses_context();
-
-        register_block_type(
-            $this->get_block_type(),
-            $block_settings
-        );
+        register_block_type($this->get_block_type(), $block_settings);
     }
-
     /**
      * Get the block type.
      *
@@ -265,7 +213,6 @@ abstract class AbstractBlock
     {
         return $this->namespace . '/' . $this->block_name;
     }
-
     /**
      * Get the render callback for this block type.
      *
@@ -278,7 +225,6 @@ abstract class AbstractBlock
     {
         return $this->render_callback(...);
     }
-
     /**
      * Get the editor script data for this block type.
      *
@@ -288,14 +234,9 @@ abstract class AbstractBlock
      */
     protected function get_block_type_editor_script($key = null)
     {
-        $script = [
-            'handle'       => 'wc-' . $this->block_name . '-block',
-            'path'         => $this->asset_api->get_block_asset_build_path($this->block_name),
-            'dependencies' => [ 'wc-blocks' ],
-        ];
-        return $key ? $script[ $key ] : $script;
+        $script = ['handle' => 'wc-' . $this->block_name . '-block', 'path' => $this->asset_api->get_block_asset_build_path($this->block_name), 'dependencies' => ['wc-blocks']];
+        return $key ? $script[$key] : $script;
     }
-
     /**
      * Get the editor style handle for this block type.
      *
@@ -306,7 +247,6 @@ abstract class AbstractBlock
     {
         return 'wc-blocks-editor-style';
     }
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -316,14 +256,9 @@ abstract class AbstractBlock
      */
     protected function get_block_type_script($key = null)
     {
-        $script = [
-            'handle'       => 'wc-' . $this->block_name . '-block-frontend',
-            'path'         => $this->asset_api->get_block_asset_build_path($this->block_name . '-frontend'),
-            'dependencies' => [],
-        ];
-        return $key ? $script[ $key ] : $script;
+        $script = ['handle' => 'wc-' . $this->block_name . '-block-frontend', 'path' => $this->asset_api->get_block_asset_build_path($this->block_name . '-frontend'), 'dependencies' => []];
+        return $key ? $script[$key] : $script;
     }
-
     /**
      * Get the frontend style handle for this block type.
      *
@@ -332,10 +267,8 @@ abstract class AbstractBlock
     protected function get_block_type_style()
     {
         $this->asset_api->register_style('wc-blocks-style-' . $this->block_name, $this->asset_api->get_block_asset_build_path($this->block_name, 'css'), [], 'all', true);
-
-        return [ 'wc-blocks-style', 'wc-blocks-style-' . $this->block_name ];
+        return ['wc-blocks-style', 'wc-blocks-style-' . $this->block_name];
     }
-
     /**
      * Get the supports array for this block type.
      *
@@ -346,7 +279,6 @@ abstract class AbstractBlock
     {
         return [];
     }
-
     /**
      * Get block attributes.
      *
@@ -356,7 +288,6 @@ abstract class AbstractBlock
     {
         return [];
     }
-
     /**
      * Get block usesContext.
      *
@@ -366,7 +297,6 @@ abstract class AbstractBlock
     {
         return [];
     }
-
     /**
      * Parses block attributes from the render_callback.
      *
@@ -377,7 +307,6 @@ abstract class AbstractBlock
     {
         return is_a($attributes, 'WP_Block') ? $attributes->attributes : $attributes;
     }
-
     /**
      * Render the block. Extended by children.
      *
@@ -390,7 +319,6 @@ abstract class AbstractBlock
     {
         return $content;
     }
-
     /**
      * Enqueue frontend assets for this block, just in time for rendering.
      *
@@ -410,7 +338,6 @@ abstract class AbstractBlock
         $this->enqueue_scripts($attributes);
         $this->enqueued_assets = true;
     }
-
     /**
      * Data passed through from server to client for block.
      *
@@ -421,21 +348,16 @@ abstract class AbstractBlock
     protected function enqueue_data(array $attributes = [])
     {
         $registered_script_data = $this->integration_registry->get_all_registered_script_data();
-
         foreach ($registered_script_data as $asset_data_key => $asset_data_value) {
-            if (! $this->asset_data_registry->exists($asset_data_key)) {
+            if (!$this->asset_data_registry->exists($asset_data_key)) {
                 $this->asset_data_registry->add($asset_data_key, $asset_data_value);
             }
         }
-
-        if (! $this->asset_data_registry->exists('wcBlocksConfig')) {
+        if (!$this->asset_data_registry->exists('wcBlocksConfig')) {
             $wc_blocks_config = [
-                'pluginUrl'     => plugins_url('/', dirname(__DIR__, 2)),
-                'restApiRoutes' => [
-                    '/wc/store/v1' => array_keys($this->get_routes_from_namespace('wc/store/v1')),
-                ],
-                'defaultAvatar' => get_avatar_url(0, [ 'force_default' => true ]),
-
+                'pluginUrl' => plugins_url('/', dirname(__DIR__, 2)),
+                'restApiRoutes' => ['/wc/store/v1' => array_keys($this->get_routes_from_namespace('wc/store/v1'))],
+                'defaultAvatar' => get_avatar_url(0, ['force_default' => true]),
                 /*
                  * translators: If your word count is based on single characters (e.g. East Asian characters),
                  * enter 'characters_excluding_spaces' or 'characters_including_spaces'. Otherwise, enter 'words'.
@@ -443,27 +365,20 @@ abstract class AbstractBlock
                  */
                 'wordCountType' => _x('words', 'Word count type. Do not translate!', 'woocommerce'),
             ];
-            if (is_admin() && ! WC()->is_rest_api_request()) {
-                $product_counts     = wp_count_posts('product');
+            if (is_admin() && !WC()->is_rest_api_request()) {
+                $product_counts = wp_count_posts('product');
                 $published_products = $product_counts->publish ?? 0;
-                $wc_blocks_config   = array_merge(
-                    $wc_blocks_config,
-                    [
-                        // Note that while we don't have a consolidated way of doing feature-flagging
-                        // we are borrowing from the WC Admin Features implementation. Also note we cannot
-                        // use the wcAdminFeatures global because it's not always enqueued in the context of blocks.
-                        'experimentalBlocksEnabled' => Features::is_enabled('experimental-blocks'),
-                        'productCount'              => $published_products,
-                    ]
-                );
+                $wc_blocks_config = array_merge($wc_blocks_config, [
+                    // Note that while we don't have a consolidated way of doing feature-flagging
+                    // we are borrowing from the WC Admin Features implementation. Also note we cannot
+                    // use the wcAdminFeatures global because it's not always enqueued in the context of blocks.
+                    'experimentalBlocksEnabled' => Features::is_enabled('experimental-blocks'),
+                    'productCount' => $published_products,
+                ]);
             }
-            $this->asset_data_registry->add(
-                'wcBlocksConfig',
-                $wc_blocks_config
-            );
+            $this->asset_data_registry->add('wcBlocksConfig', $wc_blocks_config);
         }
     }
-
     /**
      * Get routes from a REST API namespace.
      *
@@ -480,34 +395,18 @@ abstract class AbstractBlock
          * @param string $namespace Namespace for routes.
          * @param string $context   Context, can be edit or view.
          */
-        $routes = apply_filters(
-            'woocommerce_blocks_pre_get_routes_from_namespace',
-            [],
-            $namespace,
-            'view'
-        );
-
-        if (! empty($routes)) {
+        $routes = apply_filters('woocommerce_blocks_pre_get_routes_from_namespace', [], $namespace, 'view');
+        if (!empty($routes)) {
             return $routes;
         }
-
-        $rest_server     = rest_get_server();
-        $namespace_index = $rest_server->get_namespace_index(
-            [
-                'namespace' => $namespace,
-                'context'   => 'view',
-            ]
-        );
-
+        $rest_server = rest_get_server();
+        $namespace_index = $rest_server->get_namespace_index(['namespace' => $namespace, 'context' => 'view']);
         if (is_wp_error($namespace_index)) {
             return [];
         }
-
         $response_data = $namespace_index->get_data();
-
         return $response_data['routes'] ?? [];
     }
-
     /**
      * Register/enqueue scripts used for this block on the frontend, during render.
      *

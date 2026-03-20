@@ -1,35 +1,30 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WC Admin Order Refund
  *
  * WC Admin Order Refund class that adds some functionality on top of general WooCommerce WC_Order_Refund.
  */
-
-namespace Automattic\WooCommerce\Admin\Overrides;
+namespace Automattic\Woo_Commerce\Admin\Overrides;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\Customers\DataStore as CustomersDataStore;
-
+use Automattic\Woo_Commerce\Admin\API\Reports\Customers\Data_Store as CustomersDataStore;
 /**
  * WC_Order_Refund subclass.
  */
-class OrderRefund extends \WC_Order_Refund
+class Order_Refund extends \WC_Order_Refund
 {
     /**
      * Order traits.
      */
-    use OrderTraits;
-
+    use Order_Traits;
     /**
      * Caches the customer ID.
      *
      * @var int
      */
     public $customer_id;
-
     /**
      * Add filter(s) required to hook this class to substitute WC_Order_Refund.
      */
@@ -37,7 +32,6 @@ class OrderRefund extends \WC_Order_Refund
     {
         add_filter('woocommerce_order_class', self::order_class_name(...), 10, 3);
     }
-
     /**
      * Filter function to swap class WC_Order_Refund for this one in cases when it's suitable.
      *
@@ -51,11 +45,10 @@ class OrderRefund extends \WC_Order_Refund
     {
         // @todo - Only substitute class when necessary (during sync).
         if ('WC_Order_Refund' === $classname) {
-            return \Automattic\WooCommerce\Admin\Overrides\OrderRefund::class;
+            return \Automattic\Woo_Commerce\Admin\Overrides\Order_Refund::class;
         }
         return $classname;
     }
-
     /**
      * Get the customer ID of the parent order used for reports in the customer lookup table.
      *
@@ -65,17 +58,13 @@ class OrderRefund extends \WC_Order_Refund
     {
         if (is_null($this->customer_id)) {
             $parent_order = \wc_get_order($this->get_parent_id());
-
-            if (! $parent_order) {
+            if (!$parent_order) {
                 $this->customer_id = false;
             }
-
-            $this->customer_id = CustomersDataStore::get_or_create_customer_from_order($parent_order);
+            $this->customer_id = Customers_Data_Store::get_or_create_customer_from_order($parent_order);
         }
-
         return $this->customer_id;
     }
-
     /**
      * Returns null since refunds should not be counted towards returning customer counts.
      */

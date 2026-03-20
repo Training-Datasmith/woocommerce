@@ -1,34 +1,29 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Admin Personalize Your Store Note Provider.
  *
  * Adds a note to the merchant's inbox prompting them to personalize their store.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\Notes;
+namespace Automattic\Woo_Commerce\Internal\Admin\Notes;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\Notes\Note;
-use Automattic\WooCommerce\Admin\Notes\NoteTraits;
-
+use Automattic\Woo_Commerce\Admin\Notes\Note;
+use Automattic\Woo_Commerce\Admin\Notes\Note_Traits;
 /**
  * Personalize_Store
  */
-class PersonalizeStore
+class Personalize_Store
 {
     /**
      * Note traits.
      */
-    use NoteTraits;
-
+    use Note_Traits;
     /**
      * Name of the note for use in the database.
      */
     public const NOTE_NAME = 'wc-admin-personalize-store';
-
     /**
      * Get the note.
      *
@@ -38,22 +33,17 @@ class PersonalizeStore
     {
         // Only show the note to stores with homepage.
         $homepage_id = get_option('woocommerce_onboarding_homepage_post_id', false);
-        if (! $homepage_id) {
+        if (!$homepage_id) {
             return;
         }
-
         // Show the note after task list is done.
         $is_task_list_complete = get_option('woocommerce_task_list_complete', false);
-
         // We want to show the note after day 5.
         $five_days_in_seconds = 5 * DAY_IN_SECONDS;
-
-        if (! self::is_wc_admin_active_in_date_range('week-1-4', $five_days_in_seconds) && ! $is_task_list_complete) {
+        if (!self::is_wc_admin_active_in_date_range('week-1-4', $five_days_in_seconds) && !$is_task_list_complete) {
             return;
         }
-
         $content = __('The homepage is one of the most important entry points in your store. When done right it can lead to higher conversions and engagement. Don\'t forget to personalize the homepage that we created for your store during the onboarding.', 'woocommerce');
-
         $note = new Note();
         $note->set_title(__('Personalize your store\'s homepage', 'woocommerce'));
         $note->set_content($content);

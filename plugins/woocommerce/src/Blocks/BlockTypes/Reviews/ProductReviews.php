@@ -1,27 +1,23 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Reviews;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\Reviews;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AbstractBlock;
-use Automattic\WooCommerce\Blocks\BlockTypes\EnableBlockJsonAssetsTrait;
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Abstract_Block;
+use Automattic\Woo_Commerce\Blocks\Block_Types\Enable_Block_Json_Assets_Trait;
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * ProductReviews class.
  */
-class ProductReviews extends AbstractBlock
+class Product_Reviews extends Abstract_Block
 {
-    use EnableBlockJsonAssetsTrait;
-
+    use Enable_Block_Json_Assets_Trait;
     /**
      * Block name.
      *
      * @var string
      */
     protected $block_name = 'product-reviews';
-
     /**
      * Render the block.
      *
@@ -36,19 +32,15 @@ class ProductReviews extends AbstractBlock
         if (empty($block->parsed_block['innerBlocks'])) {
             return $this->render_legacy_block($attributes, $content, $block);
         }
-
-        if (! comments_open()) {
+        if (!comments_open()) {
             return '';
         }
-
         $p = new \WP_HTML_Tag_Processor($content);
         $p->next_tag();
         $p->set_attribute('data-wp-interactive', $this->get_full_block_name());
         $p->set_attribute('data-wp-router-region', $this->get_full_block_name());
-
         return $p->get_updated_html();
     }
-
     /**
      * Previously, the Product Reviews block was a standalone block. It doesn't
      * have any inner blocks and it rendered the tabs directly like the classic
@@ -64,26 +56,18 @@ class ProductReviews extends AbstractBlock
      */
     protected function render_legacy_block($attributes, $content, $block)
     {
-        if (! is_singular('product')) {
+        if (!is_singular('product')) {
             return $content;
         }
-
         ob_start();
-
         rewind_posts();
         while (have_posts()) {
             the_post();
             comments_template();
         }
-
         $reviews = ob_get_clean();
-
-        return sprintf(
-            '<div class="wp-block-woocommerce-product-reviews %1$s">
+        return sprintf('<div class="wp-block-woocommerce-product-reviews %1$s">
 				%2$s
-			</div>',
-            StyleAttributesUtils::get_classes_by_attributes($attributes, [ 'extra_classes' ]),
-            $reviews
-        );
+			</div>', Style_Attributes_Utils::get_classes_by_attributes($attributes, ['extra_classes']), $reviews);
     }
 }

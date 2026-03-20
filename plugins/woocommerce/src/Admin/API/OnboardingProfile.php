@@ -5,26 +5,22 @@
  *
  * Handles requests to /onboarding/profile
  */
-
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\API;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\API;
 
 defined('ABSPATH') || exit;
-
 use Automattic\Jetpack\Connection\Manager as Jetpack_Connection_Manager;
-use Automattic\WooCommerce\Internal\Admin\Onboarding\OnboardingProfile as Profile;
+use Automattic\Woo_Commerce\Internal\Admin\Onboarding\Onboarding_Profile as Profile;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
-
 /**
  * Onboarding Profile controller.
  *
  * @internal
  * @extends WC_REST_Data_Controller
  */
-class OnboardingProfile extends \WC_REST_Data_Controller
+class Onboarding_Profile extends \WC_REST_Data_Controller
 {
     /**
      * Endpoint namespace.
@@ -32,120 +28,25 @@ class OnboardingProfile extends \WC_REST_Data_Controller
      * @var string
      */
     protected $namespace = 'wc-admin';
-
     /**
      * Route base.
      *
      * @var string
      */
     protected $rest_base = 'onboarding/profile';
-
     /**
      * Register routes.
      */
     public function register_routes(): void
     {
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base,
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_items(...),
-                    'permission_callback' => $this->get_items_permissions_check(...),
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base,
-            [
-                [
-                    'methods'             => \WP_REST_Server::EDITABLE,
-                    'callback'            => $this->update_items(...),
-                    'permission_callback' => $this->update_items_permissions_check(...),
-                    'args'                => $this->get_collection_params(),
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
-
+        register_rest_route($this->namespace, '/' . $this->rest_base, [['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_items(...), 'permission_callback' => $this->get_items_permissions_check(...)], 'schema' => [$this, 'get_public_item_schema']]);
+        register_rest_route($this->namespace, '/' . $this->rest_base, [['methods' => \WP_REST_Server::EDITABLE, 'callback' => $this->update_items(...), 'permission_callback' => $this->update_items_permissions_check(...), 'args' => $this->get_collection_params()], 'schema' => [$this, 'get_public_item_schema']]);
         // This endpoint is experimental. For internal use only.
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/experimental_get_email_prefill',
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_email_prefill(...),
-                    'permission_callback' => $this->get_items_permissions_check(...),
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
-
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/progress',
-            [
-                [
-                    'methods'             => \WP_REST_Server::READABLE,
-                    'callback'            => $this->get_profile_progress(...),
-                    'permission_callback' => $this->get_items_permissions_check(...),
-                ],
-            ]
-        );
-
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/progress/core-profiler/complete',
-            [
-                [
-                    'methods'             => \WP_REST_Server::EDITABLE,
-                    'callback'            => $this->core_profiler_step_complete(...),
-                    'permission_callback' => $this->update_items_permissions_check(...),
-                    'args'                => [
-                        'step' => [
-                            'required'    => true,
-                            'type'        => 'string',
-                            'description' => __('The Core Profiler step to mark as complete.', 'woocommerce'),
-                            'enum'        => [
-                                'intro-opt-in',
-                                'skip-guided-setup',
-                                'user-profile',
-                                'business-info',
-                                'plugins',
-                                'intro-builder',
-                                'skip-guided-setup',
-                            ],
-                        ],
-                    ],
-                ],
-            ]
-        );
-
-        register_rest_route(
-            $this->namespace,
-            '/' . $this->rest_base . '/update-store-currency-and-measurement-units',
-            [
-                [
-                    'methods'             => 'POST',
-                    'callback'            => $this->update_store_currency_and_measurement_units(...),
-                    'permission_callback' => $this->update_items_permissions_check(...),
-                    'args'                => [
-                        'country_code' => [
-                            'description' => __('Country code.', 'woocommerce'),
-                            'type'        => 'string',
-                            'required'    => true,
-                        ],
-                    ],
-                ],
-                'schema' => [ $this, 'get_public_item_schema' ],
-            ]
-        );
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/experimental_get_email_prefill', [['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_email_prefill(...), 'permission_callback' => $this->get_items_permissions_check(...)], 'schema' => [$this, 'get_public_item_schema']]);
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/progress', [['methods' => \WP_REST_Server::READABLE, 'callback' => $this->get_profile_progress(...), 'permission_callback' => $this->get_items_permissions_check(...)]]);
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/progress/core-profiler/complete', [['methods' => \WP_REST_Server::EDITABLE, 'callback' => $this->core_profiler_step_complete(...), 'permission_callback' => $this->update_items_permissions_check(...), 'args' => ['step' => ['required' => true, 'type' => 'string', 'description' => __('The Core Profiler step to mark as complete.', 'woocommerce'), 'enum' => ['intro-opt-in', 'skip-guided-setup', 'user-profile', 'business-info', 'plugins', 'intro-builder', 'skip-guided-setup']]]]]);
+        register_rest_route($this->namespace, '/' . $this->rest_base . '/update-store-currency-and-measurement-units', [['methods' => 'POST', 'callback' => $this->update_store_currency_and_measurement_units(...), 'permission_callback' => $this->update_items_permissions_check(...), 'args' => ['country_code' => ['description' => __('Country code.', 'woocommerce'), 'type' => 'string', 'required' => true]]], 'schema' => [$this, 'get_public_item_schema']]);
     }
-
     /**
      * Check whether a given request has permission to read onboarding profile data.
      *
@@ -153,13 +54,11 @@ class OnboardingProfile extends \WC_REST_Data_Controller
      */
     public function get_items_permissions_check($request): \WP_Error|true
     {
-        if (! wc_rest_check_manager_permissions('settings', 'read')) {
-            return new \WP_Error('woocommerce_rest_cannot_view', __('Sorry, you cannot list resources.', 'woocommerce'), [ 'status' => rest_authorization_required_code() ]);
+        if (!wc_rest_check_manager_permissions('settings', 'read')) {
+            return new \WP_Error('woocommerce_rest_cannot_view', __('Sorry, you cannot list resources.', 'woocommerce'), ['status' => rest_authorization_required_code()]);
         }
-
         return true;
     }
-
     /**
      * Check whether a given request has permission to edit onboarding profile data.
      *
@@ -168,13 +67,11 @@ class OnboardingProfile extends \WC_REST_Data_Controller
      */
     public function update_items_permissions_check($request)
     {
-        if (! wc_rest_check_manager_permissions('settings', 'edit')) {
-            return new \WP_Error('woocommerce_rest_cannot_view', __('Sorry, you cannot edit this resource.', 'woocommerce'), [ 'status' => rest_authorization_required_code() ]);
+        if (!wc_rest_check_manager_permissions('settings', 'edit')) {
+            return new \WP_Error('woocommerce_rest_cannot_view', __('Sorry, you cannot edit this resource.', 'woocommerce'), ['status' => rest_authorization_required_code()]);
         }
-
         return true;
     }
-
     /**
      * Return all onboarding profile data.
      *
@@ -184,24 +81,19 @@ class OnboardingProfile extends \WC_REST_Data_Controller
     public function get_items($request)
     {
         include_once WC_ABSPATH . 'includes/admin/helper/class-wc-helper-options.php';
-
-        $onboarding_data             = get_option(Profile::DATA_OPTION, []);
+        $onboarding_data = get_option(Profile::DATA_OPTION, []);
         $onboarding_data['industry'] = isset($onboarding_data['industry']) ? $this->filter_industries($onboarding_data['industry']) : null;
-        $item_schema                 = $this->get_item_schema();
-        $items                       = [];
+        $item_schema = $this->get_item_schema();
+        $items = [];
         foreach ($item_schema['properties'] as $key => $property_schema) {
-            $items[ $key ] = $onboarding_data[ $key ] ?? null;
+            $items[$key] = $onboarding_data[$key] ?? null;
         }
-
-        $wccom_auth               = \WC_Helper_Options::get('auth');
+        $wccom_auth = \WC_Helper_Options::get('auth');
         $items['wccom_connected'] = empty($wccom_auth['access_token']) ? false : true;
-
         $item = $this->prepare_item_for_response($items, $request);
         $data = $this->prepare_response_for_collection($item);
-
         return rest_ensure_response($data);
     }
-
     /**
      * Filter the industries.
      *
@@ -216,12 +108,8 @@ class OnboardingProfile extends \WC_REST_Data_Controller
          * @since 6.5.0
          * @param array $industries List of industries.
          */
-        return apply_filters(
-            'woocommerce_admin_onboarding_industries',
-            $industries
-        );
+        return apply_filters('woocommerce_admin_onboarding_industries', $industries);
     }
-
     /**
      * Update onboarding profile data.
      *
@@ -230,13 +118,11 @@ class OnboardingProfile extends \WC_REST_Data_Controller
      */
     public function update_items($request)
     {
-        $params     = $request->get_json_params();
+        $params = $request->get_json_params();
         $query_args = $this->prepare_objects_query($params);
-
         $onboarding_data = (array) get_option(Profile::DATA_OPTION, []);
-        $profile_data    = array_merge($onboarding_data, $query_args);
+        $profile_data = array_merge($onboarding_data, $query_args);
         update_option(Profile::DATA_OPTION, $profile_data);
-
         /**
          * Fires when onboarding profile data is updated via the REST API.
          *
@@ -245,18 +131,11 @@ class OnboardingProfile extends \WC_REST_Data_Controller
          * @param array $query_args New data being set.
          */
         do_action('woocommerce_onboarding_profile_data_updated', $onboarding_data, $query_args);
-
-        $result = [
-            'status'  => 'success',
-            'message' => __('Onboarding profile data has been updated.', 'woocommerce'),
-        ];
-
+        $result = ['status' => 'success', 'message' => __('Onboarding profile data has been updated.', 'woocommerce')];
         $response = $this->prepare_item_for_response($result, $request);
-        $data     = $this->prepare_response_for_collection($response);
-
+        $data = $this->prepare_response_for_collection($response);
         return rest_ensure_response($data);
     }
-
     /**
      * Returns a default email to be pre-filled in OBW. Prioritizes Jetpack if connected,
      * otherwise will default to WordPress general settings.
@@ -266,28 +145,21 @@ class OnboardingProfile extends \WC_REST_Data_Controller
      */
     public function get_email_prefill($request)
     {
-        $result = [
-            'email' => '',
-        ];
-
+        $result = ['email' => ''];
         // Attempt to get email from Jetpack.
         if (class_exists(Jetpack_Connection_Manager::class)) {
             $jetpack_connection_manager = new Jetpack_Connection_Manager();
             if ($jetpack_connection_manager->is_active()) {
                 $jetpack_user = $jetpack_connection_manager->get_connected_user_data();
-
                 $result['email'] = $jetpack_user['email'];
             }
         }
-
         // Attempt to get email from WordPress general settings.
         if (empty($result['email'])) {
             $result['email'] = get_option('admin_email');
         }
-
         return rest_ensure_response($result);
     }
-
     /**
      * Mark a core profiler step as complete.
      *
@@ -298,19 +170,12 @@ class OnboardingProfile extends \WC_REST_Data_Controller
     {
         $json = $request->get_json_params();
         $step = $json['step'];
-
         $onboarding_progress = (array) get_option(Profile::PROGRESS_OPTION, []);
-
-        if (! isset($onboarding_progress['core_profiler_completed_steps'])) {
+        if (!isset($onboarding_progress['core_profiler_completed_steps'])) {
             $onboarding_progress['core_profiler_completed_steps'] = [];
         }
-
-        $onboarding_progress['core_profiler_completed_steps'][ $step ] = [
-            'completed_at' => gmdate('Y-m-d\TH:i:s\Z'),
-        ];
-
+        $onboarding_progress['core_profiler_completed_steps'][$step] = ['completed_at' => gmdate('Y-m-d\TH:i:s\Z')];
         update_option(Profile::PROGRESS_OPTION, $onboarding_progress);
-
         /**
          * Fires when a core profiler step is completed.
          *
@@ -318,15 +183,9 @@ class OnboardingProfile extends \WC_REST_Data_Controller
          * @param string $step The completed step name.
          */
         do_action('woocommerce_core_profiler_step_complete', $step);
-
-        $response_data = [
-            'results' => $onboarding_progress,
-            'status'  => 'success',
-        ];
-
+        $response_data = ['results' => $onboarding_progress, 'status' => 'success'];
         return rest_ensure_response($response_data);
     }
-
     /**
      * Get the onboarding profile progress.
      *
@@ -338,7 +197,6 @@ class OnboardingProfile extends \WC_REST_Data_Controller
         $onboarding_progress = (array) get_option(Profile::PROGRESS_OPTION, []);
         return rest_ensure_response($onboarding_progress);
     }
-
     /**
      * Update store's currency and measurement units.
      * Requires 'country' code to be passed in the request.
@@ -349,35 +207,17 @@ class OnboardingProfile extends \WC_REST_Data_Controller
     public function update_store_currency_and_measurement_units(WP_REST_Request $request)
     {
         $country_code = $request->get_param('country_code');
-        $locale_info  = include WC()->plugin_path() . '/i18n/locale-info.php';
-
-        if (empty($country_code) || ! isset($locale_info[ $country_code ])) {
-            return new WP_Error(
-                'woocommerce_rest_invalid_country_code',
-                __('Invalid country code.', 'woocommerce'),
-                [ 'status' => 400 ]
-            );
+        $locale_info = include WC()->plugin_path() . '/i18n/locale-info.php';
+        if (empty($country_code) || !isset($locale_info[$country_code])) {
+            return new WP_Error('woocommerce_rest_invalid_country_code', __('Invalid country code.', 'woocommerce'), ['status' => 400]);
         }
-
-        $country_info = $locale_info[ $country_code ];
-
-        $currency_settings = [
-            'woocommerce_currency'           => $country_info['currency_code'],
-            'woocommerce_currency_pos'       => $country_info['currency_pos'],
-            'woocommerce_price_thousand_sep' => $country_info['thousand_sep'],
-            'woocommerce_price_decimal_sep'  => $country_info['decimal_sep'],
-            'woocommerce_price_num_decimals' => $country_info['num_decimals'],
-            'woocommerce_weight_unit'        => $country_info['weight_unit'],
-            'woocommerce_dimension_unit'     => $country_info['dimension_unit'],
-        ];
-
+        $country_info = $locale_info[$country_code];
+        $currency_settings = ['woocommerce_currency' => $country_info['currency_code'], 'woocommerce_currency_pos' => $country_info['currency_pos'], 'woocommerce_price_thousand_sep' => $country_info['thousand_sep'], 'woocommerce_price_decimal_sep' => $country_info['decimal_sep'], 'woocommerce_price_num_decimals' => $country_info['num_decimals'], 'woocommerce_weight_unit' => $country_info['weight_unit'], 'woocommerce_dimension_unit' => $country_info['dimension_unit']];
         foreach ($currency_settings as $key => $value) {
             update_option($key, $value);
         }
-
         return new WP_REST_Response([], 204);
     }
-
     /**
      * Prepare objects query.
      *
@@ -386,15 +226,13 @@ class OnboardingProfile extends \WC_REST_Data_Controller
      */
     protected function prepare_objects_query($params)
     {
-        $args       = [];
+        $args = [];
         $properties = self::get_profile_properties();
-
         foreach ($properties as $key => $property) {
-            if (isset($params[ $key ])) {
-                $args[ $key ] = $params[ $key ];
+            if (isset($params[$key])) {
+                $args[$key] = $params[$key];
             }
         }
-
         /**
          * Filter the query arguments for a request.
          *
@@ -406,10 +244,8 @@ class OnboardingProfile extends \WC_REST_Data_Controller
          * @param array $params The params sent in the request.
          */
         $args = apply_filters('woocommerce_rest_onboarding_profile_object_query', $args, $params);
-
         return $args;
     }
-
     /**
      * Prepare the data object for response.
      *
@@ -419,10 +255,9 @@ class OnboardingProfile extends \WC_REST_Data_Controller
      */
     public function prepare_item_for_response($item, $request)
     {
-        $data     = $this->add_additional_fields_to_object($item, $request);
-        $data     = $this->filter_response_by_context($data, 'view');
+        $data = $this->add_additional_fields_to_object($item, $request);
+        $data = $this->filter_response_by_context($data, 'view');
         $response = rest_ensure_response($data);
-
         /**
          * Filter the list returned from the API.
          *
@@ -433,7 +268,6 @@ class OnboardingProfile extends \WC_REST_Data_Controller
          */
         return apply_filters('woocommerce_rest_onboarding_prepare_profile', $response, $item, $request);
     }
-
     /**
      * Get onboarding profile properties.
      *
@@ -441,98 +275,7 @@ class OnboardingProfile extends \WC_REST_Data_Controller
      */
     public static function get_profile_properties()
     {
-        $properties = [
-            'completed'               => [
-                'type'              => 'boolean',
-                'description'       => __('Whether or not the profile was completed.', 'woocommerce'),
-                'context'           => [ 'view' ],
-                'readonly'          => true,
-                'validate_callback' => 'rest_validate_request_arg',
-            ],
-            'skipped'                 => [
-                'type'              => 'boolean',
-                'description'       => __('Whether or not the profile was skipped.', 'woocommerce'),
-                'context'           => [ 'view' ],
-                'readonly'          => true,
-                'validate_callback' => 'rest_validate_request_arg',
-            ],
-            'industry'                => [
-                'type'              => 'array',
-                'description'       => __('Industry.', 'woocommerce'),
-                'context'           => [ 'view' ],
-                'readonly'          => true,
-                'nullable'          => true,
-                'validate_callback' => 'rest_validate_request_arg',
-                'items'             => [
-                    'type' => 'string',
-                ],
-            ],
-            'business_extensions'     => [
-                'type'              => 'array',
-                'description'       => __('Extra business extensions to install.', 'woocommerce'),
-                'context'           => [ 'view' ],
-                'readonly'          => true,
-                'sanitize_callback' => 'wp_parse_slug_list',
-                'validate_callback' => 'rest_validate_request_arg',
-                'items'             => [
-                    'type' => 'string',
-                ],
-            ],
-            'is_agree_marketing'      => [
-                'type'              => 'boolean',
-                'description'       => __('Whether or not this store agreed to receiving marketing contents from WooCommerce.com.', 'woocommerce'),
-                'context'           => [ 'view' ],
-                'readonly'          => true,
-                'validate_callback' => 'rest_validate_request_arg',
-            ],
-            'store_email'             => [
-                'type'              => 'string',
-                'description'       => __('Store email address.', 'woocommerce'),
-                'context'           => [ 'view' ],
-                'readonly'          => true,
-                'nullable'          => true,
-                'validate_callback' => self::rest_validate_marketing_email(...),
-            ],
-            'is_store_country_set'    => [
-                'type'              => 'boolean',
-                'description'       => __('Whether or not this store country is set via onboarding profiler.', 'woocommerce'),
-                'context'           => [ 'view' ],
-                'readonly'          => true,
-                'validate_callback' => 'rest_validate_request_arg',
-            ],
-            'is_plugins_page_skipped' => [
-                'type'              => 'boolean',
-                'description'       => __('Whether or not plugins step in core profiler was skipped.', 'woocommerce'),
-                'context'           => [ 'view' ],
-                'readonly'          => true,
-                'validate_callback' => 'rest_validate_request_arg',
-            ],
-            'business_choice'         => [
-                'type'        => 'string',
-                'description' => __('Business choice.', 'woocommerce'),
-                'context'     => [ 'view' ],
-                'readonly'    => true,
-                'nullable'    => true,
-            ],
-            'selling_online_answer'   => [
-                'type'        => 'string',
-                'description' => __('Selling online answer.', 'woocommerce'),
-                'context'     => [ 'view' ],
-                'readonly'    => true,
-                'nullable'    => true,
-            ],
-            'selling_platforms'       => [
-                'type'        => [ 'array', 'null' ],
-                'description' => __('Selling platforms.', 'woocommerce'),
-                'context'     => [ 'view' ],
-                'readonly'    => true,
-                'nullable'    => true,
-                'items'       => [
-                    'type' => [ 'string', 'null' ],
-                ],
-            ],
-        ];
-
+        $properties = ['completed' => ['type' => 'boolean', 'description' => __('Whether or not the profile was completed.', 'woocommerce'), 'context' => ['view'], 'readonly' => true, 'validate_callback' => 'rest_validate_request_arg'], 'skipped' => ['type' => 'boolean', 'description' => __('Whether or not the profile was skipped.', 'woocommerce'), 'context' => ['view'], 'readonly' => true, 'validate_callback' => 'rest_validate_request_arg'], 'industry' => ['type' => 'array', 'description' => __('Industry.', 'woocommerce'), 'context' => ['view'], 'readonly' => true, 'nullable' => true, 'validate_callback' => 'rest_validate_request_arg', 'items' => ['type' => 'string']], 'business_extensions' => ['type' => 'array', 'description' => __('Extra business extensions to install.', 'woocommerce'), 'context' => ['view'], 'readonly' => true, 'sanitize_callback' => 'wp_parse_slug_list', 'validate_callback' => 'rest_validate_request_arg', 'items' => ['type' => 'string']], 'is_agree_marketing' => ['type' => 'boolean', 'description' => __('Whether or not this store agreed to receiving marketing contents from WooCommerce.com.', 'woocommerce'), 'context' => ['view'], 'readonly' => true, 'validate_callback' => 'rest_validate_request_arg'], 'store_email' => ['type' => 'string', 'description' => __('Store email address.', 'woocommerce'), 'context' => ['view'], 'readonly' => true, 'nullable' => true, 'validate_callback' => self::rest_validate_marketing_email(...)], 'is_store_country_set' => ['type' => 'boolean', 'description' => __('Whether or not this store country is set via onboarding profiler.', 'woocommerce'), 'context' => ['view'], 'readonly' => true, 'validate_callback' => 'rest_validate_request_arg'], 'is_plugins_page_skipped' => ['type' => 'boolean', 'description' => __('Whether or not plugins step in core profiler was skipped.', 'woocommerce'), 'context' => ['view'], 'readonly' => true, 'validate_callback' => 'rest_validate_request_arg'], 'business_choice' => ['type' => 'string', 'description' => __('Business choice.', 'woocommerce'), 'context' => ['view'], 'readonly' => true, 'nullable' => true], 'selling_online_answer' => ['type' => 'string', 'description' => __('Selling online answer.', 'woocommerce'), 'context' => ['view'], 'readonly' => true, 'nullable' => true], 'selling_platforms' => ['type' => ['array', 'null'], 'description' => __('Selling platforms.', 'woocommerce'), 'context' => ['view'], 'readonly' => true, 'nullable' => true, 'items' => ['type' => ['string', 'null']]]];
         /**
          * Filters the Onboarding Profile REST API JSON Schema.
          *
@@ -541,7 +284,6 @@ class OnboardingProfile extends \WC_REST_Data_Controller
          */
         return apply_filters('woocommerce_rest_onboarding_profile_properties', $properties);
     }
-
     /**
      * Optionally validates email if user agreed to marketing or if email is not empty.
      *
@@ -553,14 +295,11 @@ class OnboardingProfile extends \WC_REST_Data_Controller
     public static function rest_validate_marketing_email($value, $request, $param)
     {
         $is_agree_marketing = $request->get_param('is_agree_marketing');
-        if (
-            ($is_agree_marketing || ! empty($value)) &&
-            ! is_email($value)) {
+        if (($is_agree_marketing || !empty($value)) && !is_email($value)) {
             return new \WP_Error('rest_invalid_email', __('Invalid email address', 'woocommerce'));
         }
         return true;
     }
-
     /**
      * Get the schema, conforming to JSON Schema.
      *
@@ -571,22 +310,14 @@ class OnboardingProfile extends \WC_REST_Data_Controller
         // Unset properties used for collection params.
         $properties = self::get_profile_properties();
         foreach ($properties as $key => $property) {
-            unset($properties[ $key ]['default']);
-            unset($properties[ $key ]['items']);
-            unset($properties[ $key ]['validate_callback']);
-            unset($properties[ $key ]['sanitize_callback']);
+            unset($properties[$key]['default']);
+            unset($properties[$key]['items']);
+            unset($properties[$key]['validate_callback']);
+            unset($properties[$key]['sanitize_callback']);
         }
-
-        $schema = [
-            '$schema'    => 'http://json-schema.org/draft-04/schema#',
-            'title'      => 'onboarding_profile',
-            'type'       => 'object',
-            'properties' => $properties,
-        ];
-
+        $schema = ['$schema' => 'http://json-schema.org/draft-04/schema#', 'title' => 'onboarding_profile', 'type' => 'object', 'properties' => $properties];
         return $this->add_additional_fields_schema($schema);
     }
-
     /**
      * Get the query params for collections.
      *
@@ -597,12 +328,10 @@ class OnboardingProfile extends \WC_REST_Data_Controller
         // Unset properties used for item schema.
         $params = self::get_profile_properties();
         foreach ($params as $key => $param) {
-            unset($params[ $key ]['context']);
-            unset($params[ $key ]['readonly']);
+            unset($params[$key]['context']);
+            unset($params[$key]['readonly']);
         }
-
-        $params['context'] = $this->get_context_param([ 'default' => 'view' ]);
-
+        $params['context'] = $this->get_context_param(['default' => 'view']);
         /**
          * Filters the Onboarding Profile REST API collection parameters.
          *

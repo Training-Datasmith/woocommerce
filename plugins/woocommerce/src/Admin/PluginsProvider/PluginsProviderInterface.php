@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Interface for a provider for getting access to plugin queries,
  * designed to be mockable for unit tests.
  */
-
-namespace Automattic\WooCommerce\Admin\PluginsProvider;
+namespace Automattic\Woo_Commerce\Admin\Plugins_Provider;
 
 defined('ABSPATH') || exit;
-
 /**
  * Plugins Provider Interface
  */
-interface PluginsProviderInterface
+interface Plugins_Provider_Interface
 {
     /**
      * Get an array of active plugin slugs.
@@ -21,7 +19,6 @@ interface PluginsProviderInterface
      * @return array
      */
     public function get_active_plugin_slugs();
-
     /**
      * Get plugin data.
      *
@@ -30,7 +27,6 @@ interface PluginsProviderInterface
      * @return array|false
      */
     public function get_plugin_data($plugin);
-
     /**
      * Get the path to the plugin file relative to the plugins directory from the plugin slug.
      *

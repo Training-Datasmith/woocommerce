@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Class for parameter-based Customers Report querying
  *
@@ -15,17 +15,14 @@ declare(strict_types=1);
  * $report = new \Automattic\WooCommerce\Admin\API\Reports\Customers\Query( $args );
  * $mydata = $report->get_data();
  */
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Customers;
 
-namespace Automattic\WooCommerce\Admin\API\Reports\Customers;
-
-use Automattic\WooCommerce\Admin\API\Reports\GenericQuery;
-
+use Automattic\Woo_Commerce\Admin\API\Reports\Generic_Query;
 defined('ABSPATH') || exit;
-
 /**
  * API\Reports\Customers\Query
  */
-class Query extends GenericQuery
+class Query extends Generic_Query
 {
     /**
      * Specific query name.
@@ -35,18 +32,18 @@ class Query extends GenericQuery
      * @var string
      */
     protected $name = 'customers';
-
     /**
      * Valid fields for Customers report.
      */
     protected function get_default_query_vars(): array
     {
         return [
-            'per_page' => get_option('posts_per_page'), // not sure if this should be the default.
-            'page'     => 1,
-            'order'    => 'DESC',
-            'orderby'  => 'date_registered',
-            'fields'   => '*',
+            'per_page' => get_option('posts_per_page'),
+            // not sure if this should be the default.
+            'page' => 1,
+            'order' => 'DESC',
+            'orderby' => 'date_registered',
+            'fields' => '*',
         ];
     }
 }

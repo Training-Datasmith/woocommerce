@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Order_Confirmation;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\OrderConfirmation;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AbstractBlock;
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Abstract_Block;
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * AbstractOrderConfirmationBlock class.
  */
-abstract class AbstractOrderConfirmationBlock extends AbstractBlock
+abstract class Abstract_Order_Confirmation_Block extends Abstract_Block
 {
     /**
      * Get the content from a hook and return it.
@@ -26,7 +24,6 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
         do_action_ref_array($hook, $args);
         return ob_get_clean();
     }
-
     /**
      * Render the block.
      *
@@ -38,21 +35,12 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
      */
     protected function render($attributes, $content, $block)
     {
-        $order              = $this->get_order();
-        $permission         = $this->get_view_order_permissions($order);
-        $block_content      = $order ? $this->render_content($order, $permission, $attributes, $content) : $this->render_content_fallback();
-        $classes_and_styles = StyleAttributesUtils::get_classes_and_styles_by_attributes($attributes);
-
-        return $block_content ? sprintf(
-            '<div class="wp-block-%5$s-%4$s wc-block-%4$s %1$s" style="%2$s">%3$s</div>',
-            esc_attr($classes_and_styles['classes']),
-            esc_attr($classes_and_styles['styles']),
-            $block_content,
-            esc_attr($this->block_name),
-            esc_attr($this->namespace)
-        ) : '';
+        $order = $this->get_order();
+        $permission = $this->get_view_order_permissions($order);
+        $block_content = $order ? $this->render_content($order, $permission, $attributes, $content) : $this->render_content_fallback();
+        $classes_and_styles = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes);
+        return $block_content ? sprintf('<div class="wp-block-%5$s-%4$s wc-block-%4$s %1$s" style="%2$s">%3$s</div>', esc_attr($classes_and_styles['classes']), esc_attr($classes_and_styles['styles']), $block_content, esc_attr($this->block_name), esc_attr($this->namespace)) : '';
     }
-
     /**
      * This renders the content of the block within the wrapper. The permission determines what data can be shown under
      * the given context.
@@ -64,7 +52,6 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
      * @return string
      */
     abstract protected function render_content($order, $permission = false, $attributes = [], $content = '');
-
     /**
      * This is what gets rendered when the order does not exist. Renders nothing by default, but can be overridden by
      * child classes.
@@ -75,7 +62,6 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
     {
         return '';
     }
-
     /**
      * Get current order.
      *
@@ -84,14 +70,11 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
     protected function get_order()
     {
         $order_id = absint(get_query_var('order-received'));
-
         if ($order_id) {
             return wc_get_order($order_id);
         }
-
         return null;
     }
-
     /**
      * View mode for order details based on the order, current user, and settings.
      *
@@ -100,10 +83,10 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
      */
     protected function get_view_order_permissions($order)
     {
-        if (! $order || ! $this->has_valid_order_key($order)) {
-            return false; // Always disallow access to invalid orders and those without a valid key.
+        if (!$order || !$this->has_valid_order_key($order)) {
+            return false;
+            // Always disallow access to invalid orders and those without a valid key.
         }
-
         // For customers with accounts, verify the order belongs to the current user or disallow access.
         if ($this->is_customer_order($order)) {
             /**
@@ -115,19 +98,15 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
              * @since 8.4.0
              */
             $verify_known_shoppers = apply_filters('woocommerce_order_received_verify_known_shoppers', true);
-
             // If verification for known shoppers is disabled, we can show the order details.
-            if (! $verify_known_shoppers) {
+            if (!$verify_known_shoppers) {
                 return 'full';
             }
-
             return $this->is_current_customer_order($order) ? 'full' : false;
         }
-
         // Guest orders are displayed only within the grace period or after verification. If email verification is required, return false.
         return $this->email_verification_required($order) ? false : 'full';
     }
-
     /**
      * See if guest checkout is enabled.
      *
@@ -137,7 +116,6 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
     {
         return 'yes' === get_option('woocommerce_enable_guest_checkout');
     }
-
     /**
      * Guest users without an active session can provide their email address to view order details. This however can only
      * be permitted if the user also provided the correct order key, and guest checkout is actually enabled.
@@ -147,9 +125,8 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
      */
     protected function email_verification_permitted($order)
     {
-        return $this->allow_guest_checkout() && $this->has_valid_order_key($order) && ! $this->is_customer_order($order);
+        return $this->allow_guest_checkout() && $this->has_valid_order_key($order) && !$this->is_customer_order($order);
     }
-
     /**
      * See if the order was created within the grace period for viewing details.
      *
@@ -169,11 +146,9 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
          * @param string   $context      Indicates the context in which we might verify the email address. Typically 'order-pay' or 'order-received'.
          */
         $verification_grace_period = (int) apply_filters('woocommerce_order_email_verification_grace_period', 10 * MINUTE_IN_SECONDS, $order, 'order-received');
-        $date_created              = $order->get_date_created();
-
-        return is_a($date_created, \WC_DateTime::class) && time() - $date_created->getTimestamp() <= $verification_grace_period;
+        $date_created = $order->get_date_created();
+        return is_a($date_created, \Wc_date_Time::class) && time() - $date_created->get_timestamp() <= $verification_grace_period;
     }
-
     /**
      * Returns true if the email has been verified (posted email matches given order email).
      *
@@ -183,19 +158,15 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
     protected function is_email_verified($order)
     {
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
-        if (empty($_POST) || ! isset($_POST['email'], $_POST['_wpnonce'])) {
+        if (empty($_POST) || !isset($_POST['email'], $_POST['_wpnonce'])) {
             return false;
         }
-
         $nonce_value = sanitize_key(wp_unslash($_POST['_wpnonce'] ?? ''));
-
-        if (! wp_verify_nonce($nonce_value, 'wc_verify_email') && ! wp_verify_nonce($nonce_value, 'wc_create_account')) {
+        if (!wp_verify_nonce($nonce_value, 'wc_verify_email') && !wp_verify_nonce($nonce_value, 'wc_create_account')) {
             return false;
         }
-
         return $order->get_billing_email() && sanitize_email(wp_unslash($_POST['email'] ?? '')) === $order->get_billing_email();
     }
-
     /**
      * See if we need to verify the email address before showing the order details.
      *
@@ -205,22 +176,18 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
     protected function email_verification_required($order)
     {
         $session = wc()->session;
-
         // Skip verification if the current user still has the order in their session.
         if (is_a($session, \WC_Session::class) && $order->get_id() === (int) $session->get('store_api_draft_order')) {
             return false;
         }
-
         // Skip verification if the order was created within the grace period.
         if ($this->is_within_grace_period($order)) {
             return false;
         }
-
         // If the user verified their email address, we can skip further verification.
         if ($this->is_email_verified($order)) {
             return false;
         }
-
         /**
          * Provides an opportunity to override the (potential) requirement for shoppers to verify their email address
          * before we show information such as the order summary, or order payment page.
@@ -233,7 +200,6 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
          */
         return (bool) apply_filters('woocommerce_order_email_verification_required', true, $order, 'order-received');
     }
-
     /**
      * See if the order key is valid.
      *
@@ -243,9 +209,8 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
     protected function has_valid_order_key($order)
     {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        return ! empty($_GET['key']) && $order->key_is_valid(wc_clean(wp_unslash($_GET['key'])));
+        return !empty($_GET['key']) && $order->key_is_valid(wc_clean(wp_unslash($_GET['key'])));
     }
-
     /**
      * See if the current order came from a guest or a logged in customer.
      *
@@ -256,7 +221,6 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
     {
         return 0 < $order->get_user_id();
     }
-
     /**
      * See if the current logged in user ID matches the given order customer ID.
      *
@@ -269,7 +233,6 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
     {
         return $this->is_customer_order($order) && $order->get_user_id() === get_current_user_id();
     }
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -279,7 +242,6 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Render custom fields for the order.
      *
@@ -293,7 +255,6 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
         }
         return '<dl class="wc-block-components-additional-fields-list">' . implode('', array_map($this->render_additional_field(...), $fields)) . '</dl>';
     }
-
     /**
      * Render custom field row.
      *
@@ -302,10 +263,6 @@ abstract class AbstractOrderConfirmationBlock extends AbstractBlock
      */
     protected function render_additional_field(array $field)
     {
-        return sprintf(
-            '<dt>%1$s</dt><dd>%2$s</dd>',
-            esc_html($field['label']),
-            esc_html($field['value'])
-        );
+        return sprintf('<dt>%1$s</dt><dd>%2$s</dd>', esc_html($field['label']), esc_html($field['value']));
     }
 }

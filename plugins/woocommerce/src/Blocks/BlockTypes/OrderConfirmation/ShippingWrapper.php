@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes\OrderConfirmation;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Order_Confirmation;
 
 /**
  * ShippingWrapper class.
  */
-class ShippingWrapper extends AbstractOrderConfirmationBlock
+class Shipping_Wrapper extends Abstract_Order_Confirmation_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class ShippingWrapper extends AbstractOrderConfirmationBlock
      * @var string
      */
     protected $block_name = 'order-confirmation-shipping-wrapper';
-
     /**
      * This renders the content of the shipping wrapper.
      *
@@ -26,12 +24,11 @@ class ShippingWrapper extends AbstractOrderConfirmationBlock
      */
     protected function render_content($order, $permission = false, $attributes = [], $content = '')
     {
-        if (! $order || ! $order->has_shipping_address() || ! $order->needs_shipping_address() || ! $permission) {
+        if (!$order || !$order->has_shipping_address() || !$order->needs_shipping_address() || !$permission) {
             return '';
         }
         return $content;
     }
-
     /**
      * Get the frontend style handle for this block type.
      */

@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Domain\Services;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Domain\Services;
 
 /**
  * Service class implementing new create account emails used for order processing via the Block Based Checkout.
  *
  * @deprecated This class can't be removed due to https://github.com/woocommerce/woocommerce/issues/52311.
  */
-class CreateAccount
+class Create_Account
 {
     /**
      * Init - register handlers for WooCommerce core email hooks.
@@ -18,7 +17,6 @@ class CreateAccount
     {
         // This method is intentionally left blank.
     }
-
     /**
      * Trigger new account email.
      *

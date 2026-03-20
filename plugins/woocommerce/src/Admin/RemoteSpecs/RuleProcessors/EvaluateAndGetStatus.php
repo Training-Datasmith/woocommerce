@@ -1,20 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Evaluates the spec and returns a status.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\Notes\Note;
-
+use Automattic\Woo_Commerce\Admin\Notes\Note;
 /**
  * Evaluates the spec and returns a status.
  */
-class EvaluateAndGetStatus
+class Evaluate_And_Get_Status
 {
     /**
      * Evaluates the spec and returns a status.
@@ -29,42 +26,24 @@ class EvaluateAndGetStatus
     public static function evaluate($spec, $current_status, $stored_state, $rule_evaluator)
     {
         // No rules should leave the note alone.
-        if (! isset($spec->rules)) {
+        if (!isset($spec->rules)) {
             return $current_status;
         }
-
-        $evaluated_result = $rule_evaluator->evaluate(
-            $spec->rules,
-            $stored_state,
-            [
-                'slug'   => $spec->slug,
-                'source' => 'remote-inbox-notifications',
-            ]
-        );
-
+        $evaluated_result = $rule_evaluator->evaluate($spec->rules, $stored_state, ['slug' => $spec->slug, 'source' => 'remote-inbox-notifications']);
         // Pending notes should be the spec status if the spec passes,
         // left alone otherwise.
         if (Note::E_WC_ADMIN_NOTE_PENDING === $current_status) {
-            return $evaluated_result
-                ? $spec->status
-                : Note::E_WC_ADMIN_NOTE_PENDING;
+            return $evaluated_result ? $spec->status : Note::E_WC_ADMIN_NOTE_PENDING;
         }
-
         // If the spec is an alert type and the note is unactioned, set to pending if the spec no longer applies.
-        if (isset($spec->type) && in_array($spec->type, [ 'error', 'update' ], true)
-            && Note::E_WC_ADMIN_NOTE_UNACTIONED === $current_status
-            && ! $evaluated_result) {
+        if (isset($spec->type) && in_array($spec->type, ['error', 'update'], true) && Note::E_WC_ADMIN_NOTE_UNACTIONED === $current_status && !$evaluated_result) {
             return Note::E_WC_ADMIN_NOTE_PENDING;
         }
-
         // When allow_redisplay isn't set, just leave the note alone.
-        if (! isset($spec->allow_redisplay) || ! $spec->allow_redisplay) {
+        if (!isset($spec->allow_redisplay) || !$spec->allow_redisplay) {
             return $current_status;
         }
-
         // allow_redisplay is set, unaction the note if eval to true.
-        return $evaluated_result
-            ? Note::E_WC_ADMIN_NOTE_UNACTIONED
-            : $current_status;
+        return $evaluated_result ? Note::E_WC_ADMIN_NOTE_UNACTIONED : $current_status;
     }
 }

@@ -1,24 +1,20 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Block_Templates;
 
-namespace Automattic\WooCommerce\Internal\Admin\BlockTemplates;
-
-use Automattic\WooCommerce\Admin\BlockTemplates\BlockInterface;
-use Automattic\WooCommerce\Admin\BlockTemplates\BlockTemplateInterface;
-
+use Automattic\Woo_Commerce\Admin\Block_Templates\Block_Interface;
+use Automattic\Woo_Commerce\Admin\Block_Templates\Block_Template_Interface;
 /**
  * Block template class.
  */
-abstract class AbstractBlockTemplate implements BlockTemplateInterface
+abstract class Abstract_Block_Template implements Block_Template_Interface
 {
-    use BlockContainerTrait;
-
+    use Block_Container_Trait;
     /**
      * Get the template ID.
      */
     abstract public function get_id(): string;
-
     /**
      * Get the template title.
      */
@@ -26,7 +22,6 @@ abstract class AbstractBlockTemplate implements BlockTemplateInterface
     {
         return '';
     }
-
     /**
      * Get the template description.
      */
@@ -34,7 +29,6 @@ abstract class AbstractBlockTemplate implements BlockTemplateInterface
     {
         return '';
     }
-
     /**
      * Get the template area.
      */
@@ -42,24 +36,21 @@ abstract class AbstractBlockTemplate implements BlockTemplateInterface
     {
         return 'uncategorized';
     }
-
     /**
      * The block cache.
      *
      * @var BlockInterface[]
      */
     private array $block_cache = [];
-
     /**
      * Get a block by ID.
      *
      * @param string $block_id The block ID.
      */
-    public function get_block(string $block_id): ?BlockInterface
+    public function get_block(string $block_id): ?Block_Interface
     {
-        return $this->block_cache[ $block_id ] ?? null;
+        return $this->block_cache[$block_id] ?? null;
     }
-
     /**
      * Caches a block in the template. This is an internal method and should not be called directly
      * except for from the BlockContainerTrait's add_inner_block() method.
@@ -71,21 +62,17 @@ abstract class AbstractBlockTemplate implements BlockTemplateInterface
      *
      * @ignore
      */
-    public function cache_block(BlockInterface &$block): void
+    public function cache_block(Block_Interface &$block): void
     {
         $id = $block->get_id();
-
-        if (isset($this->block_cache[ $id ])) {
-            throw new \ValueError('A block with the specified ID already exists in the template.');
+        if (isset($this->block_cache[$id])) {
+            throw new \Value_Error('A block with the specified ID already exists in the template.');
         }
-
         if ($block->get_root_template() !== $this) {
-            throw new \ValueError('The block template that the block belongs to must be the same as this template.');
+            throw new \Value_Error('The block template that the block belongs to must be the same as this template.');
         }
-
-        $this->block_cache[ $id ] = $block;
+        $this->block_cache[$id] = $block;
     }
-
     /**
      * Uncaches a block in the template. This is an internal method and should not be called directly
      * except for from the BlockContainerTrait's remove_block() method.
@@ -96,11 +83,10 @@ abstract class AbstractBlockTemplate implements BlockTemplateInterface
      */
     public function uncache_block(string $block_id): void
     {
-        if (isset($this->block_cache[ $block_id ])) {
-            unset($this->block_cache[ $block_id ]);
+        if (isset($this->block_cache[$block_id])) {
+            unset($this->block_cache[$block_id]);
         }
     }
-
     /**
      * Generate a block ID based on a base.
      *
@@ -109,36 +95,27 @@ abstract class AbstractBlockTemplate implements BlockTemplateInterface
     public function generate_block_id(string $id_base): string
     {
         $instance_count = 0;
-
         do {
             $instance_count++;
             $block_id = $id_base . '-' . $instance_count;
-        } while (isset($this->block_cache[ $block_id ]));
-
+        } while (isset($this->block_cache[$block_id]));
         return $block_id;
     }
-
     /**
      * Get the root template.
      */
-    public function &get_root_template(): BlockTemplateInterface
+    public function &get_root_template(): Block_Template_Interface
     {
         return $this;
     }
-
     /**
      * Get the inner blocks as a formatted template.
      */
     public function get_formatted_template(): array
     {
         $inner_blocks = $this->get_inner_blocks_sorted_by_order();
-
-        return array_map(
-            fn (BlockInterface $block) => $block->get_formatted_template(),
-            $inner_blocks
-        );
+        return array_map(fn(Block_Interface $block) => $block->get_formatted_template(), $inner_blocks);
     }
-
     /**
      * Get the template as JSON like array.
      *
@@ -146,12 +123,6 @@ abstract class AbstractBlockTemplate implements BlockTemplateInterface
      */
     public function to_json(): array
     {
-        return [
-            'id'             => $this->get_id(),
-            'title'          => $this->get_title(),
-            'description'    => $this->get_description(),
-            'area'           => $this->get_area(),
-            'blockTemplates' => $this->get_formatted_template(),
-        ];
+        return ['id' => $this->get_id(), 'title' => $this->get_title(), 'description' => $this->get_description(), 'area' => $this->get_area(), 'blockTemplates' => $this->get_formatted_template()];
     }
 }

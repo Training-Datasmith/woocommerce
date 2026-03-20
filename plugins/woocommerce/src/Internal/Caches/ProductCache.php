@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Caches;
 
-namespace Automattic\WooCommerce\Internal\Caches;
-
-use Automattic\WooCommerce\Caching\ObjectCache;
+use Automattic\Woo_Commerce\Caching\Object_Cache;
 use WC_Product;
-
 /**
  * A class to cache Product objects.
  *
  * @since 10.5.0
  */
-class ProductCache extends ObjectCache
+class Product_Cache extends Object_Cache
 {
     /**
      * Get the cache key and prefix to use for Products.
@@ -23,7 +21,6 @@ class ProductCache extends ObjectCache
     {
         return 'product_objects';
     }
-
     /**
      * Get the id of an object to be cached.
      *
@@ -37,7 +34,6 @@ class ProductCache extends ObjectCache
     {
         return $product->get_id();
     }
-
     /**
      * Validate an object before caching it.
      *
@@ -49,13 +45,11 @@ class ProductCache extends ObjectCache
      */
     protected function validate($product): ?array
     {
-        if (! $product instanceof WC_Product) {
-            return [ 'The supplied product is not an instance of WC_Product' ];
+        if (!$product instanceof WC_Product) {
+            return ['The supplied product is not an instance of WC_Product'];
         }
-
         return null;
     }
-
     /**
      * Add a product to the cache, or update an already cached product.
      *
@@ -76,15 +70,12 @@ class ProductCache extends ObjectCache
         if (null !== $id) {
             $id = (int) $id;
         }
-
         $original_mode = $product->get_clone_mode();
         $product->set_clone_mode(\WC_Data::CLONE_MODE_CACHE);
         $result = parent::set($product, $id, $expiration);
         $product->set_clone_mode($original_mode);
-
         return $result;
     }
-
     /**
      * Remove a product from the cache.
      *
@@ -98,7 +89,6 @@ class ProductCache extends ObjectCache
     {
         return parent::remove((int) $id);
     }
-
     /**
      * Retrieve a cached product, and if no product is cached with the given id,
      * try to get one via get_from_datastore callback and then cache it.
@@ -117,14 +107,12 @@ class ProductCache extends ObjectCache
      */
     public function get($id, int $expiration = self::DEFAULT_EXPIRATION, ?callable $get_from_datastore_callback = null): ?WC_Product
     {
-        $id      = (int) $id;
+        $id = (int) $id;
         $product = parent::get($id, $expiration, $get_from_datastore_callback);
-
         if ($product instanceof WC_Product) {
             $product->set_clone_mode(\WC_Data::CLONE_MODE_DUPLICATE);
             return $product;
         }
-
         return null;
     }
 }

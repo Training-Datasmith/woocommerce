@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Reviews;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\Reviews;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AbstractBlock;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Abstract_Block;
 /**
  * ProductReviewsPaginationNumbers class.
  */
-class ProductReviewsPaginationNumbers extends AbstractBlock
+class Product_Reviews_Pagination_Numbers extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,7 +15,6 @@ class ProductReviewsPaginationNumbers extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-reviews-pagination-numbers';
-
     /**
      * Render the block.
      *
@@ -32,35 +29,17 @@ class ProductReviewsPaginationNumbers extends AbstractBlock
         if (empty($block->context['postId'])) {
             return '';
         }
-
         $comment_vars = build_comment_query_vars_from_block($block);
-
-        $total   = (new \WP_Comment_Query($comment_vars))->max_num_pages;
-        $current = ! empty($comment_vars['paged']) ? $comment_vars['paged'] : null;
-
+        $total = (new \WP_Comment_Query($comment_vars))->max_num_pages;
+        $current = !empty($comment_vars['paged']) ? $comment_vars['paged'] : null;
         // Render links.
-        $content = paginate_comments_links(
-            [
-                'total'     => $total,
-                'current'   => $current,
-                'prev_next' => false,
-                'echo'      => false,
-            ]
-        );
-
+        $content = paginate_comments_links(['total' => $total, 'current' => $current, 'prev_next' => false, 'echo' => false]);
         if (empty($content)) {
             return '';
         }
-
         $wrapper_attributes = get_block_wrapper_attributes();
-
-        return sprintf(
-            '<div %1$s>%2$s</div>',
-            $wrapper_attributes,
-            $content
-        );
+        return sprintf('<div %1$s>%2$s</div>', $wrapper_attributes, $content);
     }
-
     /**
      * Get the frontend script handle for this block type.
      *
@@ -72,7 +51,6 @@ class ProductReviewsPaginationNumbers extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the frontend style handle for this block type.
      *

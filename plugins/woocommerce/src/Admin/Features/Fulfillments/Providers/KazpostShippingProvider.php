@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments\Providers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments\Providers;
 
 /**
  * Kazpost Shipping Provider class.
  */
-class KazpostShippingProvider extends AbstractShippingProvider
+class Kazpost_Shipping_Provider extends Abstract_Shipping_Provider
 {
     /**
      * Get the key of the shipping provider.
@@ -16,7 +15,6 @@ class KazpostShippingProvider extends AbstractShippingProvider
     {
         return 'kazpost';
     }
-
     /**
      * Get the name of the shipping provider.
      */
@@ -24,7 +22,6 @@ class KazpostShippingProvider extends AbstractShippingProvider
     {
         return 'Kazpost';
     }
-
     /**
      * Get the icon of the shipping provider.
      */
@@ -32,7 +29,6 @@ class KazpostShippingProvider extends AbstractShippingProvider
     {
         return esc_url(WC()->plugin_url()) . '/assets/images/shipping_providers/kazpost.png';
     }
-
     /**
      * Get the tracking URL for a given tracking number.
      *

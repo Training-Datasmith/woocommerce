@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Product Editor Block Registration
  */
+namespace Automattic\Woo_Commerce\Admin\Features\Product_Block_Editor;
 
-namespace Automattic\WooCommerce\Admin\Features\ProductBlockEditor;
-
-use Automattic\WooCommerce\Blocks\Utils\Utils;
-use Automattic\WooCommerce\Internal\Admin\WCAdminAssets;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Utils;
+use Automattic\Woo_Commerce\Internal\Admin\Wc_Admin_Assets;
 /**
  * Product block registration and style registration functionality.
  */
-class BlockRegistry
+class Block_Registry
 {
     /**
      * Generic blocks directory.
@@ -26,73 +24,25 @@ class BlockRegistry
     /**
      * Array of all available generic blocks.
      */
-    public const GENERIC_BLOCKS = [
-        'woocommerce/conditional',
-        'woocommerce/product-checkbox-field',
-        'woocommerce/product-collapsible',
-        'woocommerce/product-radio-field',
-        'woocommerce/product-pricing-field',
-        'woocommerce/product-section',
-        'woocommerce/product-section-description',
-        'woocommerce/product-subsection',
-        'woocommerce/product-subsection-description',
-        'woocommerce/product-details-section-description',
-        'woocommerce/product-tab',
-        'woocommerce/product-toggle-field',
-        'woocommerce/product-taxonomy-field',
-        'woocommerce/product-text-field',
-        'woocommerce/product-text-area-field',
-        'woocommerce/product-number-field',
-        'woocommerce/product-linked-list-field',
-        'woocommerce/product-select-field',
-        'woocommerce/product-notice-field',
-    ];
-
+    public const GENERIC_BLOCKS = ['woocommerce/conditional', 'woocommerce/product-checkbox-field', 'woocommerce/product-collapsible', 'woocommerce/product-radio-field', 'woocommerce/product-pricing-field', 'woocommerce/product-section', 'woocommerce/product-section-description', 'woocommerce/product-subsection', 'woocommerce/product-subsection-description', 'woocommerce/product-details-section-description', 'woocommerce/product-tab', 'woocommerce/product-toggle-field', 'woocommerce/product-taxonomy-field', 'woocommerce/product-text-field', 'woocommerce/product-text-area-field', 'woocommerce/product-number-field', 'woocommerce/product-linked-list-field', 'woocommerce/product-select-field', 'woocommerce/product-notice-field'];
     /**
      * Array of all available product fields blocks.
      */
-    public const PRODUCT_FIELDS_BLOCKS = [
-        'woocommerce/product-catalog-visibility-field',
-        'woocommerce/product-custom-fields',
-        'woocommerce/product-custom-fields-toggle-field',
-        'woocommerce/product-description-field',
-        'woocommerce/product-downloads-field',
-        'woocommerce/product-images-field',
-        'woocommerce/product-inventory-email-field',
-        'woocommerce/product-sku-field',
-        'woocommerce/product-name-field',
-        'woocommerce/product-regular-price-field',
-        'woocommerce/product-sale-price-field',
-        'woocommerce/product-schedule-sale-fields',
-        'woocommerce/product-shipping-class-field',
-        'woocommerce/product-shipping-dimensions-fields',
-        'woocommerce/product-summary-field',
-        'woocommerce/product-tag-field',
-        'woocommerce/product-inventory-quantity-field',
-        'woocommerce/product-variation-items-field',
-        'woocommerce/product-password-field',
-        'woocommerce/product-list-field',
-        'woocommerce/product-has-variations-notice',
-        'woocommerce/product-single-variation-notice',
-    ];
-
+    public const PRODUCT_FIELDS_BLOCKS = ['woocommerce/product-catalog-visibility-field', 'woocommerce/product-custom-fields', 'woocommerce/product-custom-fields-toggle-field', 'woocommerce/product-description-field', 'woocommerce/product-downloads-field', 'woocommerce/product-images-field', 'woocommerce/product-inventory-email-field', 'woocommerce/product-sku-field', 'woocommerce/product-name-field', 'woocommerce/product-regular-price-field', 'woocommerce/product-sale-price-field', 'woocommerce/product-schedule-sale-fields', 'woocommerce/product-shipping-class-field', 'woocommerce/product-shipping-dimensions-fields', 'woocommerce/product-summary-field', 'woocommerce/product-tag-field', 'woocommerce/product-inventory-quantity-field', 'woocommerce/product-variation-items-field', 'woocommerce/product-password-field', 'woocommerce/product-list-field', 'woocommerce/product-has-variations-notice', 'woocommerce/product-single-variation-notice'];
     /**
      * Singleton instance.
      */
-    private static ?\Automattic\WooCommerce\Admin\Features\ProductBlockEditor\BlockRegistry $instance = null;
-
+    private static ?\Automattic\Woo_Commerce\Admin\Features\Product_Block_Editor\Block_Registry $instance = null;
     /**
      * Get the singleton instance.
      */
-    public static function get_instance(): BlockRegistry
+    public static function get_instance(): Block_Registry
     {
-        if (! self::$instance) {
+        if (!self::$instance) {
             self::$instance = new self();
         }
-
         return self::$instance;
     }
-
     /**
      * Constructor
      */
@@ -101,7 +51,6 @@ class BlockRegistry
         add_filter('block_categories_all', $this->register_categories(...), 10, 2);
         $this->register_product_blocks();
     }
-
     /**
      * Get a file path for a given block file.
      *
@@ -110,9 +59,8 @@ class BlockRegistry
      */
     private function get_file_path(string $path, string $dir): string
     {
-        return WC_ABSPATH . WCAdminAssets::get_path('js') . trailingslashit($dir) . $path;
+        return WC_ABSPATH . Wc_Admin_Assets::get_path('js') . trailingslashit($dir) . $path;
     }
-
     /**
      * Register all the product blocks.
      */
@@ -125,7 +73,6 @@ class BlockRegistry
             $this->register_block($block_name, self::GENERIC_BLOCKS_DIR);
         }
     }
-
     /**
      * Register product related block categories.
      *
@@ -135,16 +82,10 @@ class BlockRegistry
     public function register_categories($block_categories, $editor_context)
     {
         if (INIT::EDITOR_CONTEXT_NAME === $editor_context->name) {
-            $block_categories[] = [
-                'slug'  => 'woocommerce',
-                'title' => __('WooCommerce', 'woocommerce'),
-                'icon'  => null,
-            ];
+            $block_categories[] = ['slug' => 'woocommerce', 'title' => __('WooCommerce', 'woocommerce'), 'icon' => null];
         }
-
         return $block_categories;
     }
-
     /**
      * Get the block name without the "woocommerce/" prefix.
      *
@@ -155,10 +96,8 @@ class BlockRegistry
         if (str_starts_with($block_name, 'woocommerce/')) {
             return substr_replace($block_name, '', 0, strlen('woocommerce/'));
         }
-
         return $block_name;
     }
-
     /**
      * Augment the attributes of a block by adding attributes that are used by the product editor.
      *
@@ -170,41 +109,16 @@ class BlockRegistry
         global $wp_version;
         // Note: If you modify this function, also update the client-side
         // registerWooBlockType function in @woocommerce/block-templates.
-        $augmented_attributes = array_merge(
-            $attributes,
-            [
-                '_templateBlockId'                => [
-                    'type' => 'string',
-                    'role' => 'content',
-                ],
-                '_templateBlockOrder'             => [
-                    'type' => 'integer',
-                    'role' => 'content',
-                ],
-                '_templateBlockHideConditions'    => [
-                    'type' => 'array',
-                    'role' => 'content',
-                ],
-                '_templateBlockDisableConditions' => [
-                    'type' => 'array',
-                    'role' => 'content',
-                ],
-                'disabled'                        => $attributes['disabled'] ?? [
-                    'type' => 'boolean',
-                    'role' => 'content',
-                ],
-            ]
-        );
-        if (! $this->has_role_support()) {
+        $augmented_attributes = array_merge($attributes, ['_templateBlockId' => ['type' => 'string', 'role' => 'content'], '_templateBlockOrder' => ['type' => 'integer', 'role' => 'content'], '_templateBlockHideConditions' => ['type' => 'array', 'role' => 'content'], '_templateBlockDisableConditions' => ['type' => 'array', 'role' => 'content'], 'disabled' => $attributes['disabled'] ?? ['type' => 'boolean', 'role' => 'content']]);
+        if (!$this->has_role_support()) {
             foreach ($augmented_attributes as $key => $attribute) {
                 if (isset($attribute['role'])) {
-                    $augmented_attributes[ $key ]['__experimentalRole'] = $attribute['role'];
+                    $augmented_attributes[$key]['__experimentalRole'] = $attribute['role'];
                 }
             }
         }
         return $augmented_attributes;
     }
-
     /**
      * Checks for block attribute role support.
      */
@@ -213,27 +127,19 @@ class BlockRegistry
         if (Utils::wp_version_compare('6.7', '>=')) {
             return true;
         }
-
         if (is_plugin_active('gutenberg/gutenberg.php')) {
             $gutenberg_version = '';
-
             if (defined('GUTENBERG_VERSION')) {
                 $gutenberg_version = GUTENBERG_VERSION;
             }
-
-            if (! $gutenberg_version) {
-                $gutenberg_data    = get_file_data(
-                    WP_PLUGIN_DIR . '/gutenberg/gutenberg.php',
-                    [ 'Version' => 'Version' ]
-                );
+            if (!$gutenberg_version) {
+                $gutenberg_data = get_file_data(WP_PLUGIN_DIR . '/gutenberg/gutenberg.php', ['Version' => 'Version']);
                 $gutenberg_version = $gutenberg_data['Version'];
             }
             return version_compare($gutenberg_version, '19.4', '>=');
         }
-
         return false;
     }
-
     /**
      * Augment the uses_context of a block by adding attributes that are used by the product editor.
      *
@@ -243,14 +149,8 @@ class BlockRegistry
     {
         // Note: If you modify this function, also update the client-side
         // registerProductEditorBlockType function in @woocommerce/product-editor.
-        return array_merge(
-            $uses_context ?? [],
-            [
-                'postType',
-            ]
-        );
+        return array_merge($uses_context ?? [], ['postType']);
     }
-
     /**
      * Register a single block.
      *
@@ -261,12 +161,10 @@ class BlockRegistry
      */
     private function register_block(string $block_name, string $block_dir)
     {
-        $block_name      = $this->remove_block_prefix($block_name);
+        $block_name = $this->remove_block_prefix($block_name);
         $block_json_file = $this->get_file_path($block_name . '/block.json', $block_dir);
-
         return $this->register_block_type_from_metadata($block_json_file);
     }
-
     /**
      * Check if a block is registered.
      *
@@ -275,10 +173,8 @@ class BlockRegistry
     public function is_registered($block_name): bool
     {
         $registry = \WP_Block_Type_Registry::get_instance();
-
         return $registry->is_registered($block_name);
     }
-
     /**
      * Unregister a block.
      *
@@ -287,12 +183,10 @@ class BlockRegistry
     public function unregister($block_name): void
     {
         $registry = \WP_Block_Type_Registry::get_instance();
-
         if ($registry->is_registered($block_name)) {
             $registry->unregister($block_name);
         }
     }
-
     /**
      * Register a block type from metadata stored in the block.json file.
      *
@@ -303,29 +197,17 @@ class BlockRegistry
      */
     public function register_block_type_from_metadata($file_or_folder)
     {
-        $metadata_file = (! str_ends_with($file_or_folder, 'block.json'))
-            ? trailingslashit($file_or_folder) . 'block.json'
-            : $file_or_folder;
-
-        if (! file_exists($metadata_file)) {
+        $metadata_file = !str_ends_with($file_or_folder, 'block.json') ? trailingslashit($file_or_folder) . 'block.json' : $file_or_folder;
+        if (!file_exists($metadata_file)) {
             return false;
         }
-
         // We are dealing with a local file, so we can use file_get_contents.
         // phpcs:disable WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
         $metadata = json_decode(file_get_contents($metadata_file), true);
-        if (! is_array($metadata) || ! $metadata['name']) {
+        if (!is_array($metadata) || !$metadata['name']) {
             return false;
         }
-
         $this->unregister($metadata['name']);
-
-        return register_block_type_from_metadata(
-            $metadata_file,
-            [
-                'attributes'   => $this->augment_attributes($metadata['attributes'] ?? []),
-                'uses_context' => $this->augment_uses_context($metadata['usesContext'] ?? []),
-            ]
-        );
+        return register_block_type_from_metadata($metadata_file, ['attributes' => $this->augment_attributes($metadata['attributes'] ?? []), 'uses_context' => $this->augment_uses_context($metadata['usesContext'] ?? [])]);
     }
 }

@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Handles task related methods.
  */
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks;
 
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks;
-
-use Automattic\WooCommerce\Internal\Admin\WCAdminUser;
-
+use Automattic\Woo_Commerce\Internal\Admin\Wc_Admin_User;
 /**
  * Task class.
  */
@@ -17,15 +15,13 @@ abstract class Task
     /**
      * Task traits.
      */
-    use TaskTraits;
-
+    use Task_Traits;
     /**
      * Name of the dismiss option.
      *
      * @var string
      */
     public const DISMISSED_OPTION = 'woocommerce_task_list_dismissed_tasks';
-
     /**
      * Name of the snooze option.
      *
@@ -34,39 +30,30 @@ abstract class Task
      * @deprecated 7.2.0
      */
     public const SNOOZED_OPTION = 'woocommerce_task_list_remind_me_later_tasks';
-
     /**
      * Name of the actioned option.
      *
      * @var string
      */
     public const ACTIONED_OPTION = 'woocommerce_task_list_tracked_completed_actions';
-
     /**
      * Option name of completed tasks.
      *
      * @var string
      */
     public const COMPLETED_OPTION = 'woocommerce_task_list_tracked_completed_tasks';
-
     /**
      * Name of the active task transient.
      *
      * @var string
      */
     public const ACTIVE_TASK_TRANSIENT = 'wc_onboarding_active_task';
-
     /**
      * Duration to millisecond mapping.
      *
      * @var string
      */
-    protected $duration_to_ms = [
-        'day'  => DAY_IN_SECONDS * 1000,
-        'hour' => HOUR_IN_SECONDS * 1000,
-        'week' => WEEK_IN_SECONDS * 1000,
-    ];
-
+    protected $duration_to_ms = ['day' => DAY_IN_SECONDS * 1000, 'hour' => HOUR_IN_SECONDS * 1000, 'week' => WEEK_IN_SECONDS * 1000];
     /**
      * Constructor
      *
@@ -77,37 +64,33 @@ abstract class Task
          * Parent task list.
          */
         protected $task_list = null
-    ) {
+    )
+    {
     }
-
     /**
      * ID.
      *
      * @return string
      */
     abstract public function get_id();
-
     /**
      * Title.
      *
      * @return string
      */
     abstract public function get_title();
-
     /**
      * Content.
      *
      * @return string
      */
     abstract public function get_content();
-
     /**
      * Time.
      *
      * @return string
      */
     abstract public function get_time();
-
     /**
      * Parent ID.
      *
@@ -115,12 +98,11 @@ abstract class Task
      */
     public function get_parent_id()
     {
-        if (! $this->task_list) {
+        if (!$this->task_list) {
             return '';
         }
         return $this->task_list->get_list_id();
     }
-
     /**
      * Get task list options.
      *
@@ -128,12 +110,11 @@ abstract class Task
      */
     public function get_parent_options()
     {
-        if (! $this->task_list) {
+        if (!$this->task_list) {
             return [];
         }
         return $this->task_list->options;
     }
-
     /**
      * Get custom option.
      *
@@ -142,12 +123,11 @@ abstract class Task
      */
     public function get_parent_option($option_name)
     {
-        if ($this->task_list && isset($this->task_list->options[ $option_name ])) {
-            return $this->task_list->options[ $option_name ];
+        if ($this->task_list && isset($this->task_list->options[$option_name])) {
+            return $this->task_list->options[$option_name];
         }
         return null;
     }
-
     /**
      * Prefix event for track event naming.
      *
@@ -156,12 +136,11 @@ abstract class Task
      */
     public function prefix_event($event_name)
     {
-        if (! $this->task_list) {
+        if (!$this->task_list) {
             return '';
         }
         return $this->task_list->prefix_event($event_name);
     }
-
     /**
      * Additional info.
      *
@@ -171,7 +150,6 @@ abstract class Task
     {
         return '';
     }
-
     /**
      * Additional data.
      *
@@ -181,7 +159,6 @@ abstract class Task
     {
         return null;
     }
-
     /**
      * Badge.
      *
@@ -191,7 +168,6 @@ abstract class Task
     {
         return '';
     }
-
     /**
      * Level.
      *
@@ -202,10 +178,8 @@ abstract class Task
     public function get_level()
     {
         wc_deprecated_function(self::class . '::' . __FUNCTION__, '7.2.0');
-
         return 3;
     }
-
     /**
      * Action label.
      *
@@ -215,7 +189,6 @@ abstract class Task
     {
         return __("Let's go", 'woocommerce');
     }
-
     /**
      * Action URL.
      *
@@ -225,7 +198,6 @@ abstract class Task
     {
         return null;
     }
-
     /**
      * Check if a task is dismissable.
      *
@@ -235,7 +207,6 @@ abstract class Task
     {
         return false;
     }
-
     /**
      * Bool for task dismissal.
      *
@@ -243,15 +214,12 @@ abstract class Task
      */
     public function is_dismissed()
     {
-        if (! $this->is_dismissable()) {
+        if (!$this->is_dismissable()) {
             return false;
         }
-
         $dismissed = get_option(self::DISMISSED_OPTION, []);
-
         return in_array($this->get_id(), $dismissed, true);
     }
-
     /**
      * Dismiss the task.
      *
@@ -259,21 +227,17 @@ abstract class Task
      */
     public function dismiss()
     {
-        if (! $this->is_dismissable()) {
+        if (!$this->is_dismissable()) {
             return false;
         }
-
-        $dismissed   = get_option(self::DISMISSED_OPTION, []);
+        $dismissed = get_option(self::DISMISSED_OPTION, []);
         $dismissed[] = $this->get_id();
-        $update      = update_option(self::DISMISSED_OPTION, array_unique($dismissed));
-
+        $update = update_option(self::DISMISSED_OPTION, array_unique($dismissed));
         if ($update) {
-            $this->record_tracks_event('dismiss_task', [ 'task_name' => $this->get_id() ]);
+            $this->record_tracks_event('dismiss_task', ['task_name' => $this->get_id()]);
         }
-
         return $update;
     }
-
     /**
      * Undo task dismissal.
      *
@@ -282,16 +246,13 @@ abstract class Task
     public function undo_dismiss()
     {
         $dismissed = get_option(self::DISMISSED_OPTION, []);
-        $dismissed = array_diff($dismissed, [ $this->get_id() ]);
-        $update    = update_option(self::DISMISSED_OPTION, $dismissed);
-
+        $dismissed = array_diff($dismissed, [$this->get_id()]);
+        $update = update_option(self::DISMISSED_OPTION, $dismissed);
         if ($update) {
-            $this->record_tracks_event('undo_dismiss_task', [ 'task_name' => $this->get_id() ]);
+            $this->record_tracks_event('undo_dismiss_task', ['task_name' => $this->get_id()]);
         }
-
         return $update;
     }
-
     /**
      * Check if a task is snoozeable.
      *
@@ -302,10 +263,8 @@ abstract class Task
     public function is_snoozeable()
     {
         wc_deprecated_function(self::class . '::' . __FUNCTION__, '7.2.0');
-
         return false;
     }
-
     /**
      * Get the snoozed until datetime.
      *
@@ -316,12 +275,9 @@ abstract class Task
     public function get_snoozed_until()
     {
         wc_deprecated_function(self::class . '::' . __FUNCTION__, '7.2.0');
-
         $snoozed_tasks = get_option(self::SNOOZED_OPTION, []);
-
-        return $snoozed_tasks[ $this->get_id() ] ?? null;
+        return $snoozed_tasks[$this->get_id()] ?? null;
     }
-
     /**
      * Bool for task snoozed.
      *
@@ -332,16 +288,12 @@ abstract class Task
     public function is_snoozed()
     {
         wc_deprecated_function(self::class . '::' . __FUNCTION__, '7.2.0');
-
-        if (! $this->is_snoozeable()) {
+        if (!$this->is_snoozeable()) {
             return false;
         }
-
         $snoozed = get_option(self::SNOOZED_OPTION, []);
-
-        return isset($snoozed[ $this->get_id() ]) && $snoozed[ $this->get_id() ] > (time() * 1000);
+        return isset($snoozed[$this->get_id()]) && $snoozed[$this->get_id()] > time() * 1000;
     }
-
     /**
      * Snooze the task.
      *
@@ -354,25 +306,20 @@ abstract class Task
     public function snooze($duration = 'day')
     {
         wc_deprecated_function(self::class . '::' . __FUNCTION__, '7.2.0');
-
-        if (! $this->is_snoozeable()) {
+        if (!$this->is_snoozeable()) {
             return false;
         }
-
-        $snoozed                    = get_option(self::SNOOZED_OPTION, []);
-        $snoozed_until              = $this->duration_to_ms[ $duration ] + (time() * 1000);
-        $snoozed[ $this->get_id() ] = $snoozed_until;
-        $update                     = update_option(self::SNOOZED_OPTION, $snoozed);
-
+        $snoozed = get_option(self::SNOOZED_OPTION, []);
+        $snoozed_until = $this->duration_to_ms[$duration] + time() * 1000;
+        $snoozed[$this->get_id()] = $snoozed_until;
+        $update = update_option(self::SNOOZED_OPTION, $snoozed);
         if ($update) {
             if ($update) {
-                $this->record_tracks_event('remindmelater_task', [ 'task_name' => $this->get_id() ]);
+                $this->record_tracks_event('remindmelater_task', ['task_name' => $this->get_id()]);
             }
         }
-
         return $update;
     }
-
     /**
      * Undo task snooze.
      *
@@ -383,18 +330,14 @@ abstract class Task
     public function undo_snooze()
     {
         wc_deprecated_function(self::class . '::' . __FUNCTION__, '7.2.0');
-
         $snoozed = get_option(self::SNOOZED_OPTION, []);
-        unset($snoozed[ $this->get_id() ]);
+        unset($snoozed[$this->get_id()]);
         $update = update_option(self::SNOOZED_OPTION, $snoozed);
-
         if ($update) {
-            $this->record_tracks_event('undo_remindmelater_task', [ 'task_name' => $this->get_id() ]);
+            $this->record_tracks_event('undo_remindmelater_task', ['task_name' => $this->get_id()]);
         }
-
         return $update;
     }
-
     /**
      * Check if a task list has previously been marked as complete.
      *
@@ -405,7 +348,6 @@ abstract class Task
         $complete = get_option(self::COMPLETED_OPTION, []);
         return in_array($this->get_id(), $complete, true);
     }
-
     /**
      * Track task completion if task is viewable and is complete.
      */
@@ -414,18 +356,15 @@ abstract class Task
         if ($this->has_previously_completed()) {
             return;
         }
-
         // Expensive check.
-        if (! $this->is_complete()) {
+        if (!$this->is_complete()) {
             return;
         }
-
-        $completed_tasks   = get_option(self::COMPLETED_OPTION, []);
+        $completed_tasks = get_option(self::COMPLETED_OPTION, []);
         $completed_tasks[] = $this->get_id();
         update_option(self::COMPLETED_OPTION, $completed_tasks);
-        $this->record_tracks_event('task_completed', [ 'task_name' => $this->get_id() ]);
+        $this->record_tracks_event('task_completed', ['task_name' => $this->get_id()]);
     }
-
     /**
      * Set this as the active task across page loads.
      */
@@ -434,14 +373,8 @@ abstract class Task
         if ($this->is_complete()) {
             return;
         }
-
-        set_transient(
-            self::ACTIVE_TASK_TRANSIENT,
-            $this->get_id(),
-            DAY_IN_SECONDS
-        );
+        set_transient(self::ACTIVE_TASK_TRANSIENT, $this->get_id(), DAY_IN_SECONDS);
     }
-
     /**
      * Check if this is the active task.
      */
@@ -449,7 +382,6 @@ abstract class Task
     {
         return get_transient(self::ACTIVE_TASK_TRANSIENT) === $this->get_id();
     }
-
     /**
      * Check if the store is capable of viewing the task.
      *
@@ -459,7 +391,6 @@ abstract class Task
     {
         return true;
     }
-
     /**
      * Check if task is disabled.
      *
@@ -470,10 +401,8 @@ abstract class Task
     public function is_disabled()
     {
         wc_deprecated_function(self::class . '::' . __FUNCTION__, '7.2.0');
-
         return false;
     }
-
     /**
      * Check if the task is complete.
      *
@@ -483,7 +412,6 @@ abstract class Task
     {
         return self::is_actioned();
     }
-
     /**
      * Check if the task is in progress.
      *
@@ -493,7 +421,6 @@ abstract class Task
     {
         return false;
     }
-
     /**
      * The task in progress label.
      *
@@ -503,7 +430,6 @@ abstract class Task
     {
         return esc_html__('In progress', 'woocommerce');
     }
-
     /**
      * If a task is always accessible, relevant for when a task list is hidden but a task can still be viewed.
      *
@@ -513,7 +439,6 @@ abstract class Task
     {
         return false;
     }
-
     /**
      * Check if the task has been visited.
      *
@@ -521,13 +446,11 @@ abstract class Task
      */
     public function is_visited()
     {
-        $user_id       = get_current_user_id();
-        $response      = WCAdminUser::get_user_data_field($user_id, 'task_list_tracked_started_tasks');
+        $user_id = get_current_user_id();
+        $response = Wc_Admin_User::get_user_data_field($user_id, 'task_list_tracked_started_tasks');
         $tracked_tasks = $response ? json_decode((string) $response, true) : [];
-
-        return isset($tracked_tasks[ $this->get_id() ]) && $tracked_tasks[ $this->get_id() ] > 0;
+        return isset($tracked_tasks[$this->get_id()]) && $tracked_tasks[$this->get_id()] > 0;
     }
-
     /**
      * Check if should record event when task is viewed
      */
@@ -535,7 +458,6 @@ abstract class Task
     {
         return false;
     }
-
     /**
      * Get the task as JSON.
      *
@@ -547,36 +469,8 @@ abstract class Task
         if ($is_complete) {
             $this->possibly_track_completion();
         }
-
-        return [
-            'id'              => $this->get_id(),
-            'parentId'        => $this->get_parent_id(),
-            'title'           => $this->get_title(),
-            'badge'           => $this->get_badge(),
-            'canView'         => $this->can_view(),
-            'content'         => $this->get_content(),
-            'additionalInfo'  => $this->get_additional_info(),
-            'actionLabel'     => $this->get_action_label(),
-            'actionUrl'       => $this->get_action_url(),
-            'isComplete'      => $is_complete,
-            'isInProgress'    => $this->is_in_progress(),
-            'inProgressLabel' => $this->in_progress_label(),
-            'time'            => $this->get_time(),
-            'level'           => 3,
-            'isActioned'      => $this->is_actioned(),
-            'isDismissed'     => $this->is_dismissed(),
-            'isDismissable'   => $this->is_dismissable(),
-            'isSnoozed'       => false,
-            'isSnoozeable'    => false,
-            'isVisited'       => $this->is_visited(),
-            'isDisabled'      => false,
-            'snoozedUntil'    => null,
-            'additionalData'  => self::convert_object_to_camelcase($this->get_additional_data()),
-            'eventPrefix'     => $this->prefix_event(''),
-            'recordViewEvent' => $this->get_record_view_event(),
-        ];
+        return ['id' => $this->get_id(), 'parentId' => $this->get_parent_id(), 'title' => $this->get_title(), 'badge' => $this->get_badge(), 'canView' => $this->can_view(), 'content' => $this->get_content(), 'additionalInfo' => $this->get_additional_info(), 'actionLabel' => $this->get_action_label(), 'actionUrl' => $this->get_action_url(), 'isComplete' => $is_complete, 'isInProgress' => $this->is_in_progress(), 'inProgressLabel' => $this->in_progress_label(), 'time' => $this->get_time(), 'level' => 3, 'isActioned' => $this->is_actioned(), 'isDismissed' => $this->is_dismissed(), 'isDismissable' => $this->is_dismissable(), 'isSnoozed' => false, 'isSnoozeable' => false, 'isVisited' => $this->is_visited(), 'isDisabled' => false, 'snoozedUntil' => null, 'additionalData' => self::convert_object_to_camelcase($this->get_additional_data()), 'eventPrefix' => $this->prefix_event(''), 'recordViewEvent' => $this->get_record_view_event()];
     }
-
     /**
      * Convert object keys to camelcase.
      *
@@ -585,20 +479,16 @@ abstract class Task
      */
     public static function convert_object_to_camelcase($data)
     {
-        if (! is_array($data)) {
+        if (!is_array($data)) {
             return $data;
         }
-
         $new_object = (object) [];
-
         foreach ($data as $key => $value) {
-            $new_key              = lcfirst(implode('', array_map(ucfirst(...), explode('_', (string) $key))));
-            $new_object->$new_key = $value;
+            $new_key = lcfirst(implode('', array_map(ucfirst(...), explode('_', (string) $key))));
+            $new_object->{$new_key} = $value;
         }
-
         return $new_object;
     }
-
     /**
      * Mark a task as actioned.  Used to verify an action has taken place in some tasks.
      *
@@ -607,17 +497,13 @@ abstract class Task
     public function mark_actioned()
     {
         $actioned = get_option(self::ACTIONED_OPTION, []);
-
         $actioned[] = $this->get_id();
-        $update     = update_option(self::ACTIONED_OPTION, array_unique($actioned));
-
+        $update = update_option(self::ACTIONED_OPTION, array_unique($actioned));
         if ($update) {
-            $this->record_tracks_event('actioned_task', [ 'task_name' => $this->get_id() ]);
+            $this->record_tracks_event('actioned_task', ['task_name' => $this->get_id()]);
         }
-
         return $update;
     }
-
     /**
      * Check if a task has been actioned.
      *
@@ -627,7 +513,6 @@ abstract class Task
     {
         return self::is_task_actioned($this->get_id());
     }
-
     /**
      * Check if a provided task ID has been actioned.
      *
@@ -639,7 +524,6 @@ abstract class Task
         $actioned = get_option(self::ACTIONED_OPTION, []);
         return in_array($id, $actioned, true);
     }
-
     /**
      * Sorting function for tasks.
      *
@@ -652,15 +536,14 @@ abstract class Task
     {
         $result = 0;
         foreach ($sort_by as $data) {
-            $key   = $data['key'];
-            $a_val = $a->$key ?? false;
-            $b_val = $b->$key ?? false;
+            $key = $data['key'];
+            $a_val = $a->{$key} ?? false;
+            $b_val = $b->{$key} ?? false;
             if ('asc' === $data['order']) {
                 $result = $a_val <=> $b_val;
             } else {
                 $result = $b_val <=> $a_val;
             }
-
             if (0 !== $result) {
                 break;
             }

@@ -1,23 +1,22 @@
 <?php
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-use Automattic\WooCommerce\Blocks\Templates\OrderConfirmationTemplate;
-use Automattic\WooCommerce\Blocks\Templates\ProductAttributeTemplate;
-use Automattic\WooCommerce\Blocks\Templates\ProductCatalogTemplate;
-use Automattic\WooCommerce\Blocks\Templates\ProductCategoryTemplate;
-use Automattic\WooCommerce\Blocks\Templates\ProductSearchResultsTemplate;
-use Automattic\WooCommerce\Blocks\Templates\ProductTagTemplate;
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
+use Automattic\Woo_Commerce\Blocks\Templates\Order_Confirmation_Template;
+use Automattic\Woo_Commerce\Blocks\Templates\Product_Attribute_Template;
+use Automattic\Woo_Commerce\Blocks\Templates\Product_Catalog_Template;
+use Automattic\Woo_Commerce\Blocks\Templates\Product_Category_Template;
+use Automattic\Woo_Commerce\Blocks\Templates\Product_Search_Results_Template;
+use Automattic\Woo_Commerce\Blocks\Templates\Product_Tag_Template;
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 use WC_Frontend_Scripts;
 use WC_Shortcode_Checkout;
-
 /**
  * Classic Template class
  *
  * @internal
  */
-class ClassicTemplate extends AbstractDynamicBlock
+class Classic_Template extends Abstract_Dynamic_Block
 {
     /**
      * Block name.
@@ -25,14 +24,12 @@ class ClassicTemplate extends AbstractDynamicBlock
      * @var string
      */
     protected $block_name = 'legacy-template';
-
     /**
      * API version.
      *
      * @var string
      */
     protected $api_version = '3';
-
     /**
      * Initialize this block.
      */
@@ -42,7 +39,6 @@ class ClassicTemplate extends AbstractDynamicBlock
         add_filter('render_block', $this->add_alignment_class_to_wrapper(...), 10, 2);
         add_action('enqueue_block_assets', $this->enqueue_block_assets(...));
     }
-
     /**
      * Extra data passed through from server to client for block.
      *
@@ -53,17 +49,10 @@ class ClassicTemplate extends AbstractDynamicBlock
     protected function enqueue_data(array $attributes = [])
     {
         parent::enqueue_data($attributes);
-
         // Disable client-side navigation so that interactivity powered
         // components fall back to full page reload.
-        wp_interactivity_config(
-            'core/router',
-            [
-                'clientNavigationDisabled' => true,
-            ]
-        );
+        wp_interactivity_config('core/router', ['clientNavigationDisabled' => true]);
     }
-
     /**
      * Enqueue assets used for rendering the block in editor context.
      *
@@ -74,20 +63,12 @@ class ClassicTemplate extends AbstractDynamicBlock
         // Ensures frontend styles for blocks exist in the site editor iframe.
         if (class_exists('WC_Frontend_Scripts') && is_admin()) {
             $frontend_scripts = new WC_Frontend_Scripts();
-            $styles           = $frontend_scripts::get_styles();
-
+            $styles = $frontend_scripts::get_styles();
             foreach ($styles as $handle => $style) {
-                wp_enqueue_style(
-                    $handle,
-                    set_url_scheme($style['src']),
-                    $style['deps'],
-                    $style['version'],
-                    $style['media']
-                );
+                wp_enqueue_style($handle, set_url_scheme($style['src']), $style['deps'], $style['version'], $style['media']);
             }
         }
     }
-
     /**
      * Enqueue assets specific to this block.
      *
@@ -98,12 +79,10 @@ class ClassicTemplate extends AbstractDynamicBlock
     protected function enqueue_assets(array $attributes, $content, $block)
     {
         parent::enqueue_assets($attributes, $content, $block);
-
         if (is_product()) {
             add_action('wp_enqueue_scripts', $this->enqueue_legacy_assets(...), 20);
         }
     }
-
     /**
      * Enqueue legacy assets when this block is used as we don't enqueue them for block themes anymore.
      *
@@ -118,25 +97,18 @@ class ClassicTemplate extends AbstractDynamicBlock
         if (current_theme_supports('wc-product-gallery-zoom')) {
             wp_enqueue_script('wc-zoom');
         }
-
         if (current_theme_supports('wc-product-gallery-slider')) {
             wp_enqueue_script('wc-flexslider');
         }
-
         if (current_theme_supports('wc-product-gallery-lightbox')) {
             wp_enqueue_script('wc-photoswipe-ui-default');
             wp_enqueue_style('photoswipe-default-skin');
-            add_action(
-                'wp_footer',
-                function (): void {
-                    wc_get_template('single-product/photoswipe.php');
-                }
-            );
+            add_action('wp_footer', function (): void {
+                wc_get_template('single-product/photoswipe.php');
+            });
         }
-
         wp_enqueue_script('wc-single-product');
     }
-
     /**
      * Render method for the Classic Template block. This method will determine which template to render.
      *
@@ -147,10 +119,9 @@ class ClassicTemplate extends AbstractDynamicBlock
      */
     protected function render($attributes, $content, $block)
     {
-        if (! isset($attributes['template'])) {
+        if (!isset($attributes['template'])) {
             return;
         }
-
         /**
          * We need to load the scripts here because when using block templates wp_head() gets run after the block
          * template. As a result we are trying to enqueue required scripts before we have even registered them.
@@ -161,64 +132,40 @@ class ClassicTemplate extends AbstractDynamicBlock
             $frontend_scripts = new WC_Frontend_Scripts();
             $frontend_scripts::load_scripts();
         }
-
-        if (OrderConfirmationTemplate::SLUG === $attributes['template']) {
+        if (Order_Confirmation_Template::SLUG === $attributes['template']) {
             return $this->render_order_received();
         }
-
         if (is_product()) {
             add_filter('woocommerce_single_product_zoom_enabled', '__return_true');
             add_filter('woocommerce_single_product_photoswipe_enabled', '__return_true');
             add_filter('woocommerce_single_product_flexslider_enabled', '__return_true');
-
             return $this->render_single_product();
         }
-
-        $valid             = false;
-        $archive_templates = [
-            ProductCatalogTemplate::SLUG,
-            ProductCategoryTemplate::SLUG,
-            ProductTagTemplate::SLUG,
-            ProductAttributeTemplate::SLUG,
-            ProductSearchResultsTemplate::SLUG,
-        ];
-
+        $valid = false;
+        $archive_templates = [Product_Catalog_Template::SLUG, Product_Category_Template::SLUG, Product_Tag_Template::SLUG, Product_Attribute_Template::SLUG, Product_Search_Results_Template::SLUG];
         // Set selected template when we directly find template base slug.
         if (in_array($attributes['template'], $archive_templates, true)) {
             $valid = true;
         }
-
         // Set selected template when we find template base slug as prefix for a specific term.
         foreach ($archive_templates as $template) {
             if (str_starts_with((string) $attributes['template'], $template)) {
                 $valid = true;
             }
         }
-
         if ($valid) {
             // Set this so that our product filters can detect if it's a PHP template.
             $this->asset_data_registry->add('isRenderingPhpTemplate', true);
-
             // Set this so filter blocks being used as widgets know when to render.
             $this->asset_data_registry->add('hasFilterableProducts', true);
-
-            $this->asset_data_registry->add(
-                'pageUrl',
-                html_entity_decode(get_pagenum_link())
-            );
-
+            $this->asset_data_registry->add('pageUrl', html_entity_decode(get_pagenum_link()));
             return $this->render_archive_product();
         }
-
         ob_start();
-
         echo "You're using the ClassicTemplate block";
-
         wp_reset_postdata();
-
         return ob_get_clean();
     }
-
     /**
      * Render method for rendering the order confirmation template.
      *
@@ -227,23 +174,18 @@ class ClassicTemplate extends AbstractDynamicBlock
     protected function render_order_received(): string|false
     {
         ob_start();
-
         echo '<div class="wp-block-group">';
-
         printf(
             '<%1$s %2$s>%3$s</%1$s>',
             'h1',
-            get_block_wrapper_attributes(), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            get_block_wrapper_attributes(),
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             esc_html__('Order confirmation', 'woocommerce')
         );
-
         WC_Shortcode_Checkout::output([]);
-
         echo '</div>';
-
         return ob_get_clean();
     }
-
     /**
      * Render method for the single product template and parts.
      *
@@ -252,7 +194,6 @@ class ClassicTemplate extends AbstractDynamicBlock
     protected function render_single_product(): string|false
     {
         ob_start();
-
         /**
          * Hook: woocommerce_before_main_content
          *
@@ -265,21 +206,11 @@ class ClassicTemplate extends AbstractDynamicBlock
          * @since 6.3.0
          */
         do_action('woocommerce_before_main_content');
-
-        $product_query = new \WP_Query(
-            [
-                'post_type' => 'product',
-                'p'         => get_the_ID(),
-            ]
-        );
-
-        while ($product_query->have_posts()) :
-
+        $product_query = new \WP_Query(['post_type' => 'product', 'p' => get_the_ID()]);
+        while ($product_query->have_posts()) {
             $product_query->the_post();
             wc_get_template_part('content', 'single-product');
-
-        endwhile;
-
+        }
         /**
          * Hook: woocommerce_after_main_content
          *
@@ -290,12 +221,9 @@ class ClassicTemplate extends AbstractDynamicBlock
          * @since 6.3.0
          */
         do_action('woocommerce_after_main_content');
-
         wp_reset_postdata();
-
         return ob_get_clean();
     }
-
     /**
      * Render method for the archive product template and parts.
      *
@@ -304,7 +232,6 @@ class ClassicTemplate extends AbstractDynamicBlock
     protected function render_archive_product(): string|false
     {
         ob_start();
-
         /**
          * Hook: woocommerce_before_main_content
          *
@@ -317,26 +244,25 @@ class ClassicTemplate extends AbstractDynamicBlock
          * @since 6.3.0
          */
         do_action('woocommerce_before_main_content');
-
         ?>
 		<header class="woocommerce-products-header">
-			<?php
-            /**
-             * Hook: woocommerce_show_page_title
-             *
-             * Allows controlling the display of the page title.
-             *
-             * @since 6.3.0
-             */
-            if (apply_filters('woocommerce_show_page_title', true)) {
-                ?>
+			<?php 
+        /**
+         * Hook: woocommerce_show_page_title
+         *
+         * Allows controlling the display of the page title.
+         *
+         * @since 6.3.0
+         */
+        if (apply_filters('woocommerce_show_page_title', true)) {
+            ?>
 				<h1 class="woocommerce-products-header__title page-title">
-					<?php
-                        woocommerce_page_title();
-                ?>
+					<?php 
+            woocommerce_page_title();
+            ?>
 				</h1>
-				<?php
-            }
+				<?php 
+        }
         /**
          * Hook: woocommerce_archive_description.
          *
@@ -348,9 +274,8 @@ class ClassicTemplate extends AbstractDynamicBlock
         do_action('woocommerce_archive_description');
         ?>
 		</header>
-		<?php
+		<?php 
         if (woocommerce_product_loop()) {
-
             /**
              * Hook: woocommerce_before_shop_loop.
              *
@@ -361,26 +286,20 @@ class ClassicTemplate extends AbstractDynamicBlock
              * @since 6.3.0
              */
             do_action('woocommerce_before_shop_loop');
-
             woocommerce_product_loop_start();
-
             if (wc_get_loop_prop('total')) {
                 while (have_posts()) {
                     the_post();
-
                     /**
                      * Hook: woocommerce_shop_loop.
                      *
                      * @since 6.3.0
                      */
                     do_action('woocommerce_shop_loop');
-
                     wc_get_template_part('content', 'product');
                 }
             }
-
             woocommerce_product_loop_end();
-
             /**
              * Hook: woocommerce_after_shop_loop.
              *
@@ -399,7 +318,6 @@ class ClassicTemplate extends AbstractDynamicBlock
              */
             do_action('woocommerce_no_products_found');
         }
-
         /**
          * Hook: woocommerce_after_main_content
          *
@@ -410,11 +328,9 @@ class ClassicTemplate extends AbstractDynamicBlock
          * @since 6.3.0
          */
         do_action('woocommerce_after_main_content');
-
         wp_reset_postdata();
         return ob_get_clean();
     }
-
     /**
      * Get HTML markup with the right classes by attributes.
      * This function appends the classname at the first element that have the class attribute.
@@ -426,34 +342,27 @@ class ClassicTemplate extends AbstractDynamicBlock
      */
     public function add_alignment_class_to_wrapper(string $content, array $block): ?string
     {
-        if (('woocommerce/' . $this->block_name) !== $block['blockName']) {
+        if ('woocommerce/' . $this->block_name !== $block['blockName']) {
             return $content;
         }
-
         $attributes = (array) $block['attrs'];
-
         // Set the default alignment to wide.
-        if (! isset($attributes['align'])) {
+        if (!isset($attributes['align'])) {
             $attributes['align'] = 'wide';
         }
-
-        $align_class_and_style = StyleAttributesUtils::get_align_class_and_style($attributes);
-
-        if (! isset($align_class_and_style['class'])) {
+        $align_class_and_style = Style_Attributes_Utils::get_align_class_and_style($attributes);
+        if (!isset($align_class_and_style['class'])) {
             return $content;
         }
-
         // Find the first tag.
         $first_tag = '<[^<>]+>';
-        $matches   = [];
+        $matches = [];
         preg_match($first_tag, $content, $matches);
-
         // If there is a tag, but it doesn't have a class attribute, add the class attribute.
         if (isset($matches[0]) && !str_contains($matches[0], ' class=')) {
             $pattern_before_tag_closing = '/.+?(?=>)/';
             return preg_replace($pattern_before_tag_closing, '$0 class="' . $align_class_and_style['class'] . '"', $content, 1);
         }
-
         // If there is a tag, and it has a class already, add the class attribute.
         $pattern_get_class = '/(?<=class=\"|\')[^"|\']+(?=\"|\')/';
         return preg_replace($pattern_get_class, '$0 ' . $align_class_and_style['class'], $content, 1);

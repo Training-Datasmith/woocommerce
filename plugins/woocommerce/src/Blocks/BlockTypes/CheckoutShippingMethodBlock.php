@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * CheckoutShippingMethodBlock class.
  */
-class CheckoutShippingMethodBlock extends AbstractInnerBlock
+class Checkout_Shipping_Method_Block extends Abstract_Inner_Block
 {
     /**
      * Block name.

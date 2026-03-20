@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Task and TaskList Traits
  */
-
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks;
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks;
 
 defined('ABSPATH') || exit;
-
 /**
  * TaskTraits class.
  */
-trait TaskTraits
+trait Task_Traits
 {
     /**
      * Record a tracks event with the prefixed event name.
@@ -23,20 +21,13 @@ trait TaskTraits
      */
     public function record_tracks_event($event_name, $args = [])
     {
-        if (! $this->get_list_id()) {
+        if (!$this->get_list_id()) {
             return;
         }
-
         $prefixed_event_name = $this->prefix_event($event_name);
-
-        wc_admin_record_tracks_event(
-            $prefixed_event_name,
-            $args
-        );
-
+        wc_admin_record_tracks_event($prefixed_event_name, $args);
         return $prefixed_event_name;
     }
-
     /**
      * Get the task list ID.
      *
@@ -45,8 +36,6 @@ trait TaskTraits
     public function get_list_id()
     {
         $namespaced_class = $this::class;
-        return is_subclass_of($namespaced_class, \Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task::class)
-            ? $this->get_parent_id()
-            : $this->id;
+        return is_subclass_of($namespaced_class, \Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task::class) ? $this->get_parent_id() : $this->id;
     }
 }

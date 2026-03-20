@@ -1,11 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Abstract class for product form components.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\ProductForm;
+namespace Automattic\Woo_Commerce\Internal\Admin\Product_Form;
 
 /**
  * Component class.
@@ -15,8 +14,7 @@ abstract class Component
     /**
      * Product Component traits.
      */
-    use ComponentTrait;
-
+    use Component_Trait;
     /**
      * Constructor
      *
@@ -24,15 +22,18 @@ abstract class Component
      * @param string $plugin_id Plugin id.
      * @param array  $additional_args Array containing additional arguments.
      */
-    public function __construct($id, $plugin_id, /**
-     * Component additional arguments.
-     */
-        protected $additional_args)
+    public function __construct(
+        $id,
+        $plugin_id,
+        /**
+         * Component additional arguments.
+         */
+        protected $additional_args
+    )
     {
-        $this->id              = $id;
-        $this->plugin_id       = $plugin_id;
+        $this->id = $id;
+        $this->plugin_id = $plugin_id;
     }
-
     /**
      * Component arguments.
      *
@@ -42,7 +43,6 @@ abstract class Component
     {
         return $this->additional_args;
     }
-
     /**
      * Component arguments.
      *
@@ -53,7 +53,6 @@ abstract class Component
     {
         return self::get_argument_from_path($this->additional_args, $key);
     }
-
     /**
      * Get the component as JSON.
      *
@@ -61,15 +60,8 @@ abstract class Component
      */
     public function get_json()
     {
-        return array_merge(
-            [
-                'id'        => $this->get_id(),
-                'plugin_id' => $this->get_plugin_id(),
-            ],
-            $this->get_additional_args()
-        );
+        return array_merge(['id' => $this->get_id(), 'plugin_id' => $this->get_plugin_id()], $this->get_additional_args());
     }
-
     /**
      * Sorting function for product form component.
      *
@@ -80,7 +72,7 @@ abstract class Component
      */
     public static function sort($a, $b, array $sort_by = [])
     {
-        $key   = $sort_by['key'];
+        $key = $sort_by['key'];
         $a_val = $a->get_additional_argument($key);
         $b_val = $b->get_additional_argument($key);
         if ('asc' === $sort_by['order']) {
@@ -88,7 +80,6 @@ abstract class Component
         }
         return $b_val <=> $a_val;
     }
-
     /**
      * Gets argument by dot notation path.
      *
@@ -100,13 +91,12 @@ abstract class Component
     public static function get_argument_from_path($arguments, $path, $delimiter = '.')
     {
         $path_keys = explode($delimiter, $path);
-        $num_keys  = false !== $path_keys ? count($path_keys) : 0;
-
+        $num_keys = false !== $path_keys ? count($path_keys) : 0;
         $val = $arguments;
         for ($i = 0; $i < $num_keys; $i++) {
-            $key = $path_keys[ $i ];
+            $key = $path_keys[$i];
             if (array_key_exists($key, $val)) {
-                $val = $val[ $key ];
+                $val = $val[$key];
             } else {
                 $val = null;
                 break;
@@ -114,14 +104,12 @@ abstract class Component
         }
         return $val;
     }
-
     /**
      * Array of required arguments.
      *
      * @var array
      */
     protected $required_arguments = [];
-
     /**
      * Get missing arguments of args array.
      *
@@ -130,11 +118,6 @@ abstract class Component
      */
     public function get_missing_arguments($args)
     {
-        return array_values(
-            array_filter(
-                $this->required_arguments,
-                fn ($arg_key) => null === self::get_argument_from_path($args, $arg_key)
-            )
-        );
+        return array_values(array_filter($this->required_arguments, fn($arg_key) => null === self::get_argument_from_path($args, $arg_key)));
     }
 }

@@ -1,21 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
 
-namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
-
-use Automattic\WooCommerce\Internal\Logging\SafeGlobalFunctionProxy;
+use Automattic\Woo_Commerce\Internal\Logging\Safe_Global_Function_Proxy;
 use Throwable;
 use WC_Payment_Gateway;
-
 defined('ABSPATH') || exit;
-
 /**
  * Paystack payment gateway provider class.
  *
  * This class handles all the custom logic for the Paystack payment gateway provider.
  */
-class Paystack extends PaymentGateway
+class Paystack extends Payment_Gateway
 {
     /**
      * Check if the payment gateway needs setup.
@@ -28,26 +25,16 @@ class Paystack extends PaymentGateway
     {
         try {
             $is_valid_for_use = true;
-            if (is_callable([ $payment_gateway, 'is_valid_for_use' ])) {
+            if (is_callable([$payment_gateway, 'is_valid_for_use'])) {
                 $is_valid_for_use = wc_string_to_bool($payment_gateway->is_valid_for_use());
             }
-
-            return ! $is_valid_for_use || ! $this->is_account_connected($payment_gateway);
+            return !$is_valid_for_use || !$this->is_account_connected($payment_gateway);
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway needs setup: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway needs setup: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         return parent::needs_setup($payment_gateway);
     }
-
     /**
      * Check if the payment gateway has a payments processor account connected.
      *
@@ -59,23 +46,13 @@ class Paystack extends PaymentGateway
     public function is_account_connected(WC_Payment_Gateway $payment_gateway): bool
     {
         try {
-            return property_exists($payment_gateway, 'public_key') && ! empty($payment_gateway->public_key) &&
-                property_exists($payment_gateway, 'secret_key') && ! empty($payment_gateway->secret_key);
+            return property_exists($payment_gateway, 'public_key') && !empty($payment_gateway->public_key) && property_exists($payment_gateway, 'secret_key') && !empty($payment_gateway->secret_key);
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway has an account connected: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway has an account connected: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         return parent::is_account_connected($payment_gateway);
     }
-
     /**
      * Try to determine if the payment gateway is in test mode onboarding (aka sandbox or test-drive).
      *

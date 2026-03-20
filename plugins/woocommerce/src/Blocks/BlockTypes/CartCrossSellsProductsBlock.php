@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * CartCrossSellsProductsBlock class.
  */
-class CartCrossSellsProductsBlock extends AbstractInnerBlock
+class Cart_Cross_Sells_Products_Block extends Abstract_Inner_Block
 {
     /**
      * Block name.

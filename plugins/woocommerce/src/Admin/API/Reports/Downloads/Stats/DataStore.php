@@ -1,25 +1,21 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * API\Reports\Downloads\Stats\DataStore class file.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports\Downloads\Stats;
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Downloads\Stats;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\DataStoreInterface;
-use Automattic\WooCommerce\Admin\API\Reports\Downloads\DataStore as DownloadsDataStore;
-use Automattic\WooCommerce\Admin\API\Reports\StatsDataStoreTrait;
-
+use Automattic\Woo_Commerce\Admin\API\Reports\Data_Store_Interface;
+use Automattic\Woo_Commerce\Admin\API\Reports\Downloads\Data_Store as DownloadsDataStore;
+use Automattic\Woo_Commerce\Admin\API\Reports\Stats_Data_Store_Trait;
 /**
  * API\Reports\Downloads\Stats\DataStore.
  */
-class DataStore extends DownloadsDataStore implements DataStoreInterface
+class Data_Store extends Downloads_Data_Store implements Data_Store_Interface
 {
-    use StatsDataStoreTrait;
-
+    use Stats_Data_Store_Trait;
     /**
      * Mapping columns to data type to return correct response types.
      *
@@ -27,10 +23,7 @@ class DataStore extends DownloadsDataStore implements DataStoreInterface
      *
      * @var array
      */
-    protected $column_types = [
-        'download_count' => 'intval',
-    ];
-
+    protected $column_types = ['download_count' => 'intval'];
     /**
      * Cache identifier.
      *
@@ -39,7 +32,6 @@ class DataStore extends DownloadsDataStore implements DataStoreInterface
      * @var string
      */
     protected $cache_key = 'downloads_stats';
-
     /**
      * Data store context used to pass to filters.
      *
@@ -48,7 +40,6 @@ class DataStore extends DownloadsDataStore implements DataStoreInterface
      * @var string
      */
     protected $context = 'downloads_stats';
-
     /**
      * Assign report columns once full table name has been assigned.
      *
@@ -56,11 +47,8 @@ class DataStore extends DownloadsDataStore implements DataStoreInterface
      */
     protected function assign_report_columns()
     {
-        $this->report_columns = [
-            'download_count' => 'COUNT(DISTINCT download_log_id) as download_count',
-        ];
+        $this->report_columns = ['download_count' => 'COUNT(DISTINCT download_log_id) as download_count'];
     }
-
     /**
      * Get the default query arguments to be used by get_data().
      * These defaults are only partially applied when used via REST API, as that has its own defaults.
@@ -71,12 +59,10 @@ class DataStore extends DownloadsDataStore implements DataStoreInterface
      */
     public function get_default_query_vars()
     {
-        $defaults             = parent::get_default_query_vars();
+        $defaults = parent::get_default_query_vars();
         $defaults['interval'] = 'week';
-
         return $defaults;
     }
-
     /**
      * Returns the report data based on normalized parameters.
      * Will be called by `get_data` if there is no data in cache.
@@ -94,26 +80,20 @@ class DataStore extends DownloadsDataStore implements DataStoreInterface
     public function get_noncached_stats_data(array $query_args, array $params, &$data, $expected_interval_count)
     {
         global $wpdb;
-
         $table_name = self::get_db_table_name();
-
         $this->initialize_queries();
         $selections = $this->selected_columns($query_args);
         $this->add_sql_query_params($query_args);
         $where_time = $this->add_time_period_sql_params($query_args, $table_name);
         $this->add_intervals_sql_params($query_args, $table_name);
-
         $this->interval_query->add_sql_clause('select', $this->get_sql_clause('select') . ' AS time_interval');
         $this->interval_query->str_replace_clause('select', 'date_created', 'timestamp');
         $this->interval_query->str_replace_clause('where_time', 'date_created', 'timestamp');
-
         $db_intervals = $wpdb->get_col(
             // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- cache ok, DB call ok, unprepared SQL ok.
             $this->interval_query->get_query_statement()
         );
-
         $db_records_count = count($db_intervals);
-
         $this->update_intervals_sql_params($query_args, $db_records_count, $expected_interval_count, $table_name);
         $this->interval_query->str_replace_clause('where_time', 'date_created', 'timestamp');
         $this->total_query->add_sql_clause('select', $selections);
@@ -129,29 +109,23 @@ class DataStore extends DownloadsDataStore implements DataStoreInterface
         if (null === $totals) {
             return new \WP_Error('woocommerce_analytics_downloads_stats_result_failed', __('Sorry, fetching downloads data failed.', 'woocommerce'));
         }
-
         $this->interval_query->add_sql_clause('order_by', $this->get_sql_clause('order_by'));
         $this->interval_query->add_sql_clause('limit', $this->get_sql_clause('limit'));
         $this->interval_query->add_sql_clause('select', ', MAX(timestamp) AS datetime_anchor');
         if ('' !== $selections) {
             $this->interval_query->add_sql_clause('select', ', ' . $selections);
         }
-
         $intervals = $wpdb->get_results(
             // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- cache ok, DB call ok, unprepared SQL ok.
             $this->interval_query->get_query_statement(),
             ARRAY_A
         );
-
         if (null === $intervals) {
             return new \WP_Error('woocommerce_analytics_downloads_stats_result_failed', __('Sorry, fetching downloads data failed.', 'woocommerce'));
         }
-
         $totals = (object) $this->cast_numbers($totals[0]);
-
-        $data->totals    = $totals;
+        $data->totals = $totals;
         $data->intervals = $intervals;
-
         if ($this->intervals_missing($expected_interval_count, $db_records_count, $params['per_page'], $query_args['page'], $query_args['order'], $query_args['orderby'], count($intervals))) {
             $this->fill_in_missing_intervals($db_intervals, $query_args['adj_after'], $query_args['adj_before'], $query_args['interval'], $data);
             $this->sort_intervals($data, $query_args['orderby'], $query_args['order']);
@@ -159,10 +133,8 @@ class DataStore extends DownloadsDataStore implements DataStoreInterface
         } else {
             $this->update_interval_boundary_dates($query_args['after'], $query_args['before'], $query_args['interval'], $data->intervals);
         }
-
         return $data;
     }
-
     /**
      * Normalizes order_by clause to match to SQL query.
      *
@@ -176,7 +148,6 @@ class DataStore extends DownloadsDataStore implements DataStoreInterface
         if ('date' === $order_by) {
             return 'time_interval';
         }
-
         return $order_by;
     }
 }

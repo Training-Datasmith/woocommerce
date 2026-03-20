@@ -1,28 +1,25 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Reports variations stats controller
  *
  * Handles requests to the /reports/variations/stats endpoint.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports\Variations\Stats;
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Variations\Stats;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\GenericQuery;
-use Automattic\WooCommerce\Admin\API\Reports\GenericStatsController;
+use Automattic\Woo_Commerce\Admin\API\Reports\Generic_Query;
+use Automattic\Woo_Commerce\Admin\API\Reports\Generic_Stats_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
-
 /**
  * REST API Reports variations stats controller class.
  *
  * @internal
  * @extends GenericStatsController
  */
-class Controller extends GenericStatsController
+class Controller extends Generic_Stats_Controller
 {
     /**
      * Route base.
@@ -30,16 +27,12 @@ class Controller extends GenericStatsController
      * @var string
      */
     protected $rest_base = 'reports/variations/stats';
-
     /**
      * Mapping between external parameter name and name used in query class.
      *
      * @var array
      */
-    protected $param_mapping = [
-        'variations' => 'variation_includes',
-    ];
-
+    protected $param_mapping = ['variations' => 'variation_includes'];
     /**
      * Constructor.
      */
@@ -47,7 +40,6 @@ class Controller extends GenericStatsController
     {
         add_filter('woocommerce_analytics_variations_stats_select_query', $this->set_default_report_data(...));
     }
-
     /**
      * Get data from `'variations-stats'` GenericQuery.
      *
@@ -58,10 +50,9 @@ class Controller extends GenericStatsController
      */
     protected function get_datastore_data($query_args = [])
     {
-        $query = new GenericQuery($query_args, 'variations-stats');
+        $query = new Generic_Query($query_args, 'variations-stats');
         return $query->get_data();
     }
-
     /**
      * Maps query arguments from the REST request, to be fed to Query.
      *
@@ -70,14 +61,7 @@ class Controller extends GenericStatsController
      */
     protected function prepare_reports_query($request): array
     {
-        $query_args = [
-            'fields' => [
-                'items_sold',
-                'net_revenue',
-                'orders_count',
-                'variations_count',
-            ],
-        ];
+        $query_args = ['fields' => ['items_sold', 'net_revenue', 'orders_count', 'variations_count']];
         /**
          * Experimental: Filter the list of parameters provided when querying data from the data store.
          *
@@ -86,20 +70,18 @@ class Controller extends GenericStatsController
          * @param array $collection_params List of parameters.
          */
         $collection_params = apply_filters('experimental_woocommerce_analytics_variations_stats_collection_params', $this->get_collection_params());
-        $registered        = array_keys($collection_params);
+        $registered = array_keys($collection_params);
         foreach ($registered as $param_name) {
-            if (isset($request[ $param_name ])) {
-                if (isset($this->param_mapping[ $param_name ])) {
-                    $query_args[ $this->param_mapping[ $param_name ] ] = $request[ $param_name ];
+            if (isset($request[$param_name])) {
+                if (isset($this->param_mapping[$param_name])) {
+                    $query_args[$this->param_mapping[$param_name]] = $request[$param_name];
                 } else {
-                    $query_args[ $param_name ] = $request[ $param_name ];
+                    $query_args[$param_name] = $request[$param_name];
                 }
             }
         }
-
         return $query_args;
     }
-
     /**
      * Prepare a report data item for serialization.
      *
@@ -110,7 +92,6 @@ class Controller extends GenericStatsController
     public function prepare_item_for_response($report, $request)
     {
         $response = parent::prepare_item_for_response($report, $request);
-
         /**
          * Filter a report returned from the API.
          *
@@ -122,38 +103,14 @@ class Controller extends GenericStatsController
          */
         return apply_filters('woocommerce_rest_prepare_report_variations_stats', $response, $report, $request);
     }
-
     /**
      * Get the Report's item properties schema.
      * Will be used by `get_item_schema` as `totals` and `subtotals`.
      */
     protected function get_item_properties_schema(): array
     {
-        return [
-            'items_sold'   => [
-                'title'       => __('Variations Sold', 'woocommerce'),
-                'description' => __('Number of variation items sold.', 'woocommerce'),
-                'type'        => 'integer',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-                'indicator'   => true,
-            ],
-            'net_revenue'  => [
-                'description' => __('Net sales.', 'woocommerce'),
-                'type'        => 'number',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-                'format'      => 'currency',
-            ],
-            'orders_count' => [
-                'description' => __('Number of orders.', 'woocommerce'),
-                'type'        => 'integer',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-            ],
-        ];
+        return ['items_sold' => ['title' => __('Variations Sold', 'woocommerce'), 'description' => __('Number of variation items sold.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true, 'indicator' => true], 'net_revenue' => ['description' => __('Net sales.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true, 'format' => 'currency'], 'orders_count' => ['description' => __('Number of orders.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true]];
     }
-
     /**
      * Get the Report's schema, conforming to JSON Schema.
      *
@@ -161,23 +118,13 @@ class Controller extends GenericStatsController
      */
     public function get_item_schema()
     {
-        $schema          = parent::get_item_schema();
+        $schema = parent::get_item_schema();
         $schema['title'] = 'report_variations_stats';
-
-        $segment_label = [
-            'description' => __('Human readable segment label, either product or variation name.', 'woocommerce'),
-            'type'        => 'string',
-            'context'     => [ 'view', 'edit' ],
-            'readonly'    => true,
-            'enum'        => [ 'day', 'week', 'month', 'year' ],
-        ];
-
-        $schema['properties']['totals']['properties']['segments']['items']['properties']['segment_label']                                        = $segment_label;
+        $segment_label = ['description' => __('Human readable segment label, either product or variation name.', 'woocommerce'), 'type' => 'string', 'context' => ['view', 'edit'], 'readonly' => true, 'enum' => ['day', 'week', 'month', 'year']];
+        $schema['properties']['totals']['properties']['segments']['items']['properties']['segment_label'] = $segment_label;
         $schema['properties']['intervals']['items']['properties']['subtotals']['properties']['segments']['items']['properties']['segment_label'] = $segment_label;
-
         return $this->add_additional_fields_schema($schema);
     }
-
     /**
      * Set the default results to 0 if API returns an empty array
      *
@@ -187,19 +134,18 @@ class Controller extends GenericStatsController
     public function set_default_report_data($results)
     {
         if (empty($results)) {
-            $results                       = new \stdClass();
-            $results->total                = 0;
-            $results->totals               = new \stdClass();
-            $results->totals->items_sold   = 0;
-            $results->totals->net_revenue  = 0;
+            $results = new \stdClass();
+            $results->total = 0;
+            $results->totals = new \stdClass();
+            $results->totals->items_sold = 0;
+            $results->totals->net_revenue = 0;
             $results->totals->orders_count = 0;
-            $results->intervals            = [];
-            $results->pages                = 1;
-            $results->page_no              = 1;
+            $results->intervals = [];
+            $results->pages = 1;
+            $results->page_no = 1;
         }
         return $results;
     }
-
     /**
      * Get the query params for collections.
      *
@@ -207,106 +153,17 @@ class Controller extends GenericStatsController
      */
     public function get_collection_params()
     {
-        $params                      = parent::get_collection_params();
-        $params['match']             = [
-            'description'       => __('Indicates whether all the conditions should be true for the resulting set, or if any one of them is sufficient. Match affects the following parameters: status_is, status_is_not, product_includes, product_excludes, coupon_includes, coupon_excludes, customer, categories', 'woocommerce'),
-            'type'              => 'string',
-            'default'           => 'all',
-            'enum'              => [
-                'all',
-                'any',
-            ],
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-        $params['orderby']['enum']   = $this->apply_custom_orderby_filters(
-            [
-                'date',
-                'net_revenue',
-                'coupons',
-                'refunds',
-                'shipping',
-                'taxes',
-                'net_revenue',
-                'orders_count',
-                'items_sold',
-            ]
-        );
-        $params['category_includes'] = [
-            'description'       => __('Limit result to items from the specified categories.', 'woocommerce'),
-            'type'              => 'array',
-            'sanitize_callback' => 'wp_parse_id_list',
-            'validate_callback' => 'rest_validate_request_arg',
-            'items'             => [
-                'type' => 'integer',
-            ],
-        ];
-        $params['category_excludes'] = [
-            'description'       => __('Limit result set to variations not in the specified categories.', 'woocommerce'),
-            'type'              => 'array',
-            'sanitize_callback' => 'wp_parse_id_list',
-            'validate_callback' => 'rest_validate_request_arg',
-            'items'             => [
-                'type' => 'integer',
-            ],
-        ];
-        $params['product_includes']  = [
-            'description'       => __('Limit result set to items that have the specified parent product(s).', 'woocommerce'),
-            'type'              => 'array',
-            'items'             => [
-                'type' => 'integer',
-            ],
-            'default'           => [],
-            'sanitize_callback' => 'wp_parse_id_list',
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-        $params['product_excludes']  = [
-            'description'       => __('Limit result set to items that don\'t have the specified parent product(s).', 'woocommerce'),
-            'type'              => 'array',
-            'items'             => [
-                'type' => 'integer',
-            ],
-            'default'           => [],
-            'validate_callback' => 'rest_validate_request_arg',
-            'sanitize_callback' => 'wp_parse_id_list',
-        ];
-        $params['variations']        = [
-            'description'       => __('Limit result to items with specified variation ids.', 'woocommerce'),
-            'type'              => 'array',
-            'sanitize_callback' => 'wp_parse_id_list',
-            'validate_callback' => 'rest_validate_request_arg',
-            'items'             => [
-                'type' => 'integer',
-            ],
-        ];
-        $params['segmentby']         = [
-            'description'       => __('Segment the response by additional constraint.', 'woocommerce'),
-            'type'              => 'string',
-            'enum'              => [
-                'product',
-                'category',
-                'variation',
-            ],
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-        $params['attribute_is']      = [
-            'description'       => __('Limit result set to orders that include products with the specified attributes.', 'woocommerce'),
-            'type'              => 'array',
-            'items'             => [
-                'type' => 'array',
-            ],
-            'default'           => [],
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-        $params['attribute_is_not']  = [
-            'description'       => __('Limit result set to orders that don\'t include products with the specified attributes.', 'woocommerce'),
-            'type'              => 'array',
-            'items'             => [
-                'type' => 'array',
-            ],
-            'default'           => [],
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-
+        $params = parent::get_collection_params();
+        $params['match'] = ['description' => __('Indicates whether all the conditions should be true for the resulting set, or if any one of them is sufficient. Match affects the following parameters: status_is, status_is_not, product_includes, product_excludes, coupon_includes, coupon_excludes, customer, categories', 'woocommerce'), 'type' => 'string', 'default' => 'all', 'enum' => ['all', 'any'], 'validate_callback' => 'rest_validate_request_arg'];
+        $params['orderby']['enum'] = $this->apply_custom_orderby_filters(['date', 'net_revenue', 'coupons', 'refunds', 'shipping', 'taxes', 'net_revenue', 'orders_count', 'items_sold']);
+        $params['category_includes'] = ['description' => __('Limit result to items from the specified categories.', 'woocommerce'), 'type' => 'array', 'sanitize_callback' => 'wp_parse_id_list', 'validate_callback' => 'rest_validate_request_arg', 'items' => ['type' => 'integer']];
+        $params['category_excludes'] = ['description' => __('Limit result set to variations not in the specified categories.', 'woocommerce'), 'type' => 'array', 'sanitize_callback' => 'wp_parse_id_list', 'validate_callback' => 'rest_validate_request_arg', 'items' => ['type' => 'integer']];
+        $params['product_includes'] = ['description' => __('Limit result set to items that have the specified parent product(s).', 'woocommerce'), 'type' => 'array', 'items' => ['type' => 'integer'], 'default' => [], 'sanitize_callback' => 'wp_parse_id_list', 'validate_callback' => 'rest_validate_request_arg'];
+        $params['product_excludes'] = ['description' => __('Limit result set to items that don\'t have the specified parent product(s).', 'woocommerce'), 'type' => 'array', 'items' => ['type' => 'integer'], 'default' => [], 'validate_callback' => 'rest_validate_request_arg', 'sanitize_callback' => 'wp_parse_id_list'];
+        $params['variations'] = ['description' => __('Limit result to items with specified variation ids.', 'woocommerce'), 'type' => 'array', 'sanitize_callback' => 'wp_parse_id_list', 'validate_callback' => 'rest_validate_request_arg', 'items' => ['type' => 'integer']];
+        $params['segmentby'] = ['description' => __('Segment the response by additional constraint.', 'woocommerce'), 'type' => 'string', 'enum' => ['product', 'category', 'variation'], 'validate_callback' => 'rest_validate_request_arg'];
+        $params['attribute_is'] = ['description' => __('Limit result set to orders that include products with the specified attributes.', 'woocommerce'), 'type' => 'array', 'items' => ['type' => 'array'], 'default' => [], 'validate_callback' => 'rest_validate_request_arg'];
+        $params['attribute_is_not'] = ['description' => __('Limit result set to orders that don\'t include products with the specified attributes.', 'woocommerce'), 'type' => 'array', 'items' => ['type' => 'array'], 'default' => [], 'validate_callback' => 'rest_validate_request_arg'];
         return $params;
     }
 }

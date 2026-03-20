@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\ProductCollection\Utils as ProductCollectionUtils;
-use Automattic\WooCommerce\Internal\ProductFilters\FilterDataProvider;
-use Automattic\WooCommerce\Internal\ProductFilters\QueryClauses;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Product_Collection\Utils as ProductCollectionUtils;
+use Automattic\Woo_Commerce\Internal\Product_Filters\Filter_Data_Provider;
+use Automattic\Woo_Commerce\Internal\Product_Filters\Query_Clauses;
 /**
  * Product Filter: Rating Block
  *
  * @package Automattic\WooCommerce\Blocks\BlockTypes
  */
-final class ProductFilterRating extends AbstractBlock
+final class Product_Filter_Rating extends Abstract_Block
 {
     /**
      * Block name.
@@ -21,9 +19,7 @@ final class ProductFilterRating extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-filter-rating';
-
     public const RATING_FILTER_QUERY_VAR = 'rating_filter';
-
     /**
      * Initialize this block type.
      *
@@ -33,10 +29,8 @@ final class ProductFilterRating extends AbstractBlock
     protected function initialize(): void
     {
         parent::initialize();
-
         add_filter('woocommerce_blocks_product_filters_selected_items', $this->prepare_selected_filters(...), 10, 2);
     }
-
     /**
      * Prepare the active filter items.
      *
@@ -46,33 +40,25 @@ final class ProductFilterRating extends AbstractBlock
      */
     public function prepare_selected_filters($items, array $params)
     {
-        if (empty($params[ self::RATING_FILTER_QUERY_VAR ])) {
+        if (empty($params[self::RATING_FILTER_QUERY_VAR])) {
             return $items;
         }
-
-        $active_ratings = array_map(absint(...), explode(',', (string) $params[ self::RATING_FILTER_QUERY_VAR ]));
-        $active_ratings = array_filter(
-            $active_ratings,
-            fn ($rating) => $rating > 0 && $rating < 6
-        );
+        $active_ratings = array_map(absint(...), explode(',', (string) $params[self::RATING_FILTER_QUERY_VAR]));
+        $active_ratings = array_filter($active_ratings, fn($rating) => $rating > 0 && $rating < 6);
         $active_ratings = array_unique($active_ratings);
-
         if (empty($active_ratings)) {
             return $items;
         }
-
         foreach ($active_ratings as $rating) {
             $items[] = [
-                'type'        => 'rating',
-                'value'       => (string) $rating,
+                'type' => 'rating',
+                'value' => (string) $rating,
                 /* translators: %s is referring to rating value. Example: Rated 4 out of 5. */
                 'activeLabel' => sprintf(__('Rating: Rated %d out of 5', 'woocommerce'), $rating),
             ];
         }
-
         return $items;
     }
-
     /**
      * Include and render the block.
      *
@@ -87,73 +73,33 @@ final class ProductFilterRating extends AbstractBlock
         if (is_admin() || wp_doing_ajax()) {
             return '';
         }
-
-        $min_rating    = $attributes['minRating'] ?? 0;
+        $min_rating = $attributes['minRating'] ?? 0;
         $rating_counts = $this->get_rating_counts($block);
         // User selected minimum rating to display.
-        $rating_counts_with_min = array_filter(
-            $rating_counts,
-            fn (array $rating) => $rating['rating'] >= $min_rating & $rating['rating'] < 6
-        );
-        $filter_params          = $block->context['filterParams'] ?? [];
-        $rating_query           = $filter_params[ self::RATING_FILTER_QUERY_VAR ] ?? '';
-        $selected_rating        = array_filter(array_map(absint(...), explode(',', $rating_query)));
-
-        $filter_options = array_map(
-            function (array $rating) use ($selected_rating): array {
-                $aria_label = sprintf(
-                    /* translators: %1$d is referring to rating value. Example: Rated 4 out of 5. */
-                    __('Rated %1$d out of 5', 'woocommerce'),
-                    $rating['rating'],
-                );
-
-                return [
-                    'label'     => $this->render_rating_label((int) $rating['rating']),
-                    'ariaLabel' => $aria_label,
-                    'value'     => (string) $rating['rating'],
-                    'selected'  => in_array($rating['rating'], $selected_rating, true),
-                    'count'     => $rating['count'],
-                    'type'      => 'rating',
-                ];
-            },
-            $rating_counts_with_min
-        );
-
-        $filter_context = [
-            'items'      => $filter_options,
-            'showCounts' => $attributes['showCounts'] ?? false,
-            'groupLabel' => __('Rating', 'woocommerce'),
-        ];
-
-        $wrapper_attributes = [
-            'data-wp-interactive' => 'woocommerce/product-filters',
-            'data-wp-key'         => wp_unique_prefixed_id($this->get_full_block_name()),
-            'data-wp-context'     => wp_json_encode(
-                [
-                    /* translators: {{label}} is the rating filter item label. */
-                    'activeLabelTemplate' => __('Rating: {{label}}', 'woocommerce'),
-                    'filterType'          => 'rating',
-                ],
-                JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
-            ),
-        ];
-
+        $rating_counts_with_min = array_filter($rating_counts, fn(array $rating) => $rating['rating'] >= $min_rating & $rating['rating'] < 6);
+        $filter_params = $block->context['filterParams'] ?? [];
+        $rating_query = $filter_params[self::RATING_FILTER_QUERY_VAR] ?? '';
+        $selected_rating = array_filter(array_map(absint(...), explode(',', $rating_query)));
+        $filter_options = array_map(function (array $rating) use ($selected_rating): array {
+            $aria_label = sprintf(
+                /* translators: %1$d is referring to rating value. Example: Rated 4 out of 5. */
+                __('Rated %1$d out of 5', 'woocommerce'),
+                $rating['rating']
+            );
+            return ['label' => $this->render_rating_label((int) $rating['rating']), 'ariaLabel' => $aria_label, 'value' => (string) $rating['rating'], 'selected' => in_array($rating['rating'], $selected_rating, true), 'count' => $rating['count'], 'type' => 'rating'];
+        }, $rating_counts_with_min);
+        $filter_context = ['items' => $filter_options, 'showCounts' => $attributes['showCounts'] ?? false, 'groupLabel' => __('Rating', 'woocommerce')];
+        $wrapper_attributes = ['data-wp-interactive' => 'woocommerce/product-filters', 'data-wp-key' => wp_unique_prefixed_id($this->get_full_block_name()), 'data-wp-context' => wp_json_encode([
+            /* translators: {{label}} is the rating filter item label. */
+            'activeLabelTemplate' => __('Rating: {{label}}', 'woocommerce'),
+            'filterType' => 'rating',
+        ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)];
         if (empty($filter_options)) {
             $wrapper_attributes['hidden'] = true;
-            $wrapper_attributes['class']  = 'wc-block-product-filter--hidden';
+            $wrapper_attributes['class'] = 'wc-block-product-filter--hidden';
         }
-
-        return sprintf(
-            '<div %1$s>%2$s</div>',
-            get_block_wrapper_attributes($wrapper_attributes),
-            array_reduce(
-                $block->parsed_block['innerBlocks'],
-                fn (string $carry, $parsed_block): string => $carry . (new \WP_Block($parsed_block, [ 'filterData' => $filter_context ]))->render(),
-                ''
-            )
-        );
+        return sprintf('<div %1$s>%2$s</div>', get_block_wrapper_attributes($wrapper_attributes), array_reduce($block->parsed_block['innerBlocks'], fn(string $carry, $parsed_block): string => $carry . (new \WP_Block($parsed_block, ['filterData' => $filter_context]))->render(), ''));
     }
-
     /**
      * Render the rating label.
      *
@@ -163,37 +109,42 @@ final class ProductFilterRating extends AbstractBlock
     private function render_rating_label(int $rating): string|false
     {
         $view_box_width = $rating * 24;
-
         $rating_label = sprintf(
             /* translators: %1$d is referring to rating value. Example: Rated 4 out of 5. */
             __('Rated %1$d out of 5', 'woocommerce'),
-            $rating,
+            $rating
         );
-
         ob_start();
         ?>
 			<svg
-				width="<?php echo esc_attr($view_box_width); ?>"
+				width="<?php 
+        echo esc_attr($view_box_width);
+        ?>"
 				height="24"
-				viewBox="0 0 <?php echo esc_attr($view_box_width); ?> 24"
+				viewBox="0 0 <?php 
+        echo esc_attr($view_box_width);
+        ?> 24"
 				fill="currentColor"
-				aria-label="<?php echo esc_attr($rating_label); ?>"
+				aria-label="<?php 
+        echo esc_attr($rating_label);
+        ?>"
 			>
-				<?php
-                for ($i = 0; $i < $rating; $i++) {
-                    ?>
+				<?php 
+        for ($i = 0; $i < $rating; $i++) {
+            ?>
 					<path
 						d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-						transform="translate(<?php echo esc_attr($i * 24); ?>, 0)"
+						transform="translate(<?php 
+            echo esc_attr($i * 24);
+            ?>, 0)"
 					/>
-					<?php
-                }
+					<?php 
+        }
         ?>
 			</svg>
-		<?php
+		<?php 
         return ob_get_clean();
     }
-
     /**
      * Retrieve the rating filter data for current block.
      *
@@ -202,38 +153,25 @@ final class ProductFilterRating extends AbstractBlock
      */
     private function get_rating_counts($block): array
     {
-        if (! isset($block->context['filterParams'])) {
+        if (!isset($block->context['filterParams'])) {
             return [];
         }
-
-        $query_vars = ProductCollectionUtils::get_query_vars($block, 1);
-
-        if (! empty($query_vars['tax_query'])) {
+        $query_vars = Product_Collection_Utils::get_query_vars($block, 1);
+        if (!empty($query_vars['tax_query'])) {
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-            $query_vars['tax_query'] = ProductCollectionUtils::remove_query_array($query_vars['tax_query'], 'rating_filter', true);
+            $query_vars['tax_query'] = Product_Collection_Utils::remove_query_array($query_vars['tax_query'], 'rating_filter', true);
         }
-
         if (isset($query_vars['taxonomy']) && str_contains($query_vars['taxonomy'], 'pa_')) {
-            unset(
-                $query_vars['taxonomy'],
-                $query_vars['term']
-            );
+            unset($query_vars['taxonomy'], $query_vars['term']);
         }
-
         $container = wc_get_container();
-        $counts    = $container->get(FilterDataProvider::class)->with($container->get(QueryClauses::class))->get_rating_counts($query_vars);
-        $data      = [];
-
+        $counts = $container->get(Filter_Data_Provider::class)->with($container->get(Query_Clauses::class))->get_rating_counts($query_vars);
+        $data = [];
         foreach ($counts as $key => $value) {
-            $data[] = [
-                'rating' => $key,
-                'count'  => intval($value),
-            ];
+            $data[] = ['rating' => $key, 'count' => intval($value)];
         }
-
         return $data;
     }
-
     /**
      * Disable the editor style handle for this block type.
      */
@@ -241,7 +179,6 @@ final class ProductFilterRating extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Disable the script handle for this block type. We use block.json to load the script.
      *

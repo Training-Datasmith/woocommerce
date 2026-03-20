@@ -1,35 +1,30 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Admin: WooCommerce Subscriptions.
  *
  * Adds a note to learn more about WooCommerce Subscriptions.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\Notes;
+namespace Automattic\Woo_Commerce\Internal\Admin\Notes;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\Notes\Note;
-use Automattic\WooCommerce\Admin\Notes\NoteTraits;
-use Automattic\WooCommerce\Internal\Admin\Onboarding\OnboardingProfile;
-
+use Automattic\Woo_Commerce\Admin\Notes\Note;
+use Automattic\Woo_Commerce\Admin\Notes\Note_Traits;
+use Automattic\Woo_Commerce\Internal\Admin\Onboarding\Onboarding_Profile;
 /**
  * WooCommerce_Subscriptions.
  */
-class WooCommerceSubscriptions
+class Woo_Commerce_Subscriptions
 {
     /**
      * Note traits.
      */
-    use NoteTraits;
-
+    use Note_Traits;
     /**
      * Name of the note for use in the database.
      */
     public const NOTE_NAME = 'wc-admin-woocommerce-subscriptions';
-
     /**
      * Get the note.
      *
@@ -37,16 +32,13 @@ class WooCommerceSubscriptions
      */
     public static function get_note()
     {
-        $onboarding_data = get_option(OnboardingProfile::DATA_OPTION, []);
-
-        if (! isset($onboarding_data['product_types']) || ! in_array('subscriptions', $onboarding_data['product_types'], true)) {
+        $onboarding_data = get_option(Onboarding_Profile::DATA_OPTION, []);
+        if (!isset($onboarding_data['product_types']) || !in_array('subscriptions', $onboarding_data['product_types'], true)) {
             return;
         }
-
-        if (! self::is_wc_admin_active_in_date_range('week-1', DAY_IN_SECONDS)) {
+        if (!self::is_wc_admin_active_in_date_range('week-1', DAY_IN_SECONDS)) {
             return;
         }
-
         $note = new Note();
         $note->set_title(__('Do you need more info about WooCommerce Subscriptions?', 'woocommerce'));
         $note->set_content(__('WooCommerce Subscriptions allows you to introduce a variety of subscriptions for physical or virtual products and services. Create product-of-the-month clubs, weekly service subscriptions or even yearly software billing packages. Add sign-up fees, offer free trials, or set expiration periods.', 'woocommerce'));
@@ -54,13 +46,7 @@ class WooCommerceSubscriptions
         $note->set_name(self::NOTE_NAME);
         $note->set_content_data((object) []);
         $note->set_source('woocommerce-admin');
-        $note->add_action(
-            'learn-more',
-            __('Learn More', 'woocommerce'),
-            'https://woocommerce.com/products/woocommerce-subscriptions/?utm_source=inbox&utm_medium=product',
-            Note::E_WC_ADMIN_NOTE_UNACTIONED,
-            true
-        );
+        $note->add_action('learn-more', __('Learn More', 'woocommerce'), 'https://woocommerce.com/products/woocommerce-subscriptions/?utm_source=inbox&utm_medium=product', Note::E_WC_ADMIN_NOTE_UNACTIONED, true);
         return $note;
     }
 }

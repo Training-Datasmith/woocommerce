@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\EmailEditor\EmailTemplates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Email_Editor\Email_Templates;
 
 /**
  * Basic template for WooCommerce transactional emails used in the email editor.
  */
-class WooEmailTemplate
+class Woo_Email_Template
 {
     /**
      * The template slug.
      */
     public const TEMPLATE_SLUG = 'wooemailtemplate';
-
     /**
      * Get the template slug.
      *
@@ -23,7 +21,6 @@ class WooEmailTemplate
     {
         return self::TEMPLATE_SLUG;
     }
-
     /**
      * Get the template title.
      *
@@ -33,7 +30,6 @@ class WooEmailTemplate
     {
         return __('Woo Email Template', 'woocommerce');
     }
-
     /**
      * Get the template description.
      *
@@ -43,7 +39,6 @@ class WooEmailTemplate
     {
         return __('Basic template for WooCommerce transactional emails used in the email editor', 'woocommerce');
     }
-
     /**
      * Get the template content.
      *
@@ -71,7 +66,6 @@ class WooEmailTemplate
 <!-- /wp:group -->
 		';
     }
-
     /**
      * Get the site logo or title.
      *
@@ -82,12 +76,10 @@ class WooEmailTemplate
     private function get_site_logo_or_title(): string
     {
         $custom_logo = get_custom_logo();
-
-        if (! empty($custom_logo)) {
+        if (!empty($custom_logo)) {
             // Use Site logo if available.
             return '<!-- wp:site-logo {"width":130,"isLink":false,"align":"center","style":{"spacing":{"padding":{"top":"var:preset|spacing|10","bottom":"var:preset|spacing|10"}}}} /-->';
         }
-
         return '<!-- wp:site-title {"level":2,"textAlign":"center","style":{"spacing":{"padding":{"top":"var:preset|spacing|10","bottom":"var:preset|spacing|10"}}}} /-->';
     }
 }

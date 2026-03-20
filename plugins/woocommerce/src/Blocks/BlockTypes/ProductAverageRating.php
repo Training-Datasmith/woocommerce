@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * ProductAverageRating class.
  */
-class ProductAverageRating extends AbstractBlock
+class Product_Average_Rating extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,14 +15,12 @@ class ProductAverageRating extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-average-rating';
-
     /**
      * API version name.
      *
      * @var string
      */
     protected $api_version = '3';
-
     /**
      * Overwrite parent method to prevent script registration.
      *
@@ -35,7 +31,6 @@ class ProductAverageRating extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Get the frontend style handle for this block type.
      */
@@ -43,7 +38,6 @@ class ProductAverageRating extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Include and render the block.
      *
@@ -56,34 +50,12 @@ class ProductAverageRating extends AbstractBlock
     {
         $post_id = $block->context['postId'];
         $product = wc_get_product($post_id);
-
-        if (! $product || ! $product->get_review_count()) {
+        if (!$product || !$product->get_review_count()) {
             return '';
         }
-
-        $styles_and_classes            = StyleAttributesUtils::get_classes_and_styles_by_attributes($attributes, [], [ 'extra_classes' ]);
-        $text_align_styles_and_classes = StyleAttributesUtils::get_text_align_class_and_style($attributes);
-
-        $wrapper_attributes = get_block_wrapper_attributes(
-            [
-                'class' => implode(
-                    ' ',
-                    array_filter(
-                        [
-                            'wc-block-components-product-average-rating-counter',
-                            esc_attr($text_align_styles_and_classes['class'] ?? ''),
-                            esc_attr($styles_and_classes['classes']),
-                        ]
-                    )
-                ),
-                'style' => esc_attr($styles_and_classes['styles'] ?? ''),
-            ]
-        );
-
-        return sprintf(
-            '<div %1$s>%2$s</div>',
-            $wrapper_attributes,
-            $product->get_average_rating()
-        );
+        $styles_and_classes = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes, [], ['extra_classes']);
+        $text_align_styles_and_classes = Style_Attributes_Utils::get_text_align_class_and_style($attributes);
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => implode(' ', array_filter(['wc-block-components-product-average-rating-counter', esc_attr($text_align_styles_and_classes['class'] ?? ''), esc_attr($styles_and_classes['classes'])])), 'style' => esc_attr($styles_and_classes['styles'] ?? '')]);
+        return sprintf('<div %1$s>%2$s</div>', $wrapper_attributes, $product->get_average_rating());
     }
 }

@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor for publishing based on the number of orders.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
 /**
  * Rule processor for publishing based on the number of orders.
  */
-class OrderCountRuleProcessor implements RuleProcessorInterface
+class Order_Count_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * The orders provider.
@@ -20,7 +18,6 @@ class OrderCountRuleProcessor implements RuleProcessorInterface
      * @var OrdersProvider
      */
     protected $orders_provider;
-
     /**
      * Constructor.
      *
@@ -28,9 +25,8 @@ class OrderCountRuleProcessor implements RuleProcessorInterface
      */
     public function __construct($orders_provider = null)
     {
-        $this->orders_provider = $orders_provider ?? new OrdersProvider();
+        $this->orders_provider = $orders_provider ?? new Orders_Provider();
     }
-
     /**
      * Process the rule.
      *
@@ -42,14 +38,8 @@ class OrderCountRuleProcessor implements RuleProcessorInterface
     public function process($rule, $stored_state)
     {
         $count = $this->orders_provider->get_order_count();
-
-        return ComparisonOperation::compare(
-            $count,
-            $rule->value,
-            $rule->operation
-        );
+        return Comparison_Operation::compare($count, $rule->value, $rule->operation);
     }
-
     /**
      * Validates the rule.
      *
@@ -59,14 +49,12 @@ class OrderCountRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->value)) {
+        if (!isset($rule->value)) {
             return false;
         }
-
-        if (! isset($rule->operation)) {
+        if (!isset($rule->operation)) {
             return false;
         }
-
         return true;
     }
 }

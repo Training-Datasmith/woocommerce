@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils;
+use Automattic\Woo_Commerce\Blocks\Utils\Cart_Checkout_Utils;
 use Exception;
-
 /**
  * CheckoutExpressPaymentBlock class.
  */
-class CheckoutExpressPaymentBlock extends AbstractInnerBlock
+class Checkout_Express_Payment_Block extends Abstract_Inner_Block
 {
     /**
      * Block name.
@@ -18,37 +16,27 @@ class CheckoutExpressPaymentBlock extends AbstractInnerBlock
      * @var string
      */
     protected $block_name = 'checkout-express-payment-block';
-
     /**
      * Default styles for the express payment buttons
      *
      * @var boolean
      */
     protected $default_styles;
-
     /**
      * Current styles for the express payment buttons
      *
      * @var boolean
      */
     protected $current_styles;
-
     /**
      * Initialise the block
      */
     protected function initialize()
     {
         parent::initialize();
-
-        $this->default_styles = [
-            'showButtonStyles'   => false,
-            'buttonHeight'       => '48',
-            'buttonBorderRadius' => '4',
-        ];
-
+        $this->default_styles = ['showButtonStyles' => false, 'buttonHeight' => '48', 'buttonBorderRadius' => '4'];
         add_action('save_post', $this->sync_express_payment_attrs(...), 10, 2);
     }
-
     /**
      * Synchorize the express payment attributes between the Cart and Checkout pages.
      *
@@ -64,49 +52,39 @@ class CheckoutExpressPaymentBlock extends AbstractInnerBlock
         } else {
             return;
         }
-
         // This is not a proper save action, maybe an autosave, so don't continue.
         if (empty($post->post_status) || 'inherit' === $post->post_status) {
             return;
         }
-
-        $block_name    = 'woocommerce/' . $cart_or_checkout;
-        $page_id       = 'woocommerce_' . $cart_or_checkout . '_page_id';
+        $block_name = 'woocommerce/' . $cart_or_checkout;
+        $page_id = 'woocommerce_' . $cart_or_checkout . '_page_id';
         $template_name = 'page-' . $cart_or_checkout;
-
         // Check if we are editing the cart/checkout page and that it contains a Cart/Checkout block.
         // Cast to string for Cart/Checkout page ID comparison because get_option can return it as a string, so better to compare both values as strings.
-        if (! empty($post->post_type) && 'wp_template' !== $post->post_type && (false === has_block($block_name, $post) || (string) get_option($page_id) !== (string) $post_id)) {
+        if (!empty($post->post_type) && 'wp_template' !== $post->post_type && (false === has_block($block_name, $post) || (string) get_option($page_id) !== (string) $post_id)) {
             return;
         }
-
         // Check if we are editing the Cart/Checkout template and that it contains a Cart/Checkout block.
-        if ((! empty($post->post_type) && ! empty($post->post_name) && $template_name !== $post->post_name && 'wp_template' === $post->post_type) || false === has_block($block_name, $post)) {
+        if (!empty($post->post_type) && !empty($post->post_name) && $template_name !== $post->post_name && 'wp_template' === $post->post_type || false === has_block($block_name, $post)) {
             return;
         }
-
         if (empty($post->post_content)) {
             return;
         }
-
         try {
             // Parse the post content to get the express payment attributes of the current page.
-            $attrs = CartCheckoutUtils::find_express_checkout_attributes($post->post_content, $cart_or_checkout);
-
-            if (! is_array($attrs)) {
+            $attrs = Cart_Checkout_Utils::find_express_checkout_attributes($post->post_content, $cart_or_checkout);
+            if (!is_array($attrs)) {
                 return;
             }
             $updated_attrs = array_merge($this->default_styles, $attrs);
-
             // We need to sync the attributes between the Cart and Checkout pages.
             $other_page = 'cart' === $cart_or_checkout ? 'checkout' : 'cart';
-
             $this->update_other_page_with_express_payment_attrs($other_page, $updated_attrs);
         } catch (Exception $e) {
-            wc_get_logger()->log('error', 'Error updating express payment attributes: ' . $e->getMessage());
+            wc_get_logger()->log('error', 'Error updating express payment attributes: ' . $e->get_message());
         }
     }
-
     /**
      * Update the express payment attributes in the other page (Cart or Checkout).
      *
@@ -116,32 +94,18 @@ class CheckoutExpressPaymentBlock extends AbstractInnerBlock
     private function update_other_page_with_express_payment_attrs(string $cart_or_checkout, array $updated_attrs): void
     {
         $page_id = 'cart' === $cart_or_checkout ? wc_get_page_id('cart') : wc_get_page_id('checkout');
-
         if (-1 === $page_id) {
             return;
         }
-
         $post = get_post($page_id);
-
         if (empty($post->post_content)) {
             return;
         }
-
         $blocks = parse_blocks($post->post_content);
-        CartCheckoutUtils::update_blocks_with_new_attrs($blocks, $cart_or_checkout, $updated_attrs);
-
+        Cart_Checkout_Utils::update_blocks_with_new_attrs($blocks, $cart_or_checkout, $updated_attrs);
         $updated_content = serialize_blocks($blocks);
         remove_action('save_post', $this->sync_express_payment_attrs(...), 10, 2);
-
-        wp_update_post(
-            [
-                'ID'           => $page_id,
-                'post_content' => $updated_content,
-            ],
-            false,
-            false
-        );
-
+        wp_update_post(['ID' => $page_id, 'post_content' => $updated_content], false, false);
         add_action('save_post', $this->sync_express_payment_attrs(...), 10, 2);
     }
 }

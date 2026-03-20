@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Templates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Templates;
 
 /**
  * AbstractPageTemplate class.
@@ -11,7 +10,7 @@ namespace Automattic\WooCommerce\Blocks\Templates;
  *
  * @internal
  */
-abstract class AbstractPageTemplate extends AbstractTemplate
+abstract class Abstract_Page_Template extends Abstract_Template
 {
     /**
      * Initialization method.
@@ -20,21 +19,18 @@ abstract class AbstractPageTemplate extends AbstractTemplate
     {
         add_filter('page_template_hierarchy', $this->page_template_hierarchy(...), 1);
     }
-
     /**
      * Returns the page object assigned to this template/page.
      *
      * @return \WP_Post|null Post object or null.
      */
     abstract protected function get_placeholder_page();
-
     /**
      * Should return true on pages/endpoints/routes where the template should be shown.
      *
      * @return boolean
      */
     abstract protected function is_active_template();
-
     /**
      * When the page should be displaying the template, add it to the hierarchy.
      *
@@ -51,7 +47,6 @@ abstract class AbstractPageTemplate extends AbstractTemplate
         }
         return $templates;
     }
-
     /**
      * Forces the page title to match the template title when this template is active.
      *

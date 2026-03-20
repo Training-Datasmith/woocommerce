@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Keeps the product category lookup table in sync with live data.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin;
+namespace Automattic\Woo_Commerce\Internal\Admin;
 
 defined('ABSPATH') || exit;
-
 /**
  * \Automattic\WooCommerce\Internal\Admin\CategoryLookup class.
  */
-class CategoryLookup
+class Category_Lookup
 {
     /**
      * Stores changes to categories we need to sync.
@@ -20,21 +18,18 @@ class CategoryLookup
      * @var array
      */
     protected $edited_product_cats = [];
-
     /**
      * The single instance of the class.
      *
      * @var object
      */
     protected static $instance;
-
     /**
      * Constructor
      */
     protected function __construct()
     {
     }
-
     /**
      * Get class instance.
      *
@@ -47,7 +42,6 @@ class CategoryLookup
         }
         return static::$instance;
     }
-
     /**
      * Init hooks.
      */
@@ -59,45 +53,25 @@ class CategoryLookup
         add_action('created_product_cat', $this->on_create(...), 99);
         add_action('init', $this->define_category_lookup_tables_in_wpdb(...));
     }
-
     /**
      * Regenerate all lookup table data.
      */
     public function regenerate(): void
     {
         global $wpdb;
-
-        $wpdb->query("TRUNCATE TABLE $wpdb->wc_category_lookup");
-
-        $terms = get_terms(
-            'product_cat',
-            [
-                'hide_empty' => false,
-                'fields'     => 'id=>parent',
-            ]
-        );
-
+        $wpdb->query("TRUNCATE TABLE {$wpdb->wc_category_lookup}");
+        $terms = get_terms('product_cat', ['hide_empty' => false, 'fields' => 'id=>parent']);
         $hierarchy = [];
-        $inserts   = [];
-
+        $inserts = [];
         $this->unflatten_terms($hierarchy, $terms, 0);
         $this->get_term_insert_values($inserts, $hierarchy);
-
-        if (! $inserts) {
+        if (!$inserts) {
             return;
         }
-
-        $insert_string = implode(
-            '),(',
-            array_map(
-                fn ($item) => implode(',', $item),
-                $inserts
-            )
-        );
-
-        $wpdb->query("INSERT IGNORE INTO $wpdb->wc_category_lookup (category_tree_id,category_id) VALUES ({$insert_string})"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $insert_string = implode('),(', array_map(fn($item) => implode(',', $item), $inserts));
+        $wpdb->query("INSERT IGNORE INTO {$wpdb->wc_category_lookup} (category_tree_id,category_id) VALUES ({$insert_string})");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
     }
-
     /**
      * Store edits so we know when the parent ID changes.
      *
@@ -105,10 +79,9 @@ class CategoryLookup
      */
     public function before_edit($category_id): void
     {
-        $category                                  = get_term($category_id, 'product_cat');
-        $this->edited_product_cats[ $category_id ] = $category->parent;
+        $category = get_term($category_id, 'product_cat');
+        $this->edited_product_cats[$category_id] = $category->parent;
     }
-
     /**
      * When a product category gets edited, see if we need to sync the table.
      *
@@ -117,24 +90,19 @@ class CategoryLookup
     public function on_edit($category_id): void
     {
         global $wpdb;
-
-        if (! isset($this->edited_product_cats[ $category_id ])) {
+        if (!isset($this->edited_product_cats[$category_id])) {
             return;
         }
-
         $category_object = get_term($category_id, 'product_cat');
-        $prev_parent     = $this->edited_product_cats[ $category_id ];
-        $new_parent      = $category_object->parent;
-
+        $prev_parent = $this->edited_product_cats[$category_id];
+        $new_parent = $category_object->parent;
         // No edits - no need to modify relationships.
         if ($prev_parent === $new_parent) {
             return;
         }
-
         $this->delete($category_id, $prev_parent);
         $this->update($category_id);
     }
-
     /**
      * When a product category gets created, add a new lookup row.
      *
@@ -146,10 +114,8 @@ class CategoryLookup
         if ('yes' === get_transient('wc_installing')) {
             return;
         }
-
         $this->update($category_id);
     }
-
     /**
      * Delete lookup table data from a tree.
      *
@@ -160,23 +126,20 @@ class CategoryLookup
     protected function delete($category_id, $category_tree_id)
     {
         global $wpdb;
-
-        if (! $category_tree_id) {
+        if (!$category_tree_id) {
             return;
         }
-
-        $ancestors   = get_ancestors($category_tree_id, 'product_cat', 'taxonomy');
+        $ancestors = get_ancestors($category_tree_id, 'product_cat', 'taxonomy');
         $ancestors[] = $category_tree_id;
-        $children    = get_term_children($category_id, 'product_cat');
-        $children[]  = $category_id;
-        $children    = array_map('absint', array_unique(array_filter($children)));
+        $children = get_term_children($category_id, 'product_cat');
+        $children[] = $category_id;
+        $children = array_map('absint', array_unique(array_filter($children)));
         $placeholders = implode(',', array_fill(0, count($children), '%d'));
-
         foreach ($ancestors as $ancestor) {
-            $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->wc_category_lookup WHERE category_tree_id = %d AND category_id IN ({$placeholders})", array_merge([$ancestor], $children))); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+            $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->wc_category_lookup} WHERE category_tree_id = %d AND category_id IN ({$placeholders})", array_merge([$ancestor], $children)));
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
         }
     }
-
     /**
      * Updates lookup table data for a category by ID.
      *
@@ -185,26 +148,21 @@ class CategoryLookup
     protected function update($category_id)
     {
         global $wpdb;
-
-        $ancestors    = get_ancestors($category_id, 'product_cat', 'taxonomy');
-        $children     = get_term_children($category_id, 'product_cat');
-        $inserts      = [];
-        $inserts[]    = $this->get_insert_sql($category_id, $category_id);
+        $ancestors = get_ancestors($category_id, 'product_cat', 'taxonomy');
+        $children = get_term_children($category_id, 'product_cat');
+        $inserts = [];
+        $inserts[] = $this->get_insert_sql($category_id, $category_id);
         $children_ids = array_map(intval(...), array_unique(array_filter($children)));
-
         foreach ($ancestors as $ancestor) {
             $inserts[] = $this->get_insert_sql($category_id, $ancestor);
-
             foreach ($children_ids as $child_category_id) {
                 $inserts[] = $this->get_insert_sql($child_category_id, $ancestor);
             }
         }
-
         $insert_string = implode(',', $inserts);
-
-        $wpdb->query("INSERT IGNORE INTO $wpdb->wc_category_lookup (category_id, category_tree_id) VALUES {$insert_string}"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $wpdb->query("INSERT IGNORE INTO {$wpdb->wc_category_lookup} (category_id, category_tree_id) VALUES {$insert_string}");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
     }
-
     /**
      * Get category lookup table values to insert.
      *
@@ -217,7 +175,6 @@ class CategoryLookup
         global $wpdb;
         return $wpdb->prepare('(%d,%d)', $category_id, $category_tree_id);
     }
-
     /**
      * Used to construct insert query recursively.
      *
@@ -228,19 +185,13 @@ class CategoryLookup
     protected function get_term_insert_values(&$inserts, $terms, $parents = [])
     {
         foreach ($terms as $term) {
-            $insert_parents = array_merge([ $term['term_id'] ], $parents);
-
+            $insert_parents = array_merge([$term['term_id']], $parents);
             foreach ($insert_parents as $parent) {
-                $inserts[] = [
-                    $parent,
-                    $term['term_id'],
-                ];
+                $inserts[] = [$parent, $term['term_id']];
             }
-
             $this->get_term_insert_values($inserts, $term['descendants'], $insert_parents);
         }
     }
-
     /**
      * Convert flat terms array into nested array.
      *
@@ -252,18 +203,14 @@ class CategoryLookup
     {
         foreach ($terms as $term_id => $parent_id) {
             if ((int) $parent_id === $parent) {
-                $hierarchy[ $term_id ] = [
-                    'term_id'     => $term_id,
-                    'descendants' => [],
-                ];
-                unset($terms[ $term_id ]);
+                $hierarchy[$term_id] = ['term_id' => $term_id, 'descendants' => []];
+                unset($terms[$term_id]);
             }
         }
         foreach ($hierarchy as $term_id => $terms_array) {
-            $this->unflatten_terms($hierarchy[ $term_id ]['descendants'], $terms, $term_id);
+            $this->unflatten_terms($hierarchy[$term_id]['descendants'], $terms, $term_id);
         }
     }
-
     /**
      * Get category descendants.
      *
@@ -273,17 +220,8 @@ class CategoryLookup
     protected function get_descendants($category_id)
     {
         global $wpdb;
-
-        return wp_parse_id_list(
-            $wpdb->get_col(
-                $wpdb->prepare(
-                    "SELECT category_id FROM $wpdb->wc_category_lookup WHERE category_tree_id = %d",
-                    $category_id
-                )
-            )
-        );
+        return wp_parse_id_list($wpdb->get_col($wpdb->prepare("SELECT category_id FROM {$wpdb->wc_category_lookup} WHERE category_tree_id = %d", $category_id)));
     }
-
     /**
      * Return all ancestor category ids for a category.
      *
@@ -293,31 +231,18 @@ class CategoryLookup
     protected function get_ancestors($category_id)
     {
         global $wpdb;
-
-        return wp_parse_id_list(
-            $wpdb->get_col(
-                $wpdb->prepare(
-                    "SELECT category_tree_id FROM $wpdb->wc_category_lookup WHERE category_id = %d",
-                    $category_id
-                )
-            )
-        );
+        return wp_parse_id_list($wpdb->get_col($wpdb->prepare("SELECT category_tree_id FROM {$wpdb->wc_category_lookup} WHERE category_id = %d", $category_id)));
     }
-
     /**
      * Add category lookup table to $wpdb object.
      */
     public static function define_category_lookup_tables_in_wpdb(): void
     {
         global $wpdb;
-
         // List of tables without prefixes.
-        $tables = [
-            'wc_category_lookup' => 'wc_category_lookup',
-        ];
-
+        $tables = ['wc_category_lookup' => 'wc_category_lookup'];
         foreach ($tables as $name => $table) {
-            $wpdb->$name    = $wpdb->prefix . $table;
+            $wpdb->{$name} = $wpdb->prefix . $table;
             $wpdb->tables[] = $table;
         }
     }

@@ -1,20 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor for sending when WooCommerce Admin has been updated.
  */
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
-
-use Automattic\WooCommerce\Admin\RemoteInboxNotifications\RemoteInboxNotificationsEngine;
-
+use Automattic\Woo_Commerce\Admin\Remote_Inbox_Notifications\Remote_Inbox_Notifications_Engine;
 defined('ABSPATH') || exit;
-
 /**
  * Rule processor for sending when WooCommerce Admin has been updated.
  */
-class WooCommerceAdminUpdatedRuleProcessor implements RuleProcessorInterface
+class Woo_Commerce_Admin_Updated_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * Process the rule.
@@ -26,9 +23,8 @@ class WooCommerceAdminUpdatedRuleProcessor implements RuleProcessorInterface
      */
     public function process($rule, $stored_state)
     {
-        return get_option(RemoteInboxNotificationsEngine::WCA_UPDATED_OPTION_NAME, false);
+        return get_option(Remote_Inbox_Notifications_Engine::WCA_UPDATED_OPTION_NAME, false);
     }
-
     /**
      * Validates the rule.
      *

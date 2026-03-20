@@ -1,12 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\BlockTemplates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Block_Templates;
 
 /**
  * Interface for block containers.
  */
-interface BlockContainerInterface extends BlockInterface, ContainerInterface
+interface Block_Container_Interface extends Block_Interface, Container_Interface
 {
 }

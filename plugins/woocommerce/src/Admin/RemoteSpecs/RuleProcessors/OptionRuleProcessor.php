@@ -1,20 +1,17 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor that performs a comparison operation against an option value.
  */
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
-
-use Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors\Transformers\TransformerService;
-
+use Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors\Transformers\Transformer_Service;
 defined('ABSPATH') || exit;
-
 /**
  * Rule processor that performs a comparison operation against an option value.
  */
-class OptionRuleProcessor implements RuleProcessorInterface
+class Option_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * Performs a comparison operation against the option value.
@@ -26,23 +23,16 @@ class OptionRuleProcessor implements RuleProcessorInterface
      */
     public function process($rule, $stored_state)
     {
-        $is_contains                     = $rule->operation && str_contains((string) $rule->operation, 'contains');
+        $is_contains = $rule->operation && str_contains((string) $rule->operation, 'contains');
         $value_when_default_not_provided = $is_contains ? [] : false;
-        $is_default_set                  = property_exists($rule, 'default');
-        $default_value                   = $is_default_set ? $rule->default : $value_when_default_not_provided;
-        $option_value                    = $this->get_option_value($rule, $default_value, $is_contains);
-
+        $is_default_set = property_exists($rule, 'default');
+        $default_value = $is_default_set ? $rule->default : $value_when_default_not_provided;
+        $option_value = $this->get_option_value($rule, $default_value, $is_contains);
         if (isset($rule->transformers) && is_array($rule->transformers)) {
-            $option_value = TransformerService::apply($option_value, $rule->transformers, $is_default_set, $default_value);
+            $option_value = Transformer_Service::apply($option_value, $rule->transformers, $is_default_set, $default_value);
         }
-
-        return ComparisonOperation::compare(
-            $option_value,
-            $rule->value,
-            $rule->operation
-        );
+        return Comparison_Operation::compare($option_value, $rule->value, $rule->operation);
     }
-
     /**
      * Retrieves the option value and handles logging if necessary.
      *
@@ -54,28 +44,15 @@ class OptionRuleProcessor implements RuleProcessorInterface
      */
     private function get_option_value($rule, $default_value, bool $is_contains)
     {
-        $option_value      = get_option($rule->option_name, $default_value);
-        $is_contains_valid = $is_contains && (is_array($option_value) || (is_string($option_value) && is_string($rule->value)));
-
-        if ($is_contains && ! $is_contains_valid) {
+        $option_value = get_option($rule->option_name, $default_value);
+        $is_contains_valid = $is_contains && (is_array($option_value) || is_string($option_value) && is_string($rule->value));
+        if ($is_contains && !$is_contains_valid) {
             $logger = wc_get_logger();
-            $logger->warning(
-                sprintf(
-                    'ComparisonOperation "%s" option value "%s" is not an array, defaulting to empty array.',
-                    $rule->operation,
-                    $rule->option_name
-                ),
-                [
-                    'option_value' => $option_value,
-                    'rule'         => $rule,
-                ]
-            );
+            $logger->warning(sprintf('ComparisonOperation "%s" option value "%s" is not an array, defaulting to empty array.', $rule->operation, $rule->option_name), ['option_value' => $option_value, 'rule' => $rule]);
             $option_value = [];
         }
-
         return $option_value;
     }
-
     /**
      * Validates the rule.
      *
@@ -85,27 +62,23 @@ class OptionRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->option_name)) {
+        if (!isset($rule->option_name)) {
             return false;
         }
-
-        if (! isset($rule->value)) {
+        if (!isset($rule->value)) {
             return false;
         }
-
-        if (! isset($rule->operation)) {
+        if (!isset($rule->operation)) {
             return false;
         }
-
         if (isset($rule->transformers) && is_array($rule->transformers)) {
             foreach ($rule->transformers as $transform_args) {
-                $transformer = TransformerService::create_transformer($transform_args->use);
-                if (! $transformer->validate($transform_args->arguments)) {
+                $transformer = Transformer_Service::create_transformer($transform_args->use);
+                if (!$transformer->validate($transform_args->arguments)) {
                     return false;
                 }
             }
         }
-
         return true;
     }
 }

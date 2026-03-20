@@ -1,18 +1,17 @@
 <?php
+
 /**
  * Meta box to edit and add custom meta values for an order.
  */
+namespace Automattic\Woo_Commerce\Internal\Admin\Orders\Meta_Boxes;
 
-namespace Automattic\WooCommerce\Internal\Admin\Orders\MetaBoxes;
-
-use Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStoreMeta;
+use Automattic\Woo_Commerce\Internal\Data_Stores\Orders\Orders_Table_Data_Store_Meta;
 use WC_Order;
 use WP_Ajax_Response;
-
 /**
  * Class CustomMetaBox.
  */
-class CustomMetaBox
+class Custom_Meta_Box
 {
     /**
      * Update nonce shared among different meta rows.
@@ -20,7 +19,6 @@ class CustomMetaBox
      * @var string
      */
     private $update_nonce;
-
     /**
      * Helper method to get formatted meta data array with proper keys. This can be directly fed to `list_meta()` method.
      *
@@ -30,7 +28,7 @@ class CustomMetaBox
      */
     private function get_formatted_order_meta_data(\WC_Order $order): array
     {
-        $metadata         = $order->get_meta_data();
+        $metadata = $order->get_meta_data();
         $metadata_to_list = [];
         foreach ($metadata as $meta) {
             $data = $meta->get_data();
@@ -38,14 +36,14 @@ class CustomMetaBox
                 continue;
             }
             $metadata_to_list[] = [
-                'meta_id'    => $data['id'],
-                'meta_key'   => $data['key'], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- False positive, not a meta query.
-                'meta_value' => maybe_serialize($data['value']), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- False positive, not a meta query.
+                'meta_id' => $data['id'],
+                'meta_key' => $data['key'],
+                // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- False positive, not a meta query.
+                'meta_value' => maybe_serialize($data['value']),
             ];
         }
         return $metadata_to_list;
     }
-
     /**
      * Renders the meta box to manage custom meta.
      *
@@ -60,7 +58,6 @@ class CustomMetaBox
         }
         $this->render_custom_meta_form($this->get_formatted_order_meta_data($order), $order);
     }
-
     /**
      * Helper method to render layout and actual HTML
      *
@@ -72,13 +69,13 @@ class CustomMetaBox
         ?>
 		<div id="postcustomstuff">
 			<div id="ajax-response"></div>
-			<?php
-            list_meta($metadata_to_list);
+			<?php 
+        list_meta($metadata_to_list);
         $this->render_meta_form($order);
         ?>
 		</div>
 		<p>
-			<?php
+			<?php 
         printf(
             /* translators: 1: opening documentation tag 2: closing documentation tag. */
             esc_html(__('Custom fields can be used to add extra metadata to an order that you can %1$suse in your theme%2$s.', 'woocommerce')),
@@ -87,9 +84,8 @@ class CustomMetaBox
         );
         ?>
 		</p>
-		<?php
+		<?php 
     }
-
     /**
      * Compute keys to display in autofill when adding new meta key entry in custom meta box.
      * Currently, returns empty keys, will be implemented after caching is merged.
@@ -101,10 +97,9 @@ class CustomMetaBox
      */
     public function order_meta_keys_autofill($deprecated, $order): array|int|float|string|false|null
     {
-        if (! is_a($order, \WC_Order::class)) {
+        if (!is_a($order, \WC_Order::class)) {
             return [];
         }
-
         /**
          * Filters values for the meta key dropdown in the Custom Fields meta box.
          *
@@ -116,7 +111,7 @@ class CustomMetaBox
          * @param \WC_Order  $order The current post object.
          */
         $keys = apply_filters('postmeta_form_keys', null, $order);
-        if (null === $keys || ! is_array($keys)) {
+        if (null === $keys || !is_array($keys)) {
             /**
              * Compatibility filter for 'postmeta_form_limit', which filters the number of custom fields to retrieve
              * for the drop-down in the Custom Fields meta box.
@@ -126,16 +121,13 @@ class CustomMetaBox
              * @param int $limit Number of custom fields to retrieve. Default 30.
              */
             $limit = (int) apply_filters('postmeta_form_limit', 30);
-            $keys  = wc_get_container()->get(OrdersTableDataStoreMeta::class)->get_meta_keys($limit);
+            $keys = wc_get_container()->get(Orders_Table_Data_Store_Meta::class)->get_meta_keys($limit);
         }
-
         if ($keys) {
             natcasesort($keys);
         }
-
         return $keys;
     }
-
     /**
      * Reimplementation of WP core's `meta_form` function. Renders meta form box.
      *
@@ -144,12 +136,18 @@ class CustomMetaBox
     public function render_meta_form(\WC_Order $order): void
     {
         ?>
-		<p><strong><?php esc_html_e('Add New Custom Field:', 'woocommerce'); ?></strong></p>
+		<p><strong><?php 
+        esc_html_e('Add New Custom Field:', 'woocommerce');
+        ?></strong></p>
 		<table id="newmeta">
 			<thead>
 			<tr>
-				<th class="left"><label for="metakeyselect"><?php esc_html_e('Name', 'woocommerce'); ?></label></th>
-				<th><label for="metavalue"><?php esc_html_e('Value', 'woocommerce'); ?></label></th>
+				<th class="left"><label for="metakeyselect"><?php 
+        esc_html_e('Name', 'woocommerce');
+        ?></label></th>
+				<th><label for="metavalue"><?php 
+        esc_html_e('Value', 'woocommerce');
+        ?></label></th>
 			</tr>
 			</thead>
 
@@ -157,38 +155,40 @@ class CustomMetaBox
 			<tr>
 				<td id="newmetaleft" class="left">
 					<span id="metakey-search">
-					<select id="metakeyselect" name="metakeyselect" class="wc-order-metakey-search" data-placeholder="<?php esc_attr_e('Add existing', 'woocommerce'); ?>" data-minimum-input-length="0" data-order_id="<?php echo esc_attr($order->get_id()); ?>">
+					<select id="metakeyselect" name="metakeyselect" class="wc-order-metakey-search" data-placeholder="<?php 
+        esc_attr_e('Add existing', 'woocommerce');
+        ?>" data-minimum-input-length="0" data-order_id="<?php 
+        echo esc_attr($order->get_id());
+        ?>">
 					</select>
 					</span>
-					<input class="hidden" type="text" id="metakeyinput" name="metakeyinput" value="" aria-label="<?php esc_attr_e('New custom field name', 'woocommerce'); ?>" />
+					<input class="hidden" type="text" id="metakeyinput" name="metakeyinput" value="" aria-label="<?php 
+        esc_attr_e('New custom field name', 'woocommerce');
+        ?>" />
 					<button type="button" id="newmeta-button" class="button button-small hide-if-no-js" onclick="jQuery('#metakeyinput, #metakeyselect, #enternew, #cancelnew, #metakey-search').toggleClass('hidden');jQuery('#metakeyinput, #metakeyselect').filter(':visible').trigger('focus');">
-					<span id="enternew"><?php esc_html_e('Enter new', 'woocommerce'); ?></span>
-					<span id="cancelnew" class="hidden"><?php esc_html_e('Cancel', 'woocommerce'); ?></span>
+					<span id="enternew"><?php 
+        esc_html_e('Enter new', 'woocommerce');
+        ?></span>
+					<span id="cancelnew" class="hidden"><?php 
+        esc_html_e('Cancel', 'woocommerce');
+        ?></span>
 				</td>
 				<td><textarea id="metavalue" name="metavalue" rows="2" cols="25"></textarea>
-				<?php wp_nonce_field('add-meta', '_ajax_nonce-add-meta', false); ?>
+				<?php 
+        wp_nonce_field('add-meta', '_ajax_nonce-add-meta', false);
+        ?>
 				</td>
 			</tr>
 			</tbody>
 		</table>
 
 		<div class="submit add-custom-field">
-			<?php
-            submit_button(
-                __('Add Custom Field', 'woocommerce'),
-                '',
-                'addmeta',
-                false,
-                [
-                    'id'            => 'newmeta-submit',
-                    'data-wp-lists' => 'add:the-list:newmeta',
-                ]
-            );
+			<?php 
+        submit_button(__('Add Custom Field', 'woocommerce'), '', 'addmeta', false, ['id' => 'newmeta-submit', 'data-wp-lists' => 'add:the-list:newmeta']);
         ?>
 		</div>
-		<?php
+		<?php 
     }
-
     /**
      * Helper method to verify order edit permissions.
      *
@@ -198,71 +198,62 @@ class CustomMetaBox
      */
     private function verify_order_edit_permission_for_ajax(int $order_id): ?WC_Order
     {
-        if (! current_user_can('manage_woocommerce') || ! current_user_can('edit_others_shop_orders')) {
+        if (!current_user_can('manage_woocommerce') || !current_user_can('edit_others_shop_orders')) {
             wp_send_json_error('missing_capabilities');
             wp_die();
         }
-
         $order = wc_get_order($order_id);
-        if (! $order) {
+        if (!$order) {
             wp_send_json_error('invalid_order_id');
             wp_die();
         }
         return $order;
     }
-
     /**
      * WP Ajax handler to render the list of unique meta keys asynchronously.
      */
     public function search_metakeys_ajax(): void
     {
         check_ajax_referer('search-order-metakeys', 'security');
-
-        if (! isset($_GET['order_id']) || ! current_user_can('edit_shop_orders')) {
+        if (!isset($_GET['order_id']) || !current_user_can('edit_shop_orders')) {
             wp_die(-1);
         }
-
         $order_id = intval($_GET['order_id']);
-        $order    = wc_get_order($order_id);
-        if (! is_a($order, \WC_Order::class)) {
+        $order = wc_get_order($order_id);
+        if (!is_a($order, \WC_Order::class)) {
             wp_die(-1);
         }
-
         $found_order_meta_keys = $this->order_meta_keys_autofill(null, $order);
-
         wp_send_json($found_order_meta_keys);
     }
-
     /**
      * Reimplementation of WP core's `wp_ajax_add_meta` method to support order custom meta updates with custom tables.
      */
     public function add_meta_ajax(): void
     {
-        if (! check_ajax_referer('add-meta', '_ajax_nonce-add-meta')) {
+        if (!check_ajax_referer('add-meta', '_ajax_nonce-add-meta')) {
             wp_send_json_error('invalid_nonce');
             wp_die();
         }
-
         $order_id = (int) $_POST['order_id'] ?? 0;
-        $order    = $this->verify_order_edit_permission_for_ajax($order_id);
-
+        $order = $this->verify_order_edit_permission_for_ajax($order_id);
         $select_meta_key = trim(sanitize_text_field(wp_unslash($_POST['metakeyselect'] ?? '')));
-        $input_meta_key  = trim(sanitize_text_field(wp_unslash($_POST['metakeyinput'] ?? '')));
-
-        if (empty($_POST['meta']) && in_array($select_meta_key, [ '', '#NONE#' ], true) && ! $input_meta_key) {
+        $input_meta_key = trim(sanitize_text_field(wp_unslash($_POST['metakeyinput'] ?? '')));
+        if (empty($_POST['meta']) && in_array($select_meta_key, ['', '#NONE#'], true) && !$input_meta_key) {
             wp_die(1);
         }
-
-        if (! empty($_POST['meta'])) { // update.
-            $meta = wp_unslash($_POST['meta']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitization done below in array_walk.
+        if (!empty($_POST['meta'])) {
+            // update.
+            $meta = wp_unslash($_POST['meta']);
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitization done below in array_walk.
             $this->handle_update_meta($order, $meta);
-        } else { // add meta.
+        } else {
+            // add meta.
             $meta_value = sanitize_text_field(wp_unslash($_POST['metavalue'] ?? ''));
-            $meta_key   = $input_meta_key ?: $select_meta_key;
+            $meta_key = $input_meta_key ?: $select_meta_key;
             $this->handle_add_meta($order, $meta_key, $meta_value);
         }
     }
-
     /**
      * Part of WP Core's `wp_ajax_add_meta`. This is re-implemented to support updating meta for custom tables.
      *
@@ -277,35 +268,25 @@ class CustomMetaBox
             wp_send_json_error('protected_meta');
             wp_die();
         }
-        $metas_for_current_key = wp_list_filter($order->get_meta_data(), [ 'key' => $meta_key ]);
-        $meta_ids              = wp_list_pluck($metas_for_current_key, 'id');
+        $metas_for_current_key = wp_list_filter($order->get_meta_data(), ['key' => $meta_key]);
+        $meta_ids = wp_list_pluck($metas_for_current_key, 'id');
         $order->add_meta_data($meta_key, $meta_value);
         $order->save_meta_data();
-        $metas_for_current_key_with_new = wp_list_filter($order->get_meta_data(), [ 'key' => $meta_key ]);
-        $meta_id                        = 0;
-        $new_meta_ids                   = wp_list_pluck($metas_for_current_key_with_new, 'id');
-        $new_meta_ids                   = array_values(array_diff($new_meta_ids, $meta_ids));
+        $metas_for_current_key_with_new = wp_list_filter($order->get_meta_data(), ['key' => $meta_key]);
+        $meta_id = 0;
+        $new_meta_ids = wp_list_pluck($metas_for_current_key_with_new, 'id');
+        $new_meta_ids = array_values(array_diff($new_meta_ids, $meta_ids));
         if (count($new_meta_ids) > 0) {
             $meta_id = $new_meta_ids[0];
         }
-        $response = new WP_Ajax_Response(
-            [
-                'what'     => 'meta',
-                'id'       => $meta_id,
-                'data'     => $this->list_meta_row(
-                    [
-                        'meta_id'    => $meta_id,
-                        'meta_key'   => $meta_key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- false positive, not a meta query.
-                        'meta_value' => $meta_value, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- false positive, not a meta query.
-                    ],
-                    $count
-                ),
-                'position' => 1,
-            ]
-        );
+        $response = new WP_Ajax_Response(['what' => 'meta', 'id' => $meta_id, 'data' => $this->list_meta_row([
+            'meta_id' => $meta_id,
+            'meta_key' => $meta_key,
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- false positive, not a meta query.
+            'meta_value' => $meta_value,
+        ], $count), 'position' => 1]);
         $response->send();
     }
-
     /**
      * Handles updating metadata.
      *
@@ -314,18 +295,18 @@ class CustomMetaBox
      */
     private function handle_update_meta(WC_Order $order, array $meta): void
     {
-        if (! is_array($meta)) {
+        if (!is_array($meta)) {
             wp_send_json_error('invalid_meta');
             wp_die();
         }
         array_walk($meta, sanitize_text_field(...));
         $mid = (int) key($meta);
-        if (! $mid) {
+        if (!$mid) {
             wp_send_json_error('invalid_meta_id');
             wp_die();
         }
-        $key   = $meta[ $mid ]['key'];
-        $value = $meta[ $mid ]['value'];
+        $key = $meta[$mid]['key'];
+        $value = $meta[$mid]['value'];
         if (is_protected_meta($key)) {
             wp_send_json_error('protected_meta');
             wp_die();
@@ -334,29 +315,18 @@ class CustomMetaBox
             wp_send_json_error('invalid_meta_key');
             wp_die();
         }
-
         $count = 0;
         $order->update_meta_data($key, $value, $mid);
         $order->save_meta_data();
-        $response = new WP_Ajax_Response(
-            [
-                'what'     => 'meta',
-                'id'       => $mid,
-                'old_id'   => $mid,
-                'data'     => $this->list_meta_row(
-                    [
-                        'meta_key'   => $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- false positive, not a meta query.
-                        'meta_value' => $value, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- false positive, not a meta query.
-                        'meta_id'    => $mid,
-                    ],
-                    $count
-                ),
-                'position' => 0,
-            ]
-        );
+        $response = new WP_Ajax_Response(['what' => 'meta', 'id' => $mid, 'old_id' => $mid, 'data' => $this->list_meta_row([
+            'meta_key' => $key,
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- false positive, not a meta query.
+            'meta_value' => $value,
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- false positive, not a meta query.
+            'meta_id' => $mid,
+        ], $count), 'position' => 0]);
         $response->send();
     }
-
     /**
      * Outputs a single row of public meta data in the Custom Fields meta box.
      *
@@ -370,72 +340,63 @@ class CustomMetaBox
         if (is_protected_meta($entry['meta_key'], 'post')) {
             return '';
         }
-
-        if (! $this->update_nonce) {
+        if (!$this->update_nonce) {
             $this->update_nonce = wp_create_nonce('add-meta');
         }
-
         $r = '';
         ++$count;
-
         if (is_serialized($entry['meta_value'])) {
             if (is_serialized_string($entry['meta_value'])) {
                 // This is a serialized string, so we should display it.
-                $entry['meta_value'] = maybe_unserialize($entry['meta_value']); // // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- false positive, not a meta query.
+                $entry['meta_value'] = maybe_unserialize($entry['meta_value']);
+                // // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- false positive, not a meta query.
             } else {
                 // This is a serialized array/object so we should NOT display it.
                 --$count;
                 return '';
             }
         }
-
-        $entry['meta_key']   = esc_attr($entry['meta_key']); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- false positive, not a meta query.
-        $entry['meta_value'] = esc_textarea($entry['meta_value']); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- false positive, not a meta query.
-        $entry['meta_id']    = (int) $entry['meta_id'];
-
+        $entry['meta_key'] = esc_attr($entry['meta_key']);
+        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- false positive, not a meta query.
+        $entry['meta_value'] = esc_textarea($entry['meta_value']);
+        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- false positive, not a meta query.
+        $entry['meta_id'] = (int) $entry['meta_id'];
         $delete_nonce = wp_create_nonce('delete-meta_' . $entry['meta_id']);
-
         $r .= "\n\t<tr id='meta-{$entry['meta_id']}'>";
         $r .= "\n\t\t<td class='left'><label class='screen-reader-text' for='meta-{$entry['meta_id']}-key'>" . __('Key', 'woocommerce') . "</label><input name='meta[{$entry['meta_id']}][key]' id='meta-{$entry['meta_id']}-key' type='text' size='20' value='{$entry['meta_key']}' />";
-
         $r .= "\n\t\t<div class='submit'>";
-        $r .= get_submit_button(__('Delete', 'woocommerce'), 'deletemeta small', "deletemeta[{$entry['meta_id']}]", false, [ 'data-wp-lists' => "delete:the-list:meta-{$entry['meta_id']}::_ajax_nonce:$delete_nonce" ]);
+        $r .= get_submit_button(__('Delete', 'woocommerce'), 'deletemeta small', "deletemeta[{$entry['meta_id']}]", false, ['data-wp-lists' => "delete:the-list:meta-{$entry['meta_id']}::_ajax_nonce:{$delete_nonce}"]);
         $r .= "\n\t\t";
-        $r .= get_submit_button(__('Update', 'woocommerce'), 'updatemeta small', "meta-{$entry['meta_id']}-submit", false, [ 'data-wp-lists' => "add:the-list:meta-{$entry['meta_id']}::_ajax_nonce-add-meta={$this->update_nonce}" ]);
+        $r .= get_submit_button(__('Update', 'woocommerce'), 'updatemeta small', "meta-{$entry['meta_id']}-submit", false, ['data-wp-lists' => "add:the-list:meta-{$entry['meta_id']}::_ajax_nonce-add-meta={$this->update_nonce}"]);
         $r .= '</div>';
         $r .= wp_nonce_field('change-meta', '_ajax_nonce', false, false);
         $r .= '</td>';
         return $r . ("\n\t\t<td><label class='screen-reader-text' for='meta-{$entry['meta_id']}-value'>" . __('Value', 'woocommerce') . "</label><textarea name='meta[{$entry['meta_id']}][value]' id='meta-{$entry['meta_id']}-value' rows='2' cols='30'>{$entry['meta_value']}</textarea></td>\n\t</tr>");
     }
-
     /**
      * Reimplementation of WP core's `wp_ajax_delete_meta` method to support order custom meta updates with custom tables.
      */
     public function delete_meta_ajax(): void
     {
-        $meta_id  = (int) $_POST['id'] ?? 0;
+        $meta_id = (int) $_POST['id'] ?? 0;
         $order_id = (int) $_POST['order_id'] ?? 0;
-        if (! $meta_id || ! $order_id) {
+        if (!$meta_id || !$order_id) {
             wp_send_json_error('invalid_meta_id');
             wp_die();
         }
-        check_ajax_referer("delete-meta_$meta_id");
-
-        $order          = $this->verify_order_edit_permission_for_ajax($order_id);
-        $meta_to_delete = wp_list_filter($order->get_meta_data(), [ 'id' => $meta_id ]);
-
+        check_ajax_referer("delete-meta_{$meta_id}");
+        $order = $this->verify_order_edit_permission_for_ajax($order_id);
+        $meta_to_delete = wp_list_filter($order->get_meta_data(), ['id' => $meta_id]);
         if (empty($meta_to_delete)) {
             wp_send_json_error('invalid_meta_id');
             wp_die();
         }
-
         $order->delete_meta_data_by_mid($meta_id);
         if ($order->save()) {
             wp_die(1);
         }
         wp_die(0);
     }
-
     /**
      * Handle the possible changes in order metadata coming from an order edit page in admin
      * (labeled "custom fields" in the UI).
@@ -449,37 +410,25 @@ class CustomMetaBox
     public function handle_metadata_changes($order): void
     {
         $has_meta_changes = false;
-
         $order_meta = $order->get_meta_data();
-
-        $order_meta =
-            array_combine(
-                array_map(fn ($meta) => $meta->id, $order_meta),
-                $order_meta
-            );
-
+        $order_meta = array_combine(array_map(fn($meta) => $meta->id, $order_meta), $order_meta);
         // phpcs:disable WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing
-
-        foreach (($_POST['meta'] ?? []) as $request_meta_id => $request_meta_data) {
-            $request_meta_id    = wp_unslash($request_meta_id);
-            $request_meta_key   = wp_unslash($request_meta_data['key']);
+        foreach ($_POST['meta'] ?? [] as $request_meta_id => $request_meta_data) {
+            $request_meta_id = wp_unslash($request_meta_id);
+            $request_meta_key = wp_unslash($request_meta_data['key']);
             $request_meta_value = wp_unslash($request_meta_data['value']);
-            if (array_key_exists($request_meta_id, $order_meta) &&
-                ($order_meta[ $request_meta_id ]->key !== $request_meta_key || $order_meta[ $request_meta_id ]->value !== $request_meta_value)) {
+            if (array_key_exists($request_meta_id, $order_meta) && ($order_meta[$request_meta_id]->key !== $request_meta_key || $order_meta[$request_meta_id]->value !== $request_meta_value)) {
                 $order->update_meta_data($request_meta_key, $request_meta_value, $request_meta_id);
                 $has_meta_changes = true;
             }
         }
-
-        $request_new_key   = wp_unslash($_POST['metakeyinput'] ?? '');
+        $request_new_key = wp_unslash($_POST['metakeyinput'] ?? '');
         $request_new_value = wp_unslash($_POST['metavalue'] ?? '');
         if ('' !== $request_new_key) {
             $order->add_meta_data($request_new_key, $request_new_value);
             $has_meta_changes = true;
         }
-
         // phpcs:enable WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing
-
         if ($has_meta_changes) {
             $order->save();
         }

@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * ProductImageGallery class.
  */
-class ProductImageGallery extends AbstractBlock
+class Product_Image_Gallery extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,7 +15,6 @@ class ProductImageGallery extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-image-gallery';
-
     /**
      * It isn't necessary register block assets because it is a server side block.
      */
@@ -25,7 +22,6 @@ class ProductImageGallery extends AbstractBlock
     {
         return null;
     }
-
     /**
      *  Register the context
      *
@@ -33,9 +29,8 @@ class ProductImageGallery extends AbstractBlock
      */
     protected function get_block_type_uses_context(): array
     {
-        return [ 'query', 'queryId', 'postId' ];
+        return ['query', 'queryId', 'postId'];
     }
-
     /**
      * Enqueue assets specific to this block.
      *
@@ -46,10 +41,8 @@ class ProductImageGallery extends AbstractBlock
     protected function enqueue_assets(array $attributes, $content, $block)
     {
         parent::enqueue_assets($attributes, $content, $block);
-
         add_action('wp_enqueue_scripts', $this->enqueue_legacy_assets(...), 20);
     }
-
     /**
      * Enqueue legacy assets when this block is used as we don't enqueue them for block themes anymore.
      *
@@ -62,34 +55,26 @@ class ProductImageGallery extends AbstractBlock
     {
         // Legacy script dependencies for backward compatibility.
         $need_single_product_script = false;
-
         if (current_theme_supports('wc-product-gallery-zoom')) {
             $need_single_product_script = true;
             wp_enqueue_script('wc-zoom');
         }
-
         if (current_theme_supports('wc-product-gallery-slider')) {
             $need_single_product_script = true;
             wp_enqueue_script('wc-flexslider');
         }
-
         if (current_theme_supports('wc-product-gallery-lightbox')) {
             $need_single_product_script = true;
             wp_enqueue_script('wc-photoswipe-ui-default');
             wp_enqueue_style('photoswipe-default-skin');
-            add_action(
-                'wp_footer',
-                function (): void {
-                    wc_get_template('single-product/photoswipe.php');
-                }
-            );
+            add_action('wp_footer', function (): void {
+                wc_get_template('single-product/photoswipe.php');
+            });
         }
-
         if ($need_single_product_script) {
             wp_enqueue_script('wc-single-product');
         }
     }
-
     /**
      * Include and render the block.
      *
@@ -101,40 +86,27 @@ class ProductImageGallery extends AbstractBlock
     protected function render($attributes, $content, $block): string
     {
         $post_id = $block->context['postId'];
-
-        if (! isset($post_id)) {
+        if (!isset($post_id)) {
             return '';
         }
-
         global $product;
-
         $previous_product = $product;
-        $product          = wc_get_product($post_id);
-        if (! $product instanceof \WC_Product) {
+        $product = wc_get_product($post_id);
+        if (!$product instanceof \WC_Product) {
             $product = $previous_product;
-
             return '';
         }
-
         add_filter('woocommerce_single_product_zoom_enabled', '__return_true');
         add_filter('woocommerce_single_product_photoswipe_enabled', '__return_true');
         add_filter('woocommerce_single_product_flexslider_enabled', '__return_true');
-
         ob_start();
         woocommerce_show_product_sale_flash();
         $sale_badge_html = ob_get_clean();
-
         ob_start();
         woocommerce_show_product_images();
         $product_image_gallery_html = ob_get_clean();
-
-        $product   = $previous_product;
-        $classname = StyleAttributesUtils::get_classes_by_attributes($attributes, [ 'extra_classes' ]);
-        return sprintf(
-            '<div class="wp-block-woocommerce-product-image-gallery %1$s">%2$s %3$s</div>',
-            esc_attr($classname),
-            $sale_badge_html,
-            $product_image_gallery_html
-        );
+        $product = $previous_product;
+        $classname = Style_Attributes_Utils::get_classes_by_attributes($attributes, ['extra_classes']);
+        return sprintf('<div class="wp-block-woocommerce-product-image-gallery %1$s">%2$s %3$s</div>', esc_attr($classname), $sale_badge_html, $product_image_gallery_html);
     }
 }

@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Interface for a transformer.
  *
  * @deprecated 9.4.0 Use \Automattic\WooCommerce\Admin\RemoteSpecs\Transformers\TransformerInterface instead.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteInboxNotifications;
+namespace Automattic\Woo_Commerce\Admin\Remote_Inbox_Notifications;
 
 use stdClass;
-
 /**
  * An interface to define a transformer.
  *
@@ -20,7 +18,7 @@ use stdClass;
  *
  * @deprecated 9.4.0 Use \Automattic\WooCommerce\Admin\RemoteSpecs\Transformers\TransformerInterface instead.
  */
-interface TransformerInterface
+interface Transformer_Interface
 {
     /**
      * Transform given value to a different value.
@@ -32,7 +30,6 @@ interface TransformerInterface
      * @return mixed|null
      */
     public function transform($value, ?stdClass $arguments = null, $default_value = null);
-
     /**
      * Validate Transformer arguments.
      *

@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Reports stock stats controller
  *
  * Handles requests to the /reports/stock/stats endpoint.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports\Stock\Stats;
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Stock\Stats;
 
 defined('ABSPATH') || exit;
-
 /**
  * REST API Reports stock stats controller class.
  *
@@ -25,14 +23,12 @@ class Controller extends \WC_REST_Reports_Controller
      * @var string
      */
     protected $namespace = 'wc-analytics';
-
     /**
      * Route base.
      *
      * @var string
      */
     protected $rest_base = 'reports/stock/stats';
-
     /**
      * Get Stock Status Totals.
      *
@@ -43,12 +39,9 @@ class Controller extends \WC_REST_Reports_Controller
     {
         $stock_query = new Query();
         $report_data = $stock_query->get_data();
-        $out_data    = [
-            'totals' => $report_data,
-        ];
+        $out_data = ['totals' => $report_data];
         return rest_ensure_response($out_data);
     }
-
     /**
      * Prepare a report data item for serialization.
      *
@@ -59,14 +52,11 @@ class Controller extends \WC_REST_Reports_Controller
     public function prepare_item_for_response($report, $request)
     {
         $data = $report;
-
-        $context = ! empty($request['context']) ? $request['context'] : 'view';
-        $data    = $this->add_additional_fields_to_object($data, $request);
-        $data    = $this->filter_response_by_context($data, $context);
-
+        $context = !empty($request['context']) ? $request['context'] : 'view';
+        $data = $this->add_additional_fields_to_object($data, $request);
+        $data = $this->filter_response_by_context($data, $context);
         // Wrap the data in a response object.
         $response = rest_ensure_response($data);
-
         /**
          * Filter a report returned from the API.
          *
@@ -80,7 +70,6 @@ class Controller extends \WC_REST_Reports_Controller
          */
         return apply_filters('woocommerce_rest_prepare_report_stock_stats', $response, $report, $request);
     }
-
     /**
      * Get the Report's schema, conforming to JSON Schema.
      *
@@ -88,57 +77,27 @@ class Controller extends \WC_REST_Reports_Controller
      */
     public function get_item_schema()
     {
-        $totals = [
-            'products' => [
-                'description' => __('Number of products.', 'woocommerce'),
-                'type'        => 'integer',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-            ],
-            'lowstock' => [
-                'description' => __('Number of low stock products.', 'woocommerce'),
-                'type'        => 'integer',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-            ],
-        ];
-
+        $totals = ['products' => ['description' => __('Number of products.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true], 'lowstock' => ['description' => __('Number of low stock products.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true]];
         $status_options = wc_get_product_stock_status_options();
         foreach ($status_options as $status => $label) {
-            $totals[ $status ] = [
+            $totals[$status] = [
                 /* translators: Stock status. Example: "Number of low stock products */
                 'description' => sprintf(__('Number of %s products.', 'woocommerce'), $label),
-                'type'        => 'integer',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
+                'type' => 'integer',
+                'context' => ['view', 'edit'],
+                'readonly' => true,
             ];
         }
-
-        $schema = [
-            '$schema'    => 'http://json-schema.org/draft-04/schema#',
-            'title'      => 'report_customers_stats',
-            'type'       => 'object',
-            'properties' => [
-                'totals' => [
-                    'description' => __('Totals data.', 'woocommerce'),
-                    'type'        => 'object',
-                    'context'     => [ 'view', 'edit' ],
-                    'readonly'    => true,
-                    'properties'  => $totals,
-                ],
-            ],
-        ];
-
+        $schema = ['$schema' => 'http://json-schema.org/draft-04/schema#', 'title' => 'report_customers_stats', 'type' => 'object', 'properties' => ['totals' => ['description' => __('Totals data.', 'woocommerce'), 'type' => 'object', 'context' => ['view', 'edit'], 'readonly' => true, 'properties' => $totals]]];
         return $this->add_additional_fields_schema($schema);
     }
-
     /**
      * Get the query params for collections.
      */
     public function get_collection_params(): array
     {
-        $params            = [];
-        $params['context'] = $this->get_context_param([ 'default' => 'view' ]);
+        $params = [];
+        $params['context'] = $this->get_context_param(['default' => 'view']);
         return $params;
     }
 }

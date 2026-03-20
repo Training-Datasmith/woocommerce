@@ -1,91 +1,75 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * DataSynchronizer class file.
  */
+namespace Automattic\Woo_Commerce\Internal\Data_Stores\Orders;
 
-namespace Automattic\WooCommerce\Internal\DataStores\Orders;
-
-use Automattic\WooCommerce\Caches\OrderCacheController;
-use Automattic\WooCommerce\Database\Migrations\CustomOrderTable\PostsToOrdersMigrationController;
-use Automattic\WooCommerce\Internal\Admin\Orders\EditLock;
-use Automattic\WooCommerce\Internal\BatchProcessing\{ BatchProcessingController, BatchProcessorInterface };
-use Automattic\WooCommerce\Internal\Utilities\DatabaseUtil;
-use Automattic\WooCommerce\Proxies\LegacyProxy;
-
+use Automattic\Woo_Commerce\Caches\Order_Cache_Controller;
+use Automattic\Woo_Commerce\Database\Migrations\Custom_Order_Table\Posts_To_Orders_Migration_Controller;
+use Automattic\Woo_Commerce\Internal\Admin\Orders\Edit_Lock;
+use Automattic\Woo_Commerce\Internal\Batch_Processing\{Batch_Processing_Controller, Batch_Processor_Interface};
+use Automattic\Woo_Commerce\Internal\Utilities\Database_Util;
+use Automattic\Woo_Commerce\Proxies\Legacy_Proxy;
 defined('ABSPATH') || exit;
-
 /**
  * This class handles the database structure creation and the data synchronization for the custom orders tables. Its responsibilities are:
  *
  * - Providing entry points for creating and deleting the required database tables.
  * - Synchronizing changes between the custom orders tables and the posts table whenever changes in orders happen.
  */
-class DataSynchronizer implements BatchProcessorInterface
+class Data_Synchronizer implements Batch_Processor_Interface
 {
     public const ORDERS_DATA_SYNC_ENABLED_OPTION = 'woocommerce_custom_orders_table_data_sync_enabled';
-    public const PLACEHOLDER_ORDER_POST_TYPE     = 'shop_order_placehold';
-
-    public const DELETED_RECORD_META_KEY        = '_deleted_from';
-    public const DELETED_FROM_POSTS_META_VALUE  = 'posts_table';
+    public const PLACEHOLDER_ORDER_POST_TYPE = 'shop_order_placehold';
+    public const DELETED_RECORD_META_KEY = '_deleted_from';
+    public const DELETED_FROM_POSTS_META_VALUE = 'posts_table';
     public const DELETED_FROM_ORDERS_META_VALUE = 'orders_table';
-
     public const ORDERS_TABLE_CREATED = 'woocommerce_custom_orders_table_created';
-
     private const ORDERS_SYNC_BATCH_SIZE = 250;
-
     // Allowed values for $type in get_ids_of_orders_pending_sync method.
-    public const ID_TYPE_MISSING_IN_ORDERS_TABLE   = 0;
-    public const ID_TYPE_MISSING_IN_POSTS_TABLE    = 1;
-    public const ID_TYPE_DIFFERENT_UPDATE_DATE     = 2;
+    public const ID_TYPE_MISSING_IN_ORDERS_TABLE = 0;
+    public const ID_TYPE_MISSING_IN_POSTS_TABLE = 1;
+    public const ID_TYPE_DIFFERENT_UPDATE_DATE = 2;
     public const ID_TYPE_DELETED_FROM_ORDERS_TABLE = 3;
-    public const ID_TYPE_DELETED_FROM_POSTS_TABLE  = 4;
-
-    public const BACKGROUND_SYNC_MODE_OPTION     = 'woocommerce_custom_orders_table_background_sync_mode';
+    public const ID_TYPE_DELETED_FROM_POSTS_TABLE = 4;
+    public const BACKGROUND_SYNC_MODE_OPTION = 'woocommerce_custom_orders_table_background_sync_mode';
     public const BACKGROUND_SYNC_INTERVAL_OPTION = 'woocommerce_custom_orders_table_background_sync_interval';
-    public const BACKGROUND_SYNC_MODE_INTERVAL   = 'interval';
+    public const BACKGROUND_SYNC_MODE_INTERVAL = 'interval';
     public const BACKGROUND_SYNC_MODE_CONTINUOUS = 'continuous';
-    public const BACKGROUND_SYNC_MODE_OFF        = 'off';
-    public const BACKGROUND_SYNC_EVENT_HOOK      = 'woocommerce_custom_orders_table_background_sync';
-
+    public const BACKGROUND_SYNC_MODE_OFF = 'off';
+    public const BACKGROUND_SYNC_EVENT_HOOK = 'woocommerce_custom_orders_table_background_sync';
     /**
      * The data store object to use.
      */
-    private ?\Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore $data_store = null;
-
+    private ?\Automattic\Woo_Commerce\Internal\Data_Stores\Orders\Orders_Table_Data_Store $data_store = null;
     /**
      * The database util object to use.
      */
-    private ?\Automattic\WooCommerce\Internal\Utilities\DatabaseUtil $database_util = null;
-
+    private ?\Automattic\Woo_Commerce\Internal\Utilities\Database_Util $database_util = null;
     /**
      * The posts to COT migrator to use.
      */
-    private ?\Automattic\WooCommerce\Database\Migrations\CustomOrderTable\PostsToOrdersMigrationController $posts_to_cot_migrator = null;
-
+    private ?\Automattic\Woo_Commerce\Database\Migrations\Custom_Order_Table\Posts_To_Orders_Migration_Controller $posts_to_cot_migrator = null;
     /**
      * Logger object to be used to log events.
      *
      * @var \WC_Logger
      */
     private $error_logger;
-
     /**
      * The instance of the LegacyProxy object to use.
      */
-    private ?\Automattic\WooCommerce\Proxies\LegacyProxy $legacy_proxy = null;
-
+    private ?\Automattic\Woo_Commerce\Proxies\Legacy_Proxy $legacy_proxy = null;
     /**
      * The order cache controller.
      */
-    private ?\Automattic\WooCommerce\Caches\OrderCacheController $order_cache_controller = null;
-
+    private ?\Automattic\Woo_Commerce\Caches\Order_Cache_Controller $order_cache_controller = null;
     /**
      * The batch processing controller.
      */
-    private ?\Automattic\WooCommerce\Internal\BatchProcessing\BatchProcessingController $batch_processing_controller = null;
-
+    private ?\Automattic\Woo_Commerce\Internal\Batch_Processing\Batch_Processing_Controller $batch_processing_controller = null;
     /**
      * Class constructor.
      */
@@ -106,17 +90,12 @@ class DataSynchronizer implements BatchProcessorInterface
         if (self::BACKGROUND_SYNC_MODE_CONTINUOUS === $this->get_background_sync_mode()) {
             add_action('shutdown', $this->handle_continuous_background_sync(...));
         }
-
         if (defined('WC_PLUGIN_BASENAME')) {
-            add_action(
-                'deactivate_' . WC_PLUGIN_BASENAME,
-                function (): void {
-                    $this->unschedule_background_sync();
-                }
-            );
+            add_action('deactivate_' . WC_PLUGIN_BASENAME, function (): void {
+                $this->unschedule_background_sync();
+            });
         }
     }
-
     /**
      * Class initialization, invoked by the DI container.
      *
@@ -128,23 +107,16 @@ class DataSynchronizer implements BatchProcessorInterface
      * @param BatchProcessingController        $batch_processing_controller The batch processing controller to use.
      * @internal
      */
-    final public function init(
-        OrdersTableDataStore $data_store,
-        DatabaseUtil $database_util,
-        PostsToOrdersMigrationController $posts_to_cot_migrator,
-        LegacyProxy $legacy_proxy,
-        OrderCacheController $order_cache_controller,
-        BatchProcessingController $batch_processing_controller
-    ): void {
-        $this->data_store                  = $data_store;
-        $this->database_util               = $database_util;
-        $this->posts_to_cot_migrator       = $posts_to_cot_migrator;
-        $this->legacy_proxy                = $legacy_proxy;
-        $this->error_logger                = $legacy_proxy->call_function('wc_get_logger');
-        $this->order_cache_controller      = $order_cache_controller;
+    final public function init(Orders_Table_Data_Store $data_store, Database_Util $database_util, Posts_To_Orders_Migration_Controller $posts_to_cot_migrator, Legacy_Proxy $legacy_proxy, Order_Cache_Controller $order_cache_controller, Batch_Processing_Controller $batch_processing_controller): void
+    {
+        $this->data_store = $data_store;
+        $this->database_util = $database_util;
+        $this->posts_to_cot_migrator = $posts_to_cot_migrator;
+        $this->legacy_proxy = $legacy_proxy;
+        $this->error_logger = $legacy_proxy->call_function('wc_get_logger');
+        $this->order_cache_controller = $order_cache_controller;
         $this->batch_processing_controller = $batch_processing_controller;
     }
-
     /**
      * Does the custom orders tables exist in the database?
      *
@@ -153,7 +125,6 @@ class DataSynchronizer implements BatchProcessorInterface
     public function check_orders_table_exists(): bool
     {
         $missing_tables = $this->database_util->get_missing_tables($this->data_store->get_database_schema());
-
         if (count($missing_tables) === 0) {
             update_option(self::ORDERS_TABLE_CREATED, 'yes');
             return true;
@@ -161,7 +132,6 @@ class DataSynchronizer implements BatchProcessorInterface
         update_option(self::ORDERS_TABLE_CREATED, 'no');
         return false;
     }
-
     /**
      * Returns the value of the orders table created option. If it's not set, then it checks the orders table and set it accordingly.
      *
@@ -175,7 +145,6 @@ class DataSynchronizer implements BatchProcessorInterface
             default => $this->check_orders_table_exists(),
         };
     }
-
     /**
      * Create the custom orders database tables and log an error if that's not possible.
      *
@@ -185,21 +154,19 @@ class DataSynchronizer implements BatchProcessorInterface
     {
         $this->database_util->dbdelta($this->data_store->get_database_schema());
         $success = $this->check_orders_table_exists();
-        if (! $success) {
+        if (!$success) {
             $missing_tables = $this->database_util->get_missing_tables($this->data_store->get_database_schema());
             $missing_tables = implode(', ', $missing_tables);
-            $this->error_logger->error("HPOS tables are missing in the database and couldn't be created. The missing tables are: $missing_tables");
+            $this->error_logger->error("HPOS tables are missing in the database and couldn't be created. The missing tables are: {$missing_tables}");
         }
         return $success;
     }
-
     /**
      * Delete the custom orders database tables.
      */
     public function delete_database_tables(): void
     {
         $table_names = $this->data_store->get_all_table_names();
-
         foreach ($table_names as $table_name) {
             $this->database_util->drop_database_table($table_name);
         }
@@ -208,7 +175,6 @@ class DataSynchronizer implements BatchProcessorInterface
         }
         delete_option(self::ORDERS_TABLE_CREATED);
     }
-
     /**
      * Is the real-time data sync between old and new tables currently enabled?
      */
@@ -216,28 +182,23 @@ class DataSynchronizer implements BatchProcessorInterface
     {
         return 'yes' === get_option(self::ORDERS_DATA_SYNC_ENABLED_OPTION);
     }
-
     /**
      * Get the current background data sync mode.
      */
     public function get_background_sync_mode(): string
     {
         $default = $this->data_sync_is_enabled() ? self::BACKGROUND_SYNC_MODE_INTERVAL : self::BACKGROUND_SYNC_MODE_OFF;
-
         return get_option(self::BACKGROUND_SYNC_MODE_OPTION, $default);
     }
-
     /**
      * Is the background data sync between old and new tables currently enabled?
      */
     public function background_sync_is_enabled(): bool
     {
-        $enabled_modes = [ self::BACKGROUND_SYNC_MODE_INTERVAL, self::BACKGROUND_SYNC_MODE_CONTINUOUS ];
-        $mode          = $this->get_background_sync_mode();
-
+        $enabled_modes = [self::BACKGROUND_SYNC_MODE_INTERVAL, self::BACKGROUND_SYNC_MODE_CONTINUOUS];
+        $mode = $this->get_background_sync_mode();
         return in_array($mode, $enabled_modes, true);
     }
-
     /**
      * Process an option change for specific keys.
      *
@@ -250,11 +211,10 @@ class DataSynchronizer implements BatchProcessorInterface
      */
     public function process_updated_option($option_key, $old_value, $new_value): void
     {
-        $sync_option_keys = [ self::ORDERS_DATA_SYNC_ENABLED_OPTION, self::BACKGROUND_SYNC_MODE_OPTION ];
-        if (! in_array($option_key, $sync_option_keys, true) || $new_value === $old_value) {
+        $sync_option_keys = [self::ORDERS_DATA_SYNC_ENABLED_OPTION, self::BACKGROUND_SYNC_MODE_OPTION];
+        if (!in_array($option_key, $sync_option_keys, true) || $new_value === $old_value) {
             return;
         }
-
         if (self::BACKGROUND_SYNC_MODE_OPTION === $option_key) {
             $mode = $new_value;
         } else {
@@ -264,21 +224,18 @@ class DataSynchronizer implements BatchProcessorInterface
             self::BACKGROUND_SYNC_MODE_INTERVAL => $this->schedule_background_sync(),
             default => $this->unschedule_background_sync(),
         };
-
         if (self::ORDERS_DATA_SYNC_ENABLED_OPTION === $option_key) {
-            if (! $this->check_orders_table_exists()) {
+            if (!$this->check_orders_table_exists()) {
                 $this->create_database_tables();
             }
-
             if ($this->data_sync_is_enabled()) {
-                wc_get_container()->get(LegacyDataCleanup::class)->toggle_flag(false);
+                wc_get_container()->get(Legacy_Data_Cleanup::class)->toggle_flag(false);
                 $this->batch_processing_controller->enqueue_processor(self::class);
             } else {
                 $this->batch_processing_controller->remove_processor(self::class);
             }
         }
     }
-
     /**
      * Process an option change when the key didn't exist before.
      *
@@ -292,7 +249,6 @@ class DataSynchronizer implements BatchProcessorInterface
     {
         $this->process_updated_option($option_key, false, $value);
     }
-
     /**
      * Process an option deletion for specific keys.
      *
@@ -306,27 +262,16 @@ class DataSynchronizer implements BatchProcessorInterface
         if (self::BACKGROUND_SYNC_MODE_OPTION !== $option_key) {
             return;
         }
-
         $this->unschedule_background_sync();
         $this->batch_processing_controller->remove_processor(self::class);
     }
-
     /**
      * Get the time interval, in seconds, between background syncs.
      */
     public function get_background_sync_interval(): int
     {
-        return filter_var(
-            get_option(self::BACKGROUND_SYNC_INTERVAL_OPTION, HOUR_IN_SECONDS),
-            FILTER_VALIDATE_INT,
-            [
-                'options' => [
-                    'default' => HOUR_IN_SECONDS,
-                ],
-            ]
-        );
+        return filter_var(get_option(self::BACKGROUND_SYNC_INTERVAL_OPTION, HOUR_IN_SECONDS), FILTER_VALIDATE_INT, ['options' => ['default' => HOUR_IN_SECONDS]]);
     }
-
     /**
      * Keys that can be ignored during synchronization or verification.
      *
@@ -344,35 +289,23 @@ class DataSynchronizer implements BatchProcessorInterface
          */
         $ignored_props = apply_filters('woocommerce_hpos_sync_ignored_order_props', []);
         $ignored_props = array_filter(array_map(trim(...), array_filter($ignored_props, is_string(...))));
-
-        return array_merge(
-            $ignored_props,
-            [
-                '_paid_date', // This has been deprecated and replaced by '_date_paid' in the CPT datastore.
-                '_completed_date', // This has been deprecated and replaced by '_date_completed' in the CPT datastore.
-                EditLock::META_KEY_NAME,
-            ]
-        );
+        return array_merge($ignored_props, [
+            '_paid_date',
+            // This has been deprecated and replaced by '_date_paid' in the CPT datastore.
+            '_completed_date',
+            // This has been deprecated and replaced by '_date_completed' in the CPT datastore.
+            Edit_Lock::META_KEY_NAME,
+        ]);
     }
-
     /**
      * Schedule an event to run background sync when the mode is set to interval.
      */
     private function schedule_background_sync(): void
     {
         $interval = $this->get_background_sync_interval();
-
         // Calling Action Scheduler directly because WC_Action_Queue doesn't support the unique parameter yet.
-        as_schedule_recurring_action(
-            time() + $interval,
-            $interval,
-            self::BACKGROUND_SYNC_EVENT_HOOK,
-            [],
-            '',
-            true
-        );
+        as_schedule_recurring_action(time() + $interval, $interval, self::BACKGROUND_SYNC_EVENT_HOOK, [], '', true);
     }
-
     /**
      * Remove any pending background sync events.
      */
@@ -380,7 +313,6 @@ class DataSynchronizer implements BatchProcessorInterface
     {
         WC()->queue()->cancel_all(self::BACKGROUND_SYNC_EVENT_HOOK);
     }
-
     /**
      * Callback to check for pending syncs and enqueue the background data sync processor when in interval mode.
      *
@@ -393,13 +325,11 @@ class DataSynchronizer implements BatchProcessorInterface
             $this->unschedule_background_sync();
             return;
         }
-
         $pending_count = $this->get_total_pending_count();
         if ($pending_count > 0) {
             $this->batch_processing_controller->enqueue_processor(self::class);
         }
     }
-
     /**
      * Callback to keep the background data sync processor enqueued when in continuous mode.
      *
@@ -412,11 +342,9 @@ class DataSynchronizer implements BatchProcessorInterface
             $this->batch_processing_controller->remove_processor(self::class);
             return;
         }
-
         // This method already checks if a processor is enqueued before adding it to avoid duplication.
         $this->batch_processing_controller->enqueue_processor(self::class);
     }
-
     /**
      * Get the current sync process status.
      * The information is meaningful only if pending_data_sync_is_in_progress return true.
@@ -426,18 +354,9 @@ class DataSynchronizer implements BatchProcessorInterface
      */
     public function get_sync_status(): array
     {
-        wc_deprecated_function(
-            __METHOD__,
-            '9.0.0',
-            'get_current_orders_pending_sync_count()'
-        );
-
-        return [
-            'initial_pending_count' => 0,
-            'current_pending_count' => $this->get_total_pending_count(),
-        ];
+        wc_deprecated_function(__METHOD__, '9.0.0', 'get_current_orders_pending_sync_count()');
+        return ['initial_pending_count' => 0, 'current_pending_count' => $this->get_total_pending_count()];
     }
-
     /**
      * Get the total number of orders pending synchronization.
      */
@@ -445,7 +364,6 @@ class DataSynchronizer implements BatchProcessorInterface
     {
         return $this->get_current_orders_pending_sync_count(true);
     }
-
     /**
      * Calculate how many orders need to be synchronized currently.
      * A database query is performed to get how many orders match one of the following:
@@ -463,13 +381,10 @@ class DataSynchronizer implements BatchProcessorInterface
                 return (int) $pending_count;
             }
         }
-
         $pending_count = $this->query_orders_pending_sync_count();
-
         wp_cache_set('woocommerce_hpos_pending_sync_count', $pending_count, 'counts');
         return $pending_count;
     }
-
     /**
      * Check if there are orders pending synchronization.
      *
@@ -488,14 +403,10 @@ class DataSynchronizer implements BatchProcessorInterface
                 return (int) $pending_count > 0;
             }
         }
-
         $has_pending_sync = $this->query_orders_pending_sync_count(false) > 0;
-
         wp_cache_set('woocommerce_hpos_has_orders_pending_sync', $has_pending_sync, 'counts');
-
         return $has_pending_sync;
     }
-
     /**
      * Query the number of orders pending synchronization.
      *
@@ -505,100 +416,39 @@ class DataSynchronizer implements BatchProcessorInterface
     private function query_orders_pending_sync_count(bool $full_count = true)
     {
         global $wpdb;
-
         $order_post_types = wc_get_order_types('cot-migration');
-
         $order_post_type_placeholder = implode(', ', array_fill(0, count($order_post_types), '%s'));
-
         $orders_table = $this->data_store::get_orders_table_name();
-
         $count_clause = $full_count ? 'COUNT(1)' : '1';
-
         $limit_clause = $full_count ? '' : 'LIMIT 1';
-
         if (empty($order_post_types)) {
-            $this->error_logger->debug(
-                sprintf(
-                    /* translators: 1: method name. */
-                    esc_html__('%1$s was called but no order types were registered: it may have been called too early.', 'woocommerce'),
-                    __METHOD__
-                )
-            );
-
+            $this->error_logger->debug(sprintf(
+                /* translators: 1: method name. */
+                esc_html__('%1$s was called but no order types were registered: it may have been called too early.', 'woocommerce'),
+                __METHOD__
+            ));
             return 0;
         }
-
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare,WordPress.DB.PreparedSQL.NotPrepared --
         // -- $order_post_type_placeholder, $orders_table, self::PLACEHOLDER_ORDER_POST_TYPE are all safe to use in queries.
-        if (! $this->get_table_exists()) {
-            return $wpdb->get_var(
-                $wpdb->prepare(
-                    "SELECT $count_clause FROM $wpdb->posts where post_type in ( $order_post_type_placeholder )",
-                    $order_post_types
-                )
-            );
+        if (!$this->get_table_exists()) {
+            return $wpdb->get_var($wpdb->prepare("SELECT {$count_clause} FROM {$wpdb->posts} where post_type in ( {$order_post_type_placeholder} )", $order_post_types));
         }
-
         if ($this->custom_orders_table_is_authoritative()) {
-            $missing_orders_count_sql = $wpdb->prepare(
-                "
-SELECT $count_clause FROM $wpdb->posts posts
-RIGHT JOIN $orders_table orders ON posts.ID=orders.id
-WHERE (posts.post_type IS NULL OR posts.post_type = '" . self::PLACEHOLDER_ORDER_POST_TYPE . "')
- AND orders.status NOT IN ( 'auto-draft' )
- AND orders.type IN ($order_post_type_placeholder)
-$limit_clause",
-                $order_post_types
-            );
-            $operator                 = '>';
+            $missing_orders_count_sql = $wpdb->prepare("\nSELECT {$count_clause} FROM {$wpdb->posts} posts\nRIGHT JOIN {$orders_table} orders ON posts.ID=orders.id\nWHERE (posts.post_type IS NULL OR posts.post_type = '" . self::PLACEHOLDER_ORDER_POST_TYPE . "')\n AND orders.status NOT IN ( 'auto-draft' )\n AND orders.type IN ({$order_post_type_placeholder})\n{$limit_clause}", $order_post_types);
+            $operator = '>';
         } else {
-            $missing_orders_count_sql = $wpdb->prepare(
-                "
-SELECT $count_clause FROM $wpdb->posts posts
-LEFT JOIN $orders_table orders ON posts.ID=orders.id
-WHERE
-  posts.post_type in ($order_post_type_placeholder)
-  AND posts.post_status != 'auto-draft'
-  AND orders.id IS NULL
-$limit_clause",
-                $order_post_types
-            );
-
+            $missing_orders_count_sql = $wpdb->prepare("\nSELECT {$count_clause} FROM {$wpdb->posts} posts\nLEFT JOIN {$orders_table} orders ON posts.ID=orders.id\nWHERE\n  posts.post_type in ({$order_post_type_placeholder})\n  AND posts.post_status != 'auto-draft'\n  AND orders.id IS NULL\n{$limit_clause}", $order_post_types);
             $operator = '<';
         }
-
-        $sql = $wpdb->prepare(
-            "
-SELECT(
-	($missing_orders_count_sql)
-	+
-	(SELECT COUNT(1) FROM (
-		SELECT orders.id FROM $orders_table orders
-		JOIN $wpdb->posts posts on posts.ID = orders.id
-		WHERE
-		  posts.post_type IN ($order_post_type_placeholder)
-		  AND orders.date_updated_gmt $operator posts.post_modified_gmt
-	) x)
-) count",
-            $order_post_types
-        );
+        $sql = $wpdb->prepare("\nSELECT(\n\t({$missing_orders_count_sql})\n\t+\n\t(SELECT COUNT(1) FROM (\n\t\tSELECT orders.id FROM {$orders_table} orders\n\t\tJOIN {$wpdb->posts} posts on posts.ID = orders.id\n\t\tWHERE\n\t\t  posts.post_type IN ({$order_post_type_placeholder})\n\t\t  AND orders.date_updated_gmt {$operator} posts.post_modified_gmt\n\t) x)\n) count", $order_post_types);
         // phpcs:enable
-
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $pending_count = (int) $wpdb->get_var($sql);
-
         $deleted_from_table = $this->get_current_deletion_record_meta_value();
-
-        $deleted_count  = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT $count_clause FROM {$wpdb->prefix}wc_orders_meta WHERE meta_key=%s AND meta_value=%s",
-                [ self::DELETED_RECORD_META_KEY, $deleted_from_table ]
-            )
-        );
-
+        $deleted_count = $wpdb->get_var($wpdb->prepare("SELECT {$count_clause} FROM {$wpdb->prefix}wc_orders_meta WHERE meta_key=%s AND meta_value=%s", [self::DELETED_RECORD_META_KEY, $deleted_from_table]));
         return $pending_count + $deleted_count;
     }
-
     /**
      * Get the meta value for order deletion records based on which table is currently authoritative.
      *
@@ -606,11 +456,8 @@ SELECT(
      */
     private function get_current_deletion_record_meta_value(): string
     {
-        return $this->custom_orders_table_is_authoritative() ?
-                self::DELETED_FROM_ORDERS_META_VALUE :
-                self::DELETED_FROM_POSTS_META_VALUE;
+        return $this->custom_orders_table_is_authoritative() ? self::DELETED_FROM_ORDERS_META_VALUE : self::DELETED_FROM_POSTS_META_VALUE;
     }
-
     /**
      * Is the custom orders table the authoritative data source for orders currently?
      *
@@ -618,9 +465,8 @@ SELECT(
      */
     public function custom_orders_table_is_authoritative(): bool
     {
-        return wc_string_to_bool(get_option(CustomOrdersTableController::CUSTOM_ORDERS_TABLE_USAGE_ENABLED_OPTION));
+        return wc_string_to_bool(get_option(Custom_Orders_Table_Controller::CUSTOM_ORDERS_TABLE_USAGE_ENABLED_OPTION));
     }
-
     /**
      * Get a list of ids of orders than are out of sync.
      *
@@ -640,56 +486,23 @@ SELECT(
     public function get_ids_of_orders_pending_sync(int $type, int $limit)
     {
         global $wpdb;
-
         if ($limit < 1) {
             throw new \Exception('$limit must be at least 1');
         }
-
-        $orders_table                 = $this->data_store::get_orders_table_name();
-        $order_post_types             = wc_get_order_types('cot-migration');
+        $orders_table = $this->data_store::get_orders_table_name();
+        $order_post_types = wc_get_order_types('cot-migration');
         $order_post_type_placeholders = implode(', ', array_fill(0, count($order_post_types), '%s'));
-
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare,WordPress.DB.PreparedSQL.NotPrepared
         switch ($type) {
             case self::ID_TYPE_MISSING_IN_ORDERS_TABLE:
-                $sql = $wpdb->prepare(
-                    "
-SELECT posts.ID FROM $wpdb->posts posts
-LEFT JOIN $orders_table orders ON posts.ID = orders.id
-WHERE
-  posts.post_type IN ($order_post_type_placeholders)
-  AND posts.post_status != 'auto-draft'
-  AND orders.id IS NULL
-ORDER BY posts.ID ASC",
-                    $order_post_types
-                );
+                $sql = $wpdb->prepare("\nSELECT posts.ID FROM {$wpdb->posts} posts\nLEFT JOIN {$orders_table} orders ON posts.ID = orders.id\nWHERE\n  posts.post_type IN ({$order_post_type_placeholders})\n  AND posts.post_status != 'auto-draft'\n  AND orders.id IS NULL\nORDER BY posts.ID ASC", $order_post_types);
                 break;
             case self::ID_TYPE_MISSING_IN_POSTS_TABLE:
-                $sql = $wpdb->prepare(
-                    "
-SELECT orders.id FROM $wpdb->posts posts
-RIGHT JOIN $orders_table orders ON posts.ID=orders.id
-WHERE (posts.post_type IS NULL OR posts.post_type = '" . self::PLACEHOLDER_ORDER_POST_TYPE . "')
-AND orders.status NOT IN ( 'auto-draft' )
-AND orders.type IN ($order_post_type_placeholders)
-ORDER BY posts.ID ASC",
-                    $order_post_types
-                );
+                $sql = $wpdb->prepare("\nSELECT orders.id FROM {$wpdb->posts} posts\nRIGHT JOIN {$orders_table} orders ON posts.ID=orders.id\nWHERE (posts.post_type IS NULL OR posts.post_type = '" . self::PLACEHOLDER_ORDER_POST_TYPE . "')\nAND orders.status NOT IN ( 'auto-draft' )\nAND orders.type IN ({$order_post_type_placeholders})\nORDER BY posts.ID ASC", $order_post_types);
                 break;
             case self::ID_TYPE_DIFFERENT_UPDATE_DATE:
                 $operator = $this->custom_orders_table_is_authoritative() ? '>' : '<';
-
-                $sql = $wpdb->prepare(
-                    "
-SELECT orders.id FROM $orders_table orders
-JOIN $wpdb->posts posts on posts.ID = orders.id
-WHERE
-  posts.post_type IN ($order_post_type_placeholders)
-  AND orders.date_updated_gmt $operator posts.post_modified_gmt
-ORDER BY orders.id ASC
-",
-                    $order_post_types
-                );
+                $sql = $wpdb->prepare("\nSELECT orders.id FROM {$orders_table} orders\nJOIN {$wpdb->posts} posts on posts.ID = orders.id\nWHERE\n  posts.post_type IN ({$order_post_type_placeholders})\n  AND orders.date_updated_gmt {$operator} posts.post_modified_gmt\nORDER BY orders.id ASC\n", $order_post_types);
                 break;
             case self::ID_TYPE_DELETED_FROM_ORDERS_TABLE:
             case self::ID_TYPE_DELETED_FROM_POSTS_TABLE:
@@ -698,11 +511,9 @@ ORDER BY orders.id ASC
                 throw new \Exception('Invalid $type, must be one of the ID_TYPE_... constants.');
         }
         // phpcs:enable
-
         // phpcs:ignore WordPress.DB
-        return array_map(intval(...), $wpdb->get_col($sql . " LIMIT $limit"));
+        return array_map(intval(...), $wpdb->get_col($sql . " LIMIT {$limit}"));
     }
-
     /**
      * Get the ids of the orders that are marked as deleted in the orders meta table.
      *
@@ -712,22 +523,13 @@ ORDER BY orders.id ASC
     private function get_deleted_order_ids(int $limit): array
     {
         global $wpdb;
-
         $deleted_from_table = $this->get_current_deletion_record_meta_value();
-
         $order_ids = $wpdb->get_col(
             // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->prepare(
-                "SELECT DISTINCT(order_id) FROM {$wpdb->prefix}wc_orders_meta WHERE meta_key=%s AND meta_value=%s LIMIT {$limit}",
-                self::DELETED_RECORD_META_KEY,
-                $deleted_from_table
-            )
-            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $wpdb->prepare("SELECT DISTINCT(order_id) FROM {$wpdb->prefix}wc_orders_meta WHERE meta_key=%s AND meta_value=%s LIMIT {$limit}", self::DELETED_RECORD_META_KEY, $deleted_from_table)
         );
-
         return array_map(absint(...), $order_ids);
     }
-
     /**
      * Cleanup all the synchronization status information,
      * because the process has been disabled by the user via settings,
@@ -737,7 +539,6 @@ ORDER BY orders.id ASC
     {
         delete_option('woocommerce_initial_orders_pending_sync_count');
     }
-
     /**
      * Process data for current batch.
      *
@@ -748,21 +549,17 @@ ORDER BY orders.id ASC
         if (empty($batch)) {
             return;
         }
-
         $batch = array_map(absint(...), $batch);
-
         $this->order_cache_controller->temporarily_disable_orders_cache_usage();
-
         $custom_orders_table_is_authoritative = $this->custom_orders_table_is_authoritative();
-        $deleted_order_ids                    = $this->process_deleted_orders($batch, $custom_orders_table_is_authoritative);
-        $batch                                = array_diff($batch, $deleted_order_ids);
-
-        if (! empty($batch)) {
+        $deleted_order_ids = $this->process_deleted_orders($batch, $custom_orders_table_is_authoritative);
+        $batch = array_diff($batch, $deleted_order_ids);
+        if (!empty($batch)) {
             if ($custom_orders_table_is_authoritative) {
                 foreach ($batch as $id) {
                     $order = wc_get_order($id);
-                    if (! $order) {
-                        $this->error_logger->error("Order $id not found during batch process, skipping.");
+                    if (!$order) {
+                        $this->error_logger->error("Order {$id} not found during batch process, skipping.");
                         continue;
                     }
                     $data_store = $order->get_data_store();
@@ -772,13 +569,11 @@ ORDER BY orders.id ASC
                 $this->posts_to_cot_migrator->migrate_orders($batch);
             }
         }
-
         if (0 === $this->get_total_pending_count()) {
             $this->cleanup_synchronization_state();
             $this->order_cache_controller->maybe_restore_orders_cache_usage();
         }
     }
-
     /**
      * Take a batch of order ids pending synchronization and process those that were deleted, ignoring the others
      * (which will be orders that were created or modified) and returning the ids of the orders actually processed.
@@ -790,80 +585,49 @@ ORDER BY orders.id ASC
     private function process_deleted_orders(array $batch, bool $custom_orders_table_is_authoritative): array
     {
         global $wpdb;
-
         $deleted_from_table_name = $this->get_current_deletion_record_meta_value();
-
-        $data_store_for_deletion =
-            $custom_orders_table_is_authoritative ?
-            new \WC_Order_Data_Store_CPT() :
-            wc_get_container()->get(OrdersTableDataStore::class);
-
+        $data_store_for_deletion = $custom_orders_table_is_authoritative ? new \WC_Order_Data_Store_CPT() : wc_get_container()->get(Orders_Table_Data_Store::class);
         $order_ids_as_sql_list = '(' . implode(',', $batch) . ')';
-
-        $deleted_order_ids  = [];
+        $deleted_order_ids = [];
         $meta_ids_to_delete = [];
-
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $deletion_data = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT id, order_id FROM {$wpdb->prefix}wc_orders_meta WHERE meta_key=%s AND meta_value=%s AND order_id IN $order_ids_as_sql_list ORDER BY order_id DESC",
-                self::DELETED_RECORD_META_KEY,
-                $deleted_from_table_name
-            ),
-            ARRAY_A
-        );
+        $deletion_data = $wpdb->get_results($wpdb->prepare("SELECT id, order_id FROM {$wpdb->prefix}wc_orders_meta WHERE meta_key=%s AND meta_value=%s AND order_id IN {$order_ids_as_sql_list} ORDER BY order_id DESC", self::DELETED_RECORD_META_KEY, $deleted_from_table_name), ARRAY_A);
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-
         if (empty($deletion_data)) {
             return [];
         }
-
         foreach ($deletion_data as $item) {
-            $meta_id  = $item['id'];
+            $meta_id = $item['id'];
             $order_id = $item['order_id'];
-
-            if (isset($deleted_order_ids[ $order_id ])) {
+            if (isset($deleted_order_ids[$order_id])) {
                 $meta_ids_to_delete[] = $meta_id;
                 continue;
             }
-
-            if (! $data_store_for_deletion->order_exists($order_id)) {
+            if (!$data_store_for_deletion->order_exists($order_id)) {
                 $this->error_logger->warning("Order {$order_id} doesn't exist in the backup table, thus it can't be deleted");
-                $deleted_order_ids[]  = $order_id;
+                $deleted_order_ids[] = $order_id;
                 $meta_ids_to_delete[] = $meta_id;
                 continue;
             }
-
             try {
                 $order = new \WC_Order();
                 $order->set_id($order_id);
                 $data_store_for_deletion->read($order);
-
-                $data_store_for_deletion->delete(
-                    $order,
-                    [
-                        'force_delete'     => true,
-                        'suppress_filters' => true,
-                    ]
-                );
+                $data_store_for_deletion->delete($order, ['force_delete' => true, 'suppress_filters' => true]);
             } catch (\Exception $ex) {
-                $this->error_logger->error("Couldn't delete order {$order_id} from the backup table: {$ex->getMessage()}");
+                $this->error_logger->error("Couldn't delete order {$order_id} from the backup table: {$ex->get_message()}");
                 continue;
             }
-
-            $deleted_order_ids[]  = $order_id;
+            $deleted_order_ids[] = $order_id;
             $meta_ids_to_delete[] = $meta_id;
         }
-
-        if (! empty($meta_ids_to_delete)) {
+        if (!empty($meta_ids_to_delete)) {
             $order_id_rows_as_sql_list = '(' . implode(',', $meta_ids_to_delete) . ')';
             // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $wpdb->query("DELETE FROM {$wpdb->prefix}wc_orders_meta WHERE id IN {$order_id_rows_as_sql_list}");
         }
-
         return $deleted_order_ids;
     }
-
     /**
      * Get total number of pending records that require update.
      *
@@ -873,7 +637,6 @@ ORDER BY orders.id ASC
     {
         return $this->get_current_orders_pending_sync_count();
     }
-
     /**
      * Returns the batch with records that needs to be processed for a given size.
      *
@@ -884,30 +647,19 @@ ORDER BY orders.id ASC
     public function get_next_batch_to_process(int $size): array
     {
         $orders_table_is_authoritative = $this->custom_orders_table_is_authoritative();
-
-        $order_ids = $this->get_ids_of_orders_pending_sync(
-            $orders_table_is_authoritative ? self::ID_TYPE_MISSING_IN_POSTS_TABLE : self::ID_TYPE_MISSING_IN_ORDERS_TABLE,
-            $size
-        );
+        $order_ids = $this->get_ids_of_orders_pending_sync($orders_table_is_authoritative ? self::ID_TYPE_MISSING_IN_POSTS_TABLE : self::ID_TYPE_MISSING_IN_ORDERS_TABLE, $size);
         if (count($order_ids) >= $size) {
             return $order_ids;
         }
-
         $updated_order_ids = $this->get_ids_of_orders_pending_sync(self::ID_TYPE_DIFFERENT_UPDATE_DATE, $size - count($order_ids));
-        $order_ids         = array_merge($order_ids, $updated_order_ids);
+        $order_ids = array_merge($order_ids, $updated_order_ids);
         if (count($order_ids) >= $size) {
             return $order_ids;
         }
-
-        $deleted_order_ids = $this->get_ids_of_orders_pending_sync(
-            $orders_table_is_authoritative ? self::ID_TYPE_DELETED_FROM_ORDERS_TABLE : self::ID_TYPE_DELETED_FROM_POSTS_TABLE,
-            $size - count($order_ids)
-        );
-        $order_ids         = array_merge($order_ids, $deleted_order_ids);
-
+        $deleted_order_ids = $this->get_ids_of_orders_pending_sync($orders_table_is_authoritative ? self::ID_TYPE_DELETED_FROM_ORDERS_TABLE : self::ID_TYPE_DELETED_FROM_POSTS_TABLE, $size - count($order_ids));
+        $order_ids = array_merge($order_ids, $deleted_order_ids);
         return array_map(absint(...), $order_ids);
     }
-
     /**
      * Default batch size to use.
      *
@@ -916,7 +668,6 @@ ORDER BY orders.id ASC
     public function get_default_batch_size(): int
     {
         $batch_size = self::ORDERS_SYNC_BATCH_SIZE;
-
         if ($this->custom_orders_table_is_authoritative()) {
             // Back-filling is slower than migration.
             $batch_size = absint(self::ORDERS_SYNC_BATCH_SIZE / 10) + 1;
@@ -930,7 +681,6 @@ ORDER BY orders.id ASC
          */
         return apply_filters('woocommerce_orders_cot_and_posts_sync_step_size', $batch_size);
     }
-
     /**
      * A user friendly name for this process.
      *
@@ -940,7 +690,6 @@ ORDER BY orders.id ASC
     {
         return 'Order synchronizer';
     }
-
     /**
      * A user friendly description for this process.
      *
@@ -950,7 +699,6 @@ ORDER BY orders.id ASC
     {
         return 'Synchronizes orders between posts and custom order tables.';
     }
-
     /**
      * Prevents deletion of order backup posts (regardless of sync setting) when HPOS is authoritative and the order
      * still exists in HPOS.
@@ -970,10 +718,8 @@ ORDER BY orders.id ASC
         if (self::PLACEHOLDER_ORDER_POST_TYPE !== $post->post_type && $this->custom_orders_table_is_authoritative() && $this->data_store->order_exists($post->ID)) {
             return false;
         }
-
         return $delete;
     }
-
     /**
      * Handle the 'deleted_post' action.
      *
@@ -987,46 +733,24 @@ ORDER BY orders.id ASC
     public function handle_deleted_post($postid, $post): void
     {
         global $wpdb;
-
         $order_post_types = wc_get_order_types('cot-migration');
-        if (! in_array($post->post_type, $order_post_types, true)) {
+        if (!in_array($post->post_type, $order_post_types, true)) {
             return;
         }
-
-        if (! $this->get_table_exists()) {
+        if (!$this->get_table_exists()) {
             return;
         }
-
         if ($this->data_sync_is_enabled()) {
             $this->data_store->delete_order_data_from_custom_order_tables($postid);
         } elseif ($this->custom_orders_table_is_authoritative()) {
             return;
         }
-
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.SlowDBQuery
-        if ($wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT EXISTS (SELECT id FROM {$this->data_store::get_orders_table_name()} WHERE ID=%d)
-						AND NOT EXISTS (SELECT order_id FROM {$this->data_store::get_meta_table_name()} WHERE order_id=%d AND meta_key=%s AND meta_value=%s)",
-                $postid,
-                $postid,
-                self::DELETED_RECORD_META_KEY,
-                self::DELETED_FROM_POSTS_META_VALUE
-            )
-        )
-        ) {
-            $wpdb->insert(
-                $this->data_store::get_meta_table_name(),
-                [
-                    'order_id'   => $postid,
-                    'meta_key'   => self::DELETED_RECORD_META_KEY,
-                    'meta_value' => self::DELETED_FROM_POSTS_META_VALUE,
-                ]
-            );
+        if ($wpdb->get_var($wpdb->prepare("SELECT EXISTS (SELECT id FROM {$this->data_store::get_orders_table_name()} WHERE ID=%d)\n\t\t\t\t\t\tAND NOT EXISTS (SELECT order_id FROM {$this->data_store::get_meta_table_name()} WHERE order_id=%d AND meta_key=%s AND meta_value=%s)", $postid, $postid, self::DELETED_RECORD_META_KEY, self::DELETED_FROM_POSTS_META_VALUE))) {
+            $wpdb->insert($this->data_store::get_meta_table_name(), ['order_id' => $postid, 'meta_key' => self::DELETED_RECORD_META_KEY, 'meta_value' => self::DELETED_FROM_POSTS_META_VALUE]);
         }
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.SlowDBQuery
     }
-
     /**
      * Handle the 'woocommerce_update_order' action.
      *
@@ -1038,11 +762,10 @@ ORDER BY orders.id ASC
      */
     public function handle_updated_order($order_id): void
     {
-        if (! $this->custom_orders_table_is_authoritative() && $this->data_sync_is_enabled()) {
-            $this->posts_to_cot_migrator->migrate_orders([ $order_id ]);
+        if (!$this->custom_orders_table_is_authoritative() && $this->data_sync_is_enabled()) {
+            $this->posts_to_cot_migrator->migrate_orders([$order_id]);
         }
     }
-
     /**
      * Handles deletion of auto-draft orders in sync with WP's own auto-draft deletion.
      *
@@ -1053,29 +776,14 @@ ORDER BY orders.id ASC
      */
     public function delete_auto_draft_orders(): void
     {
-        if (! $this->custom_orders_table_is_authoritative()) {
+        if (!$this->custom_orders_table_is_authoritative()) {
             return;
         }
-
         // Fetch auto-draft orders older than 1 week.
-        $to_delete = wc_get_orders(
-            [
-                'date_query' => [
-                    [
-                        'column' => 'date_created',
-                        'before' => '-1 week',
-                    ],
-                ],
-                'orderby'    => 'date',
-                'order'      => 'ASC',
-                'status'     => 'auto-draft',
-            ]
-        );
-
+        $to_delete = wc_get_orders(['date_query' => [['column' => 'date_created', 'before' => '-1 week']], 'orderby' => 'date', 'order' => 'ASC', 'status' => 'auto-draft']);
         foreach ($to_delete as $order) {
             $order->delete(true);
         }
-
         /**
          * Fires after schedueld deletion of auto-draft orders has been completed.
          *
@@ -1083,7 +791,6 @@ ORDER BY orders.id ASC
          */
         do_action('woocommerce_scheduled_auto_draft_delete');
     }
-
     /**
      * Handles deletion of trashed orders after `EMPTY_TRASH_DAYS` as defined by WordPress.
      *
@@ -1094,27 +801,20 @@ ORDER BY orders.id ASC
      */
     public function delete_trashed_orders(): void
     {
-        if (! $this->custom_orders_table_is_authoritative()) {
+        if (!$this->custom_orders_table_is_authoritative()) {
             return;
         }
-
-        $delete_timestamp = $this->legacy_proxy->call_function('time') - (DAY_IN_SECONDS * EMPTY_TRASH_DAYS);
-        $args             = [
-            'status'        => 'trash',
-            'limit'         => self::ORDERS_SYNC_BATCH_SIZE,
-            'date_modified' => '<' . $delete_timestamp,
-        ];
-
+        $delete_timestamp = $this->legacy_proxy->call_function('time') - DAY_IN_SECONDS * EMPTY_TRASH_DAYS;
+        $args = ['status' => 'trash', 'limit' => self::ORDERS_SYNC_BATCH_SIZE, 'date_modified' => '<' . $delete_timestamp];
         $orders = wc_get_orders($args);
-        if (! $orders || ! is_array($orders)) {
+        if (!$orders || !is_array($orders)) {
             return;
         }
-
         foreach ($orders as $order) {
             if ($order->get_status() !== 'trash') {
                 continue;
             }
-            if ($order->get_date_modified()->getTimestamp() >= $delete_timestamp) {
+            if ($order->get_date_modified()->get_timestamp() >= $delete_timestamp) {
                 continue;
             }
             $order->delete(true);

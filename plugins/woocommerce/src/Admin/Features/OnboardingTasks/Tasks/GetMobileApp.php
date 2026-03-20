@@ -1,16 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Tasks;
 
 use Automattic\Jetpack\Connection\Manager;
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task; // https://github.com/Automattic/jetpack/blob/trunk/projects/packages/connection/src/class-manager.php .
-
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task;
+// https://github.com/Automattic/jetpack/blob/trunk/projects/packages/connection/src/class-manager.php .
 /**
  * Get Mobile App Task
  */
-class GetMobileApp extends Task
+class Get_Mobile_App extends Task
 {
     /**
      * ID.
@@ -19,7 +18,6 @@ class GetMobileApp extends Task
     {
         return 'get-mobile-app';
     }
-
     /**
      * Title.
      *
@@ -29,7 +27,6 @@ class GetMobileApp extends Task
     {
         return __('Get the free WooCommerce mobile app', 'woocommerce');
     }
-
     /**
      * Content.
      */
@@ -37,7 +34,6 @@ class GetMobileApp extends Task
     {
         return '';
     }
-
     /**
      * Time.
      */
@@ -45,7 +41,6 @@ class GetMobileApp extends Task
     {
         return '';
     }
-
     /**
      * Task completion.
      */
@@ -53,7 +48,6 @@ class GetMobileApp extends Task
     {
         return get_option('woocommerce_admin_dismissed_mobile_app_modal') === 'yes';
     }
-
     /**
      * Task visibility.
      * Can view under these conditions:
@@ -62,12 +56,10 @@ class GetMobileApp extends Task
      */
     public function can_view(): bool
     {
-        $jetpack_can_be_installed                        = current_user_can('manage_woocommerce') && current_user_can('install_plugins') && ! self::is_jetpack_connected();
+        $jetpack_can_be_installed = current_user_can('manage_woocommerce') && current_user_can('install_plugins') && !self::is_jetpack_connected();
         $jetpack_is_installed_and_current_user_connected = self::is_current_user_connected();
-
         return $jetpack_can_be_installed || $jetpack_is_installed_and_current_user_connected;
     }
-
     /**
      * Determines if site has any users connected to WordPress.com via JetPack
      *
@@ -81,7 +73,6 @@ class GetMobileApp extends Task
         }
         return false;
     }
-
     /**
      * Determines if the current user is connected to Jetpack.
      *
@@ -95,7 +86,6 @@ class GetMobileApp extends Task
         }
         return false;
     }
-
     /**
      * Action URL.
      *

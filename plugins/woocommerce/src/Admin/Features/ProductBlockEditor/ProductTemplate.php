@@ -1,11 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Product Block Editor
  */
-
-namespace Automattic\WooCommerce\Admin\Features\ProductBlockEditor;
+namespace Automattic\Woo_Commerce\Admin\Features\Product_Block_Editor;
 
 /**
  * The Product Template that represents the relation between the Product and
@@ -13,7 +12,7 @@ namespace Automattic\WooCommerce\Admin\Features\ProductBlockEditor;
  *
  * @see ProductFormTemplateInterface
  */
-class ProductTemplate
+class Product_Template
 {
     /**
      * The template id.
@@ -21,56 +20,48 @@ class ProductTemplate
      * @var string
      */
     private $id;
-
     /**
      * The template title.
      *
      * @var string
      */
     private $title;
-
     /**
      * The product data.
      *
      * @var array
      */
     private $product_data;
-
     /**
      * The template order.
      *
      * @var Integer
      */
     private $order = 999;
-
     /**
      * The layout template id.
      *
      * @var string
      */
     private $layout_template_id;
-
     /**
      * The template description.
      *
      * @var string
      */
     private $description;
-
     /**
      * The template icon.
      *
      * @var string
      */
     private $icon;
-
     /**
      * If the template is directly selectable through the UI.
      *
      * @var boolean
      */
     private $is_selectable_by_user = true;
-
     /**
      * ProductTemplate constructor
      *
@@ -78,31 +69,25 @@ class ProductTemplate
      */
     public function __construct(array $data)
     {
-        $this->id           = $data['id'];
-        $this->title        = $data['title'];
+        $this->id = $data['id'];
+        $this->title = $data['title'];
         $this->product_data = $data['product_data'];
-
         if (isset($data['order'])) {
             $this->order = $data['order'];
         }
-
         if (isset($data['layout_template_id'])) {
             $this->layout_template_id = $data['layout_template_id'];
         }
-
         if (isset($data['description'])) {
             $this->description = $data['description'];
         }
-
         if (isset($data['icon'])) {
             $this->icon = $data['icon'];
         }
-
         if (isset($data['is_selectable_by_user'])) {
             $this->is_selectable_by_user = $data['is_selectable_by_user'];
         }
     }
-
     /**
      * Get the template ID.
      *
@@ -112,7 +97,6 @@ class ProductTemplate
     {
         return $this->id;
     }
-
     /**
      * Get the template title.
      *
@@ -122,7 +106,6 @@ class ProductTemplate
     {
         return $this->title;
     }
-
     /**
      * Get the layout template ID.
      *
@@ -132,7 +115,6 @@ class ProductTemplate
     {
         return $this->layout_template_id;
     }
-
     /**
      * Set the layout template ID.
      *
@@ -142,7 +124,6 @@ class ProductTemplate
     {
         $this->layout_template_id = $layout_template_id;
     }
-
     /**
      * Get the product data.
      *
@@ -152,7 +133,6 @@ class ProductTemplate
     {
         return $this->product_data;
     }
-
     /**
      * Get the template description.
      *
@@ -162,7 +142,6 @@ class ProductTemplate
     {
         return $this->description;
     }
-
     /**
      * Set the template description.
      *
@@ -172,7 +151,6 @@ class ProductTemplate
     {
         $this->description = $description;
     }
-
     /**
      * Get the template icon.
      *
@@ -182,7 +160,6 @@ class ProductTemplate
     {
         return $this->icon;
     }
-
     /**
      * Set the template icon.
      *
@@ -194,7 +171,6 @@ class ProductTemplate
     {
         $this->icon = $icon;
     }
-
     /**
      * Get the template order.
      *
@@ -204,7 +180,6 @@ class ProductTemplate
     {
         return $this->order;
     }
-
     /**
      * Get the selectable attribute.
      *
@@ -214,7 +189,6 @@ class ProductTemplate
     {
         return $this->is_selectable_by_user;
     }
-
     /**
      * Set the template order.
      *
@@ -224,7 +198,6 @@ class ProductTemplate
     {
         $this->order = $order;
     }
-
     /**
      * Get the product template as JSON like.
      *
@@ -232,15 +205,6 @@ class ProductTemplate
      */
     public function to_json(): array
     {
-        return [
-            'id'                 => $this->get_id(),
-            'title'              => $this->get_title(),
-            'description'        => $this->get_description(),
-            'icon'               => $this->get_icon(),
-            'order'              => $this->get_order(),
-            'layoutTemplateId'   => $this->get_layout_template_id(),
-            'productData'        => $this->get_product_data(),
-            'isSelectableByUser' => $this->get_is_selectable_by_user(),
-        ];
+        return ['id' => $this->get_id(), 'title' => $this->get_title(), 'description' => $this->get_description(), 'icon' => $this->get_icon(), 'order' => $this->get_order(), 'layoutTemplateId' => $this->get_layout_template_id(), 'productData' => $this->get_product_data(), 'isSelectableByUser' => $this->get_is_selectable_by_user()];
     }
 }

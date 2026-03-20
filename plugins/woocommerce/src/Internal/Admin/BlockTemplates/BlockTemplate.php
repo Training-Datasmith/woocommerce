@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Block_Templates;
 
-namespace Automattic\WooCommerce\Internal\Admin\BlockTemplates;
-
-use Automattic\WooCommerce\Admin\BlockTemplates\BlockInterface;
-
+use Automattic\Woo_Commerce\Admin\Block_Templates\Block_Interface;
 /**
  * Block template class.
  */
-class BlockTemplate extends AbstractBlockTemplate
+class Block_Template extends Abstract_Block_Template
 {
     /**
      * Get the template ID.
@@ -18,13 +16,12 @@ class BlockTemplate extends AbstractBlockTemplate
     {
         return 'woocommerce-block-template';
     }
-
     /**
      * Add an inner block to this template.
      *
      * @param array $block_config The block data.
      */
-    public function add_block(array $block_config): BlockInterface
+    public function add_block(array $block_config): Block_Interface
     {
         $block = new Block($block_config, $this->get_root_template(), $this);
         return $this->add_inner_block($block);

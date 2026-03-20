@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\API\Reports;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\API\Reports;
 
 // Exit if accessed directly.
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit;
 }
-
 /**
  * Trait to contain *stats-specific methods for data stores.
  *
@@ -64,7 +62,7 @@ if (! defined('ABSPATH')) {
  *
  * @see DataStore
  */
-trait StatsDataStoreTrait
+trait Stats_Data_Store_Trait
 {
     /**
      * Initialize query objects.
@@ -74,15 +72,12 @@ trait StatsDataStoreTrait
         $this->clear_all_clauses();
         unset($this->subquery);
         $table_name = self::get_db_table_name();
-
-        $this->total_query = new SqlQuery($this->context . '_total');
+        $this->total_query = new Sql_Query($this->context . '_total');
         $this->total_query->add_sql_clause('from', $table_name);
-
-        $this->interval_query = new SqlQuery($this->context . '_interval');
+        $this->interval_query = new Sql_Query($this->context . '_interval');
         $this->interval_query->add_sql_clause('from', $table_name);
         $this->interval_query->add_sql_clause('group_by', 'time_interval');
     }
-
     /**
      * Returns the stats report data based on normalized parameters.
      * Prepares the basic intervals and object structure
@@ -95,28 +90,19 @@ trait StatsDataStoreTrait
      */
     public function get_noncached_data(array $query_args)
     {
-        $params                  = $this->get_limit_params($query_args);
-        $expected_interval_count = TimeInterval::intervals_between($query_args['after'], $query_args['before'], $query_args['interval']);
-        $total_pages             = (int) ceil($expected_interval_count / $params['per_page']);
-
+        $params = $this->get_limit_params($query_args);
+        $expected_interval_count = Time_Interval::intervals_between($query_args['after'], $query_args['before'], $query_args['interval']);
+        $total_pages = (int) ceil($expected_interval_count / $params['per_page']);
         // Default, empty data object.
-        $data = (object) [
-            'totals'    => null,
-            'intervals' => [],
-            'total'     => $expected_interval_count,
-            'pages'     => $total_pages,
-            'page_no'   => (int) $query_args['page'],
-        ];
+        $data = (object) ['totals' => null, 'intervals' => [], 'total' => $expected_interval_count, 'pages' => $total_pages, 'page_no' => (int) $query_args['page']];
         // If the requested page is out off range, return the default empty object.
         if ($query_args['page'] >= 1 && $query_args['page'] <= $total_pages) {
             // Fetch the actual data.
             $data = $this->get_noncached_stats_data($query_args, $params, $data, $expected_interval_count);
-
-            if (! is_wp_error($data) && is_array($data->intervals)) {
+            if (!is_wp_error($data) && is_array($data->intervals)) {
                 $this->create_interval_subtotals($data->intervals);
             }
         }
-
         return $data;
     }
 }

@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Tasks;
 
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
-
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
-
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task;
 /**
  * Store Details Task
  */
-class StoreCreation extends Task
+class Store_Creation extends Task
 {
     /**
      * ID.
@@ -18,7 +16,6 @@ class StoreCreation extends Task
     {
         return 'store_creation';
     }
-
     /**
      * Title.
      */
@@ -27,7 +24,6 @@ class StoreCreation extends Task
         /* translators: Store name */
         return sprintf(__('You created %s', 'woocommerce'), get_bloginfo('name'));
     }
-
     /**
      * Content.
      */
@@ -35,7 +31,6 @@ class StoreCreation extends Task
     {
         return '';
     }
-
     /**
      * Time.
      */
@@ -43,7 +38,6 @@ class StoreCreation extends Task
     {
         return '';
     }
-
     /**
      * Time.
      */
@@ -51,7 +45,6 @@ class StoreCreation extends Task
     {
         return '';
     }
-
     /**
      * Task completion.
      */
@@ -59,7 +52,6 @@ class StoreCreation extends Task
     {
         return true;
     }
-
     /**
      * Check if task is disabled.
      */

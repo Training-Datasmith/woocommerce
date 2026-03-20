@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Enums\ProductStockStatus;
-
+use Automattic\Woo_Commerce\Enums\Product_Stock_Status;
 /**
  * HandpickedProducts class.
  */
-class HandpickedProducts extends AbstractProductGrid
+class Handpicked_Products extends Abstract_Product_Grid
 {
     /**
      * Block name.
@@ -17,7 +15,6 @@ class HandpickedProducts extends AbstractProductGrid
      * @var string
      */
     protected $block_name = 'handpicked-products';
-
     /**
      * Set args specific to this block
      *
@@ -26,11 +23,10 @@ class HandpickedProducts extends AbstractProductGrid
     protected function set_block_query_args(&$query_args)
     {
         $ids = array_map(absint(...), $this->attributes['products']);
-
-        $query_args['post__in']       = $ids;
-        $query_args['posts_per_page'] = count($ids); // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page
+        $query_args['post__in'] = $ids;
+        $query_args['posts_per_page'] = count($ids);
+        // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page
     }
-
     /**
      * Set visibility query args. Handpicked products will show hidden products if chosen.
      *
@@ -39,30 +35,15 @@ class HandpickedProducts extends AbstractProductGrid
     protected function set_visibility_query_args(&$query_args)
     {
         if ('yes' === get_option('woocommerce_hide_out_of_stock_items')) {
-            $product_visibility_terms  = wc_get_product_visibility_term_ids();
-            $query_args['tax_query'][] = [
-                'taxonomy' => 'product_visibility',
-                'field'    => 'term_taxonomy_id',
-                'terms'    => [ $product_visibility_terms[ ProductStockStatus::OUT_OF_STOCK ] ],
-                'operator' => 'NOT IN',
-            ];
+            $product_visibility_terms = wc_get_product_visibility_term_ids();
+            $query_args['tax_query'][] = ['taxonomy' => 'product_visibility', 'field' => 'term_taxonomy_id', 'terms' => [$product_visibility_terms[Product_Stock_Status::OUT_OF_STOCK]], 'operator' => 'NOT IN'];
         }
     }
-
     /**
      * Get block attributes.
      */
     protected function get_block_type_attributes(): array
     {
-        return [
-            'align'             => $this->get_schema_align(),
-            'alignButtons'      => $this->get_schema_boolean(false),
-            'className'         => $this->get_schema_string(),
-            'columns'           => $this->get_schema_number(wc_get_theme_support('product_blocks::default_columns', 3)),
-            'orderby'           => $this->get_schema_orderby(),
-            'products'          => $this->get_schema_list_ids(),
-            'contentVisibility' => $this->get_schema_content_visibility(),
-            'isPreview'         => $this->get_schema_boolean(false),
-        ];
+        return ['align' => $this->get_schema_align(), 'alignButtons' => $this->get_schema_boolean(false), 'className' => $this->get_schema_string(), 'columns' => $this->get_schema_number(wc_get_theme_support('product_blocks::default_columns', 3)), 'orderby' => $this->get_schema_orderby(), 'products' => $this->get_schema_list_ids(), 'contentVisibility' => $this->get_schema_content_visibility(), 'isPreview' => $this->get_schema_boolean(false)];
     }
 }

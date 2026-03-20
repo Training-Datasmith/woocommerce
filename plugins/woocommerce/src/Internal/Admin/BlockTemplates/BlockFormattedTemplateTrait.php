@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Admin\BlockTemplates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Block_Templates;
 
 /**
  * Trait for block formatted template.
  */
-trait BlockFormattedTemplateTrait
+trait Block_Formatted_Template_Trait
 {
     /**
      * Get the block configuration as a formatted template.
@@ -16,24 +15,8 @@ trait BlockFormattedTemplateTrait
      */
     public function get_formatted_template(): array
     {
-        return [
-            $this->get_name(),
-            array_merge(
-                $this->get_attributes(),
-                [
-                    '_templateBlockId'    => $this->get_id(),
-                    '_templateBlockOrder' => $this->get_order(),
-                ],
-                ! empty($this->get_hide_conditions()) ? [
-                    '_templateBlockHideConditions' => $this->get_formatted_hide_conditions(),
-                ] : [],
-                ! empty($this->get_disable_conditions()) ? [
-                    '_templateBlockDisableConditions' => $this->get_formatted_disable_conditions(),
-                ] : [],
-            ),
-        ];
+        return [$this->get_name(), array_merge($this->get_attributes(), ['_templateBlockId' => $this->get_id(), '_templateBlockOrder' => $this->get_order()], !empty($this->get_hide_conditions()) ? ['_templateBlockHideConditions' => $this->get_formatted_hide_conditions()] : [], !empty($this->get_disable_conditions()) ? ['_templateBlockDisableConditions' => $this->get_formatted_disable_conditions()] : [])];
     }
-
     /**
      * Get the block hide conditions formatted for inclusion in a formatted template.
      */
@@ -41,7 +24,6 @@ trait BlockFormattedTemplateTrait
     {
         return $this->format_conditions($this->get_hide_conditions());
     }
-
     /**
      * Get the block disable conditions formatted for inclusion in a formatted template.
      */
@@ -49,7 +31,6 @@ trait BlockFormattedTemplateTrait
     {
         return $this->format_conditions($this->get_disable_conditions());
     }
-
     /**
      * Formats conditions in the expected format to include in the template.
      *
@@ -57,11 +38,6 @@ trait BlockFormattedTemplateTrait
      */
     private function format_conditions($conditions): array
     {
-        return array_map(
-            fn (array $condition) => [
-                    'expression' => $condition['expression'],
-                ],
-            array_values($conditions)
-        );
+        return array_map(fn(array $condition) => ['expression' => $condition['expression']], array_values($conditions));
     }
 }

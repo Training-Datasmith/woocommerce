@@ -1,24 +1,21 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * API\Reports\Coupons\DataStore class file.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports\Coupons;
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Coupons;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\Cache as ReportsCache;
-use Automattic\WooCommerce\Admin\API\Reports\DataStore as ReportsDataStore;
-use Automattic\WooCommerce\Admin\API\Reports\DataStoreInterface;
-use Automattic\WooCommerce\Admin\API\Reports\SqlQuery;
-use Automattic\WooCommerce\Admin\API\Reports\TimeInterval;
-
+use Automattic\Woo_Commerce\Admin\API\Reports\Cache as ReportsCache;
+use Automattic\Woo_Commerce\Admin\API\Reports\Data_Store as ReportsDataStore;
+use Automattic\Woo_Commerce\Admin\API\Reports\Data_Store_Interface;
+use Automattic\Woo_Commerce\Admin\API\Reports\Sql_Query;
+use Automattic\Woo_Commerce\Admin\API\Reports\Time_Interval;
 /**
  * API\Reports\Coupons\DataStore.
  */
-class DataStore extends ReportsDataStore implements DataStoreInterface
+class Data_Store extends Reports_Data_Store implements Data_Store_Interface
 {
     /**
      * Table used to get the data.
@@ -28,7 +25,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      * @var string
      */
     protected static $table_name = 'wc_order_coupon_lookup';
-
     /**
      * Cache identifier.
      *
@@ -37,7 +33,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      * @var string
      */
     protected $cache_key = 'coupons';
-
     /**
      * Mapping columns to data type to return correct response types.
      *
@@ -45,12 +40,7 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      *
      * @var array
      */
-    protected $column_types = [
-        'coupon_id'    => 'intval',
-        'amount'       => 'floatval',
-        'orders_count' => 'intval',
-    ];
-
+    protected $column_types = ['coupon_id' => 'intval', 'amount' => 'floatval', 'orders_count' => 'intval'];
     /**
      * Data store context used to pass to filters.
      *
@@ -59,7 +49,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      * @var string
      */
     protected $context = 'coupons';
-
     /**
      * Assign report columns once full table name has been assigned.
      *
@@ -67,17 +56,11 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      */
     protected function assign_report_columns()
     {
-        $table_name           = self::get_db_table_name();
-        $this->report_columns = [
-            'coupon_id'    => 'coupon_id',
-            'amount'       => 'SUM(discount_amount) as amount',
-            'orders_count' => "COUNT(DISTINCT {$table_name}.order_id) as orders_count",
-        ];
+        $table_name = self::get_db_table_name();
+        $this->report_columns = ['coupon_id' => 'coupon_id', 'amount' => 'SUM(discount_amount) as amount', 'orders_count' => "COUNT(DISTINCT {$table_name}.order_id) as orders_count"];
     }
-
     // This method was already available as non-final, marking it as final now would make it backwards-incompatible.
     // phpcs:disable WooCommerce.Functions.InternalInjectionMethod.MissingFinal
-
     /**
      * Set up all the hooks for maintaining and populating table data.
      *
@@ -87,7 +70,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
     {
         add_action('woocommerce_analytics_delete_order_stats', self::sync_on_order_delete(...), 5);
     }
-
     // phpcs:enable WooCommerce.Functions.InternalInjectionMethod.MissingFinal
     /**
      * Returns an array of ids of included coupons, based on query arguments from the user.
@@ -101,7 +83,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
         }
         return [];
     }
-
     /**
      * Updates the database query with parameters used for Products report: categories and order status.
      *
@@ -111,22 +92,17 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
     {
         global $wpdb;
         $order_coupon_lookup_table = self::get_db_table_name();
-
         $this->add_time_period_sql_params($query_args, $order_coupon_lookup_table);
         $this->get_limit_sql_params($query_args);
-
         $included_coupons = $this->get_included_coupons($query_args, 'coupons');
         if ($included_coupons) {
             $this->subquery->add_sql_clause('where', "AND {$order_coupon_lookup_table}.coupon_id IN ({$included_coupons})");
-
             $this->add_order_by_params($query_args, 'outer', 'default_results.coupon_id');
         } else {
             $this->add_order_by_params($query_args, 'inner', "{$order_coupon_lookup_table}.coupon_id");
         }
-
         $this->add_order_status_clause($query_args, $order_coupon_lookup_table, $this->subquery);
     }
-
     /**
      * Fills ORDER BY clause of SQL request based on user supplied parameters.
      *
@@ -137,16 +113,13 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
     protected function add_order_by_params($query_args, $from_arg, $id_cell)
     {
         global $wpdb;
-
         // Sanitize input: guarantee that the id cell in the join is quoted with backticks.
-        $id_cell_segments   = explode('.', str_replace('`', '', $id_cell));
+        $id_cell_segments = explode('.', str_replace('`', '', $id_cell));
         $id_cell_identifier = '`' . implode('`.`', $id_cell_segments) . '`';
-
         self::get_db_table_name();
         $order_by_clause = $this->add_order_by_clause($query_args, $this);
-        $join            = "JOIN {$wpdb->posts} AS _coupons ON {$id_cell_identifier} = _coupons.ID";
+        $join = "JOIN {$wpdb->posts} AS _coupons ON {$id_cell_identifier} = _coupons.ID";
         $this->add_orderby_order_clause($query_args, $this);
-
         if ('inner' === $from_arg) {
             $this->subquery->clear_sql_clause('join');
             if (str_contains($order_by_clause, '_coupons')) {
@@ -159,7 +132,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
             }
         }
     }
-
     /**
      * Maps ordering specified by the user to columns in the database/fields in the data.
      *
@@ -178,7 +150,6 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
         }
         return $order_by;
     }
-
     /**
      * Enriches the coupon data with extra attributes.
      *
@@ -191,57 +162,38 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
             $extended_info = new \ArrayObject();
             if ($query_args['extended_info']) {
                 $coupon_id = $coupon_datum['coupon_id'];
-                $coupon    = new \WC_Coupon($coupon_id);
-
+                $coupon = new \WC_Coupon($coupon_id);
                 if (0 === $coupon->get_id()) {
                     // Deleted or otherwise invalid coupon.
-                    $extended_info = [
-                        'code'             => __('(Deleted)', 'woocommerce'),
-                        'date_created'     => '',
-                        'date_created_gmt' => '',
-                        'date_expires'     => '',
-                        'date_expires_gmt' => '',
-                        'discount_type'    => __('N/A', 'woocommerce'),
-                    ];
+                    $extended_info = ['code' => __('(Deleted)', 'woocommerce'), 'date_created' => '', 'date_created_gmt' => '', 'date_expires' => '', 'date_expires_gmt' => '', 'discount_type' => __('N/A', 'woocommerce')];
                 } else {
                     $gmt_timzone = new \DateTimeZone('UTC');
-
                     $date_expires = $coupon->get_date_expires();
                     if (is_a($date_expires, 'DateTime')) {
-                        $date_expires     = $date_expires->format(TimeInterval::$iso_datetime_format);
+                        $date_expires = $date_expires->format(Time_Interval::$iso_datetime_format);
                         $date_expires_gmt = new \DateTime($date_expires);
-                        $date_expires_gmt->setTimezone($gmt_timzone);
-                        $date_expires_gmt = $date_expires_gmt->format(TimeInterval::$iso_datetime_format);
+                        $date_expires_gmt->set_timezone($gmt_timzone);
+                        $date_expires_gmt = $date_expires_gmt->format(Time_Interval::$iso_datetime_format);
                     } else {
-                        $date_expires     = '';
+                        $date_expires = '';
                         $date_expires_gmt = '';
                     }
-
                     $date_created = $coupon->get_date_created();
                     if (is_a($date_created, 'DateTime')) {
-                        $date_created     = $date_created->format(TimeInterval::$iso_datetime_format);
+                        $date_created = $date_created->format(Time_Interval::$iso_datetime_format);
                         $date_created_gmt = new \DateTime($date_created);
-                        $date_created_gmt->setTimezone($gmt_timzone);
-                        $date_created_gmt = $date_created_gmt->format(TimeInterval::$iso_datetime_format);
+                        $date_created_gmt->set_timezone($gmt_timzone);
+                        $date_created_gmt = $date_created_gmt->format(Time_Interval::$iso_datetime_format);
                     } else {
-                        $date_created     = '';
+                        $date_created = '';
                         $date_created_gmt = '';
                     }
-
-                    $extended_info = [
-                        'code'             => $coupon->get_code(),
-                        'date_created'     => $date_created,
-                        'date_created_gmt' => $date_created_gmt,
-                        'date_expires'     => $date_expires,
-                        'date_expires_gmt' => $date_expires_gmt,
-                        'discount_type'    => $coupon->get_discount_type(),
-                    ];
+                    $extended_info = ['code' => $coupon->get_code(), 'date_created' => $date_created, 'date_created_gmt' => $date_created_gmt, 'date_expires' => $date_expires, 'date_expires_gmt' => $date_expires_gmt, 'discount_type' => $coupon->get_discount_type()];
                 }
             }
-            $coupon_data[ $idx ]['extended_info'] = $extended_info;
+            $coupon_data[$idx]['extended_info'] = $extended_info;
         }
     }
-
     /**
      * Get coupon ID for an order.
      *
@@ -257,13 +209,10 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
         if ($coupon_info) {
             return json_decode((string) $coupon_info, true)[0];
         }
-
         $coupon_data = $coupon_item->get_meta('coupon_data', true);
-
         // Try to get the coupon ID using the code.
         return $coupon_data['id'] ?? wc_get_coupon_id_by_code($coupon_item->get_code());
     }
-
     /**
      * Get the default query arguments to be used by get_data().
      * These defaults are only partially applied when used via REST API, as that has its own defaults.
@@ -274,14 +223,12 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      */
     public function get_default_query_vars()
     {
-        $defaults                  = parent::get_default_query_vars();
-        $defaults['orderby']       = 'coupon_id';
-        $defaults['coupons']       = [];
+        $defaults = parent::get_default_query_vars();
+        $defaults['orderby'] = 'coupon_id';
+        $defaults['coupons'] = [];
         $defaults['extended_info'] = false;
-
         return $defaults;
     }
-
     /**
      * Returns the report data based on normalized parameters.
      * Will be called by `get_data` if there is no data in cache.
@@ -295,88 +242,55 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
     public function get_noncached_data($query_args)
     {
         global $wpdb;
-
         $table_name = self::get_db_table_name();
-
         $this->initialize_queries();
-
-        $data = (object) [
-            'data'    => [],
-            'total'   => 0,
-            'pages'   => 0,
-            'page_no' => 0,
-        ];
-
-        $selections       = $this->selected_columns($query_args);
+        $data = (object) ['data' => [], 'total' => 0, 'pages' => 0, 'page_no' => 0];
+        $selections = $this->selected_columns($query_args);
         $included_coupons = $this->get_included_coupons_array($query_args);
-        $limit_params     = $this->get_limit_params($query_args);
+        $limit_params = $this->get_limit_params($query_args);
         $this->subquery->add_sql_clause('select', $selections);
         $this->add_sql_query_params($query_args);
-
         if (count($included_coupons) > 0) {
             $total_results = count($included_coupons);
-            $total_pages   = (int) ceil($total_results / $limit_params['per_page']);
-
-            $fields    = $this->get_fields($query_args);
+            $total_pages = (int) ceil($total_results / $limit_params['per_page']);
+            $fields = $this->get_fields($query_args);
             $ids_table = $this->get_ids_table($included_coupons, 'coupon_id');
-
-            $this->add_sql_clause('select', $this->format_join_selections($fields, [ 'coupon_id' ]));
+            $this->add_sql_clause('select', $this->format_join_selections($fields, ['coupon_id']));
             $this->add_sql_clause('from', '(');
             $this->add_sql_clause('from', $this->subquery->get_query_statement());
             $this->add_sql_clause('from', ") AS {$table_name}");
-            $this->add_sql_clause(
-                'right_join',
-                "RIGHT JOIN ( {$ids_table} ) AS default_results
-				ON default_results.coupon_id = {$table_name}.coupon_id"
-            );
-
+            $this->add_sql_clause('right_join', "RIGHT JOIN ( {$ids_table} ) AS default_results\n\t\t\t\tON default_results.coupon_id = {$table_name}.coupon_id");
             $coupons_query = $this->get_query_statement();
         } else {
-            if (in_array($query_args['orderby'], [ 'amount', 'orders_count' ], true)) {
+            if (in_array($query_args['orderby'], ['amount', 'orders_count'], true)) {
                 $this->subquery->add_sql_clause('order_by', $this->get_sql_clause('order_by') . ', coupon_id');
             } else {
                 $this->subquery->add_sql_clause('order_by', $this->get_sql_clause('order_by'));
             }
             $this->subquery->add_sql_clause('limit', $this->get_sql_clause('limit'));
             $coupons_query = $this->subquery->get_query_statement();
-
-            $this->subquery->clear_sql_clause([ 'select', 'order_by', 'limit' ]);
+            $this->subquery->clear_sql_clause(['select', 'order_by', 'limit']);
             $this->subquery->add_sql_clause('select', 'coupon_id');
-            $coupon_subquery = "SELECT COUNT(*) FROM (
-				{$this->subquery->get_query_statement()}
-			) AS tt";
-
-            $db_records_count = (int) $wpdb->get_var(
-                $coupon_subquery // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-            );
-
+            $coupon_subquery = "SELECT COUNT(*) FROM (\n\t\t\t\t{$this->subquery->get_query_statement()}\n\t\t\t) AS tt";
+            $db_records_count = (int) $wpdb->get_var($coupon_subquery);
             $total_results = $db_records_count;
-            $total_pages   = (int) ceil($db_records_count / $limit_params['per_page']);
+            $total_pages = (int) ceil($db_records_count / $limit_params['per_page']);
             if ($query_args['page'] < 1 || $query_args['page'] > $total_pages) {
                 return $data;
             }
         }
-
         $coupon_data = $wpdb->get_results(
-            $coupons_query, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $coupons_query,
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             ARRAY_A
         );
         if (null === $coupon_data) {
             return $data;
         }
-
         $this->include_extended_info($coupon_data, $query_args);
-
         $coupon_data = array_map($this->cast_numbers(...), $coupon_data);
-
-        return (object) [
-            'data'    => $coupon_data,
-            'total'   => $total_results,
-            'pages'   => $total_pages,
-            'page_no' => (int) $query_args['page'],
-        ];
+        return (object) ['data' => $coupon_data, 'total' => $total_results, 'pages' => $total_pages, 'page_no' => (int) $query_args['page']];
     }
-
     /**
      * Create or update an an entry in the wc_order_coupon_lookup table for an order.
      *
@@ -387,58 +301,34 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
     public static function sync_order_coupons($order_id): int|bool
     {
         global $wpdb;
-
         $order = wc_get_order($order_id);
-
-        if (! $order) {
+        if (!$order) {
             return -1;
         }
-
         // Refunds don't affect coupon stats so return successfully if one is called here.
         if ('shop_order_refund' === $order->get_type()) {
             return true;
         }
-
-        $table_name     = self::get_db_table_name();
-        $existing_items = $wpdb->get_col(
-            $wpdb->prepare(
-                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-                "SELECT coupon_id FROM {$table_name} WHERE order_id = %d",
-                $order_id
-            )
-        );
-        $existing_items     = array_flip($existing_items);
-        $coupon_items       = $order->get_items('coupon');
+        $table_name = self::get_db_table_name();
+        $existing_items = $wpdb->get_col($wpdb->prepare(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            "SELECT coupon_id FROM {$table_name} WHERE order_id = %d",
+            $order_id
+        ));
+        $existing_items = array_flip($existing_items);
+        $coupon_items = $order->get_items('coupon');
         $coupon_items_count = count($coupon_items);
-        $num_updated        = 0;
-        $num_deleted        = 0;
-
+        $num_updated = 0;
+        $num_deleted = 0;
         foreach ($coupon_items as $coupon_item) {
             $coupon_id = self::get_coupon_id($coupon_item);
-            unset($existing_items[ $coupon_id ]);
-
-            if (! $coupon_id) {
+            unset($existing_items[$coupon_id]);
+            if (!$coupon_id) {
                 // Insert a unique, but obviously invalid ID for this deleted coupon.
                 ++$num_deleted;
                 $coupon_id = -1 * $num_deleted;
             }
-
-            $result = $wpdb->replace(
-                self::get_db_table_name(),
-                [
-                    'order_id'        => $order_id,
-                    'coupon_id'       => $coupon_id,
-                    'discount_amount' => $coupon_item->get_discount(),
-                    'date_created'    => $order->get_date_created('edit')->date(TimeInterval::$sql_datetime_format),
-                ],
-                [
-                    '%d',
-                    '%d',
-                    '%f',
-                    '%s',
-                ]
-            );
-
+            $result = $wpdb->replace(self::get_db_table_name(), ['order_id' => $order_id, 'coupon_id' => $coupon_id, 'discount_amount' => $coupon_item->get_discount(), 'date_created' => $order->get_date_created('edit')->date(Time_Interval::$sql_datetime_format)], ['%d', '%d', '%f', '%s']);
             /**
              * Fires when coupon's reports are updated.
              *
@@ -446,28 +336,22 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
              * @param int $order_id  Order ID.
              */
             do_action('woocommerce_analytics_update_coupon', $coupon_id, $order_id);
-
             // Sum the rows affected. Using REPLACE can affect 2 rows if the row already exists.
             $num_updated += 2 === intval($result) ? 1 : intval($result);
         }
-
-        if (! empty($existing_items)) {
+        if (!empty($existing_items)) {
             $existing_items = array_flip($existing_items);
-            $format         = array_fill(0, count($existing_items), '%d');
-            $format         = implode(',', $format);
+            $format = array_fill(0, count($existing_items), '%d');
+            $format = implode(',', $format);
             array_unshift($existing_items, $order_id);
-            $wpdb->query(
-                $wpdb->prepare(
-                    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-                    "DELETE FROM {$table_name} WHERE order_id = %d AND coupon_id in ({$format})",
-                    $existing_items
-                )
-            );
+            $wpdb->query($wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                "DELETE FROM {$table_name} WHERE order_id = %d AND coupon_id in ({$format})",
+                $existing_items
+            ));
         }
-
-        return ($coupon_items_count === $num_updated);
+        return $coupon_items_count === $num_updated;
     }
-
     /**
      * Clean coupons data when an order is deleted.
      *
@@ -476,8 +360,7 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
     public static function sync_on_order_delete($order_id): void
     {
         global $wpdb;
-
-        $wpdb->delete(self::get_db_table_name(), [ 'order_id' => $order_id ]);
+        $wpdb->delete(self::get_db_table_name(), ['order_id' => $order_id]);
         /**
          * Fires when coupon's reports are removed from database.
          *
@@ -485,10 +368,8 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
          * @param int $order_id  Order ID.
          */
         do_action('woocommerce_analytics_delete_coupon', 0, $order_id);
-
-        ReportsCache::invalidate();
+        Reports_Cache::invalidate();
     }
-
     /**
      * Gets coupons based on the provided arguments.
      *
@@ -500,22 +381,20 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
     {
         global $wpdb;
         $query = "SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type='shop_coupon'";
-
         $included_coupons = $this->get_included_coupons($args, 'include');
-        if (! empty($included_coupons)) {
+        if (!empty($included_coupons)) {
             $query .= " AND ID IN ({$included_coupons})";
         }
-
-        return $wpdb->get_results($query); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        return $wpdb->get_results($query);
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
     }
-
     /**
      * Initialize query objects.
      */
     protected function initialize_queries()
     {
         $this->clear_all_clauses();
-        $this->subquery = new SqlQuery($this->context . '_subquery');
+        $this->subquery = new Sql_Query($this->context . '_subquery');
         $this->subquery->add_sql_clause('from', self::get_db_table_name());
         $this->subquery->add_sql_clause('group_by', 'coupon_id');
     }

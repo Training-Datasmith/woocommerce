@@ -1,15 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Templates;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Templates;
 
 /**
  * ComingSoonSocialLinksTemplate class.
  *
  * @internal
  */
-class ComingSoonSocialLinksTemplate extends AbstractTemplatePart
+class Coming_Soon_Social_Links_Template extends Abstract_Template_Part
 {
     /**
      * The slug of the template.
@@ -17,21 +16,18 @@ class ComingSoonSocialLinksTemplate extends AbstractTemplatePart
      * @var string
      */
     public const SLUG = 'coming-soon-social-links';
-
     /**
      * The template part area where the template part belongs.
      *
      * @var string
      */
     public $template_area = 'uncategorized';
-
     /**
      * Initialization method.
      */
     public function init()
     {
     }
-
     /**
      * Returns the title of the template.
      *
@@ -41,7 +37,6 @@ class ComingSoonSocialLinksTemplate extends AbstractTemplatePart
     {
         return _x('Coming soon social links', 'Template name', 'woocommerce');
     }
-
     /**
      * Returns the description of the template.
      *
@@ -51,7 +46,6 @@ class ComingSoonSocialLinksTemplate extends AbstractTemplatePart
     {
         return __('Reusable template part for displaying social links on the coming soon page.', 'woocommerce');
     }
-
     /**
      * Returns the page object assigned to this template/page.
      *

@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Images;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Images;
 
 /**
  * Pexels API client.

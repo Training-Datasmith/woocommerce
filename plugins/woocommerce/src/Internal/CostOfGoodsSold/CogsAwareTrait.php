@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Cost_Of_Goods_Sold;
 
-namespace Automattic\WooCommerce\Internal\CostOfGoodsSold;
-
-use Automattic\WooCommerce\Proxies\LegacyProxy;
-
+use Automattic\Woo_Commerce\Proxies\Legacy_Proxy;
 /**
  * Trait with general Cost of Goods Sold related functionality shared by the entire codebase.
  */
-trait CogsAwareTrait
+trait Cogs_Aware_Trait
 {
     /**
      * Check if the Cost of Goods Sold feature is enabled.
@@ -20,19 +18,12 @@ trait CogsAwareTrait
      */
     protected function cogs_is_enabled(?string $doing_it_wrong_function_name = null): bool
     {
-        if (wc_get_container()->get(CostOfGoodsSoldController::class)->feature_is_enabled()) {
+        if (wc_get_container()->get(Cost_Of_Goods_Sold_Controller::class)->feature_is_enabled()) {
             return true;
         }
-
         if ($doing_it_wrong_function_name) {
-            wc_get_container()->get(LegacyProxy::class)->call_function(
-                'wc_doing_it_wrong',
-                $doing_it_wrong_function_name,
-                'The Cost of Goods sold feature is disabled, thus the method called will do nothing and will return dummy data.',
-                '9.5.0'
-            );
+            wc_get_container()->get(Legacy_Proxy::class)->call_function('wc_doing_it_wrong', $doing_it_wrong_function_name, 'The Cost of Goods sold feature is disabled, thus the method called will do nothing and will return dummy data.', '9.5.0');
         }
-
         return false;
     }
 }

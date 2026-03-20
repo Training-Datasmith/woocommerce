@@ -1,11 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Generic migration class to move any entity, entity_meta table combination to custom table.
  */
-
-namespace Automattic\WooCommerce\Database\Migrations;
+namespace Automattic\Woo_Commerce\Database\Migrations;
 
 /**
  * Base class for implementing migrations from the standard WordPress meta table
@@ -13,61 +12,56 @@ namespace Automattic\WooCommerce\Database\Migrations;
  *
  * @package Automattic\WooCommerce\Database\Migrations
  */
-abstract class MetaToCustomTableMigrator extends TableMigrator
+abstract class Meta_To_Custom_Table_Migrator extends Table_Migrator
 {
     /**
      * Config for tables being migrated and migrated from. See __construct() for detailed config.
      */
     protected array $schema_config;
-
     /**
      * Meta config, see __construct for detailed config.
      */
     protected array $meta_column_mapping;
-
     /**
      * Column mapping from source table to destination custom table. See __construct for detailed config.
      */
     protected array $core_column_mapping;
-
     /**
      * MetaToCustomTableMigrator constructor.
      */
     public function __construct()
     {
-        $this->schema_config       = MigrationHelper::escape_schema_for_backtick($this->get_schema_config());
+        $this->schema_config = Migration_Helper::escape_schema_for_backtick($this->get_schema_config());
         $this->meta_column_mapping = $this->get_meta_column_config();
         $this->core_column_mapping = $this->get_core_column_mapping();
     }
-
     /**
-     * Specify schema config the source and destination table.
-     *
-     * @return array Schema, must of the form:
-     * array(
-        'source' => array(
-            'entity' => array(
-                'table_name' => $source_table_name,
-                'meta_rel_column' => $column_meta, Name of column in source table which is referenced by meta table.
-                'destination_rel_column' => $column_dest, Name of column in source table which is refenced by destination table,
-                'primary_key' => $primary_key, Primary key of the source table
-            ),
-            'meta' => array(
-                'table' => $meta_table_name,
-                'meta_key_column' => $meta_key_column_name,
-                'meta_value_column' => $meta_value_column_name,
-                'entity_id_column' => $entity_id_column, Name of the column having entity IDs.
-            ),
-        ),
-        'destination' => array(
-            'table_name' => $table_name, Name of destination table,
-            'source_rel_column' => $column_source_id, Name of the column in destination table which is referenced by source table.
-            'primary_key' => $table_primary_key,
-            'primary_key_type' => $type bool|int|string|decimal
-        )
-     */
+    * Specify schema config the source and destination table.
+    *
+    * @return array Schema, must of the form:
+    * array(
+       'source' => array(
+           'entity' => array(
+               'table_name' => $source_table_name,
+               'meta_rel_column' => $column_meta, Name of column in source table which is referenced by meta table.
+               'destination_rel_column' => $column_dest, Name of column in source table which is refenced by destination table,
+               'primary_key' => $primary_key, Primary key of the source table
+           ),
+           'meta' => array(
+               'table' => $meta_table_name,
+               'meta_key_column' => $meta_key_column_name,
+               'meta_value_column' => $meta_value_column_name,
+               'entity_id_column' => $entity_id_column, Name of the column having entity IDs.
+           ),
+       ),
+       'destination' => array(
+           'table_name' => $table_name, Name of destination table,
+           'source_rel_column' => $column_source_id, Name of the column in destination table which is referenced by source table.
+           'primary_key' => $table_primary_key,
+           'primary_key_type' => $type bool|int|string|decimal
+       )
+    */
     abstract protected function get_schema_config(): array;
-
     /**
      * Specify column config from the source table.
      *
@@ -84,7 +78,6 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
      * ).
      */
     abstract protected function get_core_column_mapping(): array;
-
     /**
      * Specify meta keys config from source meta table.
      *
@@ -101,7 +94,6 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
      * ).
      */
     abstract protected function get_meta_column_config(): array;
-
     /**
      * Generate SQL for data insertion.
      *
@@ -116,12 +108,10 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
     private function generate_insert_sql_for_batch(array $batch): string
     {
         $table = $this->schema_config['destination']['table_name'];
-
         [$value_sql, $column_sql] = $this->generate_column_clauses(array_merge($this->core_column_mapping, $this->meta_column_mapping), $batch);
-
-        return "INSERT INTO $table (`$column_sql`) VALUES $value_sql;"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, -- $insert_query is hardcoded, $value_sql is already escaped.
+        return "INSERT INTO {$table} (`{$column_sql}`) VALUES {$value_sql};";
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, -- $insert_query is hardcoded, $value_sql is already escaped.
     }
-
     /**
      * Generate SQL for data updating.
      *
@@ -142,22 +132,14 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
     private function generate_update_sql_for_batch(array $batch, array $entity_row_mapping): string
     {
         $table = $this->schema_config['destination']['table_name'];
-
         $destination_primary_id_schema = $this->get_destination_table_primary_id_schema();
         foreach ($batch as $entity_id => $row) {
-            $batch[ $entity_id ][ $destination_primary_id_schema['destination_primary_key']['destination'] ] = $entity_row_mapping[ $entity_id ]->destination_id;
+            $batch[$entity_id][$destination_primary_id_schema['destination_primary_key']['destination']] = $entity_row_mapping[$entity_id]->destination_id;
         }
-
-        [$value_sql, $column_sql, $columns] = $this->generate_column_clauses(
-            array_merge($destination_primary_id_schema, $this->core_column_mapping, $this->meta_column_mapping),
-            $batch
-        );
-
-        $duplicate_update_key_statement = MigrationHelper::generate_on_duplicate_statement_clause($columns);
-
-        return "INSERT INTO $table (`$column_sql`) VALUES $value_sql $duplicate_update_key_statement;";
+        [$value_sql, $column_sql, $columns] = $this->generate_column_clauses(array_merge($destination_primary_id_schema, $this->core_column_mapping, $this->meta_column_mapping), $batch);
+        $duplicate_update_key_statement = Migration_Helper::generate_on_duplicate_statement_clause($columns);
+        return "INSERT INTO {$table} (`{$column_sql}`) VALUES {$value_sql} {$duplicate_update_key_statement};";
     }
-
     /**
      * Generate schema for primary ID column of destination table.
      *
@@ -165,14 +147,8 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
      */
     private function get_destination_table_primary_id_schema(): array
     {
-        return [
-            'destination_primary_key' => [
-                'destination' => $this->schema_config['destination']['primary_key'],
-                'type'        => $this->schema_config['destination']['primary_key_type'],
-            ],
-        ];
+        return ['destination_primary_key' => ['destination' => $this->schema_config['destination']['primary_key'], 'type' => $this->schema_config['destination']['primary_key_type']]];
     }
-
     /**
      * Generate values and columns clauses to be used in INSERT and INSERT..ON DUPLICATE KEY UPDATE statements.
      *
@@ -184,40 +160,33 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
     private function generate_column_clauses(array $columns_schema, array $batch): array
     {
         global $wpdb;
-
-        $columns      = [];
+        $columns = [];
         $placeholders = [];
         foreach ($columns_schema as $schema) {
             if (in_array($schema['destination'], $columns, true)) {
                 continue;
             }
-            $columns[]      = $schema['destination'];
-            $placeholders[] = MigrationHelper::get_wpdb_placeholder_for_type($schema['type']);
+            $columns[] = $schema['destination'];
+            $placeholders[] = Migration_Helper::get_wpdb_placeholder_for_type($schema['type']);
         }
-
         $values = [];
         foreach (array_values($batch) as $row) {
             $row_values = [];
             foreach ($columns as $index => $column) {
-                if (! isset($row[ $column ]) || is_null($row[ $column ])) {
+                if (!isset($row[$column]) || is_null($row[$column])) {
                     $row_values[] = 'NULL';
                 } else {
                     // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- $placeholders is a placeholder.
-                    $row_values[] = $wpdb->prepare($placeholders[ $index ], $row[ $column ]);
+                    $row_values[] = $wpdb->prepare($placeholders[$index], $row[$column]);
                 }
             }
-
             $value_string = '(' . implode(',', $row_values) . ')';
-            $values[]     = $value_string;
+            $values[] = $value_string;
         }
-
         $value_sql = implode(',', $values);
-
         $column_sql = implode('`, `', $columns);
-
-        return [ $value_sql, $column_sql, $columns ];
+        return [$value_sql, $column_sql, $columns];
     }
-
     /**
      * Return data to be migrated for a batch of entities.
      *
@@ -229,18 +198,13 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
     {
         $this->clear_errors();
         $data = $this->fetch_data_for_migration_for_ids($entity_ids);
-
         foreach ($data['errors'] as $entity_id => $errors) {
             foreach ($errors as $column_name => $error_message) {
-                $this->add_error("Error importing data for post with id $entity_id: column $column_name: $error_message");
+                $this->add_error("Error importing data for post with id {$entity_id}: column {$column_name}: {$error_message}");
             }
         }
-        return [
-            'data'   => $data['data'],
-            'errors' => $this->get_errors(),
-        ];
+        return ['data' => $data['data'], 'errors' => $this->get_errors()];
     }
-
     /**
      * Migrate a batch of entities from the posts table to the corresponding table.
      *
@@ -251,7 +215,6 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
         $data = $this->fetch_sanitized_migration_data($entity_ids);
         $this->process_migration_data($data);
     }
-
     /**
      * Process migration data for a batch of entities.
      *
@@ -263,33 +226,21 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
     {
         $this->clear_errors();
         $exception = null;
-
-        if (! isset($data['data']) || ! is_array($data['data']) || count($data['data']) === 0) {
-            return [
-                'errors'    => $this->get_errors(),
-                'exception' => null,
-            ];
+        if (!isset($data['data']) || !is_array($data['data']) || count($data['data']) === 0) {
+            return ['errors' => $this->get_errors(), 'exception' => null];
         }
-
         try {
-            $entity_ids       = array_keys($data['data']);
+            $entity_ids = array_keys($data['data']);
             $existing_records = $this->get_already_existing_records($entity_ids);
-
             $to_insert = array_diff_key($data['data'], $existing_records);
             $this->process_insert_batch($to_insert);
-
             $to_update = array_intersect_key($data['data'], $existing_records);
             $this->process_update_batch($to_update, $existing_records);
         } catch (\Exception $e) {
             $exception = $e;
         }
-
-        return [
-            'errors'    => $this->get_errors(),
-            'exception' => $exception,
-        ];
+        return ['errors' => $this->get_errors(), 'exception' => $exception];
     }
-
     /**
      * Process batch for insertion into destination table.
      *
@@ -300,13 +251,11 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
         if (0 === count($batch)) {
             return;
         }
-
         $queries = $this->generate_insert_sql_for_batch($batch);
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Queries should already be prepared.
         $processed_rows_count = $this->db_query($queries);
         $this->maybe_add_insert_or_update_error('insert', $processed_rows_count);
     }
-
     /**
      * Process batch for update into destination table.
      *
@@ -318,13 +267,11 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
         if (0 === count($batch)) {
             return;
         }
-
         $queries = $this->generate_update_sql_for_batch($batch, $ids_mapping);
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Queries should already be prepared.
         $processed_rows_count = $this->db_query($queries) / 2;
         $this->maybe_add_insert_or_update_error('update', $processed_rows_count);
     }
-
     /**
      * Fetch data for migration.
      *
@@ -344,30 +291,20 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
     private function fetch_data_for_migration_for_ids(array $entity_ids): array
     {
         if (empty($entity_ids)) {
-            return [
-                'data'   => [],
-                'errors' => [],
-            ];
+            return ['data' => [], 'errors' => []];
         }
-
         $entity_table_query = $this->build_entity_table_query($entity_ids);
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Output of $this->build_entity_table_query is already prepared.
         $entity_data = $this->db_get_results($entity_table_query);
         if (empty($entity_data)) {
-            return [
-                'data'   => [],
-                'errors' => [],
-            ];
+            return ['data' => [], 'errors' => []];
         }
         $entity_meta_rel_ids = array_column($entity_data, 'entity_meta_rel_id');
-
         $meta_table_query = $this->build_meta_data_query($entity_meta_rel_ids);
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Output of $this->build_meta_data_query is already prepared.
         $meta_data = $this->db_get_results($meta_table_query);
-
         return $this->process_and_sanitize_data($entity_data, $meta_data);
     }
-
     /**
      * Fetch id mappings for records that are already inserted in the destination table.
      *
@@ -386,36 +323,21 @@ abstract class MetaToCustomTableMigrator extends TableMigrator
     protected function get_already_existing_records(array $entity_ids): array
     {
         global $wpdb;
-
-        $source_table                   = $this->schema_config['source']['entity']['table_name'];
+        $source_table = $this->schema_config['source']['entity']['table_name'];
         $source_destination_join_column = $this->schema_config['source']['entity']['destination_rel_column'];
-        $source_primary_key_column      = $this->schema_config['source']['entity']['primary_key'];
-
-        $destination_table              = $this->schema_config['destination']['table_name'];
+        $source_primary_key_column = $this->schema_config['source']['entity']['primary_key'];
+        $destination_table = $this->schema_config['destination']['table_name'];
         $destination_source_join_column = $this->schema_config['destination']['source_rel_column'];
         $destination_primary_key_column = $this->schema_config['destination']['primary_key'];
-
         $entity_id_placeholder = implode(',', array_fill(0, count($entity_ids), '%d'));
-
         $additional_where = $this->get_additional_where_clause_for_get_data_to_insert_or_update($entity_ids);
-
-        $already_migrated_entity_ids = $this->db_get_results(
-            $wpdb->prepare(
-                // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- All columns and table names are hardcoded.
-                "
-SELECT source.`$source_primary_key_column` as source_id, destination.`$destination_primary_key_column` as destination_id
-FROM `$destination_table` destination
-JOIN `$source_table` source ON source.`$source_destination_join_column` = destination.`$destination_source_join_column`
-WHERE source.`$source_primary_key_column` IN ( $entity_id_placeholder ) $additional_where
-",
-                $entity_ids
-            )
-            // phpcs:enable
-        );
-
+        $already_migrated_entity_ids = $this->db_get_results($wpdb->prepare(
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- All columns and table names are hardcoded.
+            "\nSELECT source.`{$source_primary_key_column}` as source_id, destination.`{$destination_primary_key_column}` as destination_id\nFROM `{$destination_table}` destination\nJOIN `{$source_table}` source ON source.`{$source_destination_join_column}` = destination.`{$destination_source_join_column}`\nWHERE source.`{$source_primary_key_column}` IN ( {$entity_id_placeholder} ) {$additional_where}\n",
+            $entity_ids
+        ));
         return array_column($already_migrated_entity_ids, null, 'source_id');
     }
-
     /**
      * Get additional string to be appended to the WHERE clause of the SQL query used by get_data_to_insert_or_update.
      *
@@ -426,7 +348,6 @@ WHERE source.`$source_primary_key_column` IN ( $entity_id_placeholder ) $additio
     {
         return '';
     }
-
     /**
      * Helper method to build query used to fetch data from core source table.
      *
@@ -437,40 +358,25 @@ WHERE source.`$source_primary_key_column` IN ( $entity_id_placeholder ) $additio
     private function build_entity_table_query(array $entity_ids): string
     {
         global $wpdb;
-
-        $source_entity_table       = $this->schema_config['source']['entity']['table_name'];
-        $source_meta_rel_id_column = "`$source_entity_table`.`{$this->schema_config['source']['entity']['meta_rel_column']}`";
-        $source_primary_key_column = "`$source_entity_table`.`{$this->schema_config['source']['entity']['primary_key']}`";
-
-        $where_clause = "$source_primary_key_column IN (" . implode(',', array_fill(0, count($entity_ids), '%d')) . ')';
-        $entity_keys  = [];
+        $source_entity_table = $this->schema_config['source']['entity']['table_name'];
+        $source_meta_rel_id_column = "`{$source_entity_table}`.`{$this->schema_config['source']['entity']['meta_rel_column']}`";
+        $source_primary_key_column = "`{$source_entity_table}`.`{$this->schema_config['source']['entity']['primary_key']}`";
+        $where_clause = "{$source_primary_key_column} IN (" . implode(',', array_fill(0, count($entity_ids), '%d')) . ')';
+        $entity_keys = [];
         foreach ($this->core_column_mapping as $column_name => $column_schema) {
             if (isset($column_schema['select_clause'])) {
                 $select_clause = $column_schema['select_clause'];
-                $entity_keys[] = "$select_clause AS $column_name";
+                $entity_keys[] = "{$select_clause} AS {$column_name}";
             } else {
-                $entity_keys[] = "$source_entity_table.$column_name";
+                $entity_keys[] = "{$source_entity_table}.{$column_name}";
             }
         }
         $entity_column_string = implode(', ', $entity_keys);
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $source_meta_rel_id_column, $source_destination_rel_id_column etc is escaped for backticks. $where clause and $order_by should already be escaped.
-        $query = $wpdb->prepare(
-            "
-SELECT
-	$source_meta_rel_id_column as entity_meta_rel_id,
-    $source_primary_key_column as primary_key_id,
-	$entity_column_string
-FROM `$source_entity_table`
-WHERE $where_clause;
-",
-            $entity_ids
-        );
-
+        $query = $wpdb->prepare("\nSELECT\n\t{$source_meta_rel_id_column} as entity_meta_rel_id,\n    {$source_primary_key_column} as primary_key_id,\n\t{$entity_column_string}\nFROM `{$source_entity_table}`\nWHERE {$where_clause};\n", $entity_ids);
         // phpcs:enable
-
         return $query;
     }
-
     /**
      * Helper method to build query that will be used to fetch data from source meta table.
      *
@@ -481,36 +387,18 @@ WHERE $where_clause;
     private function build_meta_data_query(array $entity_ids): string
     {
         global $wpdb;
-
-        $meta_table                = $this->schema_config['source']['meta']['table_name'];
-        $meta_keys                 = array_keys($this->meta_column_mapping);
-        $meta_key_column           = $this->schema_config['source']['meta']['meta_key_column'];
-        $meta_value_column         = $this->schema_config['source']['meta']['meta_value_column'];
+        $meta_table = $this->schema_config['source']['meta']['table_name'];
+        $meta_keys = array_keys($this->meta_column_mapping);
+        $meta_key_column = $this->schema_config['source']['meta']['meta_key_column'];
+        $meta_value_column = $this->schema_config['source']['meta']['meta_value_column'];
         $meta_table_relational_key = $this->schema_config['source']['meta']['entity_id_column'];
-
         $meta_column_string = implode(', ', array_fill(0, count($meta_keys), '%s'));
-        $entity_id_string   = implode(', ', array_fill(0, count($entity_ids), '%d'));
-
+        $entity_id_string = implode(', ', array_fill(0, count($entity_ids), '%d'));
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $meta_table_relational_key, $meta_key_column, $meta_value_column and $meta_table is escaped for backticks. $entity_id_string and $meta_column_string are placeholders.
-        $query = $wpdb->prepare(
-            "
-SELECT `$meta_table_relational_key` as entity_id, `$meta_key_column` as meta_key, `$meta_value_column` as meta_value
-FROM `$meta_table`
-WHERE
-	`$meta_table_relational_key` IN ( $entity_id_string )
-	AND `$meta_key_column` IN ( $meta_column_string );
-",
-            array_merge(
-                $entity_ids,
-                $meta_keys
-            )
-        );
-
+        $query = $wpdb->prepare("\nSELECT `{$meta_table_relational_key}` as entity_id, `{$meta_key_column}` as meta_key, `{$meta_value_column}` as meta_value\nFROM `{$meta_table}`\nWHERE\n\t`{$meta_table_relational_key}` IN ( {$entity_id_string} )\n\tAND `{$meta_key_column}` IN ( {$meta_column_string} );\n", array_merge($entity_ids, $meta_keys));
         // phpcs:enable
-
         return $query;
     }
-
     /**
      * Helper function to validate and combine data before we try to insert.
      *
@@ -522,16 +410,11 @@ WHERE
     private function process_and_sanitize_data(array $entity_data, array $meta_data): array
     {
         $sanitized_entity_data = [];
-        $error_records         = [];
+        $error_records = [];
         $this->process_and_sanitize_entity_data($sanitized_entity_data, $error_records, $entity_data);
         $this->processs_and_sanitize_meta_data($sanitized_entity_data, $error_records, $meta_data);
-
-        return [
-            'data'   => $sanitized_entity_data,
-            'errors' => $error_records,
-        ];
+        return ['data' => $sanitized_entity_data, 'errors' => $error_records];
     }
-
     /**
      * Helper method to sanitize core source table.
      *
@@ -545,18 +428,17 @@ WHERE
             $row_data = [];
             foreach ($this->core_column_mapping as $column_name => $schema) {
                 $custom_table_column_name = $schema['destination'] ?? $column_name;
-                $value                    = $entity->$column_name;
-                $value                    = $this->validate_data($value, $schema['type']);
+                $value = $entity->{$column_name};
+                $value = $this->validate_data($value, $schema['type']);
                 if (is_wp_error($value)) {
-                    $error_records[ $entity->primary_key_id ][ $custom_table_column_name ] = $value->get_error_code();
+                    $error_records[$entity->primary_key_id][$custom_table_column_name] = $value->get_error_code();
                 } else {
-                    $row_data[ $custom_table_column_name ] = $value;
+                    $row_data[$custom_table_column_name] = $value;
                 }
             }
-            $sanitized_entity_data[ $entity->entity_meta_rel_id ] = $row_data;
+            $sanitized_entity_data[$entity->entity_meta_rel_id] = $row_data;
         }
     }
-
     /**
      * Helper method to sanitize soure meta data.
      *
@@ -567,20 +449,19 @@ WHERE
     private function processs_and_sanitize_meta_data(array &$sanitized_entity_data, array &$error_records, array $meta_data): void
     {
         foreach ($meta_data as $datum) {
-            $column_schema = $this->meta_column_mapping[ $datum->meta_key ];
-            if (isset($sanitized_entity_data[ $datum->entity_id ][ $column_schema['destination'] ])) {
+            $column_schema = $this->meta_column_mapping[$datum->meta_key];
+            if (isset($sanitized_entity_data[$datum->entity_id][$column_schema['destination']])) {
                 // We pick only the first meta if there are duplicates for a flat column, to be consistent with WP core behavior in handing duplicate meta which are marked as unique.
                 continue;
             }
             $value = $this->validate_data($datum->meta_value, $column_schema['type']);
             if (is_wp_error($value)) {
-                $error_records[ $datum->entity_id ][ $column_schema['destination'] ] = "{$value->get_error_code()}: {$value->get_error_message()}";
+                $error_records[$datum->entity_id][$column_schema['destination']] = "{$value->get_error_code()}: {$value->get_error_message()}";
             } else {
-                $sanitized_entity_data[ $datum->entity_id ][ $column_schema['destination'] ] = $value;
+                $sanitized_entity_data[$datum->entity_id][$column_schema['destination']] = $value;
             }
         }
     }
-
     /**
      * Validate and transform data so that we catch as many errors as possible before inserting.
      *
@@ -609,7 +490,7 @@ WHERE
                         $value = (new \DateTime($value))->format('Y-m-d H:i:s');
                     }
                 } catch (\Exception $e) {
-                    return new \WP_Error($e->getMessage());
+                    return new \WP_Error($e->get_message());
                 }
                 break;
             case 'date_epoch':
@@ -617,17 +498,15 @@ WHERE
                     if ('' === $value) {
                         $value = null;
                     } else {
-                        $value = (new \DateTime("@$value"))->format('Y-m-d H:i:s');
+                        $value = (new \DateTime("@{$value}"))->format('Y-m-d H:i:s');
                     }
                 } catch (\Exception $e) {
-                    return new \WP_Error($e->getMessage());
+                    return new \WP_Error($e->get_message());
                 }
                 break;
         }
-
         return $value;
     }
-
     /**
      * Verify whether data was migrated properly for given IDs.
      *
@@ -644,7 +523,6 @@ WHERE
         $results = $this->fill_source_metadata($results, $source_ids);
         return $this->verify_data($results);
     }
-
     /**
      * Generate query to fetch data from both source and destination tables. Use the results in `verify_data` to verify if data was migrated properly.
      *
@@ -654,39 +532,26 @@ WHERE
      */
     protected function build_verification_query($source_ids)
     {
-        $source_table                  = $this->schema_config['source']['entity']['table_name'];
-        $destination_table             = $this->schema_config['destination']['table_name'];
+        $source_table = $this->schema_config['source']['entity']['table_name'];
+        $destination_table = $this->schema_config['destination']['table_name'];
         $destination_source_rel_column = $this->schema_config['destination']['source_rel_column'];
         $source_destination_rel_column = $this->schema_config['source']['entity']['destination_rel_column'];
-
-        $source_destination_join_clause = "$destination_table ON $destination_table.$destination_source_rel_column = $source_table.$source_destination_rel_column";
-
-        $meta_select_clauses        = [];
-        $source_select_clauses      = [];
+        $source_destination_join_clause = "{$destination_table} ON {$destination_table}.{$destination_source_rel_column} = {$source_table}.{$source_destination_rel_column}";
+        $meta_select_clauses = [];
+        $source_select_clauses = [];
         $destination_select_clauses = [];
-
         foreach ($this->core_column_mapping as $column_name => $schema) {
-            $source_select_column         = $schema['select_clause'] ?? "$source_table.$column_name";
-            $source_select_clauses[]      = "$source_select_column as {$source_table}_{$column_name}";
-            $destination_select_clauses[] = "$destination_table.{$schema['destination']} as {$destination_table}_{$schema['destination']}";
+            $source_select_column = $schema['select_clause'] ?? "{$source_table}.{$column_name}";
+            $source_select_clauses[] = "{$source_select_column} as {$source_table}_{$column_name}";
+            $destination_select_clauses[] = "{$destination_table}.{$schema['destination']} as {$destination_table}_{$schema['destination']}";
         }
-
         foreach ($this->meta_column_mapping as $schema) {
-            $destination_select_clauses[] = "$destination_table.{$schema['destination']} as {$destination_table}_{$schema['destination']}";
+            $destination_select_clauses[] = "{$destination_table}.{$schema['destination']} as {$destination_table}_{$schema['destination']}";
         }
-
         $select_clause = implode(', ', array_merge($source_select_clauses, $meta_select_clauses, $destination_select_clauses));
-
         $where_clause = $this->get_where_clause_for_verification($source_ids);
-
-        return "
-SELECT $select_clause
-FROM $source_table
-    LEFT JOIN $source_destination_join_clause
-WHERE $where_clause
-";
+        return "\nSELECT {$select_clause}\nFROM {$source_table}\n    LEFT JOIN {$source_destination_join_clause}\nWHERE {$where_clause}\n";
     }
-
     /**
      * Fill source metadata for given IDs for verification. This will return filled data in following format:
      * [
@@ -709,49 +574,41 @@ WHERE $where_clause
     private function fill_source_metadata(array $results, array $source_ids): array
     {
         global $wpdb;
-        $meta_table            = $this->schema_config['source']['meta']['table_name'];
+        $meta_table = $this->schema_config['source']['meta']['table_name'];
         $meta_entity_id_column = $this->schema_config['source']['meta']['entity_id_column'];
-        $meta_key_column       = $this->schema_config['source']['meta']['meta_key_column'];
-        $meta_value_column     = $this->schema_config['source']['meta']['meta_value_column'];
-        $meta_id_column        = $this->schema_config['source']['meta']['meta_id_column'];
-        $meta_columns          = array_keys($this->meta_column_mapping);
-
+        $meta_key_column = $this->schema_config['source']['meta']['meta_key_column'];
+        $meta_value_column = $this->schema_config['source']['meta']['meta_value_column'];
+        $meta_id_column = $this->schema_config['source']['meta']['meta_id_column'];
+        $meta_columns = array_keys($this->meta_column_mapping);
         $meta_columns_placeholder = implode(', ', array_fill(0, count($meta_columns), '%s'));
-        $source_ids_placeholder   = implode(', ', array_fill(0, count($source_ids), '%d'));
-
+        $source_ids_placeholder = implode(', ', array_fill(0, count($source_ids), '%d'));
         $query = $wpdb->prepare(
             // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-            "SELECT $meta_entity_id_column as entity_id, $meta_key_column as meta_key, $meta_value_column as meta_value
-			FROM $meta_table
-			WHERE $meta_entity_id_column IN ($source_ids_placeholder)
-			AND $meta_key_column IN ($meta_columns_placeholder)
-			ORDER BY $meta_id_column ASC",
+            "SELECT {$meta_entity_id_column} as entity_id, {$meta_key_column} as meta_key, {$meta_value_column} as meta_value\n\t\t\tFROM {$meta_table}\n\t\t\tWHERE {$meta_entity_id_column} IN ({$source_ids_placeholder})\n\t\t\tAND {$meta_key_column} IN ({$meta_columns_placeholder})\n\t\t\tORDER BY {$meta_id_column} ASC",
             array_merge($source_ids, $meta_columns)
         );
         //phpcs:enable
-
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-        $meta_data            = $wpdb->get_results($query, ARRAY_A);
+        $meta_data = $wpdb->get_results($query, ARRAY_A);
         $source_metadata_rows = [];
         foreach ($meta_data as $meta_datum) {
-            if (! isset($source_metadata_rows[ $meta_datum['entity_id'] ])) {
-                $source_metadata_rows[ $meta_datum['entity_id'] ] = [];
+            if (!isset($source_metadata_rows[$meta_datum['entity_id']])) {
+                $source_metadata_rows[$meta_datum['entity_id']] = [];
             }
-            $destination_column = $this->meta_column_mapping[ $meta_datum['meta_key'] ]['destination'];
-            $alias              = "meta_source_{$destination_column}";
-            if (isset($source_metadata_rows[ $meta_datum['entity_id'] ][ $alias ])) {
+            $destination_column = $this->meta_column_mapping[$meta_datum['meta_key']]['destination'];
+            $alias = "meta_source_{$destination_column}";
+            if (isset($source_metadata_rows[$meta_datum['entity_id']][$alias])) {
                 // Only process first value, duplicate values mapping to flat columns are ignored to be consistent with WP core.
                 continue;
             }
-            $source_metadata_rows[ $meta_datum['entity_id'] ][ $alias ] = $meta_datum['meta_value'];
+            $source_metadata_rows[$meta_datum['entity_id']][$alias] = $meta_datum['meta_value'];
         }
         foreach ($results as $index => $result_row) {
-            $source_id         = $result_row[ $this->schema_config['source']['entity']['table_name'] . '_' . $this->schema_config['source']['entity']['primary_key'] ];
-            $results[ $index ] = array_merge($result_row, ($source_metadata_rows[ $source_id ] ?? []));
+            $source_id = $result_row[$this->schema_config['source']['entity']['table_name'] . '_' . $this->schema_config['source']['entity']['primary_key']];
+            $results[$index] = array_merge($result_row, $source_metadata_rows[$source_id] ?? []);
         }
         return $results;
     }
-
     /**
      * Helper function to generate where clause for fetching data for verification.
      *
@@ -763,16 +620,14 @@ WHERE $where_clause
     {
         global $wpdb;
         $source_primary_id_column = $this->schema_config['source']['entity']['primary_key'];
-        $source_table             = $this->schema_config['source']['entity']['table_name'];
-        $source_ids_placeholder   = implode(', ', array_fill(0, count($source_ids), '%d'));
-
+        $source_table = $this->schema_config['source']['entity']['table_name'];
+        $source_ids_placeholder = implode(', ', array_fill(0, count($source_ids), '%d'));
         return $wpdb->prepare(
             // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-            "$source_table.$source_primary_id_column IN ($source_ids_placeholder)",
+            "{$source_table}.{$source_primary_id_column} IN ({$source_ids_placeholder})",
             $source_ids
         );
     }
-
     /**
      * Verify data from both source and destination tables and check if they were migrated properly.
      *
@@ -787,10 +642,8 @@ WHERE $where_clause
             $failed_ids = $this->verify_entity_columns($row, $failed_ids);
             $failed_ids = $this->verify_meta_columns($row, $failed_ids);
         }
-
         return $failed_ids;
     }
-
     /**
      * Helper method to verify and compare core columns.
      *
@@ -803,24 +656,18 @@ WHERE $where_clause
     {
         $primary_key_column = "{$this->schema_config['source']['entity']['table_name']}_{$this->schema_config['source']['entity']['primary_key']}";
         foreach ($this->core_column_mapping as $column_name => $schema) {
-            $source_alias      = "{$this->schema_config['source']['entity']['table_name']}_$column_name";
+            $source_alias = "{$this->schema_config['source']['entity']['table_name']}_{$column_name}";
             $destination_alias = "{$this->schema_config['destination']['table_name']}_{$schema['destination']}";
-            $row               = $this->pre_process_row($row, $schema, $source_alias, $destination_alias);
-            if ($row[ $source_alias ] !== $row[ $destination_alias ]) {
-                if (! isset($failed_ids[ $row[ $primary_key_column ] ])) {
-                    $failed_ids[ $row[ $primary_key_column ] ] = [];
+            $row = $this->pre_process_row($row, $schema, $source_alias, $destination_alias);
+            if ($row[$source_alias] !== $row[$destination_alias]) {
+                if (!isset($failed_ids[$row[$primary_key_column]])) {
+                    $failed_ids[$row[$primary_key_column]] = [];
                 }
-                $failed_ids[ $row[ $primary_key_column ] ][] = [
-                    'column'         => $column_name,
-                    'original_value' => $row[ $source_alias ],
-                    'new_value'      => $row[ $destination_alias ],
-                ];
+                $failed_ids[$row[$primary_key_column]][] = ['column' => $column_name, 'original_value' => $row[$source_alias], 'new_value' => $row[$destination_alias]];
             }
         }
-
         return $failed_ids;
     }
-
     /**
      * Helper method to verify meta columns.
      *
@@ -833,24 +680,18 @@ WHERE $where_clause
     {
         $primary_key_column = "{$this->schema_config['source']['entity']['table_name']}_{$this->schema_config['source']['entity']['primary_key']}";
         foreach ($this->meta_column_mapping as $meta_key => $schema) {
-            $meta_alias        = "meta_source_{$schema['destination']}";
+            $meta_alias = "meta_source_{$schema['destination']}";
             $destination_alias = "{$this->schema_config['destination']['table_name']}_{$schema['destination']}";
-            $row               = $this->pre_process_row($row, $schema, $meta_alias, $destination_alias);
-            if ($row[ $meta_alias ] !== $row[ $destination_alias ]) {
-                if (! isset($failed_ids[ $row[ $primary_key_column ] ])) {
-                    $failed_ids[ $row[ $primary_key_column ] ] = [];
+            $row = $this->pre_process_row($row, $schema, $meta_alias, $destination_alias);
+            if ($row[$meta_alias] !== $row[$destination_alias]) {
+                if (!isset($failed_ids[$row[$primary_key_column]])) {
+                    $failed_ids[$row[$primary_key_column]] = [];
                 }
-                $failed_ids[ $row[ $primary_key_column ] ][] = [
-                    'column'         => $meta_key,
-                    'original_value' => $row[ $meta_alias ],
-                    'new_value'      => $row[ $destination_alias ],
-                ];
+                $failed_ids[$row[$primary_key_column]][] = ['column' => $meta_key, 'original_value' => $row[$meta_alias], 'new_value' => $row[$destination_alias]];
             }
         }
-
         return $failed_ids;
     }
-
     /**
      * Helper method to pre-process rows to make sure we parse the correct type.
      *
@@ -863,36 +704,36 @@ WHERE $where_clause
      */
     private function pre_process_row(array $row, array $schema, string $alias, string $destination_alias): array
     {
-        if (! isset($row[ $alias ])) {
-            $row[ $alias ] = $this->get_type_defaults($schema['type']);
+        if (!isset($row[$alias])) {
+            $row[$alias] = $this->get_type_defaults($schema['type']);
         }
-        if (is_null($row[ $destination_alias ])) {
-            $row[ $destination_alias ] = $this->get_type_defaults($schema['type']);
+        if (is_null($row[$destination_alias])) {
+            $row[$destination_alias] = $this->get_type_defaults($schema['type']);
         }
-        if (in_array($schema['type'], [ 'int', 'decimal', 'float' ], true)) {
-            if ('' === $row[ $alias ] || null === $row[ $alias ]) {
-                $row[ $alias ] = 0; // $wpdb->prepare forces empty values to 0.
+        if (in_array($schema['type'], ['int', 'decimal', 'float'], true)) {
+            if ('' === $row[$alias] || null === $row[$alias]) {
+                $row[$alias] = 0;
+                // $wpdb->prepare forces empty values to 0.
             }
-            $row[ $alias ]             = wc_format_decimal(floatval($row[ $alias ]), false, true);
-            $row[ $destination_alias ] = wc_format_decimal(floatval($row[ $destination_alias ]), false, true);
+            $row[$alias] = wc_format_decimal(floatval($row[$alias]), false, true);
+            $row[$destination_alias] = wc_format_decimal(floatval($row[$destination_alias]), false, true);
         }
         if ('bool' === $schema['type']) {
-            $row[ $alias ]             = wc_string_to_bool($row[ $alias ]);
-            $row[ $destination_alias ] = wc_string_to_bool($row[ $destination_alias ]);
+            $row[$alias] = wc_string_to_bool($row[$alias]);
+            $row[$destination_alias] = wc_string_to_bool($row[$destination_alias]);
         }
         if ('date_epoch' === $schema['type']) {
-            if ('' === $row[ $alias ] || null === $row[ $alias ]) {
-                $row[ $alias ] = null;
+            if ('' === $row[$alias] || null === $row[$alias]) {
+                $row[$alias] = null;
             } else {
-                $row[ $alias ] = (new \DateTime("@{$row[ $alias ]}"))->format('Y-m-d H:i:s');
+                $row[$alias] = (new \DateTime("@{$row[$alias]}"))->format('Y-m-d H:i:s');
             }
-            if ('0000-00-00 00:00:00' === $row[ $destination_alias ]) {
-                $row[ $destination_alias ] = null;
+            if ('0000-00-00 00:00:00' === $row[$destination_alias]) {
+                $row[$destination_alias] = null;
             }
         }
         return $row;
     }
-
     /**
      * Helper method to get default value of a type.
      *

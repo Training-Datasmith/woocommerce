@@ -1,11 +1,11 @@
 <?php
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * MiniCartProductsTableBlock class.
  */
-class MiniCartProductsTableBlock extends AbstractInnerBlock
+class Mini_Cart_Products_Table_Block extends Abstract_Inner_Block
 {
     /**
      * Block name.
@@ -13,7 +13,6 @@ class MiniCartProductsTableBlock extends AbstractInnerBlock
      * @var string
      */
     protected $block_name = 'mini-cart-products-table-block';
-
     /**
      * Render the markup for the Mini-Cart Products Table block.
      *
@@ -28,82 +27,63 @@ class MiniCartProductsTableBlock extends AbstractInnerBlock
         __('Remove item', 'woocommerce');
         $head_product_label = __('Product', 'woocommerce');
         $head_details_label = __('Details', 'woocommerce');
-        $head_total_label   = __('Total', 'woocommerce');
-
-        wp_interactivity_state(
-            $this->get_full_block_name(),
-            [
-                'cartItem' => function () {
-                    $context = wp_interactivity_get_context('woocommerce');
-                    $cart_state = wp_interactivity_state('woocommerce');
-                    $item_key = $context['cartItem']['key'];
-
-                    foreach ($cart_state['cart']['items'] as $item) {
-                        if ($item['key'] === $item_key) {
-                            return $item;
-                        }
-                    }
-
-                    return null;
-                },
-            ]
-        );
-
+        $head_total_label = __('Total', 'woocommerce');
+        wp_interactivity_state($this->get_full_block_name(), ['cartItem' => function () {
+            $context = wp_interactivity_get_context('woocommerce');
+            $cart_state = wp_interactivity_state('woocommerce');
+            $item_key = $context['cartItem']['key'];
+            foreach ($cart_state['cart']['items'] as $item) {
+                if ($item['key'] === $item_key) {
+                    return $item;
+                }
+            }
+            return null;
+        }]);
         // translators: %s is the name of the product in cart.
         $reduce_quantity_label = __('Reduce quantity of %s', 'woocommerce');
-
         // translators: %s is the name of the product in cart.
         $increase_quantity_label = __('Increase quantity of %s', 'woocommerce');
-
         // translators: %s is the name of the product in cart.
         $quantity_description_label = __('Quantity of %s in your cart.', 'woocommerce');
-
         // translators: %s is the name of the product in cart.
         $remove_from_cart_label = __('Remove %s from cart', 'woocommerce');
-
         /* translators: %s is the discount amount. */
-        $save_format             = __('Save %s', 'woocommerce');
+        $save_format = __('Save %s', 'woocommerce');
         $line_item_discount_span = '<span data-wp-text="state.lineItemDiscount" class="wc-block-formatted-money-amount wc-block-components-formatted-money-amount"></span>';
-        $line_item_save_badge    = sprintf($save_format, $line_item_discount_span);
-
+        $line_item_save_badge = sprintf($save_format, $line_item_discount_span);
         $available_on_backorder_label = __('Available on backorder', 'woocommerce');
-
-        wp_interactivity_config(
-            $this->get_full_block_name(),
-            [
-                'reduceQuantityLabel'      => $reduce_quantity_label,
-                'increaseQuantityLabel'    => $increase_quantity_label,
-                'quantityDescriptionLabel' => $quantity_description_label,
-                'removeFromCartLabel'      => $remove_from_cart_label,
-            ]
-        );
-
-        $wrapper_attributes = get_block_wrapper_attributes(
-            [
-                'class'               => 'wc-block-mini-cart__products-table',
-                'data-wp-interactive' => $this->get_full_block_name(),
-            ]
-        );
-
+        wp_interactivity_config($this->get_full_block_name(), ['reduceQuantityLabel' => $reduce_quantity_label, 'increaseQuantityLabel' => $increase_quantity_label, 'quantityDescriptionLabel' => $quantity_description_label, 'removeFromCartLabel' => $remove_from_cart_label]);
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => 'wc-block-mini-cart__products-table', 'data-wp-interactive' => $this->get_full_block_name()]);
         ob_start();
         ?>
-		<div <?php echo $wrapper_attributes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>>
+		<div <?php 
+        echo $wrapper_attributes;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>>
 			<table class="wc-block-cart-items wc-block-mini-cart-items" tabindex="-1">
 				<caption class="screen-reader-text">
 					<h2>
-						<?php echo esc_html($screen_reader_text); ?>
+						<?php 
+        echo esc_html($screen_reader_text);
+        ?>
 					</h2>
 				</caption>
 				<thead>
 					<tr class="wc-block-cart-items__header">
 						<th class="wc-block-cart-items__header-image">
-							<span><?php echo esc_html($head_product_label); ?></span>
+							<span><?php 
+        echo esc_html($head_product_label);
+        ?></span>
 						</th>
 						<th class="wc-block-cart-items__header-product">
-							<span><?php echo esc_html($head_details_label); ?></span>
+							<span><?php 
+        echo esc_html($head_details_label);
+        ?></span>
 						</th>
 						<th class="wc-block-cart-items__header-total">
-							<span><?php echo esc_html($head_total_label); ?></span>
+							<span><?php 
+        echo esc_html($head_total_label);
+        ?></span>
 						</th>
 					</tr>
 				</thead>
@@ -139,17 +119,23 @@ class MiniCartProductsTableBlock extends AbstractInnerBlock
 									<span data-wp-bind--hidden="!state.isProductHiddenFromCatalog" data-wp-text="state.cartItemName" class="wc-block-components-product-name"></span>
 									<a data-wp-bind--hidden="state.isProductHiddenFromCatalog" data-wp-text="state.cartItemName" data-wp-bind--href="state.cartItem.permalink" class="wc-block-components-product-name"></a>
 									<div data-wp-bind--hidden="!state.cartItem.show_backorder_badge" class="wc-block-components-product-badge wc-block-components-product-backorder-badge">
-										<?php echo esc_html($available_on_backorder_label); ?>
+										<?php 
+        echo esc_html($available_on_backorder_label);
+        ?>
 									</div>
 									<div class="wc-block-cart-item__prices">
 										<span data-wp-bind--hidden="!state.cartItemHasDiscount" class="price wc-block-components-product-price">
 											<span data-wp-text="state.beforeItemPrice"></span>
 											<span class="screen-reader-text">
-												<?php esc_html_e('Previous price:', 'woocommerce'); ?>
+												<?php 
+        esc_html_e('Previous price:', 'woocommerce');
+        ?>
 											</span>
 											<del data-wp-text="state.priceWithoutDiscount" class="wc-block-components-product-price__regular"></del>
 											<span class="screen-reader-text">
-												<?php esc_html_e('Discounted price:', 'woocommerce'); ?>
+												<?php 
+        esc_html_e('Discounted price:', 'woocommerce');
+        ?>
 											</span>
 											<ins data-wp-text="state.itemPrice" class="wc-block-components-product-price__value is-discounted"></ins>
 											<span data-wp-text="state.afterItemPrice"></span>
@@ -165,8 +151,14 @@ class MiniCartProductsTableBlock extends AbstractInnerBlock
 										<div data-wp-watch="callbacks.itemShortDescription" >
 											<div class="wc-block-components-product-metadata__description"></div>
 										</div>
-										<?php echo $this->render_product_details_markup('item_data'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>										
-										<?php echo $this->render_product_details_markup('variation'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>																				
+										<?php 
+        echo $this->render_product_details_markup('item_data');
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>										
+										<?php 
+        echo $this->render_product_details_markup('variation');
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>																				
 									</div>
 									<div class="wc-block-cart-item__quantity">
 										<div class="wc-block-components-quantity-selector" data-wp-bind--hidden="state.cartItem.sold_individually">
@@ -224,16 +216,8 @@ class MiniCartProductsTableBlock extends AbstractInnerBlock
 										data-wp-bind--hidden="!state.cartItemHasDiscount" 
 										class="wc-block-components-product-badge wc-block-components-sale-badge"
 									>
-									<?php
-                                        echo wp_kses(
-                                            $line_item_save_badge,
-                                            [
-                                                'span' => [
-                                                    'data-wp-text' => true,
-                                                    'class'        => true,
-                                                ],
-                                            ]
-                                        );
+									<?php 
+        echo wp_kses($line_item_save_badge, ['span' => ['data-wp-text' => true, 'class' => true]]);
         ?>
 									</div>
 								</div>
@@ -243,10 +227,9 @@ class MiniCartProductsTableBlock extends AbstractInnerBlock
 				</tbody>
 			</table>
 		</div>
-		<?php
+		<?php 
         return ob_get_clean();
     }
-
     /**
      * Render markup for product details.
      *
@@ -255,29 +238,34 @@ class MiniCartProductsTableBlock extends AbstractInnerBlock
      */
     protected function render_product_details_markup($property): string|false
     {
-        $context = [ 'dataProperty' => $property ];
-
+        $context = ['dataProperty' => $property];
         // If the property is item_data, so not a variation, we need to skip the text directive.
         $is_item_data = 'item_data' === $context['dataProperty'];
-
         ob_start();
         ?>
 		<div
-			<?php echo wp_interactivity_data_wp_context($context); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
+			<?php 
+        echo wp_interactivity_data_wp_context($context);
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
 			class="wc-block-components-product-details"
 			data-wp-bind--hidden="state.shouldHideProductDetails"
 		>
 			<template
-				data-wp-each--item-data="state.cartItem.<?php echo esc_attr($property); ?>"
+				data-wp-each--item-data="state.cartItem.<?php 
+        echo esc_attr($property);
+        ?>"
 				data-wp-each-key="state.cartItemDataKey"
 			>
-				<?php echo $this->render_product_details_item_markup($is_item_data); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>
+				<?php 
+        echo $this->render_product_details_item_markup($is_item_data);
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>
 			</template>
 		</div>
-		<?php
+		<?php 
         return ob_get_clean();
     }
-
     /**
      * Render markup for a single product detail item.
      *
@@ -292,16 +280,22 @@ class MiniCartProductsTableBlock extends AbstractInnerBlock
 			data-wp-bind--hidden="state.cartItemDataAttrHidden"
 			data-wp-bind--class="state.cartItemDataAttr.className"
 		>
-		<?php if ($is_item_data) : ?>
+		<?php 
+        if ($is_item_data) {
+            ?>
 			<span class="wc-block-components-product-details__name" data-wp-watch="callbacks.itemDataNameInnerHTML"></span>
 			<span class="wc-block-components-product-details__value" data-wp-watch="callbacks.itemDataValueInnerHTML"></span>
-		<?php else : ?>
+		<?php 
+        } else {
+            ?>
 			<span class="wc-block-components-product-details__name" data-wp-text="state.cartItemDataAttr.name"></span>
 			<span class="wc-block-components-product-details__value" data-wp-text="state.cartItemDataAttr.value"></span>
-		<?php endif; ?>
+		<?php 
+        }
+        ?>
 			<span aria-hidden="true" data-wp-bind--hidden="state.isLastCartItemDataAttr"> / </span>
 		</span>
-		<?php
+		<?php 
         return ob_get_clean();
     }
 }

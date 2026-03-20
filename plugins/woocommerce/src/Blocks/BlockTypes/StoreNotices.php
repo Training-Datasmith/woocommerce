@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * StoreNotices class.
  */
-class StoreNotices extends AbstractBlock
+class Store_Notices extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,7 +15,6 @@ class StoreNotices extends AbstractBlock
      * @var string
      */
     protected $block_name = 'store-notices';
-
     /**
      * Render the block.
      *
@@ -36,31 +33,18 @@ class StoreNotices extends AbstractBlock
          * render process on the admin side.
          * See WooCommerce::is_request() for the frontend request definition.
          */
-        if (! function_exists('wc_print_notices')) {
+        if (!function_exists('wc_print_notices')) {
             return $content;
         }
-
         ob_start();
         woocommerce_output_all_notices();
         $notices = ob_get_clean();
-
-        if (! $notices) {
+        if (!$notices) {
             return;
         }
-
-        $classes_and_styles = StyleAttributesUtils::get_classes_and_styles_by_attributes($attributes, [], [ 'extra_classes' ]);
-
-        return sprintf(
-            '<div %1$s>%2$s</div>',
-            get_block_wrapper_attributes(
-                [
-                    'class' => 'wc-block-store-notices woocommerce ' . esc_attr($classes_and_styles['classes']),
-                ]
-            ),
-            wc_kses_notice($notices)
-        );
+        $classes_and_styles = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes, [], ['extra_classes']);
+        return sprintf('<div %1$s>%2$s</div>', get_block_wrapper_attributes(['class' => 'wc-block-store-notices woocommerce ' . esc_attr($classes_and_styles['classes'])]), wc_kses_notice($notices));
     }
-
     /**
      * Disable frontend script for this block type, it's a script module.
      *

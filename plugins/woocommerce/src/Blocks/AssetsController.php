@@ -1,39 +1,39 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks;
 
 use Automattic\Jetpack\Constants;
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Blocks\Assets\Api as AssetApi;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Blocks\Assets\Api as AssetApi;
 /**
  * AssetsController class.
  *
  * @since 5.0.0
  * @internal
  */
-final readonly class AssetsController
+final readonly class Assets_Controller
 {
     /**
      * Constructor.
      *
      * @param AssetApi $api Asset API interface for various asset registration.
      */
-    public function __construct(/**
-     * Asset API interface for various asset registration.
-     */
-        private AssetApi $api
-    ) {
+    public function __construct(
+        /**
+         * Asset API interface for various asset registration.
+         */
+        private Asset_Api $api
+    )
+    {
         $this->init();
     }
-
     /**
      * Initialize class features.
      */
-    protected function init(): void // phpcs:ignore WooCommerce.Functions.InternalInjectionMethod.MissingPublic
-    {add_action('init', $this->register_assets(...));
+    protected function init(): void
+    {
+        add_action('init', $this->register_assets(...));
         add_action('init', $this->register_script_modules(...));
         add_action('enqueue_block_editor_assets', $this->register_and_enqueue_site_editor_assets(...));
         add_filter('wp_resource_hints', $this->add_resource_hints(...), 10, 2);
@@ -44,32 +44,25 @@ final readonly class AssetsController
         add_action('admin_enqueue_scripts', $this->update_block_settings_dependencies(...), 100);
         add_action('admin_enqueue_scripts', $this->enqueue_wc_entities(...), 100);
         add_filter('js_do_concat', $this->skip_boost_minification_for_cart_checkout(...), 10, 2);
-
         if (Features::is_enabled('experimental-iapi-runtime')) {
             // Run after the WordPress iAPI runtime has been registered by setting a lower priority.
             add_filter('wp_default_scripts', $this->reregister_core_iapi_runtime(...), 20);
         }
     }
-
     /**
      * Re-registers the iAPI runtime registered by WordPress Core/Gutenberg, allowing WooCommerce to register its own version of the iAPI runtime.
      */
     public function reregister_core_iapi_runtime(): void
     {
-        $interactivity_api_asset_data = $this->api->get_asset_data(
-            $this->api->get_block_asset_build_path('interactivity-api-assets', 'php')
-        );
-
+        $interactivity_api_asset_data = $this->api->get_asset_data($this->api->get_block_asset_build_path('interactivity-api-assets', 'php'));
         foreach ($interactivity_api_asset_data as $handle => $data) {
             $handle_without_js = str_replace('.js', '', $handle);
             if ('@wordpress/interactivity' === $handle_without_js || '@wordpress/interactivity-router' === $handle_without_js) {
                 wp_deregister_script_module($handle_without_js);
             }
-
             wp_register_script_module($handle_without_js, plugins_url($this->api->get_block_asset_build_path($handle_without_js), dirname(__DIR__)), $data['dependencies'], $data['version']);
         }
     }
-
     /**
      * Register script modules.
      */
@@ -78,16 +71,12 @@ final readonly class AssetsController
         // Right now we only have one script modules build for supported interactivity API powered block front-ends.
         // We generate a combined asset file for that via DependencyExtractionWebpackPlugin to make registration more
         // efficient.
-        $asset_data = $this->api->get_asset_data(
-            $this->api->get_block_asset_build_path('interactivity-blocks-frontend-assets', 'php')
-        );
-
+        $asset_data = $this->api->get_asset_data($this->api->get_block_asset_build_path('interactivity-blocks-frontend-assets', 'php'));
         foreach ($asset_data as $handle => $data) {
             $handle_without_js = str_replace('.js', '', $handle);
             wp_register_script_module($handle_without_js, plugins_url($this->api->get_block_asset_build_path($handle_without_js), dirname(__DIR__)), $data['dependencies'], $data['version']);
         }
     }
-
     /**
      * Register block scripts & styles.
      */
@@ -95,24 +84,20 @@ final readonly class AssetsController
     {
         $this->register_style('wc-blocks-packages-style', plugins_url($this->api->get_block_asset_build_path('packages-style', 'css'), dirname(__DIR__)), [], 'all', true);
         $this->register_style('wc-blocks-style', plugins_url($this->api->get_block_asset_build_path('wc-blocks', 'css'), dirname(__DIR__)), [], 'all', true);
-        $this->register_style('wc-blocks-editor-style', plugins_url($this->api->get_block_asset_build_path('wc-blocks-editor-style', 'css'), dirname(__DIR__)), [ 'wp-edit-blocks' ], 'all', true);
-
+        $this->register_style('wc-blocks-editor-style', plugins_url($this->api->get_block_asset_build_path('wc-blocks-editor-style', 'css'), dirname(__DIR__)), ['wp-edit-blocks'], 'all', true);
         $this->api->register_script('wc-types', $this->api->get_block_asset_build_path('wc-types'), [], false);
         $this->api->register_script('wc-entities', 'assets/client/blocks/wc-entities.js', [], false);
         $this->api->register_script('wc-blocks-middleware', 'assets/client/blocks/wc-blocks-middleware.js', [], false);
-        $this->api->register_script('wc-blocks-data-store', 'assets/client/blocks/wc-blocks-data.js', [ 'wc-blocks-middleware' ]);
+        $this->api->register_script('wc-blocks-data-store', 'assets/client/blocks/wc-blocks-data.js', ['wc-blocks-middleware']);
         $this->api->register_script('wc-blocks-vendors', $this->api->get_block_asset_build_path('wc-blocks-vendors'), [], false);
         $this->api->register_script('wc-blocks-registry', 'assets/client/blocks/wc-blocks-registry.js', [], false);
-        $this->api->register_script('wc-blocks', $this->api->get_block_asset_build_path('wc-blocks'), [ 'wc-blocks-vendors' ], false);
+        $this->api->register_script('wc-blocks', $this->api->get_block_asset_build_path('wc-blocks'), ['wc-blocks-vendors'], false);
         $this->api->register_script('wc-blocks-shared-context', 'assets/client/blocks/wc-blocks-shared-context.js');
         $this->api->register_script('wc-blocks-shared-hocs', 'assets/client/blocks/wc-blocks-shared-hocs.js', [], false);
-
         // The price package is shared externally so has no blocks prefix.
         $this->api->register_script('wc-price-format', 'assets/client/blocks/price-format.js', [], false);
-
         // Vendor scripts for blocks frontends (not including cart and checkout).
         $this->api->register_script('wc-blocks-frontend-vendors', $this->api->get_block_asset_build_path('wc-blocks-frontend-vendors-frontend'), [], true);
-
         // Cart and checkout frontend scripts.
         $this->api->register_script('wc-cart-checkout-vendors', $this->api->get_block_asset_build_path('wc-cart-checkout-vendors-frontend'), [], true);
         $this->api->register_script('wc-cart-checkout-base', $this->api->get_block_asset_build_path('wc-cart-checkout-base-frontend'), [], true);
@@ -120,37 +105,13 @@ final readonly class AssetsController
         $this->api->register_script('wc-blocks-checkout-events', 'assets/client/blocks/blocks-checkout-events.js');
         $this->api->register_script('wc-blocks-components', 'assets/client/blocks/blocks-components.js');
         $this->api->register_script('wc-schema-parser', 'assets/client/blocks/wc-schema-parser.js', [], false);
-
         // Sanitize.
-        $this->api->register_script(
-            'wc-sanitize',
-            'assets/client/admin/sanitize/index.js',
-            []
-        );
-
+        $this->api->register_script('wc-sanitize', 'assets/client/admin/sanitize/index.js', []);
         // Customer Effort Score.
-        $this->api->register_script(
-            'wc-customer-effort-score',
-            'assets/client/admin/customer-effort-score/index.js',
-            [ 'wp-data', 'wp-data-controls', 'wc-store-data' ]
-        );
-        $this->api->register_style(
-            'wc-customer-effort-score',
-            'assets/client/admin/customer-effort-score/style.css',
-        );
-
-        wp_add_inline_script(
-            'wc-blocks-middleware',
-            "
-			var wcBlocksMiddlewareConfig = {
-				storeApiNonce: '" . esc_js(wp_create_nonce('wc_store_api')) . "',
-				wcStoreApiNonceTimestamp: '" . esc_js(time()) . "'
-			};
-			",
-            'before'
-        );
+        $this->api->register_script('wc-customer-effort-score', 'assets/client/admin/customer-effort-score/index.js', ['wp-data', 'wp-data-controls', 'wc-store-data']);
+        $this->api->register_style('wc-customer-effort-score', 'assets/client/admin/customer-effort-score/style.css');
+        wp_add_inline_script('wc-blocks-middleware', "\n\t\t\tvar wcBlocksMiddlewareConfig = {\n\t\t\t\tstoreApiNonce: '" . esc_js(wp_create_nonce('wc_store_api')) . "',\n\t\t\t\twcStoreApiNonceTimestamp: '" . esc_js(time()) . "'\n\t\t\t};\n\t\t\t", 'before');
     }
-
     /**
      * Register and enqueue assets for exclusive usage within the Site Editor.
      */
@@ -160,7 +121,6 @@ final readonly class AssetsController
         wp_enqueue_script('wc-customer-effort-score');
         wp_enqueue_style('wc-customer-effort-score');
     }
-
     /**
      * Defines resource hints to help speed up the loading of some critical blocks.
      *
@@ -172,34 +132,22 @@ final readonly class AssetsController
      */
     public function add_resource_hints($urls, $relation_type)
     {
-        if (! in_array($relation_type, [ 'prefetch', 'prerender' ], true) || is_admin()) {
+        if (!in_array($relation_type, ['prefetch', 'prerender'], true) || is_admin()) {
             return $urls;
         }
-
         // We only need to prefetch when the cart has contents.
         $cart = wc()->cart;
-
-        if (! $cart instanceof \WC_Cart || 0 === $cart->get_cart_contents_count()) {
+        if (!$cart instanceof \WC_Cart || 0 === $cart->get_cart_contents_count()) {
             return $urls;
         }
-
         if ('prefetch' === $relation_type) {
-            $urls = array_merge(
-                $urls,
-                $this->get_prefetch_resource_hints()
-            );
+            $urls = array_merge($urls, $this->get_prefetch_resource_hints());
         }
-
         if ('prerender' === $relation_type) {
-            return array_merge(
-                $urls,
-                $this->get_prerender_resource_hints()
-            );
+            return array_merge($urls, $this->get_prerender_resource_hints());
         }
-
         return $urls;
     }
-
     /**
      * Get resource hints during prefetch requests.
      *
@@ -208,30 +156,23 @@ final readonly class AssetsController
     private function get_prefetch_resource_hints(): array
     {
         $urls = [];
-
         // Core page IDs.
-        $cart_page_id     = wc_get_page_id('cart');
+        $cart_page_id = wc_get_page_id('cart');
         $checkout_page_id = wc_get_page_id('checkout');
-
         // Checks a specific page (by ID) to see if it contains the named block.
-        $has_block_cart     = $cart_page_id && has_block('woocommerce/cart', $cart_page_id);
+        $has_block_cart = $cart_page_id && has_block('woocommerce/cart', $cart_page_id);
         $has_block_checkout = $checkout_page_id && has_block('woocommerce/checkout', $checkout_page_id);
-
         // Checks the current page to see if it contains the named block.
-        $is_block_cart     = has_block('woocommerce/cart');
+        $is_block_cart = has_block('woocommerce/cart');
         $is_block_checkout = has_block('woocommerce/checkout');
-
-        if ($has_block_cart && ! $is_block_cart) {
+        if ($has_block_cart && !$is_block_cart) {
             $urls = array_merge($urls, $this->get_block_asset_resource_hints('cart-frontend'));
         }
-
-        if ($has_block_checkout && ! $is_block_checkout) {
+        if ($has_block_checkout && !$is_block_checkout) {
             return array_merge($urls, $this->get_block_asset_resource_hints('checkout-frontend'));
         }
-
         return $urls;
     }
-
     /**
      * Get resource hints during prerender requests.
      *
@@ -239,23 +180,18 @@ final readonly class AssetsController
      */
     private function get_prerender_resource_hints(): array
     {
-        $urls          = [];
+        $urls = [];
         $is_block_cart = has_block('woocommerce/cart');
-
-        if (! $is_block_cart) {
+        if (!$is_block_cart) {
             return $urls;
         }
-
-        $checkout_page_id  = wc_get_page_id('checkout');
+        $checkout_page_id = wc_get_page_id('checkout');
         $checkout_page_url = $checkout_page_id ? get_permalink($checkout_page_id) : '';
-
         if ($checkout_page_url) {
             $urls[] = $checkout_page_url;
         }
-
         return $urls;
     }
-
     /**
      * Get the block asset resource hints in the cache or null if not found.
      *
@@ -266,22 +202,13 @@ final readonly class AssetsController
         if (wp_is_development_mode('plugin')) {
             return null;
         }
-
         $cache = get_transient('woocommerce_block_asset_resource_hints');
-
-        $current_version = [
-            'woocommerce' => Constants::get_constant('WC_VERSION'),
-            'wordpress'   => get_bloginfo('version'),
-            'site_url'    => site_url(),
-        ];
-
+        $current_version = ['woocommerce' => Constants::get_constant('WC_VERSION'), 'wordpress' => get_bloginfo('version'), 'site_url' => site_url()];
         if (isset($cache['version']) && $cache['version'] === $current_version) {
             return $cache['files'];
         }
-
         return null;
     }
-
     /**
      * Set the block asset resource hints in the cache.
      *
@@ -290,20 +217,11 @@ final readonly class AssetsController
      */
     private function set_block_asset_resource_hints_cache($filename, array $data): void
     {
-        $cache   = $this->get_block_asset_resource_hints_cache();
-        $updated = [
-            'files'   => $cache ?? [],
-            'version' => [
-                'woocommerce' => Constants::get_constant('WC_VERSION'),
-                'wordpress'   => get_bloginfo('version'),
-                'site_url'    => site_url(),
-            ],
-        ];
-
-        $updated['files'][ $filename ] = $data;
+        $cache = $this->get_block_asset_resource_hints_cache();
+        $updated = ['files' => $cache ?? [], 'version' => ['woocommerce' => Constants::get_constant('WC_VERSION'), 'wordpress' => get_bloginfo('version'), 'site_url' => site_url()]];
+        $updated['files'][$filename] = $data;
         set_transient('woocommerce_block_asset_resource_hints', $updated, WEEK_IN_SECONDS);
     }
-
     /**
      * Get resource hint for a block by name.
      *
@@ -312,37 +230,19 @@ final readonly class AssetsController
      */
     private function get_block_asset_resource_hints(string $filename = '')
     {
-        if (! $filename) {
+        if (!$filename) {
             return [];
         }
-
         $cached = $this->get_block_asset_resource_hints_cache();
-
-        if (isset($cached[ $filename ])) {
-            return $cached[ $filename ];
+        if (isset($cached[$filename])) {
+            return $cached[$filename];
         }
-
-        $script_data = $this->api->get_script_data(
-            $this->api->get_block_asset_build_path($filename)
-        );
-        $resources   = array_merge(
-            [ esc_url(add_query_arg('ver', $script_data['version'], $script_data['src'])) ],
-            $this->get_script_dependency_src_array($script_data['dependencies'])
-        );
-
-        $data = array_map(
-            fn ($src) => [
-                    'href' => $src,
-                    'as'   => 'script',
-                ],
-            array_unique(array_filter($resources))
-        );
-
+        $script_data = $this->api->get_script_data($this->api->get_block_asset_build_path($filename));
+        $resources = array_merge([esc_url(add_query_arg('ver', $script_data['version'], $script_data['src']))], $this->get_script_dependency_src_array($script_data['dependencies']));
+        $data = array_map(fn($src) => ['href' => $src, 'as' => 'script'], array_unique(array_filter($resources)));
         $this->set_block_asset_resource_hints_cache($filename, $data);
-
         return $data;
     }
-
     /**
      * Get the src of all script dependencies (handles).
      *
@@ -352,17 +252,14 @@ final readonly class AssetsController
     private function get_script_dependency_src_array(array $dependencies): array
     {
         $wp_scripts = wp_scripts();
-
         $found_dependencies = [];
         $this->gather_script_dependency_handles($dependencies, $wp_scripts, $found_dependencies);
-
         $src = [];
         foreach ($found_dependencies as $handle => $unused) {
-            $src[] = esc_url(add_query_arg('ver', $wp_scripts->registered[ $handle ]->ver, $this->get_absolute_url($wp_scripts->registered[ $handle ]->src)));
+            $src[] = esc_url(add_query_arg('ver', $wp_scripts->registered[$handle]->ver, $this->get_absolute_url($wp_scripts->registered[$handle]->src)));
         }
         return $src;
     }
-
     /**
      * Recursively gather all unique script dependency handles from a starting list.
      *
@@ -377,15 +274,14 @@ final readonly class AssetsController
     private function gather_script_dependency_handles(array $dependencies, \WP_Scripts $wp_scripts, array &$found_dependencies = []): void
     {
         foreach ($dependencies as $handle) {
-            if (isset($wp_scripts->registered[ $handle ]) && ! isset($found_dependencies[ $handle ])) {
-                $found_dependencies[ $handle ] = true;
-                if (! empty($wp_scripts->registered[ $handle ]->deps)) {
-                    $this->gather_script_dependency_handles($wp_scripts->registered[ $handle ]->deps, $wp_scripts, $found_dependencies);
+            if (isset($wp_scripts->registered[$handle]) && !isset($found_dependencies[$handle])) {
+                $found_dependencies[$handle] = true;
+                if (!empty($wp_scripts->registered[$handle]->deps)) {
+                    $this->gather_script_dependency_handles($wp_scripts->registered[$handle]->deps, $wp_scripts, $found_dependencies);
                 }
             }
         }
     }
-
     /**
      * Returns an absolute url to relative links for WordPress core scripts.
      *
@@ -395,12 +291,11 @@ final readonly class AssetsController
     private function get_absolute_url(string $src): string
     {
         $wp_scripts = wp_scripts();
-        if (! preg_match('|^(https?:)?//|', $src) && ! ($wp_scripts->content_url && str_starts_with($src, (string) $wp_scripts->content_url))) {
+        if (!preg_match('|^(https?:)?//|', $src) && !($wp_scripts->content_url && str_starts_with($src, (string) $wp_scripts->content_url))) {
             return $wp_scripts->base_url . $src;
         }
         return $src;
     }
-
     /**
      * Skip Jetpack Boost minification on older versions of Jetpack Boost where it causes issues.
      *
@@ -411,14 +306,9 @@ final readonly class AssetsController
     public function skip_boost_minification_for_cart_checkout($do_concat, $handle)
     {
         $boost_is_outdated = defined('JETPACK_BOOST_VERSION') && version_compare(JETPACK_BOOST_VERSION, '3.4.2', '<');
-        $scripts_to_ignore = [
-            'wc-cart-checkout-vendors',
-            'wc-cart-checkout-base',
-        ];
-
+        $scripts_to_ignore = ['wc-cart-checkout-vendors', 'wc-cart-checkout-base'];
         return $boost_is_outdated && in_array($handle, $scripts_to_ignore, true) ? false : $do_concat;
     }
-
     /**
      * Add body classes to the frontend and within admin.
      *
@@ -428,16 +318,13 @@ final readonly class AssetsController
     public function add_theme_body_class($classes)
     {
         $class = 'theme-' . get_template();
-
         if (is_array($classes)) {
             $classes[] = $class;
         } else {
             $classes .= ' ' . $class . ' ';
         }
-
         return $classes;
     }
-
     /**
      * Get the file modified time as a cache buster if we're in dev mode.
      *
@@ -446,12 +333,11 @@ final readonly class AssetsController
      */
     protected function get_file_version(string|array $file)
     {
-        if (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG && file_exists(\Automattic\WooCommerce\Blocks\Package::get_path() . $file)) {
-            return filemtime(\Automattic\WooCommerce\Blocks\Package::get_path() . $file);
+        if (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG && file_exists(\Automattic\Woo_Commerce\Blocks\Package::get_path() . $file)) {
+            return filemtime(\Automattic\Woo_Commerce\Blocks\Package::get_path() . $file);
         }
         return $this->api->wc_version;
     }
-
     /**
      * Registers a style according to `wp_register_style`.
      *
@@ -465,39 +351,30 @@ final readonly class AssetsController
     protected function register_style(string $handle, $src, array $deps = [], string $media = 'all', bool $rtl = false): void
     {
         $filename = str_replace(plugins_url('/', dirname(__DIR__)), '', $src);
-        $ver      = self::get_file_version($filename);
-
+        $ver = self::get_file_version($filename);
         wp_register_style($handle, $src, $deps, $ver, $media);
-
         if ($rtl) {
             wp_style_add_data($handle, 'rtl', 'replace');
         }
     }
-
     /**
      * Update block style dependencies after they have been registered.
      */
     public function update_block_style_dependencies(): void
     {
         $wp_styles = wp_styles();
-        $style     = $wp_styles->query('wc-blocks-style', 'registered');
-
-        if (! $style) {
+        $style = $wp_styles->query('wc-blocks-style', 'registered');
+        if (!$style) {
             return;
         }
-
         // In WC < 5.5, `woocommerce-general` is not registered in block editor
         // screens, so we don't add it as a dependency if it's not registered.
         // In WC >= 5.5, `woocommerce-general` is registered on `admin_enqueue_scripts`,
         // so we need to check if it's registered here instead of on `init`.
-        if (
-            wp_style_is('woocommerce-general', 'registered') &&
-            ! in_array('woocommerce-general', $style->deps, true)
-        ) {
+        if (wp_style_is('woocommerce-general', 'registered') && !in_array('woocommerce-general', $style->deps, true)) {
             $style->deps[] = 'woocommerce-general';
         }
     }
-
     /**
      * Fix scripts with wc-settings dependency.
      *
@@ -513,30 +390,24 @@ final readonly class AssetsController
      */
     public function update_block_settings_dependencies(): void
     {
-        $wp_scripts     = wp_scripts();
-        $known_packages = [ 'wc-settings', 'wc-blocks-checkout', 'wc-price-format' ];
-
+        $wp_scripts = wp_scripts();
+        $known_packages = ['wc-settings', 'wc-blocks-checkout', 'wc-price-format'];
         foreach ($wp_scripts->registered as $handle => $script) {
             // scripts that are loaded in the footer has extra->group = 1.
-            if (array_intersect($known_packages, $script->deps) && ! isset($script->extra['group'])) {
+            if (array_intersect($known_packages, $script->deps) && !isset($script->extra['group'])) {
                 // Append the script to footer.
                 $wp_scripts->add_data($handle, 'group', 1);
                 // Show a warning.
-                $error_handle  = 'wc-settings-dep-in-header';
-                $used_deps     = implode(', ', array_intersect($known_packages, $script->deps));
-                $error_message = "Scripts that have a dependency on [$used_deps] must be loaded in the footer, {$handle} was registered to load in the header, but has been switched to load in the footer instead. See https://github.com/woocommerce/woocommerce-gutenberg-products-block/pull/5059";
+                $error_handle = 'wc-settings-dep-in-header';
+                $used_deps = implode(', ', array_intersect($known_packages, $script->deps));
+                $error_message = "Scripts that have a dependency on [{$used_deps}] must be loaded in the footer, {$handle} was registered to load in the header, but has been switched to load in the footer instead. See https://github.com/woocommerce/woocommerce-gutenberg-products-block/pull/5059";
                 // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.NotInFooter,WordPress.WP.EnqueuedResourceParameters.MissingVersion
                 wp_register_script($error_handle, '');
                 wp_enqueue_script($error_handle);
-                wp_add_inline_script(
-                    $error_handle,
-                    sprintf('console.warn( "%s" );', $error_message)
-                );
-
+                wp_add_inline_script($error_handle, sprintf('console.warn( "%s" );', $error_message));
             }
         }
     }
-
     /**
      * Enqueue the wc-entities script.
      */

@@ -1,30 +1,25 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Admin\Schedulers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Schedulers;
 
 /**
  * Class MailchimpScheduler
  *
  * @package Automattic\WooCommerce\Admin\Schedulers
  */
-class MailchimpScheduler
+class Mailchimp_Scheduler
 {
-    public const SUBSCRIBE_ENDPOINT     = 'https://woocommerce.com/wp-json/wccom/v1/subscribe';
+    public const SUBSCRIBE_ENDPOINT = 'https://woocommerce.com/wp-json/wccom/v1/subscribe';
     public const SUBSCRIBE_ENDPOINT_DEV = 'https://woocommerce.test/wp-json/wccom/v1/subscribe';
-
-    public const SUBSCRIBED_OPTION_NAME             = 'woocommerce_onboarding_subscribed_to_mailchimp';
+    public const SUBSCRIBED_OPTION_NAME = 'woocommerce_onboarding_subscribed_to_mailchimp';
     public const SUBSCRIBED_ERROR_COUNT_OPTION_NAME = 'woocommerce_onboarding_subscribed_to_mailchimp_error_count';
-    public const MAX_ERROR_THRESHOLD                = 3;
-
+    public const MAX_ERROR_THRESHOLD = 3;
     public const LOGGER_CONTEXT = 'mailchimp_scheduler';
-
     /**
      * The logger instance.
      */
     private readonly ?\WC_Logger_Interface $logger;
-
     /**
      * MailchimpScheduler constructor.
      *
@@ -38,7 +33,6 @@ class MailchimpScheduler
         }
         $this->logger = $logger;
     }
-
     /**
      * Attempt to subscribe store_email to MailChimp.
      *
@@ -50,53 +44,43 @@ class MailchimpScheduler
         if ('yes' === get_option(self::SUBSCRIBED_OPTION_NAME)) {
             return false;
         }
-
         $profile_data = get_option('woocommerce_onboarding_profile');
-        if (! isset($profile_data['is_agree_marketing']) || false === $profile_data['is_agree_marketing']) {
+        if (!isset($profile_data['is_agree_marketing']) || false === $profile_data['is_agree_marketing']) {
             return false;
         }
-
         // Abort if store_email doesn't exist.
-        if (! isset($profile_data['store_email'])) {
+        if (!isset($profile_data['store_email'])) {
             return false;
         }
-
         // Abort if failed requests reaches the threshold.
         if (intval(get_option(self::SUBSCRIBED_ERROR_COUNT_OPTION_NAME, 0)) >= self::MAX_ERROR_THRESHOLD) {
             return false;
         }
-
         $country_code = WC()->countries->get_base_country();
-        $state        = WC()->countries->get_base_state();
-
+        $state = WC()->countries->get_base_state();
         $address = [
             // Setting N/A for addr1, city, state, zipcode and country as they are
             // required fields. Setting '' doesn't work.
-            'addr1'   => 'N/A',
-            'addr2'   => '',
-            'city'    => 'N/A',
-            'state'   => $state ?? 'N/A',
-            'zip'     => 'N/A',
+            'addr1' => 'N/A',
+            'addr2' => '',
+            'city' => 'N/A',
+            'state' => $state ?? 'N/A',
+            'zip' => 'N/A',
             'country' => $country_code ?? 'N/A',
         ];
-
         $response = $this->make_request($profile_data['store_email'], $address);
-
-        if (is_wp_error($response) || ! isset($response['body'])) {
+        if (is_wp_error($response) || !isset($response['body'])) {
             $this->handle_request_error();
             return false;
         }
-
         $body = json_decode((string) $response['body']);
         if (isset($body->success) && true === $body->success) {
             update_option(self::SUBSCRIBED_OPTION_NAME, 'yes');
             return true;
         }
-
         $this->handle_request_error($body);
         return false;
     }
-
     /**
      * Make an HTTP request to the API.
      *
@@ -113,20 +97,8 @@ class MailchimpScheduler
         } else {
             $subscribe_endpoint = self::SUBSCRIBE_ENDPOINT;
         }
-
-        return wp_remote_post(
-            $subscribe_endpoint,
-            [
-                'user-agent' => 'WooCommerce/' . WC()->version . '; ' . get_bloginfo('url'),
-                'method'     => 'POST',
-                'body'       => [
-                    'email'   => $store_email,
-                    'address' => $address,
-                ],
-            ]
-        );
+        return wp_remote_post($subscribe_endpoint, ['user-agent' => 'WooCommerce/' . WC()->version . '; ' . get_bloginfo('url'), 'method' => 'POST', 'body' => ['email' => $store_email, 'address' => $address]]);
     }
-
     /**
      * Reset options.
      *
@@ -137,7 +109,6 @@ class MailchimpScheduler
         delete_option(self::SUBSCRIBED_OPTION_NAME);
         delete_option(self::SUBSCRIBED_ERROR_COUNT_OPTION_NAME);
     }
-
     /**
      * Handle subscribe API error.
      *
@@ -148,9 +119,7 @@ class MailchimpScheduler
     {
         // phpcs:ignore
         $msg = isset($extra_msg) ? 'Incorrect response from Mailchimp API with: ' . print_r($extra_msg, true) : 'Error getting a response from Mailchimp API.';
-
-        $this->logger->error($msg, [ 'source' => self::LOGGER_CONTEXT ]);
-
+        $this->logger->error($msg, ['source' => self::LOGGER_CONTEXT]);
         $accumulated_error_count = intval(get_option(self::SUBSCRIBED_ERROR_COUNT_OPTION_NAME, 0)) + 1;
         update_option(self::SUBSCRIBED_ERROR_COUNT_OPTION_NAME, $accumulated_error_count);
     }

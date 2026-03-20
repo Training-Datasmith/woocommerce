@@ -3,19 +3,16 @@
 /**
  * Fulfillments Data Store Interface
  */
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments\Data_Store;
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments\DataStore;
-
-use Automattic\WooCommerce\Admin\Features\Fulfillments\Fulfillment;
-
+use Automattic\Woo_Commerce\Admin\Features\Fulfillments\Fulfillment;
 /**
  * Interface FulfillmentsDataStoreInterface
  *
  * @package Automattic\WooCommerce\Admin\Features\Fulfillments\DataStore
  */
-interface FulfillmentsDataStoreInterface
+interface Fulfillments_Data_Store_Interface
 {
     /**
      * Read the fulfillment data.

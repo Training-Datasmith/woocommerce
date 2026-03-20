@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Rule processor that performs a comparison operation against a value in the
  * onboarding profile.
  */
-
-namespace Automattic\WooCommerce\Admin\RemoteSpecs\RuleProcessors;
+namespace Automattic\Woo_Commerce\Admin\Remote_Specs\Rule_Processors;
 
 defined('ABSPATH') || exit;
-
 /**
  * Rule processor that performs a comparison operation against a value in the
  * onboarding profile.
  */
-class OnboardingProfileRuleProcessor implements RuleProcessorInterface
+class Onboarding_Profile_Rule_Processor implements Rule_Processor_Interface
 {
     /**
      * Performs a comparison operation against a value in the onboarding
@@ -28,22 +26,14 @@ class OnboardingProfileRuleProcessor implements RuleProcessorInterface
     public function process($rule, $stored_state)
     {
         $onboarding_profile = get_option('woocommerce_onboarding_profile');
-
-        if (empty($onboarding_profile) || ! is_array($onboarding_profile)) {
+        if (empty($onboarding_profile) || !is_array($onboarding_profile)) {
             return false;
         }
-
-        if (! isset($onboarding_profile[ $rule->index ])) {
+        if (!isset($onboarding_profile[$rule->index])) {
             return false;
         }
-
-        return ComparisonOperation::compare(
-            $onboarding_profile[ $rule->index ],
-            $rule->value,
-            $rule->operation
-        );
+        return Comparison_Operation::compare($onboarding_profile[$rule->index], $rule->value, $rule->operation);
     }
-
     /**
      * Validates the rule.
      *
@@ -53,18 +43,15 @@ class OnboardingProfileRuleProcessor implements RuleProcessorInterface
      */
     public function validate($rule): bool
     {
-        if (! isset($rule->index)) {
+        if (!isset($rule->index)) {
             return false;
         }
-
-        if (! isset($rule->value)) {
+        if (!isset($rule->value)) {
             return false;
         }
-
-        if (! isset($rule->operation)) {
+        if (!isset($rule->operation)) {
             return false;
         }
-
         return true;
     }
 }

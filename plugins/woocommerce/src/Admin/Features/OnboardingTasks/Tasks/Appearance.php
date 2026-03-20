@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Tasks;
 
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
-
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
-
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task;
 /**
  * Appearance Task
  */
@@ -16,11 +14,10 @@ class Appearance extends Task
      */
     public function __construct()
     {
-        if (! $this->is_complete()) {
+        if (!$this->is_complete()) {
             add_action('load-theme-install.php', $this->mark_actioned(...));
         }
     }
-
     /**
      * ID.
      */
@@ -28,7 +25,6 @@ class Appearance extends Task
     {
         return 'appearance';
     }
-
     /**
      * Title.
      *
@@ -38,7 +34,6 @@ class Appearance extends Task
     {
         return __('Choose your theme', 'woocommerce');
     }
-
     /**
      * Content.
      *
@@ -46,12 +41,8 @@ class Appearance extends Task
      */
     public function get_content()
     {
-        return __(
-            "Choose a theme that best fits your brand's look and feel, then make it your own. Change the colors, add your logo, and create pages.",
-            'woocommerce'
-        );
+        return __("Choose a theme that best fits your brand's look and feel, then make it your own. Change the colors, add your logo, and create pages.", 'woocommerce');
     }
-
     /**
      * Time.
      *
@@ -61,7 +52,6 @@ class Appearance extends Task
     {
         return __('2 minutes', 'woocommerce');
     }
-
     /**
      * Action label.
      *

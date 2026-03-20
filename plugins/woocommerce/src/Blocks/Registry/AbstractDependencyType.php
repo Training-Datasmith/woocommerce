@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Registry;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Registry;
 
 /**
  * An abstract class for dependency types.
@@ -13,7 +12,7 @@ namespace Automattic\WooCommerce\Blocks\Registry;
  *
  * @since 2.5.0
  */
-abstract class AbstractDependencyType
+abstract class Abstract_Dependency_Type
 {
     /**
      * Constructor
@@ -26,9 +25,9 @@ abstract class AbstractDependencyType
          * Holds a callable or value provided for this type.
          */
         private $callable_or_value
-    ) {
+    )
+    {
     }
-
     /**
      * Resolver for the internal dependency value.
      *
@@ -39,11 +38,8 @@ abstract class AbstractDependencyType
     protected function resolve_value(Container $container)
     {
         $callback = $this->callable_or_value;
-        return \is_callable($callback)
-            ? $callback($container)
-            : $callback;
+        return \is_callable($callback) ? $callback($container) : $callback;
     }
-
     /**
      * Retrieves the value stored internally for this DependencyType
      *

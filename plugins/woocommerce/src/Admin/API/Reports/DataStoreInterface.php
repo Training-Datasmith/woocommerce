@@ -1,22 +1,20 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Reports Data Store Interface
  */
+namespace Automattic\Woo_Commerce\Admin\API\Reports;
 
-namespace Automattic\WooCommerce\Admin\API\Reports;
-
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit;
 }
-
 /**
  * WooCommerce Reports data store interface.
  *
  * @since 3.5.0
  */
-interface DataStoreInterface
+interface Data_Store_Interface
 {
     /**
      * Get the data based on args.

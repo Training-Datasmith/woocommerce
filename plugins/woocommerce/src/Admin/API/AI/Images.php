@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\API\AI;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\API\AI;
 
 defined('ABSPATH') || exit;
-
 /**
  * Images controller
  *

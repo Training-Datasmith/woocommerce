@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Caching;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Caching;
 
 /**
  * Implementation of CacheEngine that uses the built-in WordPress cache.
  */
-class WPCacheEngine implements CacheEngine
+class Wp_Cache_Engine implements Cache_Engine
 {
-    use CacheNameSpaceTrait;
-
+    use Cache_Name_Space_Trait;
     /**
      * Retrieves an object cached under a given key.
      *
@@ -22,10 +20,9 @@ class WPCacheEngine implements CacheEngine
     public function get_cached_object(string $key, string $group = '')
     {
         $prefixed_key = self::get_prefixed_key($key, $group);
-        $value        = wp_cache_get($prefixed_key, $group);
+        $value = wp_cache_get($prefixed_key, $group);
         return false === $value ? null : $value;
     }
-
     /**
      * Retrieves a set of objects cached under the given keys.
      *
@@ -36,28 +33,19 @@ class WPCacheEngine implements CacheEngine
      */
     public function get_cached_objects(array $keys, string $group = ''): array
     {
-        $prefix  = self::get_cache_prefix($group);
-        $key_map = array_combine(
-            $keys,
-            array_map(
-                fn (string $key) => $prefix . $key,
-                $keys
-            )
-        );
-
+        $prefix = self::get_cache_prefix($group);
+        $key_map = array_combine($keys, array_map(fn(string $key) => $prefix . $key, $keys));
         $cached_values = wp_cache_get_multiple(array_values($key_map), $group);
         $return_values = [];
         foreach ($key_map as $key => $prefixed_key) {
-            if (isset($cached_values[ $prefixed_key ]) && false !== $cached_values[ $prefixed_key ]) {
-                $return_values[ $key ] = $cached_values[ $prefixed_key ];
+            if (isset($cached_values[$prefixed_key]) && false !== $cached_values[$prefixed_key]) {
+                $return_values[$key] = $cached_values[$prefixed_key];
             } else {
-                $return_values[ $key ] = null;
+                $return_values[$key] = null;
             }
         }
-
         return $return_values;
     }
-
     /**
      * Caches an object under a given key, and with a given expiration.
      *
@@ -73,7 +61,6 @@ class WPCacheEngine implements CacheEngine
         $prefixed_key = self::get_prefixed_key($key, $group);
         return false !== wp_cache_set($prefixed_key, $object, $group, $expiration);
     }
-
     /**
      * Caches an object under a given key, and with a given expiration.
      *
@@ -87,18 +74,9 @@ class WPCacheEngine implements CacheEngine
     public function cache_objects(array $objects, int $expiration, string $group = ''): array
     {
         $prefix = self::get_cache_prefix($group);
-
-        $objects = array_combine(
-            array_map(
-                fn (int|string $key) => $prefix . $key,
-                array_keys($objects)
-            ),
-            $objects,
-        );
-
+        $objects = array_combine(array_map(fn(int|string $key) => $prefix . $key, array_keys($objects)), $objects);
         return wp_cache_set_multiple($objects, $group, $expiration);
     }
-
     /**
      * Removes a cached object from the cache.
      *
@@ -112,7 +90,6 @@ class WPCacheEngine implements CacheEngine
         $prefixed_key = self::get_prefixed_key($key, $group);
         return false !== wp_cache_delete($prefixed_key, $group);
     }
-
     /**
      * Checks if an object is cached under a given key.
      *
@@ -126,7 +103,6 @@ class WPCacheEngine implements CacheEngine
         $prefixed_key = self::get_prefixed_key($key, $group);
         return false !== wp_cache_get($prefixed_key, $group);
     }
-
     /**
      * Deletes all cached objects under a given group.
      *

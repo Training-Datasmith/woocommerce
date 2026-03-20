@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * ProductCategories class.
  */
-class ProductCategories extends AbstractDynamicBlock
+class Product_Categories extends Abstract_Dynamic_Block
 {
     /**
      * Block name.
@@ -17,45 +15,19 @@ class ProductCategories extends AbstractDynamicBlock
      * @var string
      */
     protected $block_name = 'product-categories';
-
     /**
      * Default attribute values, should match what's set in JS `registerBlockType`.
      *
      * @var array
      */
-    protected $defaults = [
-        'hasCount'         => true,
-        'hasImage'         => false,
-        'hasEmpty'         => false,
-        'isDropdown'       => false,
-        'isHierarchical'   => true,
-        'showChildrenOnly' => false,
-    ];
-
+    protected $defaults = ['hasCount' => true, 'hasImage' => false, 'hasEmpty' => false, 'isDropdown' => false, 'isHierarchical' => true, 'showChildrenOnly' => false];
     /**
      * Get block attributes.
      */
     protected function get_block_type_attributes(): array
     {
-        return array_merge(
-            parent::get_block_type_attributes(),
-            [
-                'align'            => $this->get_schema_align(),
-                'className'        => $this->get_schema_string(),
-                'hasCount'         => $this->get_schema_boolean(true),
-                'hasImage'         => $this->get_schema_boolean(false),
-                'hasEmpty'         => $this->get_schema_boolean(false),
-                'isDropdown'       => $this->get_schema_boolean(false),
-                'isHierarchical'   => $this->get_schema_boolean(true),
-                'showChildrenOnly' => $this->get_schema_boolean(false),
-                'textColor'        => $this->get_schema_string(),
-                'fontSize'         => $this->get_schema_string(),
-                'lineHeight'       => $this->get_schema_string(),
-                'style'            => [ 'type' => 'object' ],
-            ]
-        );
+        return array_merge(parent::get_block_type_attributes(), ['align' => $this->get_schema_align(), 'className' => $this->get_schema_string(), 'hasCount' => $this->get_schema_boolean(true), 'hasImage' => $this->get_schema_boolean(false), 'hasEmpty' => $this->get_schema_boolean(false), 'isDropdown' => $this->get_schema_boolean(false), 'isHierarchical' => $this->get_schema_boolean(true), 'showChildrenOnly' => $this->get_schema_boolean(false), 'textColor' => $this->get_schema_string(), 'fontSize' => $this->get_schema_string(), 'lineHeight' => $this->get_schema_string(), 'style' => ['type' => 'object']]);
     }
-
     /**
      * Render the Product Categories List block.
      *
@@ -66,14 +38,12 @@ class ProductCategories extends AbstractDynamicBlock
      */
     protected function render($attributes, $content, $block): string
     {
-        $uid        = uniqid('product-categories-');
+        $uid = uniqid('product-categories-');
         $categories = $this->get_categories($attributes);
-
         if (empty($categories)) {
             return '';
         }
-
-        if (! empty($content)) {
+        if (!empty($content)) {
             // Deal with legacy attributes (before this was an SSR block) that differ from defaults.
             if (strstr($content, 'data-has-count="false"')) {
                 $attributes['hasCount'] = false;
@@ -88,21 +58,13 @@ class ProductCategories extends AbstractDynamicBlock
                 $attributes['hasEmpty'] = true;
             }
         }
-
-        $classes_and_styles = StyleAttributesUtils::get_classes_and_styles_by_attributes(
-            $attributes,
-            [ 'line_height', 'text_color', 'font_size', 'extra_classes' ]
-        );
-
+        $classes_and_styles = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes, ['line_height', 'text_color', 'font_size', 'extra_classes']);
         $classes = $this->get_container_classes($attributes) . ' ' . $classes_and_styles['classes'];
-        $styles  = $classes_and_styles['styles'];
-
-        $output  = '<div class="wp-block-woocommerce-product-categories ' . esc_attr($classes) . '" style="' . esc_attr($styles) . '">';
-        $output .= ! empty($attributes['isDropdown']) ? $this->renderDropdown($categories, $attributes, $uid) : $this->renderList($categories, $attributes, $uid);
-
+        $styles = $classes_and_styles['styles'];
+        $output = '<div class="wp-block-woocommerce-product-categories ' . esc_attr($classes) . '" style="' . esc_attr($styles) . '">';
+        $output .= !empty($attributes['isDropdown']) ? $this->render_dropdown($categories, $attributes, $uid) : $this->render_list($categories, $attributes, $uid);
         return $output . '</div>';
     }
-
     /**
      * Get the list of classes to apply to this block.
      *
@@ -111,22 +73,17 @@ class ProductCategories extends AbstractDynamicBlock
      */
     protected function get_container_classes(array $attributes = []): string
     {
-
-        $classes = [ 'wc-block-product-categories' ];
-
+        $classes = ['wc-block-product-categories'];
         if (isset($attributes['align'])) {
             $classes[] = "align{$attributes['align']}";
         }
-
         if ($attributes['isDropdown']) {
             $classes[] = 'is-dropdown';
         } else {
             $classes[] = 'is-list';
         }
-
         return implode(' ', $classes);
     }
-
     /**
      * Get categories (terms) from the db.
      *
@@ -135,45 +92,23 @@ class ProductCategories extends AbstractDynamicBlock
      */
     protected function get_categories(array $attributes)
     {
-        $hierarchical  = wc_string_to_bool($attributes['isHierarchical']);
+        $hierarchical = wc_string_to_bool($attributes['isHierarchical']);
         $children_only = wc_string_to_bool($attributes['showChildrenOnly']) && is_product_category();
-
         if ($children_only) {
-            $term_id    = get_queried_object_id();
-            $categories = get_terms(
-                'product_cat',
-                [
-                    'hide_empty'   => ! $attributes['hasEmpty'],
-                    'pad_counts'   => true,
-                    'hierarchical' => true,
-                    'child_of'     => $term_id,
-                ]
-            );
+            $term_id = get_queried_object_id();
+            $categories = get_terms('product_cat', ['hide_empty' => !$attributes['hasEmpty'], 'pad_counts' => true, 'hierarchical' => true, 'child_of' => $term_id]);
         } else {
-            $categories = get_terms(
-                'product_cat',
-                [
-                    'hide_empty'   => ! $attributes['hasEmpty'],
-                    'pad_counts'   => true,
-                    'hierarchical' => true,
-                ]
-            );
+            $categories = get_terms('product_cat', ['hide_empty' => !$attributes['hasEmpty'], 'pad_counts' => true, 'hierarchical' => true]);
         }
-
-        if (! is_array($categories) || empty($categories)) {
+        if (!is_array($categories) || empty($categories)) {
             return [];
         }
-
         // This ensures that no categories with a product count of 0 is rendered.
-        if (! $attributes['hasEmpty']) {
-            $categories = array_filter(
-                $categories,
-                fn ($category) => 0 !== $category->count
-            );
+        if (!$attributes['hasEmpty']) {
+            $categories = array_filter($categories, fn($category) => 0 !== $category->count);
         }
         return $hierarchical ? $this->build_category_tree($categories, $children_only) : $categories;
     }
-
     /**
      * Build hierarchical tree of categories.
      *
@@ -183,27 +118,23 @@ class ProductCategories extends AbstractDynamicBlock
     protected function build_category_tree($categories, $children_only): array
     {
         $categories_by_parent = [];
-
         foreach ($categories as $category) {
-            if (! isset($categories_by_parent[ 'cat-' . $category->parent ])) {
-                $categories_by_parent[ 'cat-' . $category->parent ] = [];
+            if (!isset($categories_by_parent['cat-' . $category->parent])) {
+                $categories_by_parent['cat-' . $category->parent] = [];
             }
-            $categories_by_parent[ 'cat-' . $category->parent ][] = $category;
+            $categories_by_parent['cat-' . $category->parent][] = $category;
         }
-
         $parent_id = $children_only ? get_queried_object_id() : 0;
-        $tree      = $categories_by_parent[ 'cat-' . $parent_id ]; // these are top level categories. So all parents.
-        unset($categories_by_parent[ 'cat-' . $parent_id ]);
-
+        $tree = $categories_by_parent['cat-' . $parent_id];
+        // these are top level categories. So all parents.
+        unset($categories_by_parent['cat-' . $parent_id]);
         foreach ($tree as $category) {
-            if (! empty($categories_by_parent[ 'cat-' . $category->term_id ])) {
-                $category->children = $this->fill_category_children($categories_by_parent[ 'cat-' . $category->term_id ], $categories_by_parent);
+            if (!empty($categories_by_parent['cat-' . $category->term_id])) {
+                $category->children = $this->fill_category_children($categories_by_parent['cat-' . $category->term_id], $categories_by_parent);
             }
         }
-
         return $tree;
     }
-
     /**
      * Build hierarchical tree of categories by appending children in the tree.
      *
@@ -214,13 +145,12 @@ class ProductCategories extends AbstractDynamicBlock
     protected function fill_category_children($categories, array $categories_by_parent)
     {
         foreach ($categories as $category) {
-            if (! empty($categories_by_parent[ 'cat-' . $category->term_id ])) {
-                $category->children = $this->fill_category_children($categories_by_parent[ 'cat-' . $category->term_id ], $categories_by_parent);
+            if (!empty($categories_by_parent['cat-' . $category->term_id])) {
+                $category->children = $this->fill_category_children($categories_by_parent['cat-' . $category->term_id], $categories_by_parent);
             }
         }
         return $categories;
     }
-
     /**
      * Render the category list as a dropdown.
      *
@@ -229,11 +159,9 @@ class ProductCategories extends AbstractDynamicBlock
      * @param int   $uid Unique ID for the rendered block, used for HTML IDs.
      * @return string Rendered output.
      */
-    protected function renderDropdown($categories, array $attributes, $uid): string
+    protected function render_dropdown($categories, array $attributes, $uid): string
     {
-        $aria_label = empty($attributes['hasCount']) ?
-            __('List of categories', 'woocommerce') :
-            __('List of categories with their product counts', 'woocommerce');
+        $aria_label = empty($attributes['hasCount']) ? __('List of categories', 'woocommerce') : __('List of categories with their product counts', 'woocommerce');
         return '
 			<div class="wc-block-product-categories__dropdown">
 				<label
@@ -246,7 +174,7 @@ class ProductCategories extends AbstractDynamicBlock
 					<option value="false" hidden>
 						' . esc_html__('Select a category', 'woocommerce') . '
 					</option>
-					' . $this->renderDropdownOptions($categories, $attributes, $uid) . '
+					' . $this->render_dropdown_options($categories, $attributes, $uid) . '
 				</select>
 			</div>
 			<button
@@ -270,7 +198,6 @@ class ProductCategories extends AbstractDynamicBlock
 			</button>
 		';
     }
-
     /**
      * Render dropdown options list.
      *
@@ -280,24 +207,21 @@ class ProductCategories extends AbstractDynamicBlock
      * @param int   $depth Current depth.
      * @return string Rendered output.
      */
-    protected function renderDropdownOptions($categories, $attributes, $uid, $depth = 0): string
+    protected function render_dropdown_options($categories, $attributes, $uid, $depth = 0): string
     {
         $output = '';
-
         foreach ($categories as $category) {
             $output .= '
 				<option value="' . esc_attr(get_term_link($category->term_id, 'product_cat')) . '">
 					' . str_repeat('&minus;', $depth) . '
 					' . esc_html($category->name) . '
-					' . $this->getCount($category, $attributes) . '
+					' . $this->get_count($category, $attributes) . '
 				</option>
-				' . (! empty($category->children) ? $this->renderDropdownOptions($category->children, $attributes, $uid, $depth + 1) : '') . '
+				' . (!empty($category->children) ? $this->render_dropdown_options($category->children, $attributes, $uid, $depth + 1) : '') . '
 			';
         }
-
         return $output;
     }
-
     /**
      * Render the category list as a list.
      *
@@ -307,19 +231,14 @@ class ProductCategories extends AbstractDynamicBlock
      * @param int   $depth Current depth.
      * @return string Rendered output.
      */
-    protected function renderList($categories, array $attributes, $uid, $depth = 0): string
+    protected function render_list($categories, array $attributes, $uid, $depth = 0): string
     {
-        $classes = [
-            'wc-block-product-categories-list',
-            'wc-block-product-categories-list--depth-' . absint($depth),
-        ];
-        if (! empty($attributes['hasImage'])) {
+        $classes = ['wc-block-product-categories-list', 'wc-block-product-categories-list--depth-' . absint($depth)];
+        if (!empty($attributes['hasImage'])) {
             $classes[] = 'wc-block-product-categories-list--has-images';
         }
-
-        return '<ul class="' . esc_attr(implode(' ', $classes)) . '">' . $this->renderListItems($categories, $attributes, $uid, $depth) . '</ul>';
+        return '<ul class="' . esc_attr(implode(' ', $classes)) . '">' . $this->render_list_items($categories, $attributes, $uid, $depth) . '</ul>';
     }
-
     /**
      * Render a list of terms.
      *
@@ -329,30 +248,20 @@ class ProductCategories extends AbstractDynamicBlock
      * @param int   $depth Current depth.
      * @return string Rendered output.
      */
-    protected function renderListItems($categories, $attributes, $uid, $depth = 0): ?string
+    protected function render_list_items($categories, $attributes, $uid, $depth = 0): ?string
     {
         $output = '';
-
-        $link_color_class_and_style = StyleAttributesUtils::get_link_color_class_and_style($attributes);
-
+        $link_color_class_and_style = Style_Attributes_Utils::get_link_color_class_and_style($attributes);
         $link_color_style = $link_color_class_and_style['style'] ?? '';
-
         foreach ($categories as $category) {
             $output .= '
 				<li class="wc-block-product-categories-list-item">
-					<a style="' . esc_attr($link_color_style) . '" href="' . esc_attr(get_term_link($category->term_id, 'product_cat')) . '">'
-                        . $this->get_image_html($category, $attributes)
-                        . '<span class="wc-block-product-categories-list-item__name">' . esc_html($category->name) . '</span>'
-                    . '</a>'
-                    . $this->getCount($category, $attributes)
-                    . (! empty($category->children) ? $this->renderList($category->children, $attributes, $uid, $depth + 1) : '') . '
+					<a style="' . esc_attr($link_color_style) . '" href="' . esc_attr(get_term_link($category->term_id, 'product_cat')) . '">' . $this->get_image_html($category, $attributes) . '<span class="wc-block-product-categories-list-item__name">' . esc_html($category->name) . '</span>' . '</a>' . $this->get_count($category, $attributes) . (!empty($category->children) ? $this->render_list($category->children, $attributes, $uid, $depth + 1) : '') . '
 				</li>
 			';
         }
-
         return preg_replace('/\r|\n/', '', $output);
     }
-
     /**
      * Returns the category image html
      *
@@ -365,41 +274,31 @@ class ProductCategories extends AbstractDynamicBlock
         if (empty($attributes['hasImage'])) {
             return '';
         }
-
         $image_id = get_term_meta($category->term_id, 'thumbnail_id', true);
-
-        if (! $image_id) {
+        if (!$image_id) {
             return '<span class="wc-block-product-categories-list-item__image wc-block-product-categories-list-item__image--placeholder">' . wc_placeholder_img('woocommerce_thumbnail') . '</span>';
         }
-
         return '<span class="wc-block-product-categories-list-item__image">' . wp_get_attachment_image($image_id, 'woocommerce_thumbnail') . '</span>';
     }
-
     /**
      * Get the count, if displaying.
      *
      * @param object $category Term object.
      * @param array  $attributes Block attributes. Default empty array.
      */
-    protected function getCount($category, array $attributes): string
+    protected function get_count($category, array $attributes): string
     {
         if (empty($attributes['hasCount'])) {
             return '';
         }
-
         if ($attributes['isDropdown']) {
             return '(' . absint($category->count) . ')';
         }
-
         $screen_reader_text = sprintf(
             /* translators: %s number of products in cart. */
             _n('%d product', '%d products', absint($category->count), 'woocommerce'),
             absint($category->count)
         );
-
-        return '<span class="wc-block-product-categories-list-item-count">'
-            . '<span aria-hidden="true">' . absint($category->count) . '</span>'
-            . '<span class="screen-reader-text">' . esc_html($screen_reader_text) . '</span>'
-        . '</span>';
+        return '<span class="wc-block-product-categories-list-item-count">' . '<span aria-hidden="true">' . absint($category->count) . '</span>' . '<span class="screen-reader-text">' . esc_html($screen_reader_text) . '</span>' . '</span>';
     }
 }

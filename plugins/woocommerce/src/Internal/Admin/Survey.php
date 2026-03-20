@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Survey helper methods.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin;
+namespace Automattic\Woo_Commerce\Internal\Admin;
 
 defined('ABSPATH') || exit;
-
 /**
  * Survey Class.
  */
@@ -18,7 +16,6 @@ class Survey
      * Survey URL.
      */
     public const SURVEY_URL = 'https://automattic.survey.fm';
-
     /**
      * Get a survey's URL from a path.
      *
@@ -29,14 +26,11 @@ class Survey
     public static function get_url(string $path, $query = []): string
     {
         $url = self::SURVEY_URL . $path;
-
         $query_args = apply_filters('woocommerce_admin_survey_query', $query);
-
-        if (! empty($query_args)) {
+        if (!empty($query_args)) {
             $query_string = http_build_query($query_args);
-            $url          = $url . '?' . $query_string;
+            $url = $url . '?' . $query_string;
         }
-
         return $url;
     }
 }

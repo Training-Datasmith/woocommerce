@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Domain\Services;
 
-namespace Automattic\WooCommerce\Blocks\Domain\Services;
-
-use Automattic\WooCommerce\Blocks\Domain\Services\CheckoutFieldsSchema\DocumentObject;
+use Automattic\Woo_Commerce\Blocks\Domain\Services\Checkout_Fields_Schema\Document_Object;
 use WC_Customer;
 use WC_Order;
-
 /**
  * Service class managing checkout fields and its related extensibility points on the frontend.
  */
-class CheckoutFieldsFrontend
+class Checkout_Fields_Frontend
 {
     /**
      * Sets up core fields.
@@ -22,10 +20,10 @@ class CheckoutFieldsFrontend
         /**
          * Checkout field controller.
          */
-        private readonly CheckoutFields $checkout_fields_controller
-    ) {
+        private readonly Checkout_Fields $checkout_fields_controller
+    )
+    {
     }
-
     /**
      * Initialize hooks. This is not run Store API requests.
      */
@@ -34,19 +32,15 @@ class CheckoutFieldsFrontend
         // Show custom checkout fields on the order details page.
         add_action('woocommerce_order_details_after_customer_address', $this->render_order_address_fields(...), 10, 2);
         add_action('woocommerce_order_details_after_customer_details', $this->render_order_other_fields(...), 10);
-
         // Show custom checkout fields on the My Account page.
         add_action('woocommerce_my_account_after_my_address', $this->render_address_fields(...), 10, 1);
-
         // Edit account form under my account (for contact details).
         add_filter('woocommerce_edit_account_form_fields', $this->edit_account_form_fields(...), 10, 1);
         add_action('woocommerce_save_account_details', $this->save_account_form_fields(...), 10, 1);
-
         // Edit address form under my account.
         add_filter('woocommerce_address_to_edit', $this->edit_address_fields(...), 10, 2);
         add_action('woocommerce_customer_save_address', $this->save_address_fields(...), 10, 4);
     }
-
     /**
      * Render custom fields.
      *
@@ -54,9 +48,8 @@ class CheckoutFieldsFrontend
      */
     protected function render_additional_fields($fields): string
     {
-        return ! empty($fields) ? '<dl class="wc-block-components-additional-fields-list">' . implode('', array_map($this->render_additional_field(...), $fields)) . '</dl>' : '';
+        return !empty($fields) ? '<dl class="wc-block-components-additional-fields-list">' . implode('', array_map($this->render_additional_field(...), $fields)) . '</dl>' : '';
     }
-
     /**
      * Render custom field.
      *
@@ -64,13 +57,8 @@ class CheckoutFieldsFrontend
      */
     protected function render_additional_field(array $field): string
     {
-        return sprintf(
-            '<dt>%1$s</dt><dd>%2$s</dd>',
-            esc_html($field['label']),
-            esc_html($field['value'])
-        );
+        return sprintf('<dt>%1$s</dt><dd>%2$s</dd>', esc_html($field['label']), esc_html($field['value']));
     }
-
     /**
      * Renders address fields on the order details page.
      *
@@ -82,7 +70,6 @@ class CheckoutFieldsFrontend
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo $this->render_additional_fields($this->checkout_fields_controller->get_order_additional_fields_with_values($order, 'address', $address_type, 'view'));
     }
-
     /**
      * Renders additional fields on the order details page.
      *
@@ -90,28 +77,18 @@ class CheckoutFieldsFrontend
      */
     public function render_order_other_fields(\WC_Order $order): void
     {
-        $fields = array_merge(
-            $this->checkout_fields_controller->get_order_additional_fields_with_values($order, 'contact', 'other', 'view'),
-            $this->checkout_fields_controller->get_order_additional_fields_with_values($order, 'order', 'other', 'view'),
-        );
-
-        $context = [
-            'caller' => 'CheckoutFieldsFrontend::render_order_other_fields',
-            'order'  => $order,
-        ];
-
+        $fields = array_merge($this->checkout_fields_controller->get_order_additional_fields_with_values($order, 'contact', 'other', 'view'), $this->checkout_fields_controller->get_order_additional_fields_with_values($order, 'order', 'other', 'view'));
+        $context = ['caller' => 'CheckoutFieldsFrontend::render_order_other_fields', 'order' => $order];
         $fields = $this->checkout_fields_controller->filter_fields_for_order_confirmation($fields, $context);
-
-        if (! $fields) {
+        if (!$fields) {
             return;
         }
-
         echo '<section class="wc-block-order-confirmation-additional-fields-wrapper">';
         echo '<h2>' . esc_html__('Additional information', 'woocommerce') . '</h2>';
-        echo $this->render_additional_fields($fields); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo $this->render_additional_fields($fields);
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo '</section>';
     }
-
     /**
      * Renders address fields on the account page.
      *
@@ -119,66 +96,50 @@ class CheckoutFieldsFrontend
      */
     public function render_address_fields($address_type): void
     {
-        if (! in_array($address_type, [ 'billing', 'shipping' ], true)) {
+        if (!in_array($address_type, ['billing', 'shipping'], true)) {
             return;
         }
-
         $customer = new WC_Customer(get_current_user_id());
-
-        $document_object = new DocumentObject();
+        $document_object = new Document_Object();
         $document_object->set_customer($customer);
         $document_object->set_context($address_type . '_address');
         $fields = $this->checkout_fields_controller->get_contextual_fields_for_location('address', $document_object);
-
-        if (! $fields || ! $customer) {
+        if (!$fields || !$customer) {
             return;
         }
-
         foreach ($fields as $key => $field) {
-            $value = $this->checkout_fields_controller->format_additional_field_value(
-                $this->checkout_fields_controller->get_field_from_object($key, $customer, $address_type),
-                $field
-            );
-
-            if (! $value) {
+            $value = $this->checkout_fields_controller->format_additional_field_value($this->checkout_fields_controller->get_field_from_object($key, $customer, $address_type), $field);
+            if (!$value) {
                 continue;
             }
-
             printf('<br><strong>%s</strong>: %s', wp_kses_post($field['label']), wp_kses_post($value));
         }
     }
-
     /**
      * Adds additional contact fields to the My Account edit account form.
      */
     public function edit_account_form_fields(): void
     {
         $customer = new WC_Customer(get_current_user_id());
-
-        $document_object = new DocumentObject();
+        $document_object = new Document_Object();
         $document_object->set_customer($customer);
         $document_object->set_context('contact');
         $fields = $this->checkout_fields_controller->get_contextual_fields_for_location('contact', $document_object);
-
         foreach ($fields as $key => $field) {
-            $field_key           = CheckoutFields::get_group_key('other') . $key;
-            $form_field          = $field;
-            $form_field['id']    = $field_key;
+            $field_key = Checkout_Fields::get_group_key('other') . $key;
+            $form_field = $field;
+            $form_field['id'] = $field_key;
             $form_field['value'] = $this->checkout_fields_controller->get_field_from_object($key, $customer, 'contact');
-
             if ('select' === $field['type']) {
                 $form_field['options'] = array_column($field['options'], 'label', 'value');
             }
-
             if ('checkbox' === $field['type']) {
-                $form_field['checked_value']   = '1';
+                $form_field['checked_value'] = '1';
                 $form_field['unchecked_value'] = '0';
             }
-
             woocommerce_form_field($field_key, $form_field, wc_get_post_data_by_key($key, $form_field['value']));
         }
     }
-
     /**
      * Adds additional address fields to the My Account edit address form.
      *
@@ -189,38 +150,28 @@ class CheckoutFieldsFrontend
     public function edit_address_fields(array $address, string $address_type): array
     {
         $customer = new WC_Customer(get_current_user_id());
-
-        $document_object = new DocumentObject();
+        $document_object = new Document_Object();
         $document_object->set_customer($customer);
         $document_object->set_context($address_type . '_address');
         $fields = $this->checkout_fields_controller->get_contextual_fields_for_location('address', $document_object);
-
         foreach ($fields as $key => $field) {
-            $field_key                      = CheckoutFields::get_group_key($address_type) . $key;
-            $address[ $field_key ]          = $field;
-            $address[ $field_key ]['value'] = $this->checkout_fields_controller->get_field_from_object($key, $customer, $address_type);
-
+            $field_key = Checkout_Fields::get_group_key($address_type) . $key;
+            $address[$field_key] = $field;
+            $address[$field_key]['value'] = $this->checkout_fields_controller->get_field_from_object($key, $customer, $address_type);
             if ('select' === $field['type']) {
-                $address[ $field_key ]['options'] = array_column($field['options'], 'label', 'value');
-
+                $address[$field_key]['options'] = array_column($field['options'], 'label', 'value');
                 // If a placeholder is set, add a placeholder option if it doesn't exist already.
-                if (
-                    ! empty($address[ $field_key ]['placeholder'])
-                    && ! array_key_exists('', $address[ $field_key ]['options'])
-                ) {
-                    $address[ $field_key ]['options'] = [ '' => $address[ $field_key ]['placeholder'] ] + $address[ $field_key ]['options'];
+                if (!empty($address[$field_key]['placeholder']) && !array_key_exists('', $address[$field_key]['options'])) {
+                    $address[$field_key]['options'] = ['' => $address[$field_key]['placeholder']] + $address[$field_key]['options'];
                 }
             }
-
             if ('checkbox' === $field['type']) {
-                $address[ $field_key ]['checked_value']   = '1';
-                $address[ $field_key ]['unchecked_value'] = '0';
+                $address[$field_key]['checked_value'] = '1';
+                $address[$field_key]['unchecked_value'] = '0';
             }
         }
-
         return $address;
     }
-
     /**
      * Validates and saves additional address fields to the customer object on the My Account page.
      *
@@ -232,27 +183,21 @@ class CheckoutFieldsFrontend
     {
         try {
             $customer = new WC_Customer($user_id);
-            $result   = $this->update_additional_fields_for_customer($customer, 'contact', 'other');
-
+            $result = $this->update_additional_fields_for_customer($customer, 'contact', 'other');
             if (is_wp_error($result)) {
                 foreach ($result->get_error_messages() as $error_message) {
                     wc_add_notice($error_message, 'error');
                 }
             }
-
             $customer->save();
         } catch (\Exception $e) {
-            wc_add_notice(
-                sprintf(
-                    /* translators: %s: Error message. */
-                    __('An error occurred while saving account details: %s', 'woocommerce'),
-                    esc_html($e->getMessage())
-                ),
-                'error'
-            );
+            wc_add_notice(sprintf(
+                /* translators: %s: Error message. */
+                __('An error occurred while saving account details: %s', 'woocommerce'),
+                esc_html($e->get_message())
+            ), 'error');
         }
     }
-
     /**
      * For the My Account page, save address fields. This uses the Store API endpoint for saving addresses so
      * extensibility hooks are consistent across the codebase.
@@ -268,27 +213,21 @@ class CheckoutFieldsFrontend
     {
         try {
             $customer ??= new WC_Customer($user_id);
-            $result   = $this->update_additional_fields_for_customer($customer, 'address', $address_type);
-
+            $result = $this->update_additional_fields_for_customer($customer, 'address', $address_type);
             if (is_wp_error($result)) {
                 foreach ($result->get_error_messages() as $error_message) {
                     wc_add_notice($error_message, 'error');
                 }
             }
-
             $customer->save();
         } catch (\Exception $e) {
-            wc_add_notice(
-                sprintf(
-                    /* translators: %s: Error message. */
-                    __('An error occurred while saving address details: %s', 'woocommerce'),
-                    esc_html($e->getMessage())
-                ),
-                'error'
-            );
+            wc_add_notice(sprintf(
+                /* translators: %s: Error message. */
+                __('An error occurred while saving address details: %s', 'woocommerce'),
+                esc_html($e->get_message())
+            ), 'error');
         }
     }
-
     /**
      * Get posted additional field values.
      *
@@ -300,21 +239,18 @@ class CheckoutFieldsFrontend
     protected function get_posted_additional_field_values($location, $group, $sanitize = true): array
     {
         $additional_fields = $this->checkout_fields_controller->get_fields_for_location($location);
-        $field_values      = [];
-
+        $field_values = [];
         // phpcs:disable WordPress.Security.NonceVerification.Missing
         foreach ($additional_fields as $field_key => $field_data) {
-            $post_key                   = CheckoutFields::get_group_key($group) . $field_key;
-            $field_values[ $field_key ] = wc_clean(wp_unslash($_POST[ $post_key ] ?? ''));
-
+            $post_key = Checkout_Fields::get_group_key($group) . $field_key;
+            $field_values[$field_key] = wc_clean(wp_unslash($_POST[$post_key] ?? ''));
             if ($sanitize) {
-                $field_values[ $field_key ] = $this->checkout_fields_controller->sanitize_field($field_key, $field_values[ $field_key ]);
+                $field_values[$field_key] = $this->checkout_fields_controller->sanitize_field($field_key, $field_values[$field_key]);
             }
         }
         // phpcs:enable WordPress.Security.NonceVerification.Missing
         return $field_values;
     }
-
     /**
      * Validate and save additional fields for a given customer.
      *
@@ -326,28 +262,20 @@ class CheckoutFieldsFrontend
     protected function update_additional_fields_for_customer(\WC_Customer $customer, $location, string $group): \WP_Error|true
     {
         // Get all values from the POST request before validating.
-        $field_values           = $this->get_posted_additional_field_values($location, $group, false); // These values are used to see if required fields have values.
-        $sanitized_field_values = $this->get_posted_additional_field_values($location, $group); // These values are used to validate custom rules, generate the document object, and save fields to the account.
-
-        $document_object = new DocumentObject(
-            [
-                'customer' => [
-                    ('address' === $location ? $group . '_address' : 'additional_fields') => $sanitized_field_values,
-                ],
-            ]
-        );
+        $field_values = $this->get_posted_additional_field_values($location, $group, false);
+        // These values are used to see if required fields have values.
+        $sanitized_field_values = $this->get_posted_additional_field_values($location, $group);
+        // These values are used to validate custom rules, generate the document object, and save fields to the account.
+        $document_object = new Document_Object(['customer' => ['address' === $location ? $group . '_address' : 'additional_fields' => $sanitized_field_values]]);
         $document_object->set_customer($customer);
         $document_object->set_context('address' === $location ? $group . '_address' : $location);
         $fields = $this->checkout_fields_controller->get_contextual_fields_for_location($location, $document_object);
-
         // Holds values to be persisted to the customer object.
         $persist_fields = [];
-        $errors         = new \WP_Error();
-
+        $errors = new \WP_Error();
         // Validate individual fields agains the document object. Errors are added to the $errors object, and each field is validated regardless of other field errors.
         foreach ($fields as $field_key => $field) {
-            $field_value = $field_values[ $field_key ];
-
+            $field_value = $field_values[$field_key];
             if (empty($field_value)) {
                 if (true === $field['required']) {
                     $errors->add(
@@ -357,34 +285,27 @@ class CheckoutFieldsFrontend
                     );
                     continue;
                 }
-                $persist_fields[ $field_key ] = '';
+                $persist_fields[$field_key] = '';
                 continue;
             }
-
-            $sanitized_field_value = $sanitized_field_values[ $field_key ];
-            $valid_check           = $this->checkout_fields_controller->validate_field($field, $sanitized_field_value);
-
+            $sanitized_field_value = $sanitized_field_values[$field_key];
+            $valid_check = $this->checkout_fields_controller->validate_field($field, $sanitized_field_value);
             if (is_wp_error($valid_check) && $valid_check->has_errors()) {
                 // Get one error message from the WP_Error object per field to avoid overlapping error messages.
                 $errors->add($valid_check->get_error_code(), $valid_check->get_error_message());
                 continue;
             }
-
-            $persist_fields[ $field_key ] = $sanitized_field_value;
+            $persist_fields[$field_key] = $sanitized_field_value;
         }
-
         // Validate all fields for this location (this runs custom validation callbacks). If an error is found, no values will be persisted to the customer object.
         $location_validation = $this->checkout_fields_controller->validate_fields_for_location($sanitized_field_values, $location, $group);
-
         if (is_wp_error($location_validation) && $location_validation->has_errors()) {
             $errors->merge_from($location_validation);
             return $errors;
         }
-
         foreach ($persist_fields as $field_key => $field_value) {
             $this->checkout_fields_controller->persist_field_for_customer($field_key, $field_value, $customer, $group);
         }
-
         return $errors->has_errors() ? $errors : true;
     }
 }

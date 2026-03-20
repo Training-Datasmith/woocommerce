@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments\Providers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments\Providers;
 
 /**
  * Posta Moldovei Shipping Provider class.
  */
-class PostaMoldoveiShippingProvider extends AbstractShippingProvider
+class Posta_Moldovei_Shipping_Provider extends Abstract_Shipping_Provider
 {
     /**
      * Get the key of the shipping provider.
@@ -16,7 +15,6 @@ class PostaMoldoveiShippingProvider extends AbstractShippingProvider
     {
         return 'posta-moldovei';
     }
-
     /**
      * Get the name of the shipping provider.
      */
@@ -24,7 +22,6 @@ class PostaMoldoveiShippingProvider extends AbstractShippingProvider
     {
         return 'Poșta Moldovei';
     }
-
     /**
      * Get the icon of the shipping provider.
      */
@@ -32,7 +29,6 @@ class PostaMoldoveiShippingProvider extends AbstractShippingProvider
     {
         return esc_url(WC()->plugin_url()) . '/assets/images/shipping_providers/posta-moldovei.png';
     }
-
     /**
      * Get the tracking URL for a given tracking number.
      *

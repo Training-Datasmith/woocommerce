@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Class for parameter-based Reports querying
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports;
+namespace Automattic\Woo_Commerce\Admin\API\Reports;
 
 defined('ABSPATH') || exit;
-
 /**
  * Admin\API\Reports\Query
  *
@@ -28,7 +26,6 @@ abstract class Query extends \WC_Object_Query
         wc_deprecated_function(self::class . '::' . __FUNCTION__, '9.3.0', '`GenericQuery`, `\WC_Object_Query`, or direct `DataStore` use');
         parent::__construct($args);
     }
-
     /**
      * Get report data matching the current query vars.
      *
@@ -40,6 +37,6 @@ abstract class Query extends \WC_Object_Query
     {
         wc_deprecated_function(self::class . '::' . __FUNCTION__, '9.3.0', '`GenericQuery`, `\WC_Object_Query`, or direct `DataStore` use');
         /* translators: %s: Method name */
-        return new \WP_Error('invalid-method', sprintf(__("Method '%s' not implemented. Must be overridden in subclass.", 'woocommerce'), __METHOD__), [ 'status' => 405 ]);
+        return new \WP_Error('invalid-method', sprintf(__("Method '%s' not implemented. Must be overridden in subclass.", 'woocommerce'), __METHOD__), ['status' => 405]);
     }
 }

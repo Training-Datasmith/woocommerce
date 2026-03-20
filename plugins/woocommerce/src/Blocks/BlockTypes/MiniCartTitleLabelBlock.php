@@ -1,13 +1,12 @@
 <?php
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-use Automattic\WooCommerce\Admin\Features\Features;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
 /**
  * MiniCartTitleLabelBlock class.
  */
-class MiniCartTitleLabelBlock extends AbstractInnerBlock
+class Mini_Cart_Title_Label_Block extends Abstract_Inner_Block
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class MiniCartTitleLabelBlock extends AbstractInnerBlock
      * @var string
      */
     protected $block_name = 'mini-cart-title-label-block';
-
     /**
      * Render the block.
      *
@@ -31,7 +29,6 @@ class MiniCartTitleLabelBlock extends AbstractInnerBlock
         }
         return $content;
     }
-
     /**
      * Render the interactivity API powered experimental title block.
      *
@@ -43,15 +40,19 @@ class MiniCartTitleLabelBlock extends AbstractInnerBlock
     protected function render_experimental_iapi_title_label_block(array $attributes, $content, $block): string|false
     {
         $default_cart_label = __('Your cart', 'woocommerce');
-        $cart_label         = $attributes['label'] ?: $default_cart_label;
+        $cart_label = $attributes['label'] ?: $default_cart_label;
         $wrapper_attributes = get_block_wrapper_attributes();
-
         ob_start();
         ?>
-		<span <?php echo $wrapper_attributes; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped?>>
-			<?php echo esc_html($cart_label); ?>
+		<span <?php 
+        echo $wrapper_attributes;
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ?>>
+			<?php 
+        echo esc_html($cart_label);
+        ?>
 		</span>
-		<?php
+		<?php 
         return ob_get_clean();
     }
 }

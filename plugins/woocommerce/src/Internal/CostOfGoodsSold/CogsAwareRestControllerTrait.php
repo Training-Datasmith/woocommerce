@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\CostOfGoodsSold;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Cost_Of_Goods_Sold;
 
 /**
  * Trait with Cost of Goods Sold related functionality shared by the REST products and variations controllers.
  */
-trait CogsAwareRestControllerTrait
+trait Cogs_Aware_Rest_Controller_Trait
 {
-    use CogsAwareTrait;
-
+    use Cogs_Aware_Trait;
     /**
      * Add Cost of Goods Sold related information for a given product to the array of data that will become the REST response.
      *
@@ -19,25 +17,14 @@ trait CogsAwareRestControllerTrait
      */
     private function add_cogs_info_to_returned_product_data(array &$data, $product): void
     {
-        if (! $this->cogs_is_enabled()) {
+        if (!$this->cogs_is_enabled()) {
             return;
         }
-
-        $data['cost_of_goods_sold'] = [
-            'values'      => [
-                [
-                    'defined_value'   => $product->get_cogs_value(),
-                    'effective_value' => $product->get_cogs_effective_value(),
-                ],
-            ],
-            'total_value' => $product->get_cogs_total_value(),
-        ];
-
+        $data['cost_of_goods_sold'] = ['values' => [['defined_value' => $product->get_cogs_value(), 'effective_value' => $product->get_cogs_effective_value()]], 'total_value' => $product->get_cogs_total_value()];
         if ($product instanceof \WC_Product_Variation) {
             $data['cost_of_goods_sold']['defined_value_is_additive'] = $product->get_cogs_value_is_additive();
         }
     }
-
     /**
      * Apply Cost of Goods Sold related information received in the request body to a product object.
      *
@@ -47,23 +34,20 @@ trait CogsAwareRestControllerTrait
     private function set_cogs_info_in_product_object(array $request, $product): void
     {
         $values = $request['cost_of_goods_sold']['values'] ?? null;
-        if (! is_null($values)) {
+        if (!is_null($values)) {
             $value = 0;
             foreach ($values as $value_info) {
                 $value += (float) ($value_info['defined_value'] ?? 0);
             }
-
             $product->set_cogs_value($value);
         }
-
         if ($product instanceof \WC_Product_Variation) {
             $is_additive = $request['cost_of_goods_sold']['defined_value_is_additive'] ?? null;
-            if (! is_null($is_additive)) {
+            if (!is_null($is_additive)) {
                 $product->set_cogs_value_is_additive($is_additive);
             }
         }
     }
-
     /**
      * Add Cost of Goods Sold related schema information to a given REST endpoint schema.
      *
@@ -73,53 +57,10 @@ trait CogsAwareRestControllerTrait
      */
     private function add_cogs_related_product_schema(array $schema, bool $for_variations_controller): array
     {
-        $schema['properties']['cost_of_goods_sold'] = [
-            'description' => __('Cost of Goods Sold data.', 'woocommerce'),
-            'type'        => 'object',
-            'context'     => [ 'view', 'edit' ],
-            'properties'  => [
-                'values'                    => [
-                    'description' => __('Cost of Goods Sold values for the product.', 'woocommerce'),
-                    'type'        => 'array',
-                    'context'     => [ 'view', 'edit' ],
-                    'items'       => [
-                        'type'       => 'object',
-                        'properties' => [
-                            'defined_value'   => [
-                                'description' => __('Defined cost value.', 'woocommerce'),
-                                'type'        => 'number',
-                                'context'     => [ 'view', 'edit' ],
-                            ],
-                            'effective_value' => [
-                                'description' => __('Effective monetary cost value.', 'woocommerce'),
-                                'type'        => 'number',
-                                'context'     => [ 'view', 'edit' ],
-                                'readonly'    => true,
-                            ],
-                        ],
-                    ],
-
-                ],
-                'defined_value_is_additive' => [
-                    'description' => __('Applies to variations only. If true, the effective value is the base value from the parent product plus the defined value; if false, the defined value is the final effective value.', 'woocommerce'),
-                    'type'        => 'boolean',
-                    'default'     => false,
-                    'context'     => [ 'view', 'edit' ],
-                ],
-                'total_value'               => [
-                    'description' => __('Total monetary value of the Cost of Goods Sold for the product (sum of all the effective values).', 'woocommerce'),
-                    'type'        => 'number',
-                    'context'     => [ 'view', 'edit' ],
-                    'readonly'    => true,
-                ],
-            ],
-        ];
-
+        $schema['properties']['cost_of_goods_sold'] = ['description' => __('Cost of Goods Sold data.', 'woocommerce'), 'type' => 'object', 'context' => ['view', 'edit'], 'properties' => ['values' => ['description' => __('Cost of Goods Sold values for the product.', 'woocommerce'), 'type' => 'array', 'context' => ['view', 'edit'], 'items' => ['type' => 'object', 'properties' => ['defined_value' => ['description' => __('Defined cost value.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit']], 'effective_value' => ['description' => __('Effective monetary cost value.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true]]]], 'defined_value_is_additive' => ['description' => __('Applies to variations only. If true, the effective value is the base value from the parent product plus the defined value; if false, the defined value is the final effective value.', 'woocommerce'), 'type' => 'boolean', 'default' => false, 'context' => ['view', 'edit']], 'total_value' => ['description' => __('Total monetary value of the Cost of Goods Sold for the product (sum of all the effective values).', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true]]];
         if ($for_variations_controller) {
-            $schema['properties']['cost_of_goods_sold']['properties']['defined_value_is_additive']['description'] =
-                __('If true, the effective value is the base value from the parent product plus the defined value; if false, the defined value is the final effective value.', 'woocommerce');
+            $schema['properties']['cost_of_goods_sold']['properties']['defined_value_is_additive']['description'] = __('If true, the effective value is the base value from the parent product plus the defined value; if false, the defined value is the final effective value.', 'woocommerce');
         }
-
         return $schema;
     }
 }

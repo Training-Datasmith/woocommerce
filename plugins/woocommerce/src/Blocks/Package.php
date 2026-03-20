@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks;
 
-namespace Automattic\WooCommerce\Blocks;
-
-use Automattic\WooCommerce\Blocks\Domain\Bootstrap;
-use Automattic\WooCommerce\Blocks\Domain\Package as NewPackage;
-use Automattic\WooCommerce\Blocks\Domain\Services\FeatureGating;
-use Automattic\WooCommerce\Blocks\Registry\Container;
-
+use Automattic\Woo_Commerce\Blocks\Domain\Bootstrap;
+use Automattic\Woo_Commerce\Blocks\Domain\Package as NewPackage;
+use Automattic\Woo_Commerce\Blocks\Domain\Services\Feature_Gating;
+use Automattic\Woo_Commerce\Blocks\Registry\Container;
 /**
  * Main package class.
  *
@@ -34,9 +32,8 @@ class Package
      */
     protected static function get_package()
     {
-        return self::container()->get(NewPackage::class);
+        return self::container()->get(New_Package::class);
     }
-
     /**
      * Init the package - load the blocks library and define constants.
      *
@@ -46,7 +43,6 @@ class Package
     {
         self::container()->get(Bootstrap::class);
     }
-
     /**
      * Return the version of the package.
      *
@@ -56,7 +52,6 @@ class Package
     {
         return self::get_package()->get_version();
     }
-
     /**
      * Return the path to the package.
      *
@@ -66,18 +61,16 @@ class Package
     {
         return self::get_package()->get_path();
     }
-
     /**
      * Returns an instance of the FeatureGating class.
      *
      * @deprecated since 9.6, use wp_get_environment_type() instead.
      */
-    public static function feature(): \Automattic\WooCommerce\Blocks\Domain\Services\FeatureGating
+    public static function feature(): \Automattic\Woo_Commerce\Blocks\Domain\Services\Feature_Gating
     {
         wc_deprecated_function('Package::feature', '9.6', 'wp_get_environment_type');
-        return new FeatureGating();
+        return new Feature_Gating();
     }
-
     /**
      * Loads the dependency injection container for woocommerce blocks.
      *
@@ -88,30 +81,16 @@ class Package
     public static function container($reset = false)
     {
         static $container;
-        if (
-            ! $container instanceof Container
-            || $reset
-        ) {
+        if (!$container instanceof Container || $reset) {
             $container = new Container();
             // register Package.
-            $container->register(
-                NewPackage::class,
-                function ($container): \Automattic\WooCommerce\Blocks\Domain\Package {
-                    // leave for automated version bumping.
-                    $version = '11.8.0-dev';
-                    return new NewPackage(
-                        $version,
-                        dirname(__DIR__, 2)
-                    );
-                }
-            );
+            $container->register(New_Package::class, function ($container): \Automattic\Woo_Commerce\Blocks\Domain\Package {
+                // leave for automated version bumping.
+                $version = '11.8.0-dev';
+                return new New_Package($version, dirname(__DIR__, 2));
+            });
             // register Bootstrap.
-            $container->register(
-                Bootstrap::class,
-                fn ($container) => new Bootstrap(
-                    $container
-                )
-            );
+            $container->register(Bootstrap::class, fn($container) => new Bootstrap($container));
         }
         return $container;
     }

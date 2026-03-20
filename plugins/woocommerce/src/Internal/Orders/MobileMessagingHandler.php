@@ -1,21 +1,18 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Orders;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Orders;
 
 use DateTime;
 use Exception;
 use WC_Order;
 use WC_Tracker;
-
 /**
  * Prepares formatted mobile deep link navigation link for order mails.
  */
-class MobileMessagingHandler
+class Mobile_Messaging_Handler
 {
     private const OPEN_ORDER_INTERVAL_DAYS = 30;
-
     /**
      * Prepares mobile messaging with a deep link.
      *
@@ -24,19 +21,13 @@ class MobileMessagingHandler
      * @param DateTime $now      current DateTime.
      * @param string   $domain URL of the current site.
      */
-    public static function prepare_mobile_message(
-        WC_Order $order,
-        ?int $blog_id,
-        DateTime $now,
-        string $domain
-    ): ?string {
+    public static function prepare_mobile_message(WC_Order $order, ?int $blog_id, DateTime $now, string $domain): ?string
+    {
         try {
             $last_mobile_used = self::get_closer_mobile_usage_date();
-
             $used_app_in_last_month = null !== $last_mobile_used && $last_mobile_used->diff($now)->days <= self::OPEN_ORDER_INTERVAL_DAYS;
-            $has_jetpack            = null !== $blog_id;
-
-            if (IppFunctions::is_store_in_person_payment_eligible() && IppFunctions::is_order_in_person_payment_eligible($order)) {
+            $has_jetpack = null !== $blog_id;
+            if (Ipp_Functions::is_store_in_person_payment_eligible() && Ipp_Functions::is_order_in_person_payment_eligible($order)) {
                 return self::accept_payment_message($blog_id, $domain);
             }
             if ($used_app_in_last_month && $has_jetpack) {
@@ -47,24 +38,19 @@ class MobileMessagingHandler
             return null;
         }
     }
-
     /**
      * Returns the closest date of last usage of any mobile app platform.
      */
     private static function get_closer_mobile_usage_date(): ?DateTime
     {
         $mobile_usage = WC_Tracker::get_woocommerce_mobile_usage();
-
-        if (! $mobile_usage) {
+        if (!$mobile_usage) {
             return null;
         }
-
-        $last_ios_used     = self::get_last_used_or_null('ios', $mobile_usage);
+        $last_ios_used = self::get_last_used_or_null('ios', $mobile_usage);
         $last_android_used = self::get_last_used_or_null('android', $mobile_usage);
-
         return max($last_android_used, $last_ios_used);
     }
-
     /**
      * Returns last used date of specified mobile app platform.
      *
@@ -73,20 +59,17 @@ class MobileMessagingHandler
      *
      * @return ?DateTime last used date of specified mobile app
      */
-    private static function get_last_used_or_null(
-        string $platform,
-        array $mobile_usage
-    ): ?DateTime {
+    private static function get_last_used_or_null(string $platform, array $mobile_usage): ?DateTime
+    {
         try {
             if (array_key_exists($platform, $mobile_usage)) {
-                return new DateTime($mobile_usage[ $platform ]['last_used']);
+                return new DateTime($mobile_usage[$platform]['last_used']);
             }
             return null;
         } catch (Exception) {
             return null;
         }
     }
-
     /**
      * Prepares message with a deep link to mobile payment.
      *
@@ -97,27 +80,14 @@ class MobileMessagingHandler
      */
     private static function accept_payment_message(?int $blog_id, string $domain): string
     {
-        $deep_link_url = add_query_arg(
-            array_merge(
-                [
-                    'blog_id' => absint($blog_id),
-                ],
-                self::prepare_utm_parameters('deeplinks_payments', $blog_id, $domain)
-            ),
-            'https://woocommerce.com/mobile/payments'
-        );
-
+        $deep_link_url = add_query_arg(array_merge(['blog_id' => absint($blog_id)], self::prepare_utm_parameters('deeplinks_payments', $blog_id, $domain)), 'https://woocommerce.com/mobile/payments');
         return sprintf(
             /* translators: 1: opening link tag 2: closing link tag. */
-            esc_html__(
-                '%1$sCollect payments easily%2$s from your customers anywhere with our mobile app.',
-                'woocommerce'
-            ),
+            esc_html__('%1$sCollect payments easily%2$s from your customers anywhere with our mobile app.', 'woocommerce'),
             '<a href="' . esc_url($deep_link_url) . '">',
             '</a>'
         );
     }
-
     /**
      * Prepares message with a deep link to manage order details.
      *
@@ -129,28 +99,14 @@ class MobileMessagingHandler
      */
     private static function manage_order_message(int $blog_id, int $order_id, string $domain): string
     {
-        $deep_link_url = add_query_arg(
-            array_merge(
-                [
-                    'blog_id'  => absint($blog_id),
-                    'order_id' => absint($order_id),
-                ],
-                self::prepare_utm_parameters('deeplinks_orders_details', $blog_id, $domain)
-            ),
-            'https://woocommerce.com/mobile/orders/details'
-        );
-
+        $deep_link_url = add_query_arg(array_merge(['blog_id' => absint($blog_id), 'order_id' => absint($order_id)], self::prepare_utm_parameters('deeplinks_orders_details', $blog_id, $domain)), 'https://woocommerce.com/mobile/orders/details');
         return sprintf(
             /* translators: 1: opening link tag 2: closing link tag. */
-            esc_html__(
-                '%1$sManage the order%2$s with the app.',
-                'woocommerce'
-            ),
+            esc_html__('%1$sManage the order%2$s with the app.', 'woocommerce'),
             '<a href="' . esc_url($deep_link_url) . '">',
             '</a>'
         );
     }
-
     /**
      * Prepares message with a deep link to learn more about mobile app.
      *
@@ -161,26 +117,14 @@ class MobileMessagingHandler
      */
     private static function no_app_message(?int $blog_id, string $domain): string
     {
-        $deep_link_url = add_query_arg(
-            array_merge(
-                [
-                    'blog_id' => absint($blog_id),
-                ],
-                self::prepare_utm_parameters('deeplinks_promote_app', $blog_id, $domain)
-            ),
-            'https://woocommerce.com/mobile'
-        );
+        $deep_link_url = add_query_arg(array_merge(['blog_id' => absint($blog_id)], self::prepare_utm_parameters('deeplinks_promote_app', $blog_id, $domain)), 'https://woocommerce.com/mobile');
         return sprintf(
             /* translators: 1: opening link tag 2: closing link tag. */
-            esc_html__(
-                'Process your orders on the go. %1$sGet the app%2$s.',
-                'woocommerce'
-            ),
+            esc_html__('Process your orders on the go. %1$sGet the app%2$s.', 'woocommerce'),
             '<a href="' . esc_url($deep_link_url) . '">',
             '</a>'
         );
     }
-
     /**
      * Prepares array of parameters used by WooCommerce.com for tracking.
      *
@@ -188,16 +132,8 @@ class MobileMessagingHandler
      * @param int|null $blog_id blog id of the current site.
      * @param string   $domain URL of the current site.
      */
-    private static function prepare_utm_parameters(
-        string $campaign,
-        ?int $blog_id,
-        string $domain
-    ): array {
-        return [
-            'utm_campaign' => $campaign,
-            'utm_medium'   => 'email',
-            'utm_source'   => $domain,
-            'utm_term'     => absint($blog_id),
-        ];
+    private static function prepare_utm_parameters(string $campaign, ?int $blog_id, string $domain): array
+    {
+        return ['utm_campaign' => $campaign, 'utm_medium' => 'email', 'utm_source' => $domain, 'utm_term' => absint($blog_id)];
     }
 }

@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Caches;
 
-namespace Automattic\WooCommerce\Internal\Caches;
-
-use Automattic\WooCommerce\Proxies\LegacyProxy;
-
+use Automattic\Woo_Commerce\Proxies\Legacy_Proxy;
 /**
  * Version string generator/cache class.
  *
@@ -15,23 +13,20 @@ use Automattic\WooCommerce\Proxies\LegacyProxy;
  * This is useful for cache invalidation strategies where items change over time.
  * The standard WordPress cache is used to store the version strings.
  */
-class VersionStringGenerator
+class Version_String_Generator
 {
     /**
      * Cache group name.
      */
     private const CACHE_GROUP = 'woocommerce_version_strings';
-
     /**
      * Can the version string cache be used?
      */
     private ?bool $can_use = null;
-
     /**
      * Legacy proxy instance.
      */
-    private ?LegacyProxy $legacy_proxy = null;
-
+    private ?Legacy_Proxy $legacy_proxy = null;
     /**
      * Initialize the class dependencies.
      *
@@ -39,11 +34,10 @@ class VersionStringGenerator
      *
      * @param LegacyProxy $legacy_proxy Legacy proxy instance.
      */
-    final public function init(LegacyProxy $legacy_proxy): void
+    final public function init(Legacy_Proxy $legacy_proxy): void
     {
         $this->legacy_proxy = $legacy_proxy;
     }
-
     /**
      * Tells whether the version string cache can be used or not.
      *
@@ -52,15 +46,12 @@ class VersionStringGenerator
      */
     public function can_use(): bool
     {
-        if (! is_null($this->can_use)) {
+        if (!is_null($this->can_use)) {
             return $this->can_use;
         }
-
         $this->can_use = $this->legacy_proxy->call_function('wp_using_ext_object_cache') ?? false;
-
         return $this->can_use;
     }
-
     /**
      * Get the current version string for an ID.
      *
@@ -77,12 +68,10 @@ class VersionStringGenerator
     public function get_version(string $id, bool $generate = true): ?string
     {
         $this->validate_input($id);
-
         $cache_key = $this->get_cache_key($id);
-        $version   = wp_cache_get($cache_key, self::CACHE_GROUP);
-
+        $version = wp_cache_get($cache_key, self::CACHE_GROUP);
         if (false === $version) {
-            if (! $generate) {
+            if (!$generate) {
                 return null;
             }
             $version = $this->generate_version($id);
@@ -92,7 +81,6 @@ class VersionStringGenerator
         }
         return $version;
     }
-
     /**
      * Generate and store a new version string for an ID.
      * The already existing version string, if any, will be replaced.
@@ -106,12 +94,10 @@ class VersionStringGenerator
     public function generate_version(string $id): string
     {
         $this->validate_input($id);
-
         $version = wp_generate_uuid4();
         $this->store_version($id, $version);
         return $version;
     }
-
     /**
      * Store the version string in cache with a filterable TTL.
      *
@@ -122,7 +108,6 @@ class VersionStringGenerator
     protected function store_version(string $id, string $version): bool
     {
         $cache_key = $this->get_cache_key($id);
-
         /**
          * Filter the TTL for version string cache.
          *
@@ -133,27 +118,22 @@ class VersionStringGenerator
          */
         $ttl = apply_filters('woocommerce_version_string_generator_ttl', DAY_IN_SECONDS, $id);
         $ttl = max(0, (int) $ttl);
-
         $result = wp_cache_set($cache_key, $version, self::CACHE_GROUP, $ttl);
-
         if (is_bool($result)) {
             return $result;
         }
-
         // Some object cache implementations may return non-boolean values.
         // Verify the store by reading the value back.
         $stored_value = wp_cache_get($cache_key, self::CACHE_GROUP);
         if ($stored_value === $version) {
             return true;
         }
-
         // The stored value doesn't match; clean up and report failure.
         if (false !== $stored_value) {
             wp_cache_delete($cache_key, self::CACHE_GROUP);
         }
         return false;
     }
-
     /**
      * Delete the version string for an ID by deleting its cached entry.
      *
@@ -166,14 +146,11 @@ class VersionStringGenerator
     public function delete_version(string $id): bool
     {
         $this->validate_input($id);
-
         $cache_key = $this->get_cache_key($id);
-        $result    = wp_cache_delete($cache_key, self::CACHE_GROUP);
-
+        $result = wp_cache_delete($cache_key, self::CACHE_GROUP);
         // Some object cache implementations may return non-boolean values.
-        return ! is_bool($result) || $result;
+        return !is_bool($result) || $result;
     }
-
     /**
      * Get the cache key for an ID.
      *
@@ -187,7 +164,6 @@ class VersionStringGenerator
     {
         return 'wc_version_string_' . md5($id);
     }
-
     /**
      * Validate ID input.
      *

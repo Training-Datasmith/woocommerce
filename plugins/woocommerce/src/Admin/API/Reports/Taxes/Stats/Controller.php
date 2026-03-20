@@ -1,28 +1,25 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Reports taxes stats controller
  *
  * Handles requests to the /reports/taxes/stats endpoint.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports\Taxes\Stats;
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Taxes\Stats;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\GenericQuery;
-use Automattic\WooCommerce\Admin\API\Reports\GenericStatsController;
+use Automattic\Woo_Commerce\Admin\API\Reports\Generic_Query;
+use Automattic\Woo_Commerce\Admin\API\Reports\Generic_Stats_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
-
 /**
  * REST API Reports taxes stats controller class.
  *
  * @internal
  * @extends GenericStatsController
  */
-class Controller extends GenericStatsController
+class Controller extends Generic_Stats_Controller
 {
     /**
      * Route base.
@@ -30,7 +27,6 @@ class Controller extends GenericStatsController
      * @var string
      */
     protected $rest_base = 'reports/taxes/stats';
-
     /**
      * Constructor.
      */
@@ -38,7 +34,6 @@ class Controller extends GenericStatsController
     {
         add_filter('woocommerce_analytics_taxes_stats_select_query', $this->set_default_report_data(...));
     }
-
     /**
      * Set the default results to 0 if API returns an empty array
      *
@@ -49,21 +44,20 @@ class Controller extends GenericStatsController
     public function set_default_report_data($results)
     {
         if (empty($results)) {
-            $results                       = new \stdClass();
-            $results->total                = 0;
-            $results->totals               = new \stdClass();
-            $results->totals->tax_codes    = 0;
-            $results->totals->total_tax    = 0;
-            $results->totals->order_tax    = 0;
+            $results = new \stdClass();
+            $results->total = 0;
+            $results->totals = new \stdClass();
+            $results->totals->tax_codes = 0;
+            $results->totals->total_tax = 0;
+            $results->totals->order_tax = 0;
             $results->totals->shipping_tax = 0;
-            $results->totals->orders       = 0;
-            $results->intervals            = [];
-            $results->pages                = 1;
-            $results->page_no              = 1;
+            $results->totals->orders = 0;
+            $results->intervals = [];
+            $results->pages = 1;
+            $results->page_no = 1;
         }
         return $results;
     }
-
     /**
      * Maps query arguments from the REST request.
      *
@@ -71,22 +65,20 @@ class Controller extends GenericStatsController
      */
     protected function prepare_reports_query($request): array
     {
-        $args                        = [];
-        $args['before']              = $request['before'];
-        $args['after']               = $request['after'];
-        $args['interval']            = $request['interval'];
-        $args['page']                = $request['page'];
-        $args['per_page']            = $request['per_page'];
-        $args['orderby']             = $request['orderby'];
-        $args['order']               = $request['order'];
-        $args['taxes']               = (array) $request['taxes'];
-        $args['segmentby']           = $request['segmentby'];
-        $args['fields']              = $request['fields'];
+        $args = [];
+        $args['before'] = $request['before'];
+        $args['after'] = $request['after'];
+        $args['interval'] = $request['interval'];
+        $args['page'] = $request['page'];
+        $args['per_page'] = $request['per_page'];
+        $args['orderby'] = $request['orderby'];
+        $args['order'] = $request['order'];
+        $args['taxes'] = (array) $request['taxes'];
+        $args['segmentby'] = $request['segmentby'];
+        $args['fields'] = $request['fields'];
         $args['force_cache_refresh'] = $request['force_cache_refresh'];
-
         return $args;
     }
-
     /**
      * Get data from `'taxes-stats'` GenericQuery.
      *
@@ -97,10 +89,9 @@ class Controller extends GenericStatsController
      */
     protected function get_datastore_data($query_args = [])
     {
-        $query = new GenericQuery($query_args, 'taxes-stats');
+        $query = new Generic_Query($query_args, 'taxes-stats');
         return $query->get_data();
     }
-
     /**
      * Prepare a report data item for serialization.
      *
@@ -111,7 +102,6 @@ class Controller extends GenericStatsController
     public function prepare_item_for_response($report, $request)
     {
         $response = parent::prepare_item_for_response($report, $request);
-
         // Map to `object` for backwards compatibility.
         $report = (object) $report;
         /**
@@ -125,53 +115,14 @@ class Controller extends GenericStatsController
          */
         return apply_filters('woocommerce_rest_prepare_report_taxes_stats', $response, $report, $request);
     }
-
     /**
      * Get the Report's item properties schema.
      * Will be used by `get_item_schema` as `totals` and `subtotals`.
      */
     protected function get_item_properties_schema(): array
     {
-        return [
-            'total_tax'    => [
-                'description' => __('Total tax.', 'woocommerce'),
-                'type'        => 'number',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-                'indicator'   => true,
-                'format'      => 'currency',
-            ],
-            'order_tax'    => [
-                'description' => __('Order tax.', 'woocommerce'),
-                'type'        => 'number',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-                'indicator'   => true,
-                'format'      => 'currency',
-            ],
-            'shipping_tax' => [
-                'description' => __('Shipping tax.', 'woocommerce'),
-                'type'        => 'number',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-                'indicator'   => true,
-                'format'      => 'currency',
-            ],
-            'orders_count' => [
-                'description' => __('Number of orders.', 'woocommerce'),
-                'type'        => 'integer',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-            ],
-            'tax_codes'    => [
-                'description' => __('Amount of tax codes.', 'woocommerce'),
-                'type'        => 'integer',
-                'context'     => [ 'view', 'edit' ],
-                'readonly'    => true,
-            ],
-        ];
+        return ['total_tax' => ['description' => __('Total tax.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true, 'indicator' => true, 'format' => 'currency'], 'order_tax' => ['description' => __('Order tax.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true, 'indicator' => true, 'format' => 'currency'], 'shipping_tax' => ['description' => __('Shipping tax.', 'woocommerce'), 'type' => 'number', 'context' => ['view', 'edit'], 'readonly' => true, 'indicator' => true, 'format' => 'currency'], 'orders_count' => ['description' => __('Number of orders.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true], 'tax_codes' => ['description' => __('Amount of tax codes.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true]];
     }
-
     /**
      * Get the Report's schema, conforming to JSON Schema.
      *
@@ -179,12 +130,10 @@ class Controller extends GenericStatsController
      */
     public function get_item_schema()
     {
-        $schema          = parent::get_item_schema();
+        $schema = parent::get_item_schema();
         $schema['title'] = 'report_taxes_stats';
-
         return $this->add_additional_fields_schema($schema);
     }
-
     /**
      * Get the query params for collections.
      *
@@ -192,34 +141,10 @@ class Controller extends GenericStatsController
      */
     public function get_collection_params()
     {
-        $params                    = parent::get_collection_params();
-        $params['orderby']['enum'] = $this->apply_custom_orderby_filters(
-            [
-                'date',
-                'items_sold',
-                'total_sales',
-                'orders_count',
-                'products_count',
-            ]
-        );
-        $params['taxes']           = [
-            'description'       => __('Limit result set to all items that have the specified term assigned in the taxes taxonomy.', 'woocommerce'),
-            'type'              => 'array',
-            'sanitize_callback' => 'wp_parse_id_list',
-            'validate_callback' => 'rest_validate_request_arg',
-            'items'             => [
-                'type' => 'integer',
-            ],
-        ];
-        $params['segmentby']       = [
-            'description'       => __('Segment the response by additional constraint.', 'woocommerce'),
-            'type'              => 'string',
-            'enum'              => [
-                'tax_rate_id',
-            ],
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-
+        $params = parent::get_collection_params();
+        $params['orderby']['enum'] = $this->apply_custom_orderby_filters(['date', 'items_sold', 'total_sales', 'orders_count', 'products_count']);
+        $params['taxes'] = ['description' => __('Limit result set to all items that have the specified term assigned in the taxes taxonomy.', 'woocommerce'), 'type' => 'array', 'sanitize_callback' => 'wp_parse_id_list', 'validate_callback' => 'rest_validate_request_arg', 'items' => ['type' => 'integer']];
+        $params['segmentby'] = ['description' => __('Segment the response by additional constraint.', 'woocommerce'), 'type' => 'string', 'enum' => ['tax_rate_id'], 'validate_callback' => 'rest_validate_request_arg'];
         return $params;
     }
 }

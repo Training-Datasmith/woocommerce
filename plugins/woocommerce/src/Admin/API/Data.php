@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Data Controller
  *
  * Handles requests to /data
  */
-
-namespace Automattic\WooCommerce\Admin\API;
+namespace Automattic\Woo_Commerce\Admin\API;
 
 defined('ABSPATH') || exit;
-
 /**
  * Data controller.
  *
@@ -25,7 +23,6 @@ class Data extends \WC_REST_Data_Controller
      * @var string
      */
     protected $namespace = 'wc-analytics';
-
     /**
      * Return the list of data resources.
      *
@@ -34,16 +31,8 @@ class Data extends \WC_REST_Data_Controller
      */
     public function get_items($request)
     {
-        $response         = parent::get_items($request);
-        $response->data[] = $this->prepare_response_for_collection(
-            $this->prepare_item_for_response(
-                (object) [
-                    'slug'        => 'download-ips',
-                    'description' => __('An endpoint used for searching download logs for a specific IP address.', 'woocommerce'),
-                ],
-                $request
-            )
-        );
+        $response = parent::get_items($request);
+        $response->data[] = $this->prepare_response_for_collection($this->prepare_item_for_response((object) ['slug' => 'download-ips', 'description' => __('An endpoint used for searching download logs for a specific IP address.', 'woocommerce')], $request));
         return $response;
     }
 }

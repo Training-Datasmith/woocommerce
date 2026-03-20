@@ -1,11 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Product Block Editor
  */
-
-namespace Automattic\WooCommerce\Admin\Features\ProductBlockEditor;
+namespace Automattic\Woo_Commerce\Admin\Features\Product_Block_Editor;
 
 /**
  * Add tracks for the product block editor.
@@ -19,7 +18,6 @@ class Tracks
     {
         add_filter('woocommerce_product_source', $this->add_product_source(...));
     }
-
     /**
      * Check if a URL is a product editor page.
      *
@@ -30,17 +28,13 @@ class Tracks
     {
         $query_string = wp_parse_url(wp_get_referer(), PHP_URL_QUERY);
         parse_str($query_string, $query);
-
-        if (! isset($query['page']) || 'wc-admin' !== $query['page'] || ! isset($query['path'])) {
+        if (!isset($query['page']) || 'wc-admin' !== $query['page'] || !isset($query['path'])) {
             return false;
         }
-
         $path_pieces = explode('/', $query['path']);
-        $route       = $path_pieces[1];
-
+        $route = $path_pieces[1];
         return 'add-product' === $route || 'product' === $route;
     }
-
     /**
      * Update the product source if we're on the product editor page.
      *
@@ -52,8 +46,6 @@ class Tracks
         if ($this->is_product_editor_page(wp_get_referer())) {
             return 'product-block-editor-v1';
         }
-
         return $source;
     }
-
 }

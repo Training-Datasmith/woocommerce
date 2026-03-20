@@ -5,13 +5,10 @@
  *
  * @package Automattic\WooCommerce\Internal\CLI\Migrator\Core
  */
-
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\CLI\Migrator\Core;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\CLI\Migrator\Core;
 
 defined('ABSPATH') || exit;
-
 /**
  * MigratorTracker class.
  *
@@ -20,18 +17,16 @@ defined('ABSPATH') || exit;
  *
  * @internal This class is part of the CLI Migrator feature and should not be used directly.
  */
-class MigratorTracker
+class Migrator_Tracker
 {
     /**
      * Option name for storing migration analytics.
      */
     private const OPTION_NAME = 'wc_migrator_analytics';
-
     /**
      * Current migration session data.
      */
     private array $current_session = [];
-
     /**
      * Constructor.
      */
@@ -39,7 +34,6 @@ class MigratorTracker
     {
         $this->init_hooks();
     }
-
     /**
      * Initialize WordPress hooks.
      */
@@ -49,28 +43,16 @@ class MigratorTracker
         add_action('wc_migrator_batch_processed', $this->on_batch_processed(...), 10, 3);
         add_action('wc_migrator_session_completed', $this->on_session_completed(...), 10, 2);
     }
-
     /**
      * Handle migration session start.
      *
      * @param string $platform Platform identifier (e.g., 'shopify').
      * @param array  $metadata Session metadata.
      */
-    public function on_session_started(string $platform, array $metadata): void // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
-    {$this->current_session = [
-            'platform'            => $platform,
-            'started_at'          => time(),
-            'products_total'      => 0,
-            'products_attempted'  => 0,
-            'products_successful' => 0,
-            'products_failed'     => 0,
-            'products_skipped'    => 0,
-            'product_types'       => [],
-            'total_time'          => 0,
-            'is_dry_run'          => $metadata['is_dry_run'] ?? false,
-        ];
+    public function on_session_started(string $platform, array $metadata): void
+    {
+        $this->current_session = ['platform' => $platform, 'started_at' => time(), 'products_total' => 0, 'products_attempted' => 0, 'products_successful' => 0, 'products_failed' => 0, 'products_skipped' => 0, 'product_types' => [], 'total_time' => 0, 'is_dry_run' => $metadata['is_dry_run'] ?? false];
     }
-
     /**
      * Handle batch processing completion.
      *
@@ -83,17 +65,14 @@ class MigratorTracker
         if (empty($this->current_session)) {
             return;
         }
-
         // Track detailed statistics for better telemetry accuracy.
-        $batch_stats                                   = $batch_results['stats'] ?? [];
-        $this->current_session['products_attempted']  += count($mapped_data);
+        $batch_stats = $batch_results['stats'] ?? [];
+        $this->current_session['products_attempted'] += count($mapped_data);
         $this->current_session['products_successful'] += $batch_stats['successful'] ?? 0;
-        $this->current_session['products_failed']     += $batch_stats['failed'] ?? 0;
-        $this->current_session['products_skipped']    += $batch_stats['skipped'] ?? 0;
-
+        $this->current_session['products_failed'] += $batch_stats['failed'] ?? 0;
+        $this->current_session['products_skipped'] += $batch_stats['skipped'] ?? 0;
         $this->track_product_types($mapped_data, $batch_results);
     }
-
     /**
      * Handle migration session completion.
      *
@@ -105,26 +84,18 @@ class MigratorTracker
         if (empty($this->current_session)) {
             // Log warning for debugging - session completed without active session.
             if (function_exists('wc_get_logger')) {
-                wc_get_logger()->warning(
-                    'Migration session completed event fired without active session.',
-                    [ 'source' => 'migrator_tracker' ]
-                );
+                wc_get_logger()->warning('Migration session completed event fired without active session.', ['source' => 'migrator_tracker']);
             }
             return;
         }
-
         // Use consistent time() calls to avoid any timezone issues.
-        $completion_time                       = time();
-        $this->current_session['total_time']   = $completion_time - $this->current_session['started_at'];
+        $completion_time = time();
+        $this->current_session['total_time'] = $completion_time - $this->current_session['started_at'];
         $this->current_session['completed_at'] = $completion_time;
-
         $this->current_session['products_total'] = $final_stats['total_found'] ?? $this->current_session['products_attempted'];
-
         $this->save_session_data();
-
         $this->current_session = [];
     }
-
     /**
      * Track product types from mapped data and import results.
      *
@@ -136,101 +107,72 @@ class MigratorTracker
      */
     private function track_product_types(array $mapped_data, array $batch_results): void
     {
-        $successful_results = array_filter(
-            $batch_results['results'] ?? [],
-            fn (array $result) => 'success' === ($result['status'] ?? '') && 'skipped' !== ($result['action'] ?? '')
-        );
-
+        $successful_results = array_filter($batch_results['results'] ?? [], fn(array $result) => 'success' === ($result['status'] ?? '') && 'skipped' !== ($result['action'] ?? ''));
         // Only track types for successfully imported products.
         foreach ($successful_results as $index => $result) {
-            if (! isset($mapped_data[ $index ])) {
+            if (!isset($mapped_data[$index])) {
                 continue;
             }
-
-            $product = $mapped_data[ $index ];
-            $type    = $product['type'] ?? 'simple';
-
-            if (! isset($this->current_session['product_types'][ $type ])) {
-                $this->current_session['product_types'][ $type ] = 0;
+            $product = $mapped_data[$index];
+            $type = $product['type'] ?? 'simple';
+            if (!isset($this->current_session['product_types'][$type])) {
+                $this->current_session['product_types'][$type] = 0;
             }
-
-            ++$this->current_session['product_types'][ $type ];
+            ++$this->current_session['product_types'][$type];
         }
     }
-
     /**
      * Save current session data to persistent storage.
      */
     private function save_session_data(): void
     {
         $analytics = $this->get_stored_analytics();
-        $platform  = $this->current_session['platform'];
-
-        if (! isset($analytics['platforms'][ $platform ])) {
-            $analytics['platforms'][ $platform ] = [
-                'total_products_attempted'  => 0,
-                'total_products_successful' => 0,
-                'total_products_failed'     => 0,
-                'total_products_skipped'    => 0,
-                'total_sessions'            => 0,
-                'total_time'                => 0,
-                'product_types'             => [],
-                'last_migration'            => null,
-                'dry_run_sessions'          => 0,
-            ];
+        $platform = $this->current_session['platform'];
+        if (!isset($analytics['platforms'][$platform])) {
+            $analytics['platforms'][$platform] = ['total_products_attempted' => 0, 'total_products_successful' => 0, 'total_products_failed' => 0, 'total_products_skipped' => 0, 'total_sessions' => 0, 'total_time' => 0, 'product_types' => [], 'last_migration' => null, 'dry_run_sessions' => 0];
         }
-
-        $platform_data = &$analytics['platforms'][ $platform ];
-
-        $products_attempted  = $this->current_session['products_attempted'] ?? 0;
+        $platform_data =& $analytics['platforms'][$platform];
+        $products_attempted = $this->current_session['products_attempted'] ?? 0;
         $products_successful = $this->current_session['products_successful'] ?? 0;
-        $products_failed     = $this->current_session['products_failed'] ?? 0;
-        $products_skipped    = $this->current_session['products_skipped'] ?? 0;
-        $total_time          = $this->current_session['total_time'] ?? 0;
-        $completed_at        = $this->current_session['completed_at'] ?? time();
-        $product_types       = $this->current_session['product_types'] ?? [];
-        $is_dry_run          = $this->current_session['is_dry_run'] ?? false;
-
+        $products_failed = $this->current_session['products_failed'] ?? 0;
+        $products_skipped = $this->current_session['products_skipped'] ?? 0;
+        $total_time = $this->current_session['total_time'] ?? 0;
+        $completed_at = $this->current_session['completed_at'] ?? time();
+        $product_types = $this->current_session['product_types'] ?? [];
+        $is_dry_run = $this->current_session['is_dry_run'] ?? false;
         // Update platform statistics.
-        if (! $is_dry_run) {
-            $platform_data['total_products_attempted']  += $products_attempted;
+        if (!$is_dry_run) {
+            $platform_data['total_products_attempted'] += $products_attempted;
             $platform_data['total_products_successful'] += $products_successful;
-            $platform_data['total_products_failed']     += $products_failed;
-            $platform_data['total_products_skipped']    += $products_skipped;
-            $platform_data['last_migration']             = $completed_at;
+            $platform_data['total_products_failed'] += $products_failed;
+            $platform_data['total_products_skipped'] += $products_skipped;
+            $platform_data['last_migration'] = $completed_at;
         } else {
             ++$platform_data['dry_run_sessions'];
         }
-
         ++$platform_data['total_sessions'];
         $platform_data['total_time'] += $total_time;
-
         foreach ($product_types as $type => $count) {
-            if (! isset($platform_data['product_types'][ $type ])) {
-                $platform_data['product_types'][ $type ] = 0;
+            if (!isset($platform_data['product_types'][$type])) {
+                $platform_data['product_types'][$type] = 0;
             }
-            $platform_data['product_types'][ $type ] += $count;
+            $platform_data['product_types'][$type] += $count;
         }
-
-        if (! isset($analytics['totals']) || ! is_array($analytics['totals'])) {
+        if (!isset($analytics['totals']) || !is_array($analytics['totals'])) {
             $analytics['totals'] = [];
         }
-
         // Only update global totals for non-dry-run sessions.
-        if (! $is_dry_run) {
-            $analytics['totals']['products_attempted']  = ($analytics['totals']['products_attempted'] ?? 0) + $products_attempted;
+        if (!$is_dry_run) {
+            $analytics['totals']['products_attempted'] = ($analytics['totals']['products_attempted'] ?? 0) + $products_attempted;
             $analytics['totals']['products_successful'] = ($analytics['totals']['products_successful'] ?? 0) + $products_successful;
-            $analytics['totals']['products_failed']     = ($analytics['totals']['products_failed'] ?? 0) + $products_failed;
-            $analytics['totals']['products_skipped']    = ($analytics['totals']['products_skipped'] ?? 0) + $products_skipped;
+            $analytics['totals']['products_failed'] = ($analytics['totals']['products_failed'] ?? 0) + $products_failed;
+            $analytics['totals']['products_skipped'] = ($analytics['totals']['products_skipped'] ?? 0) + $products_skipped;
         }
-
-        $analytics['totals']['total_sessions']       = ($analytics['totals']['total_sessions'] ?? 0) + 1;
+        $analytics['totals']['total_sessions'] = ($analytics['totals']['total_sessions'] ?? 0) + 1;
         $analytics['totals']['total_migration_time'] = ($analytics['totals']['total_migration_time'] ?? 0) + $total_time;
-        $analytics['totals']['dry_run_sessions']     = ($analytics['totals']['dry_run_sessions'] ?? 0) + ($is_dry_run ? 1 : 0);
-
+        $analytics['totals']['dry_run_sessions'] = ($analytics['totals']['dry_run_sessions'] ?? 0) + ($is_dry_run ? 1 : 0);
         $this->save_analytics($analytics);
     }
-
     /**
      * Get comprehensive migration data for WC_Tracker integration.
      *
@@ -239,41 +181,14 @@ class MigratorTracker
     public function get_data(): array
     {
         $analytics = $this->get_stored_analytics();
-
         $totals = $analytics['totals'] ?? [];
-
-        $data = [
-            'products_attempted'       => $totals['products_attempted'] ?? 0,
-            'products_successful'      => $totals['products_successful'] ?? 0,
-            'products_failed'          => $totals['products_failed'] ?? 0,
-            'products_skipped'         => $totals['products_skipped'] ?? 0,
-            'total_migration_sessions' => $totals['total_sessions'] ?? 0,
-            'total_migration_time'     => $totals['total_migration_time'] ?? 0,
-            'dry_run_sessions'         => $totals['dry_run_sessions'] ?? 0,
-            'platforms_used'           => array_keys($analytics['platforms'] ?? []),
-            'platform_breakdown'       => [],
-            'success_rate'             => $this->calculate_success_rate($totals),
-        ];
-
+        $data = ['products_attempted' => $totals['products_attempted'] ?? 0, 'products_successful' => $totals['products_successful'] ?? 0, 'products_failed' => $totals['products_failed'] ?? 0, 'products_skipped' => $totals['products_skipped'] ?? 0, 'total_migration_sessions' => $totals['total_sessions'] ?? 0, 'total_migration_time' => $totals['total_migration_time'] ?? 0, 'dry_run_sessions' => $totals['dry_run_sessions'] ?? 0, 'platforms_used' => array_keys($analytics['platforms'] ?? []), 'platform_breakdown' => [], 'success_rate' => $this->calculate_success_rate($totals)];
         $platforms = $analytics['platforms'] ?? [];
         foreach ($platforms as $platform => $platform_data) {
-            $data['platform_breakdown'][ $platform ] = [
-                'products_attempted'  => $platform_data['total_products_attempted'] ?? 0,
-                'products_successful' => $platform_data['total_products_successful'] ?? 0,
-                'products_failed'     => $platform_data['total_products_failed'] ?? 0,
-                'products_skipped'    => $platform_data['total_products_skipped'] ?? 0,
-                'sessions_count'      => $platform_data['total_sessions'] ?? 0,
-                'dry_run_sessions'    => $platform_data['dry_run_sessions'] ?? 0,
-                'total_time'          => $platform_data['total_time'] ?? 0,
-                'product_types'       => $platform_data['product_types'] ?? [],
-                'last_migration'      => $platform_data['last_migration'] ?? null,
-                'success_rate'        => $this->calculate_success_rate($platform_data),
-            ];
+            $data['platform_breakdown'][$platform] = ['products_attempted' => $platform_data['total_products_attempted'] ?? 0, 'products_successful' => $platform_data['total_products_successful'] ?? 0, 'products_failed' => $platform_data['total_products_failed'] ?? 0, 'products_skipped' => $platform_data['total_products_skipped'] ?? 0, 'sessions_count' => $platform_data['total_sessions'] ?? 0, 'dry_run_sessions' => $platform_data['dry_run_sessions'] ?? 0, 'total_time' => $platform_data['total_time'] ?? 0, 'product_types' => $platform_data['product_types'] ?? [], 'last_migration' => $platform_data['last_migration'] ?? null, 'success_rate' => $this->calculate_success_rate($platform_data)];
         }
-
         return $data;
     }
-
     /**
      * Calculate success rate as a percentage.
      *
@@ -282,16 +197,13 @@ class MigratorTracker
      */
     private function calculate_success_rate(array $stats): float
     {
-        $attempted  = $stats['total_products_attempted'] ?? $stats['products_attempted'] ?? 0;
+        $attempted = $stats['total_products_attempted'] ?? $stats['products_attempted'] ?? 0;
         $successful = $stats['total_products_successful'] ?? $stats['products_successful'] ?? 0;
-
         if (0 === $attempted) {
             return 0.0;
         }
-
-        return round(($successful / $attempted) * 100, 2);
+        return round($successful / $attempted * 100, 2);
     }
-
     /**
      * Get stored analytics data with defaults.
      *
@@ -299,23 +211,10 @@ class MigratorTracker
      */
     private function get_stored_analytics(): array
     {
-        $defaults = [
-            'totals'    => [
-                'products_attempted'   => 0,
-                'products_successful'  => 0,
-                'products_failed'      => 0,
-                'products_skipped'     => 0,
-                'total_sessions'       => 0,
-                'total_migration_time' => 0,
-                'dry_run_sessions'     => 0,
-            ],
-            'platforms' => [],
-        ];
-
+        $defaults = ['totals' => ['products_attempted' => 0, 'products_successful' => 0, 'products_failed' => 0, 'products_skipped' => 0, 'total_sessions' => 0, 'total_migration_time' => 0, 'dry_run_sessions' => 0], 'platforms' => []];
         $stored = get_option(self::OPTION_NAME, []);
         return wp_parse_args($stored, $defaults);
     }
-
     /**
      * Save analytics data to WordPress options.
      *
@@ -329,7 +228,6 @@ class MigratorTracker
             update_option(self::OPTION_NAME, $analytics, 'no');
         }
     }
-
     /**
      * Clear all stored analytics data.
      * Useful for development/testing or user privacy requests.

@@ -1,23 +1,21 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Caches;
 
-namespace Automattic\WooCommerce\Caches;
-
-use Automattic\WooCommerce\Caching\ObjectCache;
-use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
-
+use Automattic\Woo_Commerce\Caching\Object_Cache;
+use Automattic\Woo_Commerce\Internal\Data_Stores\Orders\Custom_Orders_Table_Controller;
 /**
  * A class to cache order objects.
  */
-class OrderCache extends ObjectCache
+class Order_Cache extends Object_Cache
 {
     /**
      * Get the cache key and prefix to use for Orders.
      */
     public function get_object_type(): string
     {
-        if ('yes' === get_option(CustomOrdersTableController::HPOS_DATASTORE_CACHING_ENABLED_OPTION)) {
+        if ('yes' === get_option(Custom_Orders_Table_Controller::HPOS_DATASTORE_CACHING_ENABLED_OPTION)) {
             /**
              * The use of datastore caching moves persistent data caching to the datastore. Order object caching then only
              * acts as request level caching as the `order_objects` cache group is set as non-persistent.
@@ -26,7 +24,6 @@ class OrderCache extends ObjectCache
         }
         return 'orders';
     }
-
     /**
      * Get the id of an object to be cached.
      *
@@ -37,7 +34,6 @@ class OrderCache extends ObjectCache
     {
         return $object->get_id();
     }
-
     /**
      * Validate an object before caching it.
      *
@@ -46,10 +42,9 @@ class OrderCache extends ObjectCache
      */
     protected function validate($object): ?array
     {
-        if (! $object instanceof \WC_Abstract_Order) {
-            return [ 'The supplied order is not an instance of WC_Abstract_Order, ' . gettype($object) ];
+        if (!$object instanceof \WC_Abstract_Order) {
+            return ['The supplied order is not an instance of WC_Abstract_Order, ' . gettype($object)];
         }
-
         return null;
     }
 }

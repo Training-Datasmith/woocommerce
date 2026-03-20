@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments\Providers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments\Providers;
 
 /**
  * AnPost Shipping Provider class.
  */
-class AnPostShippingProvider extends AbstractShippingProvider
+class An_Post_Shipping_Provider extends Abstract_Shipping_Provider
 {
     /**
      * Get the key of the shipping provider.
@@ -16,7 +15,6 @@ class AnPostShippingProvider extends AbstractShippingProvider
     {
         return 'an-post';
     }
-
     /**
      * Get the name of the shipping provider.
      */
@@ -24,7 +22,6 @@ class AnPostShippingProvider extends AbstractShippingProvider
     {
         return 'An Post';
     }
-
     /**
      * Get the icon of the shipping provider.
      */
@@ -32,7 +29,6 @@ class AnPostShippingProvider extends AbstractShippingProvider
     {
         return esc_url(WC()->plugin_url()) . '/assets/images/shipping_providers/an-post.png';
     }
-
     /**
      * Get the tracking URL for a given tracking number.
      *

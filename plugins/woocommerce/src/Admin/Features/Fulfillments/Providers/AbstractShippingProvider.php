@@ -1,31 +1,27 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Admin\Features\Fulfillments\Providers;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Fulfillments\Providers;
 
 /**
  * Abstract class for shipping providers.
  *
  * This class defines the basic structure and methods that all shipping providers must implement.
  */
-abstract class AbstractShippingProvider
+abstract class Abstract_Shipping_Provider
 {
     /**
      * Get the key of the shipping provider.
      */
     abstract public function get_key(): string;
-
     /**
      * Get the name of the shipping provider.
      */
     abstract public function get_name(): string;
-
     /**
      * Get the path of the icon of the shipping provider.
      */
     abstract public function get_icon(): string;
-
     /**
      * Get the tracking URL for a given tracking number.
      *
@@ -33,7 +29,6 @@ abstract class AbstractShippingProvider
      * @return string The tracking URL.
      */
     abstract public function get_tracking_url(string $tracking_number): string;
-
     /**
      * Get the countries from which the shipping provider can ship.
      *
@@ -43,7 +38,6 @@ abstract class AbstractShippingProvider
     {
         return [];
     }
-
     /**
      * Get the countries to which the shipping provider can ship.
      *
@@ -53,7 +47,6 @@ abstract class AbstractShippingProvider
     {
         return [];
     }
-
     /**
      * Check if the shipping provider can ship from a specific country.
      *
@@ -64,7 +57,6 @@ abstract class AbstractShippingProvider
     {
         return in_array($country_code, $this->get_shipping_from_countries(), true);
     }
-
     /**
      * Check if the shipping provider can ship to a specific country.
      *
@@ -75,7 +67,6 @@ abstract class AbstractShippingProvider
     {
         return in_array($country_code, $this->get_shipping_to_countries(), true);
     }
-
     /**
      * Check if the shipping provider can ship from a specific country to another.
      *
@@ -87,7 +78,6 @@ abstract class AbstractShippingProvider
     {
         return $this->can_ship_from($shipping_from) && $this->can_ship_to($shipping_to);
     }
-
     /**
      * Get the tracking URL for a given tracking number with additional parameters.
      *
@@ -101,6 +91,7 @@ abstract class AbstractShippingProvider
      */
     public function try_parse_tracking_number(string $tracking_number, string $shipping_from, string $shipping_to): ?array
     {
-        return null; // Default implementation returns null, subclasses should override this method.
+        return null;
+        // Default implementation returns null, subclasses should override this method.
     }
 }

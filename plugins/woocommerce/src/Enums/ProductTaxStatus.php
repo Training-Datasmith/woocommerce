@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Enums;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Enums;
 
 /**
  * Enum class for all the product tax statuses.
  */
-class ProductTaxStatus
+class Product_Tax_Status
 {
     /**
      * Tax status for products that are taxable.
@@ -15,14 +14,12 @@ class ProductTaxStatus
      * @var string
      */
     public const TAXABLE = 'taxable';
-
     /**
      * Indicates that only the shipping cost should be taxed, not the product itself.
      *
      * @var string
      */
     public const SHIPPING = 'shipping';
-
     /**
      * Tax status for products that are not taxable.
      *

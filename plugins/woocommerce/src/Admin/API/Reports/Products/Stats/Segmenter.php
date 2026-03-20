@@ -1,21 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Class for adding segmenting support without cluttering the data stores.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports\Products\Stats;
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Products\Stats;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\ParameterException;
-use Automattic\WooCommerce\Admin\API\Reports\Segmenter as ReportsSegmenter;
-
+use Automattic\Woo_Commerce\Admin\API\Reports\Parameter_Exception;
+use Automattic\Woo_Commerce\Admin\API\Reports\Segmenter as ReportsSegmenter;
 /**
  * Date & time interval and numeric range handling class for Reporting API.
  */
-class Segmenter extends ReportsSegmenter
+class Segmenter extends Reports_Segmenter
 {
     /**
      * Returns column => query mapping to be used for product-related product-level segmenting query
@@ -27,15 +24,8 @@ class Segmenter extends ReportsSegmenter
      */
     protected function get_segment_selections_product_level($products_table): array
     {
-        return [
-            'items_sold'       => "SUM($products_table.product_qty) as items_sold",
-            'net_revenue'      => "SUM($products_table.product_net_revenue ) AS net_revenue",
-            'orders_count'     => "COUNT( DISTINCT $products_table.order_id ) AS orders_count",
-            'products_count'   => "COUNT( DISTINCT $products_table.product_id ) AS products_count",
-            'variations_count' => "COUNT( DISTINCT $products_table.variation_id ) AS variations_count",
-        ];
+        return ['items_sold' => "SUM({$products_table}.product_qty) as items_sold", 'net_revenue' => "SUM({$products_table}.product_net_revenue ) AS net_revenue", 'orders_count' => "COUNT( DISTINCT {$products_table}.order_id ) AS orders_count", 'products_count' => "COUNT( DISTINCT {$products_table}.product_id ) AS products_count", 'variations_count' => "COUNT( DISTINCT {$products_table}.variation_id ) AS variations_count"];
     }
-
     /**
      * Calculate segments for totals where the segmenting property is bound to product (e.g. category, product_id, variation_id).
      *
@@ -53,31 +43,13 @@ class Segmenter extends ReportsSegmenter
     protected function get_product_related_totals_segments($segmenting_selections, $segmenting_from, $segmenting_where, $segmenting_groupby, $segmenting_dimension_name, $table_name, $totals_query, $unique_orders_table)
     {
         global $wpdb;
-
         // Can't get all the numbers from one query, so split it into one query for product-level numbers and one for order-level numbers (which first need to have orders uniqued).
         // Product-level numbers.
-        $segments_products = $wpdb->get_results(
-            "SELECT
-						$segmenting_groupby AS $segmenting_dimension_name
-						{$segmenting_selections['product_level']}
-					FROM
-						$table_name
-						$segmenting_from
-						{$totals_query['from_clause']}
-					WHERE
-						1=1
-						{$totals_query['where_time_clause']}
-						{$totals_query['where_clause']}
-						$segmenting_where
-					GROUP BY
-						$segmenting_groupby",
-            ARRAY_A
-        ); // WPCS: cache ok, DB call ok, unprepared SQL ok.
-
+        $segments_products = $wpdb->get_results("SELECT\n\t\t\t\t\t\t{$segmenting_groupby} AS {$segmenting_dimension_name}\n\t\t\t\t\t\t{$segmenting_selections['product_level']}\n\t\t\t\t\tFROM\n\t\t\t\t\t\t{$table_name}\n\t\t\t\t\t\t{$segmenting_from}\n\t\t\t\t\t\t{$totals_query['from_clause']}\n\t\t\t\t\tWHERE\n\t\t\t\t\t\t1=1\n\t\t\t\t\t\t{$totals_query['where_time_clause']}\n\t\t\t\t\t\t{$totals_query['where_clause']}\n\t\t\t\t\t\t{$segmenting_where}\n\t\t\t\t\tGROUP BY\n\t\t\t\t\t\t{$segmenting_groupby}", ARRAY_A);
+        // WPCS: cache ok, DB call ok, unprepared SQL ok.
         $totals_segments = $this->merge_segment_totals_results($segmenting_dimension_name, $segments_products, []);
         return $totals_segments;
     }
-
     /**
      * Calculate segments for intervals where the segmenting property is bound to product (e.g. category, product_id, variation_id).
      *
@@ -95,40 +67,19 @@ class Segmenter extends ReportsSegmenter
     protected function get_product_related_intervals_segments($segmenting_selections, $segmenting_from, $segmenting_where, $segmenting_groupby, $segmenting_dimension_name, $table_name, $intervals_query, $unique_orders_table)
     {
         global $wpdb;
-
         // LIMIT offset, rowcount needs to be updated to a multiple of the number of segments.
         preg_match('/LIMIT (\d+)\s?,\s?(\d+)/', (string) $intervals_query['limit'], $limit_parts);
-        $segment_count    = count($this->get_all_segments());
-        $orig_offset      = intval($limit_parts[1]);
-        $orig_rowcount    = intval($limit_parts[2]);
+        $segment_count = count($this->get_all_segments());
+        $orig_offset = intval($limit_parts[1]);
+        $orig_rowcount = intval($limit_parts[2]);
         $segmenting_limit = $wpdb->prepare('LIMIT %d, %d', $orig_offset * $segment_count, $orig_rowcount * $segment_count);
-
         // Can't get all the numbers from one query, so split it into one query for product-level numbers and one for order-level numbers (which first need to have orders uniqued).
         // Product-level numbers.
-        $segments_products = $wpdb->get_results(
-            "SELECT
-						{$intervals_query['select_clause']} AS time_interval,
-						$segmenting_groupby AS $segmenting_dimension_name
-						{$segmenting_selections['product_level']}
-					FROM
-						$table_name
-						$segmenting_from
-						{$intervals_query['from_clause']}
-					WHERE
-						1=1
-						{$intervals_query['where_time_clause']}
-						{$intervals_query['where_clause']}
-						$segmenting_where
-					GROUP BY
-						time_interval, $segmenting_groupby
-					$segmenting_limit",
-            ARRAY_A
-        ); // WPCS: cache ok, DB call ok, unprepared SQL ok.
-
+        $segments_products = $wpdb->get_results("SELECT\n\t\t\t\t\t\t{$intervals_query['select_clause']} AS time_interval,\n\t\t\t\t\t\t{$segmenting_groupby} AS {$segmenting_dimension_name}\n\t\t\t\t\t\t{$segmenting_selections['product_level']}\n\t\t\t\t\tFROM\n\t\t\t\t\t\t{$table_name}\n\t\t\t\t\t\t{$segmenting_from}\n\t\t\t\t\t\t{$intervals_query['from_clause']}\n\t\t\t\t\tWHERE\n\t\t\t\t\t\t1=1\n\t\t\t\t\t\t{$intervals_query['where_time_clause']}\n\t\t\t\t\t\t{$intervals_query['where_clause']}\n\t\t\t\t\t\t{$segmenting_where}\n\t\t\t\t\tGROUP BY\n\t\t\t\t\t\ttime_interval, {$segmenting_groupby}\n\t\t\t\t\t{$segmenting_limit}", ARRAY_A);
+        // WPCS: cache ok, DB call ok, unprepared SQL ok.
         $intervals_segments = $this->merge_segment_intervals_results($segmenting_dimension_name, $segments_products, []);
         return $intervals_segments;
     }
-
     /**
      * Return array of segments formatted for REST response.
      *
@@ -142,68 +93,50 @@ class Segmenter extends ReportsSegmenter
     protected function get_segments($type, $query_params, $table_name)
     {
         global $wpdb;
-        if (! isset($this->query_args['segmentby']) || '' === $this->query_args['segmentby']) {
+        if (!isset($this->query_args['segmentby']) || '' === $this->query_args['segmentby']) {
             return [];
         }
-
         $product_segmenting_table = $wpdb->prefix . 'wc_order_product_lookup';
-        $unique_orders_table      = 'uniq_orders';
-        $segmenting_where         = '';
-
+        $unique_orders_table = 'uniq_orders';
+        $segmenting_where = '';
         // Product, variation, and category are bound to product, so here product segmenting table is required,
         // while coupon and customer are bound to order, so we don't need the extra JOIN for those.
         // This also means that segment selections need to be calculated differently.
         if ('product' === $this->query_args['segmentby']) {
-            $product_level_columns     = $this->get_segment_selections_product_level($product_segmenting_table);
-            $segmenting_selections     = [
-                'product_level' => $this->prepare_selections($product_level_columns),
-            ];
-            $this->report_columns      = $product_level_columns;
-            $segmenting_from           = '';
-            $segmenting_groupby        = $product_segmenting_table . '.product_id';
+            $product_level_columns = $this->get_segment_selections_product_level($product_segmenting_table);
+            $segmenting_selections = ['product_level' => $this->prepare_selections($product_level_columns)];
+            $this->report_columns = $product_level_columns;
+            $segmenting_from = '';
+            $segmenting_groupby = $product_segmenting_table . '.product_id';
             $segmenting_dimension_name = 'product_id';
-
             $segments = $this->get_product_related_segments($type, $segmenting_selections, $segmenting_from, $segmenting_where, $segmenting_groupby, $segmenting_dimension_name, $table_name, $query_params, $unique_orders_table);
         } elseif ('variation' === $this->query_args['segmentby']) {
-            if (! isset($this->query_args['product_includes']) || ! is_array($this->query_args['product_includes']) || count($this->query_args['product_includes']) !== 1) {
-                throw new ParameterException('wc_admin_reports_invalid_segmenting_variation', __('product_includes parameter need to specify exactly one product when segmenting by variation.', 'woocommerce'));
+            if (!isset($this->query_args['product_includes']) || !is_array($this->query_args['product_includes']) || count($this->query_args['product_includes']) !== 1) {
+                throw new Parameter_Exception('wc_admin_reports_invalid_segmenting_variation', __('product_includes parameter need to specify exactly one product when segmenting by variation.', 'woocommerce'));
             }
-
-            $product_level_columns     = $this->get_segment_selections_product_level($product_segmenting_table);
-            $segmenting_selections     = [
-                'product_level' => $this->prepare_selections($product_level_columns),
-            ];
-            $this->report_columns      = $product_level_columns;
-            $segmenting_from           = '';
-            $segmenting_where          = "AND $product_segmenting_table.product_id = {$this->query_args['product_includes'][0]}";
-            $segmenting_groupby        = $product_segmenting_table . '.variation_id';
+            $product_level_columns = $this->get_segment_selections_product_level($product_segmenting_table);
+            $segmenting_selections = ['product_level' => $this->prepare_selections($product_level_columns)];
+            $this->report_columns = $product_level_columns;
+            $segmenting_from = '';
+            $segmenting_where = "AND {$product_segmenting_table}.product_id = {$this->query_args['product_includes'][0]}";
+            $segmenting_groupby = $product_segmenting_table . '.variation_id';
             $segmenting_dimension_name = 'variation_id';
-
             $segments = $this->get_product_related_segments($type, $segmenting_selections, $segmenting_from, $segmenting_where, $segmenting_groupby, $segmenting_dimension_name, $table_name, $query_params, $unique_orders_table);
         } elseif ('category' === $this->query_args['segmentby']) {
-            $product_level_columns     = $this->get_segment_selections_product_level($product_segmenting_table);
-            $segmenting_selections     = [
-                'product_level' => $this->prepare_selections($product_level_columns),
-            ];
-            $this->report_columns      = $product_level_columns;
-            $segmenting_from           = "
-			LEFT JOIN {$wpdb->term_relationships} ON {$product_segmenting_table}.product_id = {$wpdb->term_relationships}.object_id
-			JOIN {$wpdb->term_taxonomy} ON {$wpdb->term_taxonomy}.term_taxonomy_id = {$wpdb->term_relationships}.term_taxonomy_id
-			LEFT JOIN {$wpdb->wc_category_lookup} ON {$wpdb->term_taxonomy}.term_id = {$wpdb->wc_category_lookup}.category_id
-			";
-            $segmenting_where          = " AND {$wpdb->wc_category_lookup}.category_tree_id IS NOT NULL";
-            $segmenting_groupby        = "{$wpdb->wc_category_lookup}.category_tree_id";
+            $product_level_columns = $this->get_segment_selections_product_level($product_segmenting_table);
+            $segmenting_selections = ['product_level' => $this->prepare_selections($product_level_columns)];
+            $this->report_columns = $product_level_columns;
+            $segmenting_from = "\n\t\t\tLEFT JOIN {$wpdb->term_relationships} ON {$product_segmenting_table}.product_id = {$wpdb->term_relationships}.object_id\n\t\t\tJOIN {$wpdb->term_taxonomy} ON {$wpdb->term_taxonomy}.term_taxonomy_id = {$wpdb->term_relationships}.term_taxonomy_id\n\t\t\tLEFT JOIN {$wpdb->wc_category_lookup} ON {$wpdb->term_taxonomy}.term_id = {$wpdb->wc_category_lookup}.category_id\n\t\t\t";
+            $segmenting_where = " AND {$wpdb->wc_category_lookup}.category_tree_id IS NOT NULL";
+            $segmenting_groupby = "{$wpdb->wc_category_lookup}.category_tree_id";
             $segmenting_dimension_name = 'category_id';
-
             // Restrict our search space for category comparisons.
             if (isset($this->query_args['category_includes'])) {
-                $category_ids      = implode(',', $this->get_all_segments());
-                $segmenting_where .= " AND {$wpdb->wc_category_lookup}.category_id IN ( $category_ids )";
+                $category_ids = implode(',', $this->get_all_segments());
+                $segmenting_where .= " AND {$wpdb->wc_category_lookup}.category_id IN ( {$category_ids} )";
             }
-
             $segments = $this->get_product_related_segments($type, $segmenting_selections, $segmenting_from, $segmenting_where, $segmenting_groupby, $segmenting_dimension_name, $table_name, $query_params, $unique_orders_table);
         }
-
         return $segments;
     }
 }

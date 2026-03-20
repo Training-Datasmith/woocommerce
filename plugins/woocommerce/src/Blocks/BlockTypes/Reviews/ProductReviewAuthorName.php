@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types\Reviews;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes\Reviews;
-
-use Automattic\WooCommerce\Blocks\BlockTypes\AbstractBlock;
-
+use Automattic\Woo_Commerce\Blocks\Block_Types\Abstract_Block;
 /**
  * ProductReviewAuthorName class.
  */
-class ProductReviewAuthorName extends AbstractBlock
+class Product_Review_Author_Name extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,7 +15,6 @@ class ProductReviewAuthorName extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-review-author-name';
-
     /**
      * Render the block.
      *
@@ -28,17 +25,15 @@ class ProductReviewAuthorName extends AbstractBlock
      */
     protected function render($attributes, $content, $block): string
     {
-        if (! isset($block->context['commentId'])) {
+        if (!isset($block->context['commentId'])) {
             return '';
         }
-
-        $comment            = get_comment($block->context['commentId']);
-        $commenter          = wp_get_current_commenter();
+        $comment = get_comment($block->context['commentId']);
+        $commenter = wp_get_current_commenter();
         $show_pending_links = isset($commenter['comment_author']) && $commenter['comment_author'];
         if (empty($comment)) {
             return '';
         }
-
         $classes = [];
         if (isset($attributes['textAlign'])) {
             $classes[] = 'has-text-align-' . $attributes['textAlign'];
@@ -46,25 +41,17 @@ class ProductReviewAuthorName extends AbstractBlock
         if (isset($attributes['style']['elements']['link']['color']['text'])) {
             $classes[] = 'has-link-color';
         }
-
-        $wrapper_attributes = get_block_wrapper_attributes([ 'class' => implode(' ', $classes) ]);
-        $comment_author     = get_comment_author($comment);
-        $link               = get_comment_author_url($comment);
-
-        if (! empty($link) && ! empty($attributes['isLink']) && ! empty($attributes['linkTarget'])) {
+        $wrapper_attributes = get_block_wrapper_attributes(['class' => implode(' ', $classes)]);
+        $comment_author = get_comment_author($comment);
+        $link = get_comment_author_url($comment);
+        if (!empty($link) && !empty($attributes['isLink']) && !empty($attributes['linkTarget'])) {
             $comment_author = sprintf('<a rel="external nofollow ugc" href="%1s" target="%2s" >%3s</a>', esc_url($link), esc_attr($attributes['linkTarget']), $comment_author);
         }
-        if ('0' === $comment->comment_approved && ! $show_pending_links) {
+        if ('0' === $comment->comment_approved && !$show_pending_links) {
             $comment_author = wp_kses($comment_author, []);
         }
-
-        return sprintf(
-            '<div %1$s>%2$s</div>',
-            $wrapper_attributes,
-            $comment_author
-        );
+        return sprintf('<div %1$s>%2$s</div>', $wrapper_attributes, $comment_author);
     }
-
     /**
      * Get the frontend script handle for this block type.
      *

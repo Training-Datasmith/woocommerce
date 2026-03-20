@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Payments;
 
-namespace Automattic\WooCommerce\Blocks\Payments;
-
-use Automattic\WooCommerce\Blocks\Integrations\IntegrationRegistry;
-
+use Automattic\Woo_Commerce\Blocks\Integrations\Integration_Registry;
 /**
  * Class used for interacting with payment method types.
  *
  * @since 2.6.0
  */
-final class PaymentMethodRegistry extends IntegrationRegistry
+final class Payment_Method_Registry extends Integration_Registry
 {
     /**
      * Integration identifier is used to construct hook names and is given when the integration registry is initialized.
@@ -19,7 +17,6 @@ final class PaymentMethodRegistry extends IntegrationRegistry
      * @var string
      */
     protected $registry_identifier = 'payment_method_type';
-
     /**
      * Retrieves all registered payment methods that are also active.
      *
@@ -27,12 +24,8 @@ final class PaymentMethodRegistry extends IntegrationRegistry
      */
     public function get_all_active_registered(): array
     {
-        return array_filter(
-            $this->get_all_registered(),
-            fn (\Automattic\WooCommerce\Blocks\Integrations\IntegrationInterface $payment_method) => $payment_method->is_active()
-        );
+        return array_filter($this->get_all_registered(), fn(\Automattic\Woo_Commerce\Blocks\Integrations\Integration_Interface $payment_method) => $payment_method->is_active());
     }
-
     /**
      * Gets an array of all registered payment method script handles, but only for active payment methods.
      *
@@ -40,31 +33,23 @@ final class PaymentMethodRegistry extends IntegrationRegistry
      */
     public function get_all_active_payment_method_script_dependencies(): array
     {
-        $script_handles  = [];
+        $script_handles = [];
         $payment_methods = $this->get_all_active_registered();
-
         foreach ($payment_methods as $payment_method) {
-            $script_handles = array_merge(
-                $script_handles,
-                is_admin() ? $payment_method->get_payment_method_script_handles_for_admin() : $payment_method->get_payment_method_script_handles()
-            );
+            $script_handles = array_merge($script_handles, is_admin() ? $payment_method->get_payment_method_script_handles_for_admin() : $payment_method->get_payment_method_script_handles());
         }
-
         return array_unique(array_filter($script_handles));
     }
-
     /**
      * Gets an array of all registered payment method script data, but only for active payment methods.
      */
     public function get_all_registered_script_data(): array
     {
-        $script_data     = [];
+        $script_data = [];
         $payment_methods = $this->get_all_active_registered();
-
         foreach ($payment_methods as $payment_method) {
-            $script_data[ $payment_method->get_name() ] = $payment_method->get_payment_method_data();
+            $script_data[$payment_method->get_name()] = $payment_method->get_payment_method_data();
         }
-
-        return [ 'paymentMethodData' => array_filter($script_data) ];
+        return ['paymentMethodData' => array_filter($script_data)];
     }
 }

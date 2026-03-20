@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
 /**
  * ProductCategory class.
  */
-class ProductCategory extends AbstractProductGrid
+class Product_Category extends Abstract_Product_Grid
 {
     /**
      * Block name.
@@ -15,7 +14,6 @@ class ProductCategory extends AbstractProductGrid
      * @var string
      */
     protected $block_name = 'product-category';
-
     /**
      * Set args specific to this block
      *
@@ -24,19 +22,11 @@ class ProductCategory extends AbstractProductGrid
     protected function set_block_query_args(&$query_args)
     {
     }
-
     /**
      * Get block attributes.
      */
     protected function get_block_type_attributes(): array
     {
-        return array_merge(
-            parent::get_block_type_attributes(),
-            [
-                'className' => $this->get_schema_string(),
-                'orderby'   => $this->get_schema_orderby(),
-                'editMode'  => $this->get_schema_boolean(true),
-            ]
-        );
+        return array_merge(parent::get_block_type_attributes(), ['className' => $this->get_schema_string(), 'orderby' => $this->get_schema_orderby(), 'editMode' => $this->get_schema_boolean(true)]);
     }
 }

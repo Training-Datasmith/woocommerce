@@ -3,20 +3,16 @@
 /**
  * Functionality that takes a static URL, constructs a cart, and redirects to the checkout with a cart session.
  */
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Domain\Services;
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Blocks\Domain\Services;
-
-use Automattic\WooCommerce\StoreApi\Utilities\CartController;
-use Automattic\WooCommerce\StoreApi\Utilities\CartTokenUtils;
-
+use Automattic\Woo_Commerce\Store_Api\Utilities\Cart_Controller;
+use Automattic\Woo_Commerce\Store_Api\Utilities\Cart_Token_Utils;
 defined('ABSPATH') || exit;
-
 /**
  * Checkout Link class.
  */
-class CheckoutLink
+class Checkout_Link
 {
     /**
      * Initialize the checkout link service.
@@ -27,7 +23,6 @@ class CheckoutLink
         add_filter('query_vars', $this->add_query_vars(...), 0);
         add_action('template_redirect', $this->handle_checkout_link_endpoint(...));
     }
-
     /**
      * Add the checkout link endpoint.
      */
@@ -36,15 +31,12 @@ class CheckoutLink
         // get registered rewrite rules.
         $rules = get_option('rewrite_rules', []);
         $regex = '^checkout-link$';
-
         add_rewrite_rule($regex, 'index.php?checkout-link=true', 'top');
-
         // maybe flush rewrite rules if it was not previously in the option.
-        if (! isset($rules[ $regex ])) {
+        if (!isset($rules[$regex])) {
             flush_rewrite_rules();
         }
     }
-
     /**
      * Add the checkout link query var.
      *
@@ -56,27 +48,23 @@ class CheckoutLink
         $vars[] = 'checkout-link';
         return $vars;
     }
-
     /**
      * Handle the checkout link endpoint.
      */
     public function handle_checkout_link_endpoint(): void
     {
-        if (! get_query_var('checkout-link')) {
+        if (!get_query_var('checkout-link')) {
             return;
         }
-
-        if (! $this->validate_checkout_link()) {
+        if (!$this->validate_checkout_link()) {
             $redirect = add_query_arg('wc_error', rawurlencode(__('The provided checkout link was out of date or invalid. No products were added to the cart.', 'woocommerce')), wc_get_cart_url());
         } else {
             wc()->cart->empty_cart();
             $redirect = $this->get_checkout_link();
         }
-
         wp_safe_redirect($redirect);
         exit;
     }
-
     /**
      * Validate the checkout link.
      *
@@ -85,10 +73,8 @@ class CheckoutLink
     protected function validate_checkout_link(): bool
     {
         $products = $this->get_products_from_checkout_link();
-
-        return ! empty($products);
+        return !empty($products);
     }
-
     /**
      * Get the products from the checkout link.
      *
@@ -96,31 +82,28 @@ class CheckoutLink
      */
     protected function get_products_from_checkout_link(): array
     {
-        $raw_products = array_filter(explode(',', wc_clean(wp_unslash($_GET['products'] ?? '')))); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $products     = [];
-
+        $raw_products = array_filter(explode(',', wc_clean(wp_unslash($_GET['products'] ?? ''))));
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $products = [];
         foreach ($raw_products as $product_id_qty) {
             if (str_contains($product_id_qty, ':')) {
                 [$product_id, $qty] = explode(':', $product_id_qty);
             } else {
                 $product_id = $product_id_qty;
-                $qty        = 1;
+                $qty = 1;
             }
             $product_id = absint($product_id);
-            $qty        = absint($qty);
-            if (! $product_id) {
+            $qty = absint($qty);
+            if (!$product_id) {
                 continue;
             }
-            if (! $qty) {
+            if (!$qty) {
                 continue;
             }
-
-            $products[ $product_id ] = $qty;
+            $products[$product_id] = $qty;
         }
-
         return $products;
     }
-
     /**
      * Add error notices to the cart.
      *
@@ -133,7 +116,6 @@ class CheckoutLink
             wc_add_notice($message, 'error');
         }
     }
-
     /**
      * Process the query params and return the checkout link to redirect to complete with session token.
      *
@@ -141,70 +123,48 @@ class CheckoutLink
      */
     protected function get_checkout_link()
     {
-        $controller = new CartController();
-        $products   = $this->get_products_from_checkout_link();
-        $errors     = new \WP_Error();
-
+        $controller = new Cart_Controller();
+        $products = $this->get_products_from_checkout_link();
+        $errors = new \WP_Error();
         foreach ($products as $product_id => $qty) {
             try {
-                $controller->add_to_cart(
-                    [
-                        'id'       => $product_id,
-                        'quantity' => $qty,
-                    ]
-                );
+                $controller->add_to_cart(['id' => $product_id, 'quantity' => $qty]);
             } catch (\Exception $e) {
-                $errors->add('error', $e->getMessage());
+                $errors->add('error', $e->get_message());
             }
         }
-
         // Nothing was added to the cart. We need to redirect to the cart page with an error notice. Since guests may not
         // have a session, add the notice in the query string.
         if (wc()->cart->is_empty()) {
             $errors->add('error', __('The provided checkout link was out of date or invalid. No products were added to the cart.', 'woocommerce'));
-
-            if (! wc()->session->has_session()) {
+            if (!wc()->session->has_session()) {
                 return add_query_arg('wc_error', rawurlencode($errors->get_error_message()), wc_get_cart_url());
             }
             $this->add_error_notices($errors);
-
             return wc_get_cart_url();
         }
-
         // Apply coupon if provided.
-        $coupon = wc_format_coupon_code(wp_unslash($_GET['coupon'] ?? '')); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-
-        if (wc_coupons_enabled() && ! empty($coupon)) {
+        $coupon = wc_format_coupon_code(wp_unslash($_GET['coupon'] ?? ''));
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if (wc_coupons_enabled() && !empty($coupon)) {
             try {
                 $controller->apply_coupon($coupon);
             } catch (\Exception $e) {
-                $errors->add('error', $e->getMessage());
+                $errors->add('error', $e->get_message());
             }
         }
-
         // Add error notices to the cart. This requires a session otherwise the notices will not be displayed.
         $this->add_error_notices($errors);
-
         $redirect_url = wc_get_checkout_url();
-
         // Preserve the query string--pass it to the checkout page.
-        if (! empty($_SERVER['QUERY_STRING'])) {
-            $redirect_url = remove_query_arg(
-                [
-                    'products',
-                    'coupon',
-                    'checkout-link',
-                ],
-                add_query_arg(wp_unslash($_SERVER['QUERY_STRING']), '', $redirect_url) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            );
+        if (!empty($_SERVER['QUERY_STRING'])) {
+            $redirect_url = remove_query_arg(['products', 'coupon', 'checkout-link'], add_query_arg(wp_unslash($_SERVER['QUERY_STRING']), '', $redirect_url));
         }
-
         // If the user is logged in, the session is tied to the user ID. Do not use a cart token.
-        if (! is_user_logged_in()) {
-            $session_token = CartTokenUtils::get_cart_token((string) wc()->session->get_customer_id());
-            $redirect_url  = add_query_arg('session', $session_token, $redirect_url);
+        if (!is_user_logged_in()) {
+            $session_token = Cart_Token_Utils::get_cart_token((string) wc()->session->get_customer_id());
+            $redirect_url = add_query_arg('session', $session_token, $redirect_url);
         }
-
         return $redirect_url;
     }
 }

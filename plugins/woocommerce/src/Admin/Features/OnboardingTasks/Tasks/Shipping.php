@@ -1,21 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Tasks;
 
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
-
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
-use Automattic\WooCommerce\Internal\Admin\Onboarding\OnboardingProfile;
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task;
+use Automattic\Woo_Commerce\Internal\Admin\Onboarding\Onboarding_Profile;
 use WC_Data_Store;
-
 /**
  * Shipping Task
  */
 class Shipping extends Task
 {
     public const ZONE_COUNT_TRANSIENT_NAME = 'woocommerce_shipping_task_zone_count_transient';
-
     /**
      * Constructor
      *
@@ -32,7 +29,6 @@ class Shipping extends Task
         add_action('woocommerce_shipping_zone_method_added', self::delete_zone_count_transient(...), 9);
         add_action('woocommerce_after_shipping_zone_object_save', self::delete_zone_count_transient(...), 9);
     }
-
     /**
      * ID.
      */
@@ -40,7 +36,6 @@ class Shipping extends Task
     {
         return 'shipping';
     }
-
     /**
      * Title.
      *
@@ -50,7 +45,6 @@ class Shipping extends Task
     {
         return __('Select your shipping options', 'woocommerce');
     }
-
     /**
      * Content.
      *
@@ -58,12 +52,8 @@ class Shipping extends Task
      */
     public function get_content()
     {
-        return __(
-            "Set your store location and where you'll ship to.",
-            'woocommerce'
-        );
+        return __("Set your store location and where you'll ship to.", 'woocommerce');
     }
-
     /**
      * Time.
      *
@@ -73,7 +63,6 @@ class Shipping extends Task
     {
         return __('1 minute', 'woocommerce');
     }
-
     /**
      * Task completion.
      *
@@ -83,7 +72,6 @@ class Shipping extends Task
     {
         return self::has_shipping_zones();
     }
-
     /**
      * Task visibility.
      *
@@ -96,39 +84,31 @@ class Shipping extends Task
                 // If the user has already created a default shipping zone, we don't need to show the task.
                 return false;
             }
-
             /**
              * Do not display the task when:
              * - The store sells digital products only
              * Display the task when:
              * - We don't know where the store's located
              * - The store is located in the UK, Australia or Canada
-            */
-
+             */
             if (self::is_selling_digital_type_only()) {
                 return false;
             }
-
             $default_store_country = wc_format_country_state_string(get_option('woocommerce_default_country', ''))['country'];
-
             // Check if a store address is set so that we don't default to WooCommerce's default country US.
             // Similar logic: https://github.com/woocommerce/woocommerce/blob/059d542394b48468587f252dcb6941c6425cd8d3/plugins/woocommerce-admin/client/profile-wizard/steps/store-details/index.js#L511-L516.
             $store_country = '';
-            if (! empty(get_option('woocommerce_store_address', '')) || 'US' !== $default_store_country) {
+            if (!empty(get_option('woocommerce_store_address', '')) || 'US' !== $default_store_country) {
                 $store_country = $default_store_country;
             }
-
             // Unknown country.
             if (empty($store_country)) {
                 return true;
             }
-
-            return in_array($store_country, [ 'US', 'CA', 'AU', 'NZ', 'SG', 'HK', 'GB', 'ES', 'IT', 'DE', 'FR', 'MX', 'CO', 'CL', 'AR', 'PE', 'BR', 'UY', 'GT', 'NL', 'AT', 'BE' ], true);
+            return in_array($store_country, ['US', 'CA', 'AU', 'NZ', 'SG', 'HK', 'GB', 'ES', 'IT', 'DE', 'FR', 'MX', 'CO', 'CL', 'AR', 'PE', 'BR', 'UY', 'GT', 'NL', 'AT', 'BE'], true);
         }
-
         return self::has_physical_products();
     }
-
     /**
      * Action URL.
      *
@@ -136,11 +116,8 @@ class Shipping extends Task
      */
     public function get_action_url()
     {
-        return self::has_shipping_zones()
-            ? admin_url('admin.php?page=wc-settings&tab=shipping')
-            : null;
+        return self::has_shipping_zones() ? admin_url('admin.php?page=wc-settings&tab=shipping') : null;
     }
-
     /**
      * Check if the store has any shipping zones.
      */
@@ -150,24 +127,19 @@ class Shipping extends Task
         if (false !== $zone_count) {
             return (int) $zone_count > 0;
         }
-
         $zone_count = count(WC_Data_Store::load('shipping-zone')->get_zones());
         set_transient(self::ZONE_COUNT_TRANSIENT_NAME, $zone_count);
-
         return $zone_count > 0;
     }
-
     /**
      * Check if the store has physical products.
      */
     public static function has_physical_products(): bool
     {
-        $profiler_data = get_option(OnboardingProfile::DATA_OPTION, []);
+        $profiler_data = get_option(Onboarding_Profile::DATA_OPTION, []);
         $product_types = $profiler_data['product_types'] ?? [];
-
         return in_array('physical', $product_types, true);
     }
-
     /**
      * Delete the zone count transient used in has_shipping_zones() method
      * to refresh the cache.
@@ -176,15 +148,13 @@ class Shipping extends Task
     {
         delete_transient(self::ZONE_COUNT_TRANSIENT_NAME);
     }
-
     /**
      * Check if the store sells digital products only.
      */
     private static function is_selling_digital_type_only(): bool
     {
-        $profiler_data = get_option(OnboardingProfile::DATA_OPTION, []);
+        $profiler_data = get_option(Onboarding_Profile::DATA_OPTION, []);
         $product_types = $profiler_data['product_types'] ?? [];
-
-        return [ 'downloads' ] === $product_types;
+        return ['downloads'] === $product_types;
     }
 }

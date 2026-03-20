@@ -1,21 +1,18 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Admin\Settings\Payments_Providers;
 
-namespace Automattic\WooCommerce\Internal\Admin\Settings\PaymentsProviders;
-
-use Automattic\WooCommerce\Internal\Logging\SafeGlobalFunctionProxy;
+use Automattic\Woo_Commerce\Internal\Logging\Safe_Global_Function_Proxy;
 use Throwable;
 use WC_Payment_Gateway;
-
 defined('ABSPATH') || exit;
-
 /**
  * HelioPay payment gateway provider class.
  *
  * This class handles all the custom logic for the HelioPay payment gateway provider.
  */
-class HelioPay extends PaymentGateway
+class Helio_Pay extends Payment_Gateway
 {
     /**
      * Try to determine if the payment gateway is in test mode.
@@ -35,19 +32,10 @@ class HelioPay extends PaymentGateway
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway is in test mode: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway is in test mode: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         return parent::is_in_test_mode($payment_gateway);
     }
-
     /**
      * Check if the payment gateway has a payments processor account connected.
      *
@@ -60,31 +48,18 @@ class HelioPay extends PaymentGateway
     {
         try {
             if ($this->is_in_test_mode($payment_gateway)) {
-                if (defined('HELIO_API_KEY_DEVNET') &&
-                    defined('HELIO_API_SECRET_DEVNET')) {
-
-                    return ! empty($payment_gateway->get_option(\HELIO_API_KEY_DEVNET)) && ! empty($payment_gateway->get_option(\HELIO_API_SECRET_DEVNET));
+                if (defined('HELIO_API_KEY_DEVNET') && defined('HELIO_API_SECRET_DEVNET')) {
+                    return !empty($payment_gateway->get_option(\HELIO_API_KEY_DEVNET)) && !empty($payment_gateway->get_option(\HELIO_API_SECRET_DEVNET));
                 }
-            } elseif (defined('HELIO_API_KEY_MAINNET') &&
-                    defined('HELIO_API_SECRET_MAINNET')) {
-
-                return ! empty($payment_gateway->get_option(\HELIO_API_KEY_MAINNET)) && ! empty($payment_gateway->get_option(\HELIO_API_SECRET_MAINNET));
+            } elseif (defined('HELIO_API_KEY_MAINNET') && defined('HELIO_API_SECRET_MAINNET')) {
+                return !empty($payment_gateway->get_option(\HELIO_API_KEY_MAINNET)) && !empty($payment_gateway->get_option(\HELIO_API_SECRET_MAINNET));
             }
         } catch (Throwable $e) {
             // Do nothing but log so we can investigate.
-            SafeGlobalFunctionProxy::wc_get_logger()->debug(
-                'Failed to determine if gateway has an account connected: ' . $e->getMessage(),
-                [
-                    'gateway'   => $payment_gateway->id,
-                    'source'    => 'settings-payments',
-                    'exception' => $e,
-                ]
-            );
+            Safe_Global_Function_Proxy::wc_get_logger()->debug('Failed to determine if gateway has an account connected: ' . $e->get_message(), ['gateway' => $payment_gateway->id, 'source' => 'settings-payments', 'exception' => $e]);
         }
-
         return parent::is_account_connected($payment_gateway);
     }
-
     /**
      * Try to determine if the payment gateway is in test mode onboarding (aka sandbox or test-drive).
      *

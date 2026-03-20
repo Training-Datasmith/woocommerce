@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Register the scripts, and handles items needed for managing translations within WooCommerce Admin.
  */
+namespace Automattic\Woo_Commerce\Internal\Admin;
 
-namespace Automattic\WooCommerce\Internal\Admin;
-
-use Automattic\WooCommerce\Admin\PageController;
-
+use Automattic\Woo_Commerce\Admin\Page_Controller;
 /**
  * Translations Class.
  */
@@ -20,23 +18,20 @@ class Translations
      * @var Translations instance
      */
     protected static $instance;
-
     /**
      * Plugin domain.
      */
     private static string $plugin_domain = 'woocommerce';
-
     /**
      * Get class instance.
      */
     public static function get_instance()
     {
-        if (! self::$instance) {
+        if (!self::$instance) {
             self::$instance = new self();
         }
         return self::$instance;
     }
-
     /**
      * Constructor.
      * Hooks added here should be removed in `wc_admin_initialize` via the feature plugin.
@@ -44,15 +39,12 @@ class Translations
     public function __construct()
     {
         add_action('admin_enqueue_scripts', $this->potentially_load_translation_script_file(...), 15);
-
         // Combine JSON translation files (from chunks) when language packs are updated.
         add_action('upgrader_process_complete', $this->combine_translation_chunk_files(...), 10, 2);
-
         // Handler for WooCommerce and WooCommerce Admin plugin activation.
         add_action('woocommerce_activated_plugin', $this->potentially_generate_translation_strings(...));
         add_action('activated_plugin', $this->potentially_generate_translation_strings(...));
     }
-
     /**
      * Generate a filename to cache translations from JS chunks.
      *
@@ -62,9 +54,8 @@ class Translations
      */
     private function get_combined_translation_filename($domain, $locale): string
     {
-        return implode('-', [ $domain, $locale, WC_ADMIN_APP ]) . '.json';
+        return implode('-', [$domain, $locale, WC_ADMIN_APP]) . '.json';
     }
-
     /**
      * Combines data from translation chunk files based on officially downloaded file format.
      *
@@ -76,50 +67,35 @@ class Translations
         // the filesystem object should be hooked up.
         global $wp_filesystem;
         $combined_translation_data = [];
-
         foreach ($json_i18n_filenames as $json_filename) {
-            if (! $wp_filesystem->is_readable($json_filename)) {
+            if (!$wp_filesystem->is_readable($json_filename)) {
                 continue;
             }
-
             $file_contents = $wp_filesystem->get_contents($json_filename);
-            $chunk_data    = \json_decode($file_contents, true);
-
+            $chunk_data = \json_decode($file_contents, true);
             if (empty($chunk_data)) {
                 continue;
             }
-
-            if (! isset($chunk_data['comment']['reference'])) {
+            if (!isset($chunk_data['comment']['reference'])) {
                 continue;
             }
-
             $reference_file = $chunk_data['comment']['reference'];
-
             // Only combine "app" files (not scripts registered with WP).
-            if (
-                !str_contains((string) $reference_file, WC_ADMIN_DIST_JS_FOLDER . 'app/index.js') &&
-                !str_contains((string) $reference_file, WC_ADMIN_DIST_JS_FOLDER . 'chunks/')
-            ) {
+            if (!str_contains((string) $reference_file, WC_ADMIN_DIST_JS_FOLDER . 'app/index.js') && !str_contains((string) $reference_file, WC_ADMIN_DIST_JS_FOLDER . 'chunks/')) {
                 continue;
             }
-
             if (empty($combined_translation_data)) {
                 // Use the first translation file as the base structure.
                 $combined_translation_data = $chunk_data;
             } else {
                 // Combine all messages from all chunk files.
-                $combined_translation_data['locale_data']['messages'] = array_merge(
-                    $combined_translation_data['locale_data']['messages'],
-                    $chunk_data['locale_data']['messages']
-                );
+                $combined_translation_data['locale_data']['messages'] = array_merge($combined_translation_data['locale_data']['messages'], $chunk_data['locale_data']['messages']);
             }
         }
-
         // Remove inaccurate reference comment.
         unset($combined_translation_data['comment']);
         return $combined_translation_data;
     }
-
     /**
      * Combines data from translation chunk files based on user-generated file formats,
      * such as wp-cli tool or Loco Translate plugin.
@@ -132,46 +108,32 @@ class Translations
         // the filesystem object should be hooked up.
         global $wp_filesystem;
         $combined_translation_data = [];
-
         foreach ($json_i18n_filenames as $json_filename) {
-            if (! $wp_filesystem->is_readable($json_filename)) {
+            if (!$wp_filesystem->is_readable($json_filename)) {
                 continue;
             }
-
             $file_contents = $wp_filesystem->get_contents($json_filename);
-            $chunk_data    = \json_decode($file_contents, true);
-
+            $chunk_data = \json_decode($file_contents, true);
             if (empty($chunk_data)) {
                 continue;
             }
-
             $reference_file = $chunk_data['source'];
-
             // Only combine "app" files (not scripts registered with WP).
-            if (
-                !str_contains((string) $reference_file, WC_ADMIN_DIST_JS_FOLDER . 'app/index.js') &&
-                !str_contains((string) $reference_file, WC_ADMIN_DIST_JS_FOLDER . 'chunks/')
-            ) {
+            if (!str_contains((string) $reference_file, WC_ADMIN_DIST_JS_FOLDER . 'app/index.js') && !str_contains((string) $reference_file, WC_ADMIN_DIST_JS_FOLDER . 'chunks/')) {
                 continue;
             }
-
             if (empty($combined_translation_data)) {
                 // Use the first translation file as the base structure.
                 $combined_translation_data = $chunk_data;
             } else {
                 // Combine all messages from all chunk files.
-                $combined_translation_data['locale_data']['woocommerce'] = array_merge(
-                    $combined_translation_data['locale_data']['woocommerce'],
-                    $chunk_data['locale_data']['woocommerce']
-                );
+                $combined_translation_data['locale_data']['woocommerce'] = array_merge($combined_translation_data['locale_data']['woocommerce'], $chunk_data['locale_data']['woocommerce']);
             }
         }
-
         // Remove inaccurate reference comment.
         unset($combined_translation_data['source']);
         return $combined_translation_data;
     }
-
     /**
      * Find and combine translation chunk files.
      *
@@ -187,39 +149,31 @@ class Translations
         // So long as this function is called during the 'upgrader_process_complete' action,
         // the filesystem object should be hooked up.
         global $wp_filesystem;
-
         // Grab all JSON files in the current language pack.
-        $json_i18n_filenames       = glob($lang_dir . $domain . '-' . $locale . '-*.json');
+        $json_i18n_filenames = glob($lang_dir . $domain . '-' . $locale . '-*.json');
         $combined_translation_data = [];
-
         if (false === $json_i18n_filenames) {
             return $combined_translation_data;
         }
-
         // Use first JSON file to determine file format. This check is required due to
         // file format difference between official language files and user translated files.
         $format_determine_file = reset($json_i18n_filenames);
-
-        if (! $wp_filesystem->is_readable($format_determine_file)) {
+        if (!$wp_filesystem->is_readable($format_determine_file)) {
             return $combined_translation_data;
         }
-
-        $file_contents         = $wp_filesystem->get_contents($format_determine_file);
+        $file_contents = $wp_filesystem->get_contents($format_determine_file);
         $format_determine_data = \json_decode($file_contents, true);
-
         if (empty($format_determine_data)) {
             return $combined_translation_data;
         }
         if (isset($format_determine_data['comment'])) {
             return $this->combine_official_translation_chunks($json_i18n_filenames);
         }
-
         if (isset($format_determine_data['source'])) {
             return $this->combine_user_translation_chunks($json_i18n_filenames);
         }
         return $combined_translation_data;
     }
-
     /**
      * Combine and save translations for a specific locale.
      *
@@ -233,18 +187,14 @@ class Translations
     {
         global $wp_filesystem;
         $translations_from_chunks = $this->get_translation_chunk_data($language_dir, $plugin_domain, $locale);
-
         if (empty($translations_from_chunks)) {
             return;
         }
-
-        $cache_filename          = $this->get_combined_translation_filename($plugin_domain, $locale);
+        $cache_filename = $this->get_combined_translation_filename($plugin_domain, $locale);
         $chunk_translations_json = wp_json_encode($translations_from_chunks);
-
         // Cache combined translations strings to a file.
         $wp_filesystem->put_contents($language_dir . $cache_filename, $chunk_translations_json);
     }
-
     /**
      * Combine translation chunks when plugin is activated.
      *
@@ -255,18 +205,15 @@ class Translations
      */
     private function generate_translation_strings(): void
     {
-        $locale   = determine_locale();
+        $locale = determine_locale();
         $lang_dir = WP_LANG_DIR . '/plugins/';
-
         // Bail early if not localized.
         if ('en_US' === $locale) {
             return;
         }
-
-        if (! function_exists('get_filesystem_method')) {
+        if (!function_exists('get_filesystem_method')) {
             require_once ABSPATH . 'wp-admin/includes/file.php';
         }
-
         $access_type = get_filesystem_method();
         if ('direct' === $access_type) {
             \WP_Filesystem();
@@ -277,20 +224,17 @@ class Translations
             return;
         }
     }
-
     /**
      * Loads the required translation scripts on the correct pages.
      */
     public function potentially_load_translation_script_file(): void
     {
-        if (! PageController::is_admin_or_embed_page()) {
+        if (!Page_Controller::is_admin_or_embed_page()) {
             return;
         }
-
         // Grab translation strings from Webpack-generated chunks.
         add_filter('load_script_translation_file', $this->load_script_translation_file(...), 10, 3);
     }
-
     /**
      * Load translation strings from language packs for dynamic imports.
      *
@@ -306,18 +250,14 @@ class Translations
         if (WC_ADMIN_APP !== $handle) {
             return $file;
         }
-
         // Make sure we're handing the correct domain.
         if (self::$plugin_domain !== $domain) {
             return $file;
         }
-
-        $locale         = determine_locale();
+        $locale = determine_locale();
         $cache_filename = $this->get_combined_translation_filename($domain, $locale);
-
         return WP_LANG_DIR . '/plugins/' . $cache_filename;
     }
-
     /**
      * Run when plugin is activated (can be WooCommerce or WooCommerce Admin).
      *
@@ -326,13 +266,11 @@ class Translations
     public function potentially_generate_translation_strings($filename): void
     {
         $activated_plugin_domain = explode('/', $filename)[0];
-
         // Ensure we're only running only on activation hook that originates from our plugin.
         if (self::$plugin_domain === $activated_plugin_domain) {
             $this->generate_translation_strings();
         }
     }
-
     /**
      * Combine translation chunks when files are updated.
      *
@@ -346,27 +284,17 @@ class Translations
      */
     public function combine_translation_chunk_files($instance, array $hook_extra): void
     {
-        if (
-            ! is_a($instance, 'Language_Pack_Upgrader') ||
-            ! isset($hook_extra['translations']) ||
-            ! is_array($hook_extra['translations'])
-        ) {
+        if (!is_a($instance, 'Language_Pack_Upgrader') || !isset($hook_extra['translations']) || !is_array($hook_extra['translations'])) {
             return;
         }
-
-        $locales      = [];
+        $locales = [];
         $language_dir = WP_LANG_DIR . '/plugins/';
-
         // Gather the locales that were updated in this operation.
         foreach ($hook_extra['translations'] as $translation) {
-            if (
-                'plugin' === $translation['type'] &&
-                self::$plugin_domain === $translation['slug']
-            ) {
+            if ('plugin' === $translation['type'] && self::$plugin_domain === $translation['slug']) {
                 $locales[] = $translation['language'];
             }
         }
-
         // Build combined translation files for all updated locales.
         foreach ($locales as $locale) {
             // So long as this function is hooked to the 'upgrader_process_complete' action,

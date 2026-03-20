@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Marketing Specs Handler
  *
  * Fetches the specifications for the marketing feature from WooCommerce.com API.
  */
-
-namespace Automattic\WooCommerce\Internal\Admin\Marketing;
+namespace Automattic\Woo_Commerce\Internal\Admin\Marketing;
 
 /**
  * Marketing Specifications Class.
@@ -15,7 +14,7 @@ namespace Automattic\WooCommerce\Internal\Admin\Marketing;
  * @internal
  * @since x.x.x
  */
-class MarketingSpecs
+class Marketing_Specs
 {
     /**
      * Name of knowledge base post transient.
@@ -23,7 +22,6 @@ class MarketingSpecs
      * @var string
      */
     public const KNOWLEDGE_BASE_TRANSIENT = 'wc_marketing_knowledge_base';
-
     /**
      * Load knowledge base posts from WooCommerce.com
      *
@@ -35,57 +33,24 @@ class MarketingSpecs
         if (empty($topic)) {
             $topic = 'marketing';
         }
-
         $kb_transient = self::KNOWLEDGE_BASE_TRANSIENT . '_' . strtolower($topic);
-
         $posts = get_transient($kb_transient);
-
         if (false === $posts) {
-            $request_url = add_query_arg(
-                [
-                    'page'     => 1,
-                    'per_page' => 8,
-                    '_embed'   => 1,
-                ],
-                'https://woocommerce.com/wp-json/wccom/marketing-knowledgebase/v1/posts/' . $topic
-            );
-
-            $request = wp_remote_get(
-                $request_url,
-                [
-                    'user-agent' => 'WooCommerce/' . WC()->version . '; ' . get_bloginfo('url'),
-                ]
-            );
-            $posts   = [];
-
-            if (! is_wp_error($request) && 200 === $request['response']['code']) {
+            $request_url = add_query_arg(['page' => 1, 'per_page' => 8, '_embed' => 1], 'https://woocommerce.com/wp-json/wccom/marketing-knowledgebase/v1/posts/' . $topic);
+            $request = wp_remote_get($request_url, ['user-agent' => 'WooCommerce/' . WC()->version . '; ' . get_bloginfo('url')]);
+            $posts = [];
+            if (!is_wp_error($request) && 200 === $request['response']['code']) {
                 $raw_posts = json_decode((string) $request['body'], true);
-
                 foreach ($raw_posts as $raw_post) {
-                    $post = [
-                        'title'         => html_entity_decode((string) $raw_post['title']['rendered']),
-                        'date'          => $raw_post['date_gmt'],
-                        'link'          => $raw_post['link'],
-                        'author_name'   => isset($raw_post['author_name']) ? html_entity_decode((string) $raw_post['author_name']) : '',
-                        'author_avatar' => $raw_post['author_avatar_url'] ?? '',
-                    ];
-
+                    $post = ['title' => html_entity_decode((string) $raw_post['title']['rendered']), 'date' => $raw_post['date_gmt'], 'link' => $raw_post['link'], 'author_name' => isset($raw_post['author_name']) ? html_entity_decode((string) $raw_post['author_name']) : '', 'author_avatar' => $raw_post['author_avatar_url'] ?? ''];
                     $featured_media = isset($raw_post['_embedded']['wp:featuredmedia']) && is_array($raw_post['_embedded']['wp:featuredmedia']) ? $raw_post['_embedded']['wp:featuredmedia'] : [];
                     if (count($featured_media) > 0) {
-                        $image         = current($featured_media);
-                        $post['image'] = add_query_arg(
-                            [
-                                'resize' => '650,340',
-                                'crop'   => 1,
-                            ],
-                            $image['source_url']
-                        );
+                        $image = current($featured_media);
+                        $post['image'] = add_query_arg(['resize' => '650,340', 'crop' => 1], $image['source_url']);
                     }
-
                     $posts[] = $post;
                 }
             }
-
             set_transient(
                 $kb_transient,
                 $posts,
@@ -93,7 +58,6 @@ class MarketingSpecs
                 empty($posts) ? 900 : DAY_IN_SECONDS
             );
         }
-
         return $posts;
     }
 }

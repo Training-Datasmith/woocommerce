@@ -1,18 +1,16 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Payments\Integrations;
 
-namespace Automattic\WooCommerce\Blocks\Payments\Integrations;
-
-use Automattic\WooCommerce\Blocks\Assets\Api;
+use Automattic\Woo_Commerce\Blocks\Assets\Api;
 use WC_Gateway_Cheque;
-
 /**
  * Cheque payment method integration
  *
  * @since 2.6.0
  */
-final class Cheque extends AbstractPaymentMethodType
+final class Cheque extends Abstract_Payment_Method_Type
 {
     /**
      * Payment method name defined by payment methods extending this class.
@@ -20,7 +18,6 @@ final class Cheque extends AbstractPaymentMethodType
      * @var string
      */
     protected $name = WC_Gateway_Cheque::ID;
-
     /**
      * Constructor
      *
@@ -31,9 +28,9 @@ final class Cheque extends AbstractPaymentMethodType
          * An instance of the Asset Api
          */
         private readonly Api $asset_api
-    ) {
+    )
+    {
     }
-
     /**
      * Initializes the payment method type.
      */
@@ -41,7 +38,6 @@ final class Cheque extends AbstractPaymentMethodType
     {
         $this->settings = get_option('woocommerce_cheque_settings', []);
     }
-
     /**
      * Returns if this payment method should be active. If false, the scripts will not be enqueued.
      */
@@ -49,28 +45,19 @@ final class Cheque extends AbstractPaymentMethodType
     {
         return filter_var($this->get_setting('enabled', false), FILTER_VALIDATE_BOOLEAN);
     }
-
     /**
      * Returns an array of scripts/handles to be registered for this payment method.
      */
     public function get_payment_method_script_handles(): array
     {
-        $this->asset_api->register_script(
-            'wc-payment-method-cheque',
-            'assets/client/blocks/wc-payment-method-cheque.js'
-        );
-        return [ 'wc-payment-method-cheque' ];
+        $this->asset_api->register_script('wc-payment-method-cheque', 'assets/client/blocks/wc-payment-method-cheque.js');
+        return ['wc-payment-method-cheque'];
     }
-
     /**
      * Returns an array of key=>value pairs of data made available to the payment methods script.
      */
     public function get_payment_method_data(): array
     {
-        return [
-            'title'       => $this->get_setting('title'),
-            'description' => $this->get_setting('description'),
-            'supports'    => $this->get_supported_features(),
-        ];
+        return ['title' => $this->get_setting('title'), 'description' => $this->get_setting('description'), 'supports' => $this->get_supported_features()];
     }
 }

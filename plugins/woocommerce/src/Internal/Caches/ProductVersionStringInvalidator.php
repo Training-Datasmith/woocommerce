@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Caches;
 
-namespace Automattic\WooCommerce\Internal\Caches;
-
-use Automattic\WooCommerce\Internal\Features\FeaturesController;
-
+use Automattic\Woo_Commerce\Internal\Features\Features_Controller;
 /**
  * Product version string invalidation handler.
  *
@@ -13,13 +11,12 @@ use Automattic\WooCommerce\Internal\Features\FeaturesController;
  * the version string for a given product, which in turn invalidates
  * any cached REST API responses containing that product.
  */
-class ProductVersionStringInvalidator
+class Product_Version_String_Invalidator
 {
     /**
      * Default cache TTL in seconds for term/taxonomy entity lookups.
      */
     public const DEFAULT_TAXONOMY_LOOKUP_CACHE_TTL = 300;
-
     /**
      * Initialize the invalidator and register hooks.
      *
@@ -39,12 +36,10 @@ class ProductVersionStringInvalidator
         if ('yes' !== get_option('woocommerce_feature_rest_api_caching_enabled')) {
             return;
         }
-
         if ('yes' === get_option('woocommerce_rest_api_enable_backend_caching', 'no')) {
             $this->register_hooks();
         }
     }
-
     /**
      * Register all product-related hooks.
      *
@@ -60,24 +55,20 @@ class ProductVersionStringInvalidator
         add_action('trashed_post', $this->handle_trashed_post(...), 10, 1);
         add_action('untrashed_post', $this->handle_untrashed_post(...), 10, 1);
         add_action('transition_post_status', $this->handle_transition_post_status(...), 10, 3);
-
         // WooCommerce CRUD hooks for products.
         add_action('woocommerce_new_product', $this->handle_woocommerce_new_product(...), 10, 1);
         add_action('woocommerce_update_product', $this->handle_woocommerce_update_product(...), 10, 1);
         add_action('woocommerce_before_delete_product', $this->handle_woocommerce_before_delete_product(...), 10, 1);
         add_action('woocommerce_trash_product', $this->handle_woocommerce_trash_product(...), 10, 1);
-
         // WooCommerce CRUD hooks for variations.
         add_action('woocommerce_new_product_variation', $this->handle_woocommerce_new_product_variation(...), 10, 2);
         add_action('woocommerce_update_product_variation', $this->handle_woocommerce_update_product_variation(...), 10, 2);
         add_action('woocommerce_before_delete_product_variation', $this->handle_woocommerce_before_delete_product_variation(...), 10, 1);
         add_action('woocommerce_trash_product_variation', $this->handle_woocommerce_trash_product_variation(...), 10, 1);
-
         // SQL-level operation hooks.
         add_action('woocommerce_updated_product_stock', $this->handle_woocommerce_updated_product_stock(...), 10, 1);
         add_action('woocommerce_updated_product_price', $this->handle_woocommerce_updated_product_price(...), 10, 1);
         add_action('woocommerce_updated_product_sales', $this->handle_woocommerce_updated_product_sales(...), 10, 1);
-
         // Attribute-related hooks (only for CPT data store).
         // These hooks use direct SQL queries that assume CPT storage.
         if ($this->is_using_cpt_data_store()) {
@@ -87,7 +78,6 @@ class ProductVersionStringInvalidator
             add_action('edited_term', $this->handle_edited_term(...), 10, 3);
         }
     }
-
     /**
      * Check if the product data store is CPT-based.
      *
@@ -98,7 +88,6 @@ class ProductVersionStringInvalidator
         $data_store = \WC_Data_Store::load('product');
         return $data_store->get_current_class_name() === 'WC_Product_Data_Store_CPT';
     }
-
     /**
      * Handle the save_post_product hook.
      *
@@ -111,14 +100,11 @@ class ProductVersionStringInvalidator
     public function handle_save_post_product($post_id): void
     {
         $post_id = (int) $post_id;
-
         if (wp_is_post_autosave($post_id) || wp_is_post_revision($post_id)) {
             return;
         }
-
         $this->invalidate($post_id);
     }
-
     /**
      * Handle the delete_post hook.
      *
@@ -132,15 +118,12 @@ class ProductVersionStringInvalidator
     public function handle_delete_post($post_id, $post = null): void
     {
         $post_id = (int) $post_id;
-
-        if (! $post instanceof \WP_Post) {
+        if (!$post instanceof \WP_Post) {
             $post = get_post($post_id);
         }
-
-        if (! $post) {
+        if (!$post) {
             return;
         }
-
         if ('product_variation' === $post->post_type) {
             $parent_id = (int) $post->post_parent;
             $this->invalidate_variation_and_parent($post_id, $parent_id);
@@ -151,7 +134,6 @@ class ProductVersionStringInvalidator
             $this->invalidate_products_list();
         }
     }
-
     /**
      * Handle the trashed_post hook.
      *
@@ -165,7 +147,6 @@ class ProductVersionStringInvalidator
     {
         $this->handle_trashed_or_untrashed_post((int) $post_id);
     }
-
     /**
      * Handle the untrashed_post hook.
      *
@@ -179,7 +160,6 @@ class ProductVersionStringInvalidator
     {
         $this->handle_trashed_or_untrashed_post((int) $post_id);
     }
-
     /**
      * Handle the transition_post_status hook.
      *
@@ -196,21 +176,18 @@ class ProductVersionStringInvalidator
      */
     public function handle_transition_post_status($new_status, $old_status, $post): void
     {
-        if (! $post instanceof \WP_Post) {
+        if (!$post instanceof \WP_Post) {
             return;
         }
-
         if ($new_status === $old_status) {
             return;
         }
-
         if ('product' === $post->post_type) {
             $this->invalidate_products_list();
         } elseif ('product_variation' === $post->post_type) {
             $this->invalidate_variations_list((int) $post->post_parent);
         }
     }
-
     /**
      * Handle the trashed_post and untrashed_post hooks.
      *
@@ -219,11 +196,9 @@ class ProductVersionStringInvalidator
     private function handle_trashed_or_untrashed_post(int $post_id): void
     {
         $post = get_post($post_id);
-
-        if (! $post) {
+        if (!$post) {
             return;
         }
-
         if ('product_variation' === $post->post_type) {
             $parent_id = (int) $post->post_parent;
             $this->invalidate_variation_and_parent($post_id, $parent_id);
@@ -234,7 +209,6 @@ class ProductVersionStringInvalidator
             $this->invalidate_products_list();
         }
     }
-
     /**
      * Handle the woocommerce_new_product_variation hook.
      *
@@ -248,11 +222,10 @@ class ProductVersionStringInvalidator
     public function handle_woocommerce_new_product_variation($variation_id, $variation): void
     {
         $variation_id = (int) $variation_id;
-        $parent_id    = $variation instanceof \WC_Product ? $variation->get_parent_id() : null;
+        $parent_id = $variation instanceof \WC_Product ? $variation->get_parent_id() : null;
         $this->invalidate_variation_and_parent($variation_id, $parent_id);
         $this->invalidate_variations_list($parent_id);
     }
-
     /**
      * Handle the woocommerce_update_product_variation hook.
      *
@@ -266,11 +239,10 @@ class ProductVersionStringInvalidator
     public function handle_woocommerce_update_product_variation($variation_id, $variation): void
     {
         $variation_id = (int) $variation_id;
-        $parent_id    = $variation instanceof \WC_Product ? $variation->get_parent_id() : null;
+        $parent_id = $variation instanceof \WC_Product ? $variation->get_parent_id() : null;
         $this->invalidate_variation_and_parent($variation_id, $parent_id);
         $this->invalidate_variation_parent_cache($variation_id);
     }
-
     /**
      * Handle the woocommerce_new_product hook.
      *
@@ -285,7 +257,6 @@ class ProductVersionStringInvalidator
         $this->invalidate((int) $product_id);
         $this->invalidate_products_list();
     }
-
     /**
      * Handle the woocommerce_update_product hook.
      *
@@ -299,7 +270,6 @@ class ProductVersionStringInvalidator
     {
         $this->invalidate((int) $product_id);
     }
-
     /**
      * Handle the woocommerce_before_delete_product hook.
      *
@@ -314,7 +284,6 @@ class ProductVersionStringInvalidator
         $this->invalidate((int) $product_id);
         $this->invalidate_products_list();
     }
-
     /**
      * Handle the woocommerce_trash_product hook.
      *
@@ -329,7 +298,6 @@ class ProductVersionStringInvalidator
         $this->invalidate((int) $product_id);
         $this->invalidate_products_list();
     }
-
     /**
      * Handle the woocommerce_before_delete_product_variation hook.
      *
@@ -342,12 +310,11 @@ class ProductVersionStringInvalidator
     public function handle_woocommerce_before_delete_product_variation($variation_id): void
     {
         $variation_id = (int) $variation_id;
-        $parent_id    = $this->get_variation_parent_id($variation_id);
+        $parent_id = $this->get_variation_parent_id($variation_id);
         $this->invalidate_variation_and_parent($variation_id, $parent_id);
         $this->invalidate_variations_list($parent_id);
         $this->invalidate_variation_parent_cache($variation_id);
     }
-
     /**
      * Handle the woocommerce_trash_product_variation hook.
      *
@@ -360,12 +327,11 @@ class ProductVersionStringInvalidator
     public function handle_woocommerce_trash_product_variation($variation_id): void
     {
         $variation_id = (int) $variation_id;
-        $parent_id    = $this->get_variation_parent_id($variation_id);
+        $parent_id = $this->get_variation_parent_id($variation_id);
         $this->invalidate_variation_and_parent($variation_id, $parent_id);
         $this->invalidate_variations_list($parent_id);
         $this->invalidate_variation_parent_cache($variation_id);
     }
-
     /**
      * Handle the woocommerce_updated_product_stock hook.
      *
@@ -379,7 +345,6 @@ class ProductVersionStringInvalidator
     {
         $this->invalidate((int) $product_id);
     }
-
     /**
      * Handle the woocommerce_updated_product_price hook.
      *
@@ -393,7 +358,6 @@ class ProductVersionStringInvalidator
     {
         $this->invalidate((int) $product_id);
     }
-
     /**
      * Handle the woocommerce_updated_product_sales hook.
      *
@@ -407,7 +371,6 @@ class ProductVersionStringInvalidator
     {
         $this->invalidate((int) $product_id);
     }
-
     /**
      * Handle the woocommerce_attribute_updated hook.
      *
@@ -420,14 +383,12 @@ class ProductVersionStringInvalidator
      */
     public function handle_woocommerce_attribute_updated($id, $data): void
     {
-        if (! is_array($data) || ! isset($data['attribute_name'])) {
+        if (!is_array($data) || !isset($data['attribute_name'])) {
             return;
         }
-
         $taxonomy = wc_attribute_taxonomy_name($data['attribute_name']);
         $this->invalidate_products_with_attribute($taxonomy);
     }
-
     /**
      * Handle the woocommerce_attribute_deleted hook.
      *
@@ -441,13 +402,11 @@ class ProductVersionStringInvalidator
      */
     public function handle_woocommerce_attribute_deleted($id, $name, $taxonomy): void
     {
-        if (! is_string($taxonomy) || '' === $taxonomy) {
+        if (!is_string($taxonomy) || '' === $taxonomy) {
             return;
         }
-
         $this->invalidate_products_with_attribute($taxonomy);
     }
-
     /**
      * Handle the woocommerce_updated_product_attribute_summary hook.
      *
@@ -461,7 +420,6 @@ class ProductVersionStringInvalidator
     {
         $this->invalidate_variation_and_parent((int) $variation_id);
     }
-
     /**
      * Handle the edited_term hook.
      *
@@ -475,18 +433,15 @@ class ProductVersionStringInvalidator
      */
     public function handle_edited_term($term_id, $tt_id, $taxonomy): void
     {
-        if (! is_string($taxonomy)) {
+        if (!is_string($taxonomy)) {
             return;
         }
-
         // Only handle product attribute taxonomies.
         if (!str_starts_with($taxonomy, 'pa_')) {
             return;
         }
-
         $this->invalidate_products_with_term((int) $tt_id);
     }
-
     /**
      * Get the parent product ID for a variation.
      *
@@ -499,12 +454,10 @@ class ProductVersionStringInvalidator
     private function get_variation_parent_id(int $variation_id): ?int
     {
         $cache_key = "wc_variation_parent_{$variation_id}";
-        $cached    = wp_cache_get($cache_key, 'woocommerce');
-
+        $cached = wp_cache_get($cache_key, 'woocommerce');
         if (false !== $cached) {
             return $cached ?: null;
         }
-
         if ($this->is_using_cpt_data_store()) {
             $parent_id = wp_get_post_parent_id($variation_id);
             $parent_id = $parent_id ? (int) $parent_id : null;
@@ -513,13 +466,10 @@ class ProductVersionStringInvalidator
             $parent_id = $variation ? (int) $variation->get_parent_id() : null;
             $parent_id = $parent_id ?: null;
         }
-
         // Cache the result (store 0 for null to distinguish from cache miss).
         wp_cache_set($cache_key, $parent_id ?? 0, 'woocommerce', HOUR_IN_SECONDS);
-
         return $parent_id;
     }
-
     /**
      * Invalidate the cached parent ID for a variation.
      *
@@ -529,7 +479,6 @@ class ProductVersionStringInvalidator
     {
         wp_cache_delete("wc_variation_parent_{$variation_id}", 'woocommerce');
     }
-
     /**
      * Invalidate a variation and its parent product.
      *
@@ -539,18 +488,14 @@ class ProductVersionStringInvalidator
     private function invalidate_variation_and_parent(int $variation_id, ?int $parent_id = null): void
     {
         $this->invalidate($variation_id);
-
         if (is_null($parent_id)) {
             $parent_id = $this->get_variation_parent_id($variation_id);
         }
-
-        if (! $parent_id) {
+        if (!$parent_id) {
             return;
         }
-
         $this->invalidate($parent_id);
     }
-
     /**
      * Invalidate all products and variations that have a specific term assigned.
      *
@@ -563,22 +508,10 @@ class ProductVersionStringInvalidator
     private function invalidate_products_with_term(int $tt_id): void
     {
         global $wpdb;
-
-        $cache_key  = 'wc_cache_inv_term_' . $tt_id;
+        $cache_key = 'wc_cache_inv_term_' . $tt_id;
         $entity_ids = wp_cache_get($cache_key, 'woocommerce');
-
         if (false === $entity_ids) {
-            $entity_ids = $wpdb->get_col(
-                $wpdb->prepare(
-                    "SELECT tr.object_id
-					FROM {$wpdb->term_relationships} tr
-					INNER JOIN {$wpdb->posts} p ON tr.object_id = p.ID
-					WHERE tr.term_taxonomy_id = %d
-					AND p.post_type IN ('product', 'product_variation')",
-                    $tt_id
-                )
-            );
-
+            $entity_ids = $wpdb->get_col($wpdb->prepare("SELECT tr.object_id\n\t\t\t\t\tFROM {$wpdb->term_relationships} tr\n\t\t\t\t\tINNER JOIN {$wpdb->posts} p ON tr.object_id = p.ID\n\t\t\t\t\tWHERE tr.term_taxonomy_id = %d\n\t\t\t\t\tAND p.post_type IN ('product', 'product_variation')", $tt_id));
             /**
              * Filters the cache TTL for queries that find entities associated with a term or taxonomy.
              *
@@ -593,7 +526,6 @@ class ProductVersionStringInvalidator
             $ttl = apply_filters('woocommerce_version_string_invalidator_taxonomy_lookup_ttl', self::DEFAULT_TAXONOMY_LOOKUP_CACHE_TTL, 'product');
             wp_cache_set($cache_key, $entity_ids, 'woocommerce', $ttl);
         }
-
         foreach ($entity_ids as $entity_id) {
             $post_type = get_post_type((int) $entity_id);
             if ('product_variation' === $post_type) {
@@ -603,7 +535,6 @@ class ProductVersionStringInvalidator
             }
         }
     }
-
     /**
      * Invalidate all products using a specific attribute taxonomy.
      *
@@ -615,47 +546,23 @@ class ProductVersionStringInvalidator
     private function invalidate_products_with_attribute(string $taxonomy): void
     {
         global $wpdb;
-
         $cache_key = 'wc_cache_inv_attr_' . $taxonomy;
-        $cached    = wp_cache_get($cache_key, 'woocommerce');
-
+        $cached = wp_cache_get($cache_key, 'woocommerce');
         if (false === $cached) {
-            $product_ids = $wpdb->get_col(
-                $wpdb->prepare(
-                    "SELECT DISTINCT post_id FROM {$wpdb->postmeta}
-					WHERE meta_key = '_product_attributes'
-					AND meta_value LIKE %s",
-                    '%' . $wpdb->esc_like('s:' . strlen($taxonomy) . ':"' . $taxonomy . '"') . '%'
-                )
-            );
-
-            $variation_ids = $wpdb->get_col(
-                $wpdb->prepare(
-                    "SELECT DISTINCT post_id FROM {$wpdb->postmeta}
-					WHERE meta_key = %s",
-                    'attribute_' . $taxonomy
-                )
-            );
-
-            $cached = [
-                'product_ids'   => $product_ids,
-                'variation_ids' => $variation_ids,
-            ];
-
+            $product_ids = $wpdb->get_col($wpdb->prepare("SELECT DISTINCT post_id FROM {$wpdb->postmeta}\n\t\t\t\t\tWHERE meta_key = '_product_attributes'\n\t\t\t\t\tAND meta_value LIKE %s", '%' . $wpdb->esc_like('s:' . strlen($taxonomy) . ':"' . $taxonomy . '"') . '%'));
+            $variation_ids = $wpdb->get_col($wpdb->prepare("SELECT DISTINCT post_id FROM {$wpdb->postmeta}\n\t\t\t\t\tWHERE meta_key = %s", 'attribute_' . $taxonomy));
+            $cached = ['product_ids' => $product_ids, 'variation_ids' => $variation_ids];
             // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment -- Documented above.
             $ttl = apply_filters('woocommerce_version_string_invalidator_taxonomy_lookup_ttl', self::DEFAULT_TAXONOMY_LOOKUP_CACHE_TTL, 'product');
             wp_cache_set($cache_key, $cached, 'woocommerce', $ttl);
         }
-
         foreach ($cached['product_ids'] as $product_id) {
             $this->invalidate((int) $product_id);
         }
-
         foreach ($cached['variation_ids'] as $variation_id) {
             $this->invalidate_variation_and_parent((int) $variation_id);
         }
     }
-
     /**
      * Invalidate a product version string.
      *
@@ -666,9 +573,8 @@ class ProductVersionStringInvalidator
      */
     public function invalidate(int $product_id): void
     {
-        wc_get_container()->get(VersionStringGenerator::class)->delete_version("product_{$product_id}");
+        wc_get_container()->get(Version_String_Generator::class)->delete_version("product_{$product_id}");
     }
-
     /**
      * Invalidate the product list version string.
      *
@@ -677,9 +583,8 @@ class ProductVersionStringInvalidator
      */
     private function invalidate_products_list(): void
     {
-        wc_get_container()->get(VersionStringGenerator::class)->delete_version('list_products');
+        wc_get_container()->get(Version_String_Generator::class)->delete_version('list_products');
     }
-
     /**
      * Invalidate the variations list version string for a specific product.
      *
@@ -691,7 +596,7 @@ class ProductVersionStringInvalidator
     private function invalidate_variations_list(?int $product_id): void
     {
         if ($product_id) {
-            wc_get_container()->get(VersionStringGenerator::class)->delete_version("list_product_variations_{$product_id}");
+            wc_get_container()->get(Version_String_Generator::class)->delete_version("list_product_variations_{$product_id}");
         }
     }
 }

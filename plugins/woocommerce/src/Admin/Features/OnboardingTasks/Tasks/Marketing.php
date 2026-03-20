@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Tasks;
 
-namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks\Tasks;
-
-use Automattic\WooCommerce\Admin\Features\Features;
-use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
-
+use Automattic\Woo_Commerce\Admin\Features\Features;
+use Automattic\Woo_Commerce\Admin\Features\Onboarding_Tasks\Task;
 /**
  * Marketing Task
  */
@@ -20,17 +18,14 @@ class Marketing extends Task
     public function __construct($task_list)
     {
         parent::__construct($task_list);
-
         add_action('activated_plugin', $this->on_activated_plugin(...), 10, 1);
     }
-
     /**
      * Mark the task as complete when related plugins are activated.
      */
     public function on_activated_plugin($plugin): void
     {
         basename(plugin_basename($plugin), '.php');
-
         // Example: How to mark the marketing task as complete when a specific plugin is activated.
         /**
          * Example:
@@ -44,7 +39,6 @@ class Marketing extends Task
          * }
          */
     }
-
     /**
      * ID.
      */
@@ -52,7 +46,6 @@ class Marketing extends Task
     {
         return 'marketing';
     }
-
     /**
      * Title.
      *
@@ -62,7 +55,6 @@ class Marketing extends Task
     {
         return __('Grow your business', 'woocommerce');
     }
-
     /**
      * Content.
      *
@@ -70,12 +62,8 @@ class Marketing extends Task
      */
     public function get_content()
     {
-        return __(
-            'Add recommended marketing tools to reach new customers and grow your business',
-            'woocommerce'
-        );
+        return __('Add recommended marketing tools to reach new customers and grow your business', 'woocommerce');
     }
-
     /**
      * Time.
      *
@@ -85,7 +73,6 @@ class Marketing extends Task
     {
         return __('2 minutes', 'woocommerce');
     }
-
     /**
      * Task visibility.
      */
@@ -93,7 +80,6 @@ class Marketing extends Task
     {
         return Features::is_enabled('remote-free-extensions');
     }
-
     /**
      * Get the marketing plugins.
      *
@@ -101,13 +87,9 @@ class Marketing extends Task
      */
     public static function get_plugins(): array
     {
-        wc_deprecated_function(
-            __METHOD__,
-            '9.3.0'
-        );
+        wc_deprecated_function(__METHOD__, '9.3.0');
         return [];
     }
-
     /**
      * Check if the store has installed marketing extensions.
      *
@@ -115,10 +97,7 @@ class Marketing extends Task
      */
     public static function has_installed_extensions(): bool
     {
-        wc_deprecated_function(
-            __METHOD__,
-            '9.3.0'
-        );
+        wc_deprecated_function(__METHOD__, '9.3.0');
         return false;
     }
 }

@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Enums\ProductStatus;
-use Automattic\WooCommerce\Enums\ProductType;
-
+use Automattic\Woo_Commerce\Enums\Product_Status;
+use Automattic\Woo_Commerce\Enums\Product_Type;
 /**
  * FeaturedProduct class.
  */
-class FeaturedProduct extends FeaturedItem
+class Featured_Product extends Featured_Item
 {
     /**
      * Block name.
@@ -18,7 +16,6 @@ class FeaturedProduct extends FeaturedItem
      * @var string
      */
     protected $block_name = 'featured-product';
-
     /**
      * Returns the featured product.
      *
@@ -28,15 +25,12 @@ class FeaturedProduct extends FeaturedItem
     protected function get_item($attributes)
     {
         $id = absint($attributes['productId'] ?? 0);
-
         $product = wc_get_product($id);
-        if (! $product || (ProductStatus::PUBLISH !== $product->get_status() && ! current_user_can('read_product', $id))) {
+        if (!$product || Product_Status::PUBLISH !== $product->get_status() && !current_user_can('read_product', $id)) {
             return null;
         }
-
         return $product;
     }
-
     /**
      * Returns the name of the featured product.
      *
@@ -47,7 +41,6 @@ class FeaturedProduct extends FeaturedItem
     {
         return $product->get_title();
     }
-
     /**
      * Returns the featured product image URL.
      *
@@ -66,10 +59,8 @@ class FeaturedProduct extends FeaturedItem
                 $image = wp_get_attachment_image_url($parent_product->get_image_id(), $size);
             }
         }
-
         return $image;
     }
-
     /**
      * Renders the featured product attributes.
      *
@@ -79,46 +70,23 @@ class FeaturedProduct extends FeaturedItem
     protected function render_attributes($product, $attributes): string
     {
         $output = '';
-
         // Backwards compatibility: Only render legacy attributes if `editMode` exists as boolean value
         // This allows us to distinguish between old and new version of the block (which accept inner blocks).
         if (array_key_exists('editMode', $attributes) && is_bool($attributes['editMode'])) {
-            $legacy_title = sprintf(
-                '<h2 class="wc-block-featured-product__title">%s</h2>',
-                wp_kses_post($product->get_title())
-            );
-            if ($product->is_type(ProductType::VARIATION)) {
-                $legacy_title .= sprintf(
-                    '<h3 class="wc-block-featured-product__variation">%s</h3>',
-                    wp_kses_post(wc_get_formatted_variation($product, true, true, false))
-                );
+            $legacy_title = sprintf('<h2 class="wc-block-featured-product__title">%s</h2>', wp_kses_post($product->get_title()));
+            if ($product->is_type(Product_Type::VARIATION)) {
+                $legacy_title .= sprintf('<h3 class="wc-block-featured-product__variation">%s</h3>', wp_kses_post(wc_get_formatted_variation($product, true, true, false)));
             }
-
             $output .= $legacy_title;
-
-            if (
-                ! isset($attributes['showDesc']) ||
-                (isset($attributes['showDesc']) && false !== $attributes['showDesc'])
-            ) {
-                $desc_str = sprintf(
-                    '<div class="wc-block-featured-product__description">%s</div>',
-                    wc_format_content(wp_kses_post($product->get_short_description() ?: wc_trim_string($product->get_description(), 400)))
-                );
-                $output  .= $desc_str;
+            if (!isset($attributes['showDesc']) || isset($attributes['showDesc']) && false !== $attributes['showDesc']) {
+                $desc_str = sprintf('<div class="wc-block-featured-product__description">%s</div>', wc_format_content(wp_kses_post($product->get_short_description() ?: wc_trim_string($product->get_description(), 400))));
+                $output .= $desc_str;
             }
-
-            if (
-                ! isset($attributes['showPrice']) ||
-                (isset($attributes['showPrice']) && false !== $attributes['showPrice'])
-            ) {
-                $price_str = sprintf(
-                    '<div class="wc-block-featured-product__price">%s</div>',
-                    wp_kses_post($product->get_price_html())
-                );
-                $output   .= $price_str;
+            if (!isset($attributes['showPrice']) || isset($attributes['showPrice']) && false !== $attributes['showPrice']) {
+                $price_str = sprintf('<div class="wc-block-featured-product__price">%s</div>', wp_kses_post($product->get_price_html()));
+                $output .= $price_str;
             }
         }
-
         return $output;
     }
 }

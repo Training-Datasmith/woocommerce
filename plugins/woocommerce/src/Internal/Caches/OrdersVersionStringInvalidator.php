@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Automattic\WooCommerce\Internal\Caches;
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Caches;
 
 /**
  * Order version string invalidation handler.
@@ -11,7 +10,7 @@ namespace Automattic\WooCommerce\Internal\Caches;
  * the version string for a given order, which in turn invalidates
  * any cached REST API responses containing that order.
  */
-class OrdersVersionStringInvalidator
+class Orders_Version_String_Invalidator
 {
     /**
      * Stores the customer ID of orders before they are saved.
@@ -20,7 +19,6 @@ class OrdersVersionStringInvalidator
      * @var array<int, int> Order ID => Customer ID
      */
     private array $pre_save_customer_ids = [];
-
     /**
      * Initialize the invalidator and register hooks.
      *
@@ -40,12 +38,10 @@ class OrdersVersionStringInvalidator
         if ('yes' !== get_option('woocommerce_feature_rest_api_caching_enabled')) {
             return;
         }
-
         if ('yes' === get_option('woocommerce_rest_api_enable_backend_caching', 'no')) {
             $this->register_hooks();
         }
     }
-
     /**
      * Register all order-related hooks.
      *
@@ -57,22 +53,18 @@ class OrdersVersionStringInvalidator
     {
         // Hook to capture customer ID before save for change detection.
         add_action('woocommerce_before_order_object_save', $this->handle_before_order_save(...), 10, 1);
-
         // WooCommerce CRUD hooks for orders.
         add_action('woocommerce_new_order', $this->handle_woocommerce_new_order(...), 10, 2);
         add_action('woocommerce_update_order', $this->handle_woocommerce_update_order(...), 10, 2);
         add_action('woocommerce_before_delete_order', $this->handle_woocommerce_before_delete_order(...), 10, 2);
         add_action('woocommerce_trash_order', $this->handle_woocommerce_trash_order(...), 10, 1);
         add_action('woocommerce_untrash_order', $this->handle_woocommerce_untrash_order(...), 10, 2);
-
         // Status change hook.
         add_action('woocommerce_order_status_changed', $this->handle_woocommerce_order_status_changed(...), 10, 4);
-
         // Refund hooks.
         add_action('woocommerce_order_refunded', $this->handle_woocommerce_order_refunded(...), 10, 2);
         add_action('woocommerce_refund_deleted', $this->handle_woocommerce_refund_deleted(...), 10, 2);
     }
-
     // phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
     /**
      * Handle the woocommerce_before_order_object_save hook.
@@ -87,16 +79,14 @@ class OrdersVersionStringInvalidator
      */
     public function handle_before_order_save($order): void
     {
-        if (! $order instanceof \WC_Order || 'shop_order' !== $order->get_type()) {
+        if (!$order instanceof \WC_Order || 'shop_order' !== $order->get_type()) {
             return;
         }
-
         $order_id = $order->get_id();
         if ($order_id > 0) {
-            $this->pre_save_customer_ids[ $order_id ] = (int) $order->get_data()['customer_id'];
+            $this->pre_save_customer_ids[$order_id] = (int) $order->get_data()['customer_id'];
         }
     }
-
     /**
      * Handle the woocommerce_new_order hook.
      *
@@ -112,7 +102,6 @@ class OrdersVersionStringInvalidator
         $this->invalidate((int) $order_id);
         $this->invalidate_orders_list();
     }
-
     /**
      * Handle the woocommerce_update_order hook.
      *
@@ -127,14 +116,11 @@ class OrdersVersionStringInvalidator
     {
         $order_id = (int) $order_id;
         $this->invalidate($order_id);
-
         if ($this->did_customer_change($order_id, $order)) {
             $this->invalidate_orders_list();
         }
-
-        unset($this->pre_save_customer_ids[ $order_id ]);
+        unset($this->pre_save_customer_ids[$order_id]);
     }
-
     /**
      * Check if the customer ID changed during the update.
      *
@@ -145,16 +131,13 @@ class OrdersVersionStringInvalidator
      */
     private function did_customer_change(int $order_id, $order): bool
     {
-        if (! isset($this->pre_save_customer_ids[ $order_id ])) {
+        if (!isset($this->pre_save_customer_ids[$order_id])) {
             return false;
         }
-
-        $old_customer_id = $this->pre_save_customer_ids[ $order_id ];
+        $old_customer_id = $this->pre_save_customer_ids[$order_id];
         $new_customer_id = $order instanceof \WC_Order ? (int) $order->get_customer_id() : 0;
-
         return $old_customer_id !== $new_customer_id;
     }
-
     /**
      * Handle the woocommerce_before_delete_order hook.
      *
@@ -170,7 +153,6 @@ class OrdersVersionStringInvalidator
         $this->invalidate((int) $order_id);
         $this->invalidate_orders_list();
     }
-
     /**
      * Handle the woocommerce_trash_order hook.
      *
@@ -185,7 +167,6 @@ class OrdersVersionStringInvalidator
         $this->invalidate((int) $order_id);
         $this->invalidate_orders_list();
     }
-
     /**
      * Handle the woocommerce_untrash_order hook.
      *
@@ -201,7 +182,6 @@ class OrdersVersionStringInvalidator
         $this->invalidate((int) $order_id);
         $this->invalidate_orders_list();
     }
-
     /**
      * Handle the woocommerce_order_status_changed hook.
      *
@@ -222,7 +202,6 @@ class OrdersVersionStringInvalidator
         $this->invalidate((int) $order_id);
         $this->invalidate_orders_list();
     }
-
     /**
      * Handle the woocommerce_order_refunded hook.
      *
@@ -235,15 +214,13 @@ class OrdersVersionStringInvalidator
      */
     public function handle_woocommerce_order_refunded($order_id, $refund_id): void
     {
-        $order_id  = (int) $order_id;
+        $order_id = (int) $order_id;
         $refund_id = (int) $refund_id;
-
         $this->invalidate($order_id);
         $this->invalidate_refund($refund_id);
         $this->invalidate_order_refunds_list($order_id);
         $this->invalidate_refunds_list();
     }
-
     /**
      * Handle the woocommerce_refund_deleted hook.
      *
@@ -256,15 +233,13 @@ class OrdersVersionStringInvalidator
      */
     public function handle_woocommerce_refund_deleted($refund_id, $order_id): void
     {
-        $order_id  = (int) $order_id;
+        $order_id = (int) $order_id;
         $refund_id = (int) $refund_id;
-
         $this->invalidate($order_id);
         $this->invalidate_refund($refund_id);
         $this->invalidate_order_refunds_list($order_id);
         $this->invalidate_refunds_list();
     }
-
     // phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
     /**
      * Invalidate an order version string.
@@ -276,9 +251,8 @@ class OrdersVersionStringInvalidator
      */
     public function invalidate(int $order_id): void
     {
-        wc_get_container()->get(VersionStringGenerator::class)->delete_version("order_{$order_id}");
+        wc_get_container()->get(Version_String_Generator::class)->delete_version("order_{$order_id}");
     }
-
     /**
      * Invalidate a refund version string.
      *
@@ -289,9 +263,8 @@ class OrdersVersionStringInvalidator
      */
     public function invalidate_refund(int $refund_id): void
     {
-        wc_get_container()->get(VersionStringGenerator::class)->delete_version("refund_{$refund_id}");
+        wc_get_container()->get(Version_String_Generator::class)->delete_version("refund_{$refund_id}");
     }
-
     /**
      * Invalidate the orders list version string.
      *
@@ -300,9 +273,8 @@ class OrdersVersionStringInvalidator
      */
     private function invalidate_orders_list(): void
     {
-        wc_get_container()->get(VersionStringGenerator::class)->delete_version('list_orders');
+        wc_get_container()->get(Version_String_Generator::class)->delete_version('list_orders');
     }
-
     /**
      * Invalidate the refunds list version string.
      *
@@ -311,9 +283,8 @@ class OrdersVersionStringInvalidator
      */
     private function invalidate_refunds_list(): void
     {
-        wc_get_container()->get(VersionStringGenerator::class)->delete_version('list_refunds');
+        wc_get_container()->get(Version_String_Generator::class)->delete_version('list_refunds');
     }
-
     /**
      * Invalidate the refunds list version string for a specific order.
      *
@@ -325,7 +296,7 @@ class OrdersVersionStringInvalidator
     private function invalidate_order_refunds_list(int $order_id): void
     {
         if ($order_id > 0) {
-            wc_get_container()->get(VersionStringGenerator::class)->delete_version("list_order_refunds_{$order_id}");
+            wc_get_container()->get(Version_String_Generator::class)->delete_version("list_order_refunds_{$order_id}");
         }
     }
 }

@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Internal\Email_Editor;
 
-namespace Automattic\WooCommerce\Internal\EmailEditor;
-
-use Automattic\WooCommerce\EmailEditor\Email_Css_Inliner;
-use Automattic\WooCommerce\EmailEditor\Email_Editor_Container;
-use Automattic\WooCommerce\EmailEditor\Engine\Theme_Controller;
-
+use Automattic\Woo_Commerce\Email_Editor\Email_Css_Inliner;
+use Automattic\Woo_Commerce\Email_Editor\Email_Editor_Container;
+use Automattic\Woo_Commerce\Email_Editor\Engine\Theme_Controller;
 /**
  * Class responsible for extracting the main content from a WC_Email object.
  */
-class WooContentProcessor
+class Woo_Content_Processor
 {
     /**
      * Email theme controller
@@ -20,21 +18,18 @@ class WooContentProcessor
      * @var Theme_Controller
      */
     private $theme_controller;
-
     /**
      * CSS inliner
      */
-    private readonly \Automattic\WooCommerce\EmailEditor\Email_Css_Inliner $css_inliner;
-
+    private readonly \Automattic\Woo_Commerce\Email_Editor\Email_Css_Inliner $css_inliner;
     /**
      * Constructor
      */
     public function __construct()
     {
         $this->theme_controller = Email_Editor_Container::container()->get(Theme_Controller::class);
-        $this->css_inliner      = new Email_Css_Inliner();
+        $this->css_inliner = new Email_Css_Inliner();
     }
-
     /**
      * Get the WooCommerce content excluding headers and footers.
      *
@@ -42,11 +37,10 @@ class WooContentProcessor
      */
     public function get_woo_content(\WC_Email $wc_email): string
     {
-        $woo_content          = $this->capture_woo_content($wc_email);
+        $woo_content = $this->capture_woo_content($wc_email);
         $woo_content_with_css = $this->inline_css($woo_content);
         return $this->get_html_body_content($woo_content_with_css);
     }
-
     /**
      * Filter CSS for the email.
      * The CSS was from email editor was already inlined.
@@ -61,7 +55,6 @@ class WooContentProcessor
         $css = preg_replace('/color\s*:\s*[^;]+;/', '', $css);
         return preg_replace('/font-family\s*:\s*[^;]+;/', '', (string) $css);
     }
-
     /**
      * Get the content of the body tag from the HTML.
      *
@@ -75,7 +68,6 @@ class WooContentProcessor
         }
         return $html;
     }
-
     /**
      * Inline the CSS from the email theme and user email settings.
      *
@@ -89,7 +81,6 @@ class WooContentProcessor
         $css = $this->theme_controller->get_stylesheet_for_rendering();
         return $this->css_inliner->from_html($woo_content)->inline_css($css)->render();
     }
-
     /**
      * Capture the WooCommerce content excluding headers and footers.
      *

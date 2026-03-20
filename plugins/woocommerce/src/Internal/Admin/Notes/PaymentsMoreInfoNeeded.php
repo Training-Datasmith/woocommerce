@@ -1,33 +1,28 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * WooCommerce Admin Payments More Info Needed Inbox Note Provider
  */
+namespace Automattic\Woo_Commerce\Internal\Admin\Notes;
 
-namespace Automattic\WooCommerce\Internal\Admin\Notes;
-
-use Automattic\WooCommerce\Admin\Notes\Note;
-use Automattic\WooCommerce\Admin\Notes\NoteTraits;
-use Automattic\WooCommerce\Internal\Admin\WcPayWelcomePage;
-
+use Automattic\Woo_Commerce\Admin\Notes\Note;
+use Automattic\Woo_Commerce\Admin\Notes\Note_Traits;
+use Automattic\Woo_Commerce\Internal\Admin\Wc_Pay_Welcome_Page;
 defined('ABSPATH') || exit;
-
 /**
  * PaymentsMoreInfoNeeded
  */
-class PaymentsMoreInfoNeeded
+class Payments_More_Info_Needed
 {
     /**
      * Note traits.
      */
-    use NoteTraits;
-
+    use Note_Traits;
     /**
      * Name of the note for use in the database.
      */
     public const NOTE_NAME = 'wc-admin-payments-more-info-needed';
-
     /**
      * Should this note exist?
      */
@@ -35,28 +30,22 @@ class PaymentsMoreInfoNeeded
     {
         return self::should_display_note();
     }
-
     /**
      * Returns true if we should display the note.
      */
     public static function should_display_note(): bool
     {
         // A WooPayments incentive must not be visible.
-        if (WcPayWelcomePage::instance()->has_incentive()) {
+        if (Wc_Pay_Welcome_Page::instance()->has_incentive()) {
             return false;
         }
-
         // More than 30 days since viewing the welcome page.
         $exit_survey_timestamp = get_option('wcpay_welcome_page_exit_survey_more_info_needed_timestamp', false);
-        if (! $exit_survey_timestamp ||
-            (time() - $exit_survey_timestamp < 30 * DAY_IN_SECONDS)
-        ) {
+        if (!$exit_survey_timestamp || time() - $exit_survey_timestamp < 30 * DAY_IN_SECONDS) {
             return false;
         }
-
         return true;
     }
-
     /**
      * Get the note.
      *
@@ -64,12 +53,11 @@ class PaymentsMoreInfoNeeded
      */
     public static function get_note()
     {
-        if (! self::should_display_note()) {
+        if (!self::should_display_note()) {
             return;
         }
         /* translators: %s: Payment provider name. */
         $content = sprintf(__('We recently asked you if you wanted more information about %s. Run your business and manage your payments in one place with the solution built and supported by WooCommerce.', 'woocommerce'), 'WooPayments');
-
         $note = new Note();
         /* translators: %s: Payment provider name. */
         $note->set_title(sprintf(__('Payments made simple with %s', 'woocommerce'), 'WooPayments'));

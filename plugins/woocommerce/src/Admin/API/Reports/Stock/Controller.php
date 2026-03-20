@@ -1,30 +1,27 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * REST API Reports stock controller
  *
  * Handles requests to the /reports/stock endpoint.
  */
-
-namespace Automattic\WooCommerce\Admin\API\Reports\Stock;
+namespace Automattic\Woo_Commerce\Admin\API\Reports\Stock;
 
 defined('ABSPATH') || exit;
-
-use Automattic\WooCommerce\Admin\API\Reports\ExportableInterface;
-use Automattic\WooCommerce\Admin\API\Reports\GenericController;
-use Automattic\WooCommerce\Enums\ProductStockStatus;
-use Automattic\WooCommerce\Enums\ProductType;
+use Automattic\Woo_Commerce\Admin\API\Reports\Exportable_Interface;
+use Automattic\Woo_Commerce\Admin\API\Reports\Generic_Controller;
+use Automattic\Woo_Commerce\Enums\Product_Stock_Status;
+use Automattic\Woo_Commerce\Enums\Product_Type;
 use WP_REST_Request;
 use WP_REST_Response;
-
 /**
  * REST API Reports stock controller class.
  *
  * @internal
  * @extends GenericController
  */
-class Controller extends GenericController implements ExportableInterface
+class Controller extends Generic_Controller implements Exportable_Interface
 {
     /**
      * Route base.
@@ -32,14 +29,12 @@ class Controller extends GenericController implements ExportableInterface
      * @var string
      */
     protected $rest_base = 'reports/stock';
-
     /**
      * Registered stock status options.
      *
      * @var array
      */
     protected $status_options;
-
     /**
      * Constructor.
      */
@@ -47,7 +42,6 @@ class Controller extends GenericController implements ExportableInterface
     {
         $this->status_options = wc_get_product_stock_status_options();
     }
-
     /**
      * Maps query arguments from the REST request.
      *
@@ -55,38 +49,33 @@ class Controller extends GenericController implements ExportableInterface
      */
     protected function prepare_reports_query($request): array
     {
-        $args                        = [];
-        $args['offset']              = $request['offset'];
-        $args['order']               = $request['order'];
-        $args['orderby']             = $request['orderby'];
-        $args['paged']               = $request['page'];
-        $args['post__in']            = $request['include'];
-        $args['post__not_in']        = $request['exclude'];
-        $args['posts_per_page']      = $request['per_page'];
-        $args['post_parent__in']     = $request['parent'];
+        $args = [];
+        $args['offset'] = $request['offset'];
+        $args['order'] = $request['order'];
+        $args['orderby'] = $request['orderby'];
+        $args['paged'] = $request['page'];
+        $args['post__in'] = $request['include'];
+        $args['post__not_in'] = $request['exclude'];
+        $args['posts_per_page'] = $request['per_page'];
+        $args['post_parent__in'] = $request['parent'];
         $args['post_parent__not_in'] = $request['parent_exclude'];
-
         if ('date' === $args['orderby']) {
             $args['orderby'] = 'date ID';
         } elseif ('include' === $args['orderby']) {
             $args['orderby'] = 'post__in';
         } elseif ('id' === $args['orderby']) {
-            $args['orderby'] = 'ID'; // ID must be capitalized.
+            $args['orderby'] = 'ID';
+            // ID must be capitalized.
         }
-
-        $args['post_type'] = [ 'product', 'product_variation' ];
-
-        if (ProductStockStatus::LOW_STOCK === $request['type']) {
+        $args['post_type'] = ['product', 'product_variation'];
+        if (Product_Stock_Status::LOW_STOCK === $request['type']) {
             $args['low_in_stock'] = true;
         } elseif (in_array($request['type'], array_keys($this->status_options), true)) {
             $args['stock_status'] = $request['type'];
         }
-
         $args['ignore_sticky_posts'] = true;
-
         return $args;
     }
-
     /**
      * Query products.
      *
@@ -95,9 +84,8 @@ class Controller extends GenericController implements ExportableInterface
      */
     protected function get_products($query_args)
     {
-        $query  = new \WP_Query();
+        $query = new \WP_Query();
         $result = $query->query($query_args);
-
         $total_posts = $query->found_posts;
         if ($total_posts < 1 && isset($query_args['paged']) && absint($query_args['paged']) > 1) {
             // Out-of-bounds, run the query again without LIMIT for total count.
@@ -106,14 +94,8 @@ class Controller extends GenericController implements ExportableInterface
             $count_query->query($query_args);
             $total_posts = $count_query->found_posts;
         }
-
-        return [
-            'objects' => array_map(wc_get_product(...), $result),
-            'total'   => (int) $total_posts,
-            'pages'   => (int) ceil($total_posts / (int) $query->query_vars['posts_per_page']),
-        ];
+        return ['objects' => array_map(wc_get_product(...), $result), 'total' => (int) $total_posts, 'pages' => (int) ceil($total_posts / (int) $query->query_vars['posts_per_page'])];
     }
-
     /**
      * Get all reports.
      *
@@ -126,28 +108,19 @@ class Controller extends GenericController implements ExportableInterface
         add_filter('posts_join', self::add_wp_query_join(...), 10, 2);
         add_filter('posts_groupby', self::add_wp_query_group_by(...), 10, 2);
         add_filter('posts_clauses', self::add_wp_query_orderby(...), 10, 2);
-        $query_args    = $this->prepare_reports_query($request);
+        $query_args = $this->prepare_reports_query($request);
         $query_results = $this->get_products($query_args);
         remove_filter('posts_where', self::add_wp_query_filter(...), 10);
         remove_filter('posts_join', self::add_wp_query_join(...), 10);
         remove_filter('posts_groupby', self::add_wp_query_group_by(...), 10);
         remove_filter('posts_clauses', self::add_wp_query_orderby(...), 10);
-
         $objects = [];
         foreach ($query_results['objects'] as $object) {
-            $data      = $this->prepare_item_for_response($object, $request);
+            $data = $this->prepare_item_for_response($object, $request);
             $objects[] = $this->prepare_response_for_collection($data);
         }
-
-        return $this->add_pagination_headers(
-            $request,
-            $objects,
-            (int) $query_results['total'],
-            (int) $query_args['paged'],
-            (int) $query_results['pages']
-        );
+        return $this->add_pagination_headers($request, $objects, (int) $query_results['total'], (int) $query_args['paged'], (int) $query_results['pages']);
     }
-
     /**
      * Add in conditional search filters for products.
      *
@@ -159,41 +132,18 @@ class Controller extends GenericController implements ExportableInterface
     public static function add_wp_query_filter($where, $wp_query)
     {
         global $wpdb;
-
         $stock_status = $wp_query->get('stock_status');
         if ($stock_status) {
-            $where .= $wpdb->prepare(
-                ' AND wc_product_meta_lookup.stock_status = %s ',
-                $stock_status
-            );
+            $where .= $wpdb->prepare(' AND wc_product_meta_lookup.stock_status = %s ', $stock_status);
         }
-
         if ($wp_query->get('low_in_stock')) {
             // We want products with stock < low stock amount, but greater than no stock amount.
-            $no_stock_amount  = absint(max(get_option('woocommerce_notify_no_stock_amount'), 0));
+            $no_stock_amount = absint(max(get_option('woocommerce_notify_no_stock_amount'), 0));
             $low_stock_amount = absint(max(get_option('woocommerce_notify_low_stock_amount'), 1));
-            $where           .= "
-			AND wc_product_meta_lookup.stock_quantity IS NOT NULL
-			AND wc_product_meta_lookup.stock_status = 'instock'
-			AND (
-				(
-					low_stock_amount_meta.meta_value > ''
-					AND wc_product_meta_lookup.stock_quantity <= CAST(low_stock_amount_meta.meta_value AS SIGNED)
-					AND wc_product_meta_lookup.stock_quantity > {$no_stock_amount}
-				)
-				OR (
-					(
-						low_stock_amount_meta.meta_value IS NULL OR low_stock_amount_meta.meta_value <= ''
-					)
-					AND wc_product_meta_lookup.stock_quantity <= {$low_stock_amount}
-					AND wc_product_meta_lookup.stock_quantity > {$no_stock_amount}
-				)
-			)";
+            $where .= "\n\t\t\tAND wc_product_meta_lookup.stock_quantity IS NOT NULL\n\t\t\tAND wc_product_meta_lookup.stock_status = 'instock'\n\t\t\tAND (\n\t\t\t\t(\n\t\t\t\t\tlow_stock_amount_meta.meta_value > ''\n\t\t\t\t\tAND wc_product_meta_lookup.stock_quantity <= CAST(low_stock_amount_meta.meta_value AS SIGNED)\n\t\t\t\t\tAND wc_product_meta_lookup.stock_quantity > {$no_stock_amount}\n\t\t\t\t)\n\t\t\t\tOR (\n\t\t\t\t\t(\n\t\t\t\t\t\tlow_stock_amount_meta.meta_value IS NULL OR low_stock_amount_meta.meta_value <= ''\n\t\t\t\t\t)\n\t\t\t\t\tAND wc_product_meta_lookup.stock_quantity <= {$low_stock_amount}\n\t\t\t\t\tAND wc_product_meta_lookup.stock_quantity > {$no_stock_amount}\n\t\t\t\t)\n\t\t\t)";
         }
-
         return $where;
     }
-
     /**
      * Join posts meta tables when product search or low stock query is present.
      *
@@ -205,20 +155,16 @@ class Controller extends GenericController implements ExportableInterface
     public static function add_wp_query_join($join, $wp_query)
     {
         global $wpdb;
-
         $stock_status = $wp_query->get('stock_status');
         if ($stock_status) {
             $join = self::append_product_sorting_table_join($join);
         }
-
         if ($wp_query->get('low_in_stock')) {
-            $join  = self::append_product_sorting_table_join($join);
+            $join = self::append_product_sorting_table_join($join);
             $join .= " LEFT JOIN {$wpdb->postmeta} AS low_stock_amount_meta ON {$wpdb->posts}.ID = low_stock_amount_meta.post_id AND low_stock_amount_meta.meta_key = '_low_stock_amount' ";
         }
-
         return $join;
     }
-
     /**
      * Join wc_product_meta_lookup to posts if not already joined.
      *
@@ -229,13 +175,11 @@ class Controller extends GenericController implements ExportableInterface
     protected static function append_product_sorting_table_join($sql)
     {
         global $wpdb;
-
-        if (! strstr($sql, 'wc_product_meta_lookup')) {
-            $sql .= " LEFT JOIN {$wpdb->wc_product_meta_lookup} wc_product_meta_lookup ON $wpdb->posts.ID = wc_product_meta_lookup.product_id ";
+        if (!strstr($sql, 'wc_product_meta_lookup')) {
+            $sql .= " LEFT JOIN {$wpdb->wc_product_meta_lookup} wc_product_meta_lookup ON {$wpdb->posts}.ID = wc_product_meta_lookup.product_id ";
         }
         return $sql;
     }
-
     /**
      * Group by post ID to prevent duplicates.
      *
@@ -247,13 +191,11 @@ class Controller extends GenericController implements ExportableInterface
     public static function add_wp_query_group_by($groupby, $wp_query)
     {
         global $wpdb;
-
         if (empty($groupby)) {
             return $wpdb->posts . '.ID';
         }
         return $groupby;
     }
-
     /**
      * Custom orderby clauses using the lookup tables.
      *
@@ -265,28 +207,24 @@ class Controller extends GenericController implements ExportableInterface
     public static function add_wp_query_orderby($args, $wp_query)
     {
         global $wpdb;
-
         $orderby = $wp_query->get('orderby');
-        $order   = esc_sql($wp_query->get('order') ?: 'desc');
-
+        $order = esc_sql($wp_query->get('order') ?: 'desc');
         switch ($orderby) {
             case 'stock_quantity':
-                $args['join']    = self::append_product_sorting_table_join($args['join']);
+                $args['join'] = self::append_product_sorting_table_join($args['join']);
                 $args['orderby'] = " wc_product_meta_lookup.stock_quantity {$order}, wc_product_meta_lookup.product_id {$order} ";
                 break;
             case 'stock_status':
-                $args['join']    = self::append_product_sorting_table_join($args['join']);
+                $args['join'] = self::append_product_sorting_table_join($args['join']);
                 $args['orderby'] = " wc_product_meta_lookup.stock_status {$order}, wc_product_meta_lookup.stock_quantity {$order} ";
                 break;
             case 'sku':
-                $args['join']    = self::append_product_sorting_table_join($args['join']);
+                $args['join'] = self::append_product_sorting_table_join($args['join']);
                 $args['orderby'] = " wc_product_meta_lookup.sku {$order}, wc_product_meta_lookup.product_id {$order} ";
                 break;
         }
-
         return $args;
     }
-
     /**
      * Prepare a report data item for serialization.
      *
@@ -296,24 +234,12 @@ class Controller extends GenericController implements ExportableInterface
      */
     public function prepare_item_for_response($product, $request)
     {
-        $data = [
-            'id'               => $product->get_id(),
-            'parent_id'        => $product->get_parent_id(),
-            'name'             => wp_strip_all_tags($product->get_name()),
-            'sku'              => $product->get_sku(),
-            'stock_status'     => $product->get_stock_status(),
-            'stock_quantity'   => (float) $product->get_stock_quantity(),
-            'manage_stock'     => $product->get_manage_stock(),
-            'low_stock_amount' => $product->get_low_stock_amount(),
-        ];
-
+        $data = ['id' => $product->get_id(), 'parent_id' => $product->get_parent_id(), 'name' => wp_strip_all_tags($product->get_name()), 'sku' => $product->get_sku(), 'stock_status' => $product->get_stock_status(), 'stock_quantity' => (float) $product->get_stock_quantity(), 'manage_stock' => $product->get_manage_stock(), 'low_stock_amount' => $product->get_low_stock_amount()];
         if ('' === $data['low_stock_amount']) {
             $data['low_stock_amount'] = absint(max(get_option('woocommerce_notify_low_stock_amount'), 1));
         }
-
         $response = parent::prepare_item_for_response($data, $request);
         $response->add_links($this->prepare_links($product));
-
         /**
          * Filter a report returned from the API.
          *
@@ -325,7 +251,6 @@ class Controller extends GenericController implements ExportableInterface
          */
         return apply_filters('woocommerce_rest_prepare_report_stock', $response, $product, $request);
     }
-
     /**
      * Prepare links for the request.
      *
@@ -334,35 +259,15 @@ class Controller extends GenericController implements ExportableInterface
      */
     protected function prepare_links($product)
     {
-        if ($product->is_type(ProductType::VARIATION)) {
-            $links = [
-                'product' => [
-                    'href' => rest_url(sprintf('/%s/products/%d/variations/%d', $this->namespace, $product->get_parent_id(), $product->get_id())),
-                ],
-                'parent'  => [
-                    'href' => rest_url(sprintf('/%s/products/%d', $this->namespace, $product->get_parent_id())),
-                ],
-            ];
+        if ($product->is_type(Product_Type::VARIATION)) {
+            $links = ['product' => ['href' => rest_url(sprintf('/%s/products/%d/variations/%d', $this->namespace, $product->get_parent_id(), $product->get_id()))], 'parent' => ['href' => rest_url(sprintf('/%s/products/%d', $this->namespace, $product->get_parent_id()))]];
         } elseif ($product->get_parent_id()) {
-            $links = [
-                'product' => [
-                    'href' => rest_url(sprintf('/%s/products/%d', $this->namespace, $product->get_id())),
-                ],
-                'parent'  => [
-                    'href' => rest_url(sprintf('/%s/products/%d', $this->namespace, $product->get_parent_id())),
-                ],
-            ];
+            $links = ['product' => ['href' => rest_url(sprintf('/%s/products/%d', $this->namespace, $product->get_id()))], 'parent' => ['href' => rest_url(sprintf('/%s/products/%d', $this->namespace, $product->get_parent_id()))]];
         } else {
-            $links = [
-                'product' => [
-                    'href' => rest_url(sprintf('/%s/products/%d', $this->namespace, $product->get_id())),
-                ],
-            ];
+            $links = ['product' => ['href' => rest_url(sprintf('/%s/products/%d', $this->namespace, $product->get_id()))]];
         }
-
         return $links;
     }
-
     /**
      * Get the Report's schema, conforming to JSON Schema.
      *
@@ -370,60 +275,9 @@ class Controller extends GenericController implements ExportableInterface
      */
     public function get_item_schema()
     {
-        $schema = [
-            '$schema'    => 'http://json-schema.org/draft-04/schema#',
-            'title'      => 'report_stock',
-            'type'       => 'object',
-            'properties' => [
-                'id'             => [
-                    'description' => __('Unique identifier for the resource.', 'woocommerce'),
-                    'type'        => 'integer',
-                    'context'     => [ 'view', 'edit' ],
-                    'readonly'    => true,
-                ],
-                'parent_id'      => [
-                    'description' => __('Product parent ID.', 'woocommerce'),
-                    'type'        => 'integer',
-                    'context'     => [ 'view', 'edit' ],
-                    'readonly'    => true,
-                ],
-                'name'           => [
-                    'description' => __('Product name.', 'woocommerce'),
-                    'type'        => 'string',
-                    'context'     => [ 'view', 'edit' ],
-                    'readonly'    => true,
-                ],
-                'sku'            => [
-                    'description' => __('Unique identifier.', 'woocommerce'),
-                    'type'        => 'string',
-                    'context'     => [ 'view', 'edit' ],
-                    'readonly'    => true,
-                ],
-                'stock_status'   => [
-                    'description' => __('Stock status.', 'woocommerce'),
-                    'type'        => 'string',
-                    'enum'        => array_keys(wc_get_product_stock_status_options()),
-                    'context'     => [ 'view', 'edit' ],
-                    'readonly'    => true,
-                ],
-                'stock_quantity' => [
-                    'description' => __('Stock quantity.', 'woocommerce'),
-                    'type'        => 'integer',
-                    'context'     => [ 'view', 'edit' ],
-                    'readonly'    => true,
-                ],
-                'manage_stock'   => [
-                    'description' => __('Manage stock.', 'woocommerce'),
-                    'type'        => 'boolean',
-                    'context'     => [ 'view', 'edit' ],
-                    'readonly'    => true,
-                ],
-            ],
-        ];
-
+        $schema = ['$schema' => 'http://json-schema.org/draft-04/schema#', 'title' => 'report_stock', 'type' => 'object', 'properties' => ['id' => ['description' => __('Unique identifier for the resource.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true], 'parent_id' => ['description' => __('Product parent ID.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true], 'name' => ['description' => __('Product name.', 'woocommerce'), 'type' => 'string', 'context' => ['view', 'edit'], 'readonly' => true], 'sku' => ['description' => __('Unique identifier.', 'woocommerce'), 'type' => 'string', 'context' => ['view', 'edit'], 'readonly' => true], 'stock_status' => ['description' => __('Stock status.', 'woocommerce'), 'type' => 'string', 'enum' => array_keys(wc_get_product_stock_status_options()), 'context' => ['view', 'edit'], 'readonly' => true], 'stock_quantity' => ['description' => __('Stock quantity.', 'woocommerce'), 'type' => 'integer', 'context' => ['view', 'edit'], 'readonly' => true], 'manage_stock' => ['description' => __('Manage stock.', 'woocommerce'), 'type' => 'boolean', 'context' => ['view', 'edit'], 'readonly' => true]]];
         return $this->add_additional_fields_schema($schema);
     }
-
     /**
      * Get the query params for collections.
      *
@@ -433,71 +287,17 @@ class Controller extends GenericController implements ExportableInterface
     {
         $params = parent::get_collection_params();
         unset($params['after'], $params['before'], $params['force_cache_refresh']);
-        $params['exclude']            = [
-            'description'       => __('Ensure result set excludes specific IDs.', 'woocommerce'),
-            'type'              => 'array',
-            'items'             => [
-                'type' => 'integer',
-            ],
-            'default'           => [],
-            'sanitize_callback' => 'wp_parse_id_list',
-        ];
-        $params['include']            = [
-            'description'       => __('Limit result set to specific ids.', 'woocommerce'),
-            'type'              => 'array',
-            'items'             => [
-                'type' => 'integer',
-            ],
-            'default'           => [],
-            'sanitize_callback' => 'wp_parse_id_list',
-        ];
-        $params['offset']             = [
-            'description'       => __('Offset the result set by a specific number of items.', 'woocommerce'),
-            'type'              => 'integer',
-            'sanitize_callback' => 'absint',
-            'validate_callback' => 'rest_validate_request_arg',
-        ];
-        $params['order']['default']   = 'asc';
+        $params['exclude'] = ['description' => __('Ensure result set excludes specific IDs.', 'woocommerce'), 'type' => 'array', 'items' => ['type' => 'integer'], 'default' => [], 'sanitize_callback' => 'wp_parse_id_list'];
+        $params['include'] = ['description' => __('Limit result set to specific ids.', 'woocommerce'), 'type' => 'array', 'items' => ['type' => 'integer'], 'default' => [], 'sanitize_callback' => 'wp_parse_id_list'];
+        $params['offset'] = ['description' => __('Offset the result set by a specific number of items.', 'woocommerce'), 'type' => 'integer', 'sanitize_callback' => 'absint', 'validate_callback' => 'rest_validate_request_arg'];
+        $params['order']['default'] = 'asc';
         $params['orderby']['default'] = 'stock_status';
-        $params['orderby']['enum']    = $this->apply_custom_orderby_filters(
-            [
-                'stock_status',
-                'stock_quantity',
-                'date',
-                'id',
-                'include',
-                'title',
-                'sku',
-            ]
-        );
-        $params['parent']             = [
-            'description'       => __('Limit result set to those of particular parent IDs.', 'woocommerce'),
-            'type'              => 'array',
-            'items'             => [
-                'type' => 'integer',
-            ],
-            'sanitize_callback' => 'wp_parse_id_list',
-            'default'           => [],
-        ];
-        $params['parent_exclude']     = [
-            'description'       => __('Limit result set to all items except those of a particular parent ID.', 'woocommerce'),
-            'type'              => 'array',
-            'items'             => [
-                'type' => 'integer',
-            ],
-            'sanitize_callback' => 'wp_parse_id_list',
-            'default'           => [],
-        ];
-        $params['type']               = [
-            'description' => __('Limit result set to items assigned a stock report type.', 'woocommerce'),
-            'type'        => 'string',
-            'default'     => 'all',
-            'enum'        => array_merge([ 'all', 'lowstock' ], array_keys(wc_get_product_stock_status_options())),
-        ];
-
+        $params['orderby']['enum'] = $this->apply_custom_orderby_filters(['stock_status', 'stock_quantity', 'date', 'id', 'include', 'title', 'sku']);
+        $params['parent'] = ['description' => __('Limit result set to those of particular parent IDs.', 'woocommerce'), 'type' => 'array', 'items' => ['type' => 'integer'], 'sanitize_callback' => 'wp_parse_id_list', 'default' => []];
+        $params['parent_exclude'] = ['description' => __('Limit result set to all items except those of a particular parent ID.', 'woocommerce'), 'type' => 'array', 'items' => ['type' => 'integer'], 'sanitize_callback' => 'wp_parse_id_list', 'default' => []];
+        $params['type'] = ['description' => __('Limit result set to items assigned a stock report type.', 'woocommerce'), 'type' => 'string', 'default' => 'all', 'enum' => array_merge(['all', 'lowstock'], array_keys(wc_get_product_stock_status_options()))];
         return $params;
     }
-
     /**
      * Get the column names for export.
      *
@@ -505,25 +305,15 @@ class Controller extends GenericController implements ExportableInterface
      */
     public function get_export_columns()
     {
-        $export_columns = [
-            'title'          => __('Product / Variation', 'woocommerce'),
-            'sku'            => __('SKU', 'woocommerce'),
-            'stock_status'   => __('Status', 'woocommerce'),
-            'stock_quantity' => __('Stock', 'woocommerce'),
-        ];
-
+        $export_columns = ['title' => __('Product / Variation', 'woocommerce'), 'sku' => __('SKU', 'woocommerce'), 'stock_status' => __('Status', 'woocommerce'), 'stock_quantity' => __('Stock', 'woocommerce')];
         /**
          * Filter to add or remove column names from the stock report for
          * export.
          *
          * @since 1.6.0
          */
-        return apply_filters(
-            'woocommerce_report_stock_export_columns',
-            $export_columns
-        );
+        return apply_filters('woocommerce_report_stock_export_columns', $export_columns);
     }
-
     /**
      * Get the column values for export.
      *
@@ -534,26 +324,15 @@ class Controller extends GenericController implements ExportableInterface
     {
         $status = $item['stock_status'];
         if (array_key_exists($item['stock_status'], $this->status_options)) {
-            $status = $this->status_options[ $item['stock_status'] ];
+            $status = $this->status_options[$item['stock_status']];
         }
-
-        $export_item = [
-            'title'          => $item['name'],
-            'sku'            => $item['sku'],
-            'stock_status'   => $status,
-            'stock_quantity' => $item['stock_quantity'],
-        ];
-
+        $export_item = ['title' => $item['name'], 'sku' => $item['sku'], 'stock_status' => $status, 'stock_quantity' => $item['stock_quantity']];
         /**
          * Filter to prepare extra columns in the export item for the stock
          * report.
          *
          * @since 1.6.0
          */
-        return apply_filters(
-            'woocommerce_report_stock_prepare_export_item',
-            $export_item,
-            $item
-        );
+        return apply_filters('woocommerce_report_stock_prepare_export_item', $export_item, $item);
     }
 }

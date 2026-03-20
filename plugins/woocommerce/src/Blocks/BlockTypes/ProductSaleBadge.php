@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
+namespace Automattic\Woo_Commerce\Blocks\Block_Types;
 
-namespace Automattic\WooCommerce\Blocks\BlockTypes;
-
-use Automattic\WooCommerce\Blocks\Utils\StyleAttributesUtils;
-
+use Automattic\Woo_Commerce\Blocks\Utils\Style_Attributes_Utils;
 /**
  * ProductSaleBadge class.
  */
-class ProductSaleBadge extends AbstractBlock
+class Product_Sale_Badge extends Abstract_Block
 {
     /**
      * Block name.
@@ -17,14 +15,12 @@ class ProductSaleBadge extends AbstractBlock
      * @var string
      */
     protected $block_name = 'product-sale-badge';
-
     /**
      * API version name.
      *
      * @var string
      */
     protected $api_version = '3';
-
     /**
      * Overwrite parent method to prevent script registration.
      *
@@ -35,15 +31,13 @@ class ProductSaleBadge extends AbstractBlock
     {
         return null;
     }
-
     /**
      * Register the context.
      */
     protected function get_block_type_uses_context(): array
     {
-        return [ 'query', 'queryId', 'postId' ];
+        return ['query', 'queryId', 'postId'];
     }
-
     /**
      * Include and render the block.
      *
@@ -56,23 +50,16 @@ class ProductSaleBadge extends AbstractBlock
     {
         $post_id = $block->context['postId'] ?? '';
         $product = wc_get_product($post_id);
-
-        if (! $product) {
+        if (!$product) {
             return null;
         }
-
         $is_on_sale = $product->is_on_sale();
-
-        if (! $is_on_sale) {
+        if (!$is_on_sale) {
             return null;
         }
-
-        $classes_and_styles = StyleAttributesUtils::get_classes_and_styles_by_attributes($attributes, [], [ 'extra_classes' ]);
-
-        $classname = StyleAttributesUtils::get_classes_by_attributes($attributes, [ 'extra_classes' ]);
-
+        $classes_and_styles = Style_Attributes_Utils::get_classes_and_styles_by_attributes($attributes, [], ['extra_classes']);
+        $classname = Style_Attributes_Utils::get_classes_by_attributes($attributes, ['extra_classes']);
         $align = $attributes['align'] ?? '';
-
         /**
          * Filters the product sale badge text.
          *
@@ -84,14 +71,10 @@ class ProductSaleBadge extends AbstractBlock
          * @return string The filtered sale badge text.
          */
         $sale_text = apply_filters('woocommerce_sale_badge_text', __('Sale', 'woocommerce'), $product);
-
-        $output  = '<div class="wp-block-woocommerce-product-sale-badge ' . esc_attr($classname) . '">';
+        $output = '<div class="wp-block-woocommerce-product-sale-badge ' . esc_attr($classname) . '">';
         $output .= sprintf('<div class="wc-block-components-product-sale-badge %1$s wc-block-components-product-sale-badge--align-%2$s" style="%3$s">', esc_attr($classes_and_styles['classes']), esc_attr($align), esc_attr($classes_and_styles['styles']));
         $output .= '<span class="wc-block-components-product-sale-badge__text" aria-hidden="true">' . esc_html($sale_text) . '</span>';
-        $output .= '<span class="screen-reader-text">'
-                        . __('Product on sale', 'woocommerce')
-                    . '</span>';
-
+        $output .= '<span class="screen-reader-text">' . __('Product on sale', 'woocommerce') . '</span>';
         return $output . '</div></div>';
     }
 }
