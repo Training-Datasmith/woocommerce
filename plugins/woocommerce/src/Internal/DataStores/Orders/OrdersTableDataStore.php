@@ -3423,8 +3423,6 @@ CREATE TABLE $meta_table (
             }
             self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [ $object->get_id() ]);
         }
-
-        return $delete_meta;
     }
 
     /**
@@ -3454,11 +3452,9 @@ CREATE TABLE $meta_table (
      *
      * @param WC_Data   $object WC_Data object.
      * @param \stdClass $meta (containing ->id, ->key and ->value).
-     *
-     * @return bool The number of rows updated, or false on error.
      */
     public function update_meta(&$object, $meta): void // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.objectFound
-    {$update_meta     = $this->data_store_meta->update_meta($object, $meta);
+    {$this->data_store_meta->update_meta($object, $meta);
         $changes_applied = $this->after_meta_change($object, $meta);
 
         if (! $changes_applied && $object instanceof WC_Abstract_Order && $this->should_backfill_post_record()) {
@@ -3466,8 +3462,6 @@ CREATE TABLE $meta_table (
             update_post_meta($object->get_id(), $meta->key, $meta->value);
             self::$backfilling_order_ids = array_diff(self::$backfilling_order_ids, [ $object->get_id() ]);
         }
-
-        return $update_meta;
     }
 
     /**
