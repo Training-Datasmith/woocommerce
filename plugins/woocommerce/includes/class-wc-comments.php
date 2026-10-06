@@ -48,7 +48,7 @@ class WC_Comments
         add_action('wp_update_comment_count', self::clear_transients(...));
 
         // Secure order notes.
-        add_filter('comments_clauses', self::exclude_order_comments(...));
+        add_filter('comments_clauses', [ self::class, 'exclude_order_comments' ], 10, 1);
         add_filter('comment_feed_where', self::exclude_order_comments_from_feed_where(...));
         add_filter('akismet_excluded_comment_types', self::akismet_excluded_comment_types(...));
 

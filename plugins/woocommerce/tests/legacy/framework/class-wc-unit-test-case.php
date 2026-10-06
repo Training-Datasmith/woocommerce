@@ -157,6 +157,11 @@ class WC_Unit_Test_Case extends WP_HTTP_TestCase
      */
     public function throwAnException($message = null, $code = null)
     {
+        // Action/filter callbacks pass unrelated first arguments (e.g. order ID).
+        if (is_int($message) || (is_string($message) && is_numeric($message) && is_string($code))) {
+            $message = null;
+            $code    = 0;
+        }
         $message = (null !== $message && '' !== $message) ? (string) $message : "We're all doomed!";
         throw new Exception($message, (int) $code);
     }
