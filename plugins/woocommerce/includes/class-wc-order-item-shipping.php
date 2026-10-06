@@ -196,7 +196,7 @@ class WC_Order_Item_Shipping extends WC_Order_Item
      *
      * @return void
      */
-    public function set_tax_status($value)
+    public function set_tax_status($value): void
     {
     }
 

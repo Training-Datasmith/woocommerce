@@ -381,10 +381,10 @@ class WC_Coupon_Data_Store_CPT extends WC_Data_Store_WP implements WC_Coupon_Dat
             );
             if (! $result) {
                 // If no rows were updated, then insert a `_used_by` row manually to maintain consistency.
-                add_post_meta($coupon->get_id(), '_used_by', strtolower($used_by));
+                add_post_meta($coupon->get_id(), '_used_by', strtolower((string) $used_by));
             }
         } else {
-            add_post_meta($coupon->get_id(), '_used_by', strtolower($used_by));
+            add_post_meta($coupon->get_id(), '_used_by', strtolower((string) $used_by));
         }
 
         $this->refresh_coupon_data($coupon);
