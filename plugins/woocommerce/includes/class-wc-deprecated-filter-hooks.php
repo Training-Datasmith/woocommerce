@@ -118,7 +118,7 @@ class WC_Deprecated_Filter_Hooks extends WC_Deprecated_Hooks
      */
     public function hook_in($hook_name): void
     {
-        add_filter($hook_name, $this->maybe_handle_deprecated_hook(...), -1000, 8);
+        add_filter($hook_name, [ $this, 'maybe_handle_deprecated_hook' ], -1000, 8);
     }
 
     /**

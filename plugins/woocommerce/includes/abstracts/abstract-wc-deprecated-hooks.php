@@ -42,7 +42,7 @@ abstract class WC_Deprecated_Hooks
     public function __construct()
     {
         $new_hooks = array_keys($this->deprecated_hooks);
-        array_walk($new_hooks, $this->hook_in(...));
+        array_walk($new_hooks, [ $this, 'hook_in' ]);
     }
 
     /**

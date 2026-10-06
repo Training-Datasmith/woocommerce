@@ -92,7 +92,7 @@ class WC_Deprecated_Action_Hooks extends WC_Deprecated_Hooks
      */
     public function hook_in($hook_name): void
     {
-        add_action($hook_name, $this->maybe_handle_deprecated_hook(...), -1000, 8);
+        add_action($hook_name, [ $this, 'maybe_handle_deprecated_hook' ], -1000, 8);
     }
 
     /**
