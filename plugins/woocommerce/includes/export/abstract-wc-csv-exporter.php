@@ -432,9 +432,10 @@ abstract class WC_CSV_Exporter
         $use_mb = function_exists('mb_convert_encoding');
 
         if ($use_mb) {
-            $is_valid_utf_8 = mb_check_encoding($data, 'UTF-8');
+            $encoding_check_value = is_string($data) || is_null($data) ? $data : (string) $data;
+            $is_valid_utf_8       = mb_check_encoding($encoding_check_value, 'UTF-8');
             if (! $is_valid_utf_8) {
-                $data = mb_convert_encoding($data, 'UTF-8', 'ISO-8859-1');
+                $data = mb_convert_encoding($encoding_check_value, 'UTF-8', 'ISO-8859-1');
             }
         }
 
