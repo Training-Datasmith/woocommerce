@@ -702,7 +702,15 @@ function wc_price($price, array $args = [])
  */
 function wc_let_to_num($size): int
 {
-    $size ??= '';
+    if (false === $size || true === $size || null === $size) {
+        return 0;
+    }
+
+    $size = (string) $size;
+
+    if ('' === $size) {
+        return 0;
+    }
 
     $l   = substr($size, -1);
     $ret = (int) substr($size, 0, -1);
