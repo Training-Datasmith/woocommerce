@@ -537,7 +537,7 @@ function wc_get_default_shipping_method_for_package($key, array $package, $chose
      *
      * This is important for block-based checkout where there is an explicit toggle between shipping and pickup.
      */
-    $chosen_method_id       = current(explode(':', $chosen_method));
+    $chosen_method_id       = $chosen_method ? current(explode(':', (string) $chosen_method)) : '';
     $chosen_method_exists   = in_array($chosen_method, $rate_keys, true);
     $is_local_pickup_chosen = in_array($chosen_method_id, $local_pickup_method_ids, true);
 

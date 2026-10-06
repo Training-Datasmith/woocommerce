@@ -160,8 +160,8 @@ class WC_Tests_Cart extends WC_Unit_Test_Case
         // Add product to cart x1, calc and test.
         WC()->cart->add_to_cart($product->get_id(), 1);
         WC()->cart->calculate_totals();
-        $this->assertEquals('85.92', number_format(WC()->cart->total, 2, '.', ''));
-        $this->assertEquals('85.92', number_format(WC()->cart->subtotal, 2, '.', ''));
+        $this->assertEquals('85.92', number_format((float) WC()->cart->total, 2, '.', ''));
+        $this->assertEquals('85.92', number_format((float) WC()->cart->subtotal, 2, '.', ''));
         $this->assertEquals('85.92', wc_get_price_including_tax($product));
 
         WC_Helper_Product::delete_product($product->get_id());
@@ -334,19 +334,19 @@ class WC_Tests_Cart extends WC_Unit_Test_Case
         // Add product to cart x1, calc and test.
         WC()->cart->add_to_cart($product->get_id(), 1);
         WC()->cart->calculate_totals();
-        $this->assertEquals('9.00', number_format(WC()->cart->total, 2, '.', ''));
+        $this->assertEquals('9.00', number_format((float) WC()->cart->total, 2, '.', ''));
         $this->assertEquals('1.00', number_format(WC()->cart->discount_cart, 2, '.', ''));
 
         // Add product to cart x2, calc and test.
         WC()->cart->add_to_cart($product->get_id(), 1);
         WC()->cart->calculate_totals();
-        $this->assertEquals('19.00', number_format(WC()->cart->total, 2, '.', ''));
+        $this->assertEquals('19.00', number_format((float) WC()->cart->total, 2, '.', ''));
         $this->assertEquals('1.00', number_format(WC()->cart->discount_cart, 2, '.', ''));
 
         // Add product to cart x3, calc and test.
         WC()->cart->add_to_cart($product->get_id(), 1);
         WC()->cart->calculate_totals();
-        $this->assertEquals('29.00', number_format(WC()->cart->total, 2, '.', ''));
+        $this->assertEquals('29.00', number_format((float) WC()->cart->total, 2, '.', ''));
         $this->assertEquals('1.00', number_format(WC()->cart->discount_cart, 2, '.', ''));
     }
 
@@ -605,7 +605,7 @@ class WC_Tests_Cart extends WC_Unit_Test_Case
         WC()->cart->calculate_totals();
         $this->assertEquals('8.33', wc_format_decimal(WC()->cart->get_subtotal(), 2));
         $this->assertEquals('0.83', wc_format_decimal(WC()->cart->get_discount_total(), 2));
-        $this->assertEquals('1.50', wc_format_decimal(WC()->cart->get_total_tax(), 2), WC()->cart->get_total_tax());
+        $this->assertEquals('1.50', wc_format_decimal(WC()->cart->get_total_tax(), 2));
         $this->assertEquals('8.99', wc_format_decimal(WC()->cart->get_total('edit'), 2));
         WC()->cart->remove_coupons();
 
@@ -751,7 +751,7 @@ class WC_Tests_Cart extends WC_Unit_Test_Case
         WC()->cart->calculate_totals();
         $this->assertEquals('8.33', wc_format_decimal(WC()->cart->get_subtotal(), 2));
         $this->assertEquals('0.83', wc_format_decimal(WC()->cart->get_discount_total(), 2));
-        $this->assertEquals('0.00', wc_format_decimal(WC()->cart->get_total_tax(), 2), WC()->cart->get_total_tax());
+        $this->assertEquals('0.00', wc_format_decimal(WC()->cart->get_total_tax(), 2));
         $this->assertEquals('7.50', wc_format_decimal(WC()->cart->get_total('edit'), 2));
         WC()->cart->remove_coupons();
 

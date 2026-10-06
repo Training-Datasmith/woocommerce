@@ -23,7 +23,7 @@ class ShippingUtil
     {
         return array_filter(
             array_map(
-                function ($package_id, int $package): ?\WC_Shipping_Rate {
+                function ($package_id, array $package): ?\WC_Shipping_Rate {
                     $selected_rate_id = wc_get_chosen_shipping_method_for_package($package_id, $package);
                     $selected_rate    = false !== $selected_rate_id && isset($package['rates'][ $selected_rate_id ]) ? $package['rates'][ $selected_rate_id ] : null;
 
