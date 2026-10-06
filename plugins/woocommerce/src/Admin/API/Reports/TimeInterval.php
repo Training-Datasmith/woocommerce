@@ -528,12 +528,12 @@ class TimeInterval
      * Normalize "*_between" parameters to "*_min" and "*_max" for numeric values
      * and "*_after" and "*_before" for date values.
      *
-     * @param array        $request Query params from REST API request.
-     * @param string|array $param_names One or more param names to handle. Should not include "_between" suffix.
-     * @param bool         $is_date Boolean if the param is date is related.
+     * @param array|\WP_REST_Request $request Query params from REST API request.
+     * @param string|array           $param_names One or more param names to handle. Should not include "_between" suffix.
+     * @param bool                   $is_date Boolean if the param is date is related.
      * @return array Normalized query values.
      */
-    public static function normalize_between_params(array $request, $param_names, $is_date): array
+    public static function normalize_between_params(array|\WP_REST_Request $request, $param_names, $is_date): array
     {
         if (! is_array($param_names)) {
             $param_names = [ $param_names ];
