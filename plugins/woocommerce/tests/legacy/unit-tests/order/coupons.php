@@ -156,15 +156,15 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
 
         // Check it's expected.
         $this->assertEquals('shop_order', $order->get_type());
-        $this->assertEquals('799.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('799.00', $order->get_total());
 
         // Remove the virtual coupon. Total should be 999.
         $order->remove_coupon('this-is-a-virtal-coupon');
-        $this->assertEquals('999.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('999.00', $order->get_total());
 
         // Remove the other coupon. Total should be 1000.
         $order->remove_coupon('test-coupon-1');
-        $this->assertEquals('1000.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('1000.00', $order->get_total());
 
         // Reset.
         $this->init_test();
@@ -174,13 +174,13 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
 
         // Check it's expected.
         $this->assertEquals('shop_order', $order->get_type());
-        $this->assertEquals('799.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('799.00', $order->get_total());
 
         // Do the above tests in reverse.
         $order->remove_coupon('test-coupon-1');
-        $this->assertEquals('800.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('800.00', $order->get_total());
         $order->remove_coupon('this-is-a-virtal-coupon');
-        $this->assertEquals('1000.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('1000.00', $order->get_total());
     }
 
     /**
@@ -195,7 +195,7 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
         $order_id = $this->objects['order']->get_id();
         $order    = wc_get_order($order_id);
 
-        $this->assertEquals('799.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('799.00', $order->get_total());
 
         /**
          * Discount should be based on subtotal unless coupons apply sequentially.
@@ -203,8 +203,8 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
          * Coupon will therefore discount 200. Compare the total without tax so we can compare the ex tax price and avoid rounding mishaps.
          */
         $order->apply_coupon('test-coupon-2');
-        $this->assertEquals(401, NumberUtil::round($order->get_total_discount(false), 2), $order->get_total_discount(false));
-        $this->assertEquals(598.99, $order->get_total(), $order->get_total());
+        $this->assertEquals(401, NumberUtil::round($order->get_total_discount(false), 2));
+        $this->assertEquals(598.99, $order->get_total());
     }
 
     /**
@@ -221,15 +221,15 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
 
         // Check it's expected.
         $this->assertEquals('shop_order', $order->get_type());
-        $this->assertEquals('878.90', $order->get_total(), $order->get_total());
+        $this->assertEquals('878.90', $order->get_total());
 
         // Remove the virtual coupon. Total should be 999.
         $order->remove_coupon('this-is-a-virtal-coupon');
-        $this->assertEquals('1098.90', $order->get_total(), $order->get_total());
+        $this->assertEquals('1098.90', $order->get_total());
 
         // Remove the other coupon. Total should be 1000.
         $order->remove_coupon('test-coupon-1');
-        $this->assertEquals('1100.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('1100.00', $order->get_total());
 
         // Reset.
         $this->init_test();
@@ -239,13 +239,13 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
 
         // Check it's expected.
         $this->assertEquals('shop_order', $order->get_type());
-        $this->assertEquals('878.90', $order->get_total(), $order->get_total());
+        $this->assertEquals('878.90', $order->get_total());
 
         // Do the above tests in reverse.
         $order->remove_coupon('test-coupon-1');
-        $this->assertEquals('880.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('880.00', $order->get_total());
         $order->remove_coupon('this-is-a-virtal-coupon');
-        $this->assertEquals('1100.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('1100.00', $order->get_total());
     }
 
     /**
@@ -261,8 +261,8 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
         $order    = wc_get_order($order_id);
 
         $order->apply_coupon('test-coupon-2');
-        $this->assertEquals(401, $order->get_discount_total(), $order->get_discount_total());
-        $this->assertFloatEquals((1000 - 401) * 1.1, $order->get_total(), $order->get_total());
+        $this->assertEquals(401, $order->get_discount_total());
+        $this->assertFloatEquals((1000 - 401) * 1.1, $order->get_total());
     }
 
     /**
@@ -279,15 +279,15 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
 
         // Check it's expected.
         $this->assertEquals('shop_order', $order->get_type());
-        $this->assertEquals('799.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('799.00', $order->get_total());
 
         // Remove the virtual coupon. Total should be 999.
         $order->remove_coupon('this-is-a-virtal-coupon');
-        $this->assertEquals('999.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('999.00', $order->get_total());
 
         // Remove the other coupon. Total should be 1000.
         $order->remove_coupon('test-coupon-1');
-        $this->assertEquals('1000.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('1000.00', $order->get_total());
 
         // Reset.
         $this->init_test();
@@ -297,13 +297,13 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
 
         // Check it's expected.
         $this->assertEquals('shop_order', $order->get_type());
-        $this->assertEquals('799.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('799.00', $order->get_total());
 
         // Do the above tests in reverse.
         $order->remove_coupon('test-coupon-1');
-        $this->assertEquals('800.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('800.00', $order->get_total());
         $order->remove_coupon('this-is-a-virtal-coupon');
-        $this->assertEquals('1000.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('1000.00', $order->get_total());
     }
 
     /**
@@ -319,7 +319,7 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
         $order    = wc_get_order($order_id);
 
         $order->apply_coupon('test-coupon-2');
-        $this->assertEquals('599.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('599.00', $order->get_total());
     }
 
     /**
@@ -336,15 +336,15 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
 
         // Check it's expected.
         $this->assertEquals('shop_order', $order->get_type());
-        $this->assertEquals('799.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('799.00', $order->get_total());
 
         // Remove the virtual coupon. Total should be 999.
         $order->remove_coupon('this-is-a-virtal-coupon');
-        $this->assertEquals('999.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('999.00', $order->get_total());
 
         // Remove the other coupon. Total should be 1000.
         $order->remove_coupon('test-coupon-1');
-        $this->assertEquals('1000.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('1000.00', $order->get_total());
 
         // Reset.
         $this->init_test();
@@ -354,13 +354,13 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
 
         // Check it's expected.
         $this->assertEquals('shop_order', $order->get_type());
-        $this->assertEquals('799.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('799.00', $order->get_total());
 
         // Do the above tests in reverse.
         $order->remove_coupon('test-coupon-1');
-        $this->assertEquals('800.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('800.00', $order->get_total());
         $order->remove_coupon('this-is-a-virtal-coupon');
-        $this->assertEquals('1000.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('1000.00', $order->get_total());
     }
 
     /**
@@ -376,7 +376,7 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
         $order    = wc_get_order($order_id);
 
         $order->apply_coupon('test-coupon-2');
-        $this->assertEquals('599.00', $order->get_total(), $order->get_total());
+        $this->assertEquals('599.00', $order->get_total());
     }
 
     /**
@@ -458,7 +458,7 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
 
         $applied_coupons = $order->get_items('coupon');
 
-        $this->assertEquals('16.95', $order->get_total());
+        $this->assertEquals('16.95');
         $this->assertEquals('1.73', $order->get_total_tax());
         $this->assertEquals('1.69', $order->get_discount_total());
     }
@@ -495,7 +495,7 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
         $order->calculate_totals(true);
         $order->save();
 
-        $this->assertEquals('998.00', $order->get_total());
+        $this->assertEquals('998.00');
 
         // Remove the custom discount type handler, trash the coupon, recalculate: should not throw.
 
@@ -509,7 +509,7 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
         $order->recalculate_coupons();
         $order->save();
 
-        $this->assertEquals('1000.00', $order->get_total());
+        $this->assertEquals('1000.00');
     }
 
     /**
