@@ -44,7 +44,7 @@ class WC_Order_Item_Shipping extends WC_Order_Item
      * @param  array $calculate_tax_for Location data to get taxes for. Required.
      * @return bool  True if taxes were calculated.
      */
-    public function calculate_taxes($calculate_tax_for = []): bool
+    public function calculate_taxes(array $calculate_tax_for = []): bool
     {
         if (! isset($calculate_tax_for['country'], $calculate_tax_for['state'], $calculate_tax_for['postcode'], $calculate_tax_for['city'], $calculate_tax_for['tax_class'])) {
             return false;
