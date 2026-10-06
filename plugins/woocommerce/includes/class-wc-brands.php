@@ -975,7 +975,7 @@ class WC_Brands
      * @return array Request args.
      * @version 9.4.0
      */
-    public function rest_api_filter_products_by_brand(array $args, array $request): array
+    public function rest_api_filter_products_by_brand(array $args, WP_REST_Request $request): array
     {
         if (! empty($request['brand'])) {
             $args['tax_query'][] = [
