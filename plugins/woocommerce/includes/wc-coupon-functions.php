@@ -111,6 +111,12 @@ function wc_get_coupon_code_by_id($id): string
  */
 function wc_get_coupon_id_by_code($code, $exclude = 0)
 {
+    if (! is_string($code)) {
+        if (null === $code || '' === $code || 0 === $code || 0.0 === $code) {
+            return 0;
+        }
+        $code = (string) $code;
+    }
 
     if (StringUtil::is_null_or_whitespace($code)) {
         return 0;
