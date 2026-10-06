@@ -56,7 +56,7 @@ class WC_Query
             add_action('wp_loaded', $this->get_errors(...), 20);
             add_filter('query_vars', $this->add_query_vars(...), 0);
             add_action('parse_request', $this->parse_request(...), 0);
-            add_action('pre_get_posts', $this->pre_get_posts(...));
+            add_action('pre_get_posts', [ $this, 'pre_get_posts' ]);
             add_filter('get_pagenum_link', $this->remove_add_to_cart_pagination(...), 10, 1);
         }
         $this->init_query_vars();
@@ -461,7 +461,7 @@ class WC_Query
     public function remove_product_query_filters($posts)
     {
         $this->remove_ordering_args();
-        remove_filter('posts_clauses', $this->price_filter_post_clauses(...), 10, 2);
+        remove_filter('posts_clauses', [ $this, 'price_filter_post_clauses' ], 10, 2);
         return $posts;
     }
 
@@ -583,7 +583,7 @@ class WC_Query
      */
     public function remove_product_query(): void
     {
-        remove_action('pre_get_posts', $this->pre_get_posts(...));
+        remove_action('pre_get_posts', [ $this, 'pre_get_posts' ]);
     }
 
     /**
@@ -591,10 +591,10 @@ class WC_Query
      */
     public function remove_ordering_args(): void
     {
-        remove_filter('posts_clauses', $this->order_by_price_asc_post_clauses(...));
-        remove_filter('posts_clauses', $this->order_by_price_desc_post_clauses(...));
-        remove_filter('posts_clauses', $this->order_by_popularity_post_clauses(...));
-        remove_filter('posts_clauses', $this->order_by_rating_post_clauses(...));
+        remove_filter('posts_clauses', [ $this, 'order_by_price_asc_post_clauses' ]);
+        remove_filter('posts_clauses', [ $this, 'order_by_price_desc_post_clauses' ]);
+        remove_filter('posts_clauses', [ $this, 'order_by_popularity_post_clauses' ]);
+        remove_filter('posts_clauses', [ $this, 'order_by_rating_post_clauses' ]);
     }
 
     /**
@@ -673,10 +673,10 @@ class WC_Query
                 add_filter('posts_clauses', [ $this, $callback ]);
                 break;
             case 'popularity':
-                add_filter('posts_clauses', $this->order_by_popularity_post_clauses(...));
+                add_filter('posts_clauses', [ $this, 'order_by_popularity_post_clauses' ]);
                 break;
             case 'rating':
-                add_filter('posts_clauses', $this->order_by_rating_post_clauses(...));
+                add_filter('posts_clauses', [ $this, 'order_by_rating_post_clauses' ]);
                 break;
         }
 
