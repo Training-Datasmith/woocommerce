@@ -928,7 +928,7 @@ if (! function_exists('wc_hex_darker')) {
             $amount      = NumberUtil::round($amount * $factor);
             $new_decimal = $v - $amount;
 
-            $new_hex_component = dechex($new_decimal);
+            $new_hex_component = dechex((int) $new_decimal);
             if (strlen($new_hex_component) < 2) {
                 $new_hex_component = '0' . $new_hex_component;
             }
@@ -959,7 +959,7 @@ if (! function_exists('wc_hex_lighter')) {
             $amount      = NumberUtil::round($amount * $factor);
             $new_decimal = $v + $amount;
 
-            $new_hex_component = dechex($new_decimal);
+            $new_hex_component = dechex((int) $new_decimal);
             if (strlen($new_hex_component) < 2) {
                 $new_hex_component = '0' . $new_hex_component;
             }

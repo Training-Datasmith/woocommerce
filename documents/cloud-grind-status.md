@@ -5,7 +5,7 @@
 | Branch | `remote-test-2026-10-06` |
 | Spec | `documents/test-suite-plan.md` |
 | Brief | `documents/cloud-grind-agent.md` |
-| Latest SHA | `35336fbd2d` (see git for newer commits) |
+| Latest SHA | `cd0f4945f8` |
 
 ## Work queue
 
