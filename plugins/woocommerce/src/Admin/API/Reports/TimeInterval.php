@@ -331,9 +331,9 @@ class TimeInterval
         date_default_timezone_set($default_timezone);
         // @codingStandardsIgnoreEnd
         if ($reversed) {
-            $result = \DateTime::createFromFormat('U', $start_end_timestamp['end'])->sub($seven_days);
+            $result = \DateTime::createFromFormat('U', (string) $start_end_timestamp['end'])->sub($seven_days);
         } else {
-            $result = \DateTime::createFromFormat('U', $start_end_timestamp['start'])->add($seven_days);
+            $result = \DateTime::createFromFormat('U', (string) $start_end_timestamp['start'])->add($seven_days);
         }
         return \DateTime::createFromFormat('Y-m-d H:i:s', $result->format('Y-m-d H:i:s'), $original_timezone);
     }
