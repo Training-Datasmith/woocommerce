@@ -46,7 +46,7 @@ class Segmenter extends ReportsSegmenter
      *
      * @return array
      */
-    protected function get_order_related_totals_segments($segmenting_select, $segmenting_from, $segmenting_where, $segmenting_groupby, $table_name, $totals_query)
+    protected function get_order_related_totals_segments($segmenting_select, $segmenting_from, $segmenting_where, $segmenting_groupby, $table_name, $totals_query): array
     {
         global $wpdb;
 
@@ -85,7 +85,7 @@ class Segmenter extends ReportsSegmenter
      *
      * @return array
      */
-    protected function get_order_related_intervals_segments($segmenting_select, $segmenting_from, $segmenting_where, $segmenting_groupby, $table_name, $intervals_query)
+    protected function get_order_related_intervals_segments($segmenting_select, $segmenting_from, $segmenting_where, $segmenting_groupby, $table_name, $intervals_query): array
     {
         global $wpdb;
         $segmenting_limit = '';
@@ -131,7 +131,7 @@ class Segmenter extends ReportsSegmenter
      * @return array
      * @throws \Automattic\WooCommerce\Admin\API\Reports\ParameterException In case of segmenting by variations, when no parent product is specified.
      */
-    protected function get_segments($type, $query_params, $table_name)
+    protected function get_segments($type, $query_params, $table_name): array
     {
         if (! isset($this->query_args['segmentby']) || '' === $this->query_args['segmentby']) {
             return [];
