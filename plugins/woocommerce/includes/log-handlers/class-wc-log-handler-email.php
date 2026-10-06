@@ -141,7 +141,7 @@ class WC_Log_Handler_Email extends WC_Log_Handler
         if (! empty($this->logs)) {
             $subject = $this->get_subject();
             $body    = $this->get_body();
-            $result  = wp_mail();
+            $result  = wp_mail($this->recipients, $subject, $body);
             $this->clear_logs();
         }
 
