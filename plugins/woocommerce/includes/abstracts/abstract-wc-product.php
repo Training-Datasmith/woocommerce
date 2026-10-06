@@ -1637,7 +1637,7 @@ class WC_Product extends WC_Abstract_Legacy_Product
      *
      * @return mixed A state value that will be passed to after_data_store_save_or_update.
      */
-    protected function before_data_store_save_or_update(): null
+    protected function before_data_store_save_or_update(): mixed
     {
         return null;
     }

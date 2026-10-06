@@ -649,9 +649,9 @@ class WC_Product_Variation extends WC_Product_Simple
      *
      * @param bool $value The value to set for the flag.
      */
-    public function set_cogs_value_is_additive(bool $value): void
+    public function set_cogs_value_is_additive($value): void
     {
-        $this->set_prop('cogs_value_is_additive', $value);
+        $this->set_prop('cogs_value_is_additive', wc_string_to_bool($value));
     }
 
     /**

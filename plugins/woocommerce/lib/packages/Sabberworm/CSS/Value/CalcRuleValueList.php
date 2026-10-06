@@ -21,8 +21,7 @@ class CalcRuleValueList extends RuleValueList
      *
      * @return string
      */
-    public function render($oOutputFormat)
-    {
+    public function render($oOutputFormat): string    {
         return $oOutputFormat->implode(' ', $this->aComponents);
     }
 }

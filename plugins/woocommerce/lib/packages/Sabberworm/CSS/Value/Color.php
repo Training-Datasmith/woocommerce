@@ -159,8 +159,7 @@ class Color extends CSSFunction
      *
      * @return string
      */
-    public function render($oOutputFormat)
-    {
+    public function render($oOutputFormat): string    {
         // Shorthand RGB color values
         if ($oOutputFormat->getRGBHashNotation() && implode('', array_keys($this->aComponents)) === 'rgb') {
             $sResult = sprintf(

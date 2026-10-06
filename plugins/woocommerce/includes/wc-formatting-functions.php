@@ -24,8 +24,16 @@ defined('ABSPATH') || exit;
  */
 function wc_string_to_bool($string): bool
 {
-    $string ??= '';
-    return is_bool($string) ? $string : ('yes' === strtolower($string) || 1 === $string || 'true' === strtolower($string) || '1' === $string);
+    if (is_bool($string)) {
+        return $string;
+    }
+
+    if (is_int($string) || is_float($string)) {
+        return 1 === (int) $string;
+    }
+
+    $string = (string) ($string ?? '');
+    return 'yes' === strtolower($string) || 'true' === strtolower($string) || '1' === $string;
 }
 
 /**

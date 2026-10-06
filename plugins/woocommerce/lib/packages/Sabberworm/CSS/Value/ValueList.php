@@ -92,8 +92,7 @@ abstract class ValueList extends Value
      *
      * @return string
      */
-    public function render($oOutputFormat)
-    {
+    public function render($oOutputFormat): string    {
         return $oOutputFormat->implode(
             $oOutputFormat->spaceBeforeListArgumentSeparator($this->sSeparator) . $this->sSeparator
             . $oOutputFormat->spaceAfterListArgumentSeparator($this->sSeparator),

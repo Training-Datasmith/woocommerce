@@ -1748,15 +1748,36 @@ function wc_nocache_headers(): void
  * Used to sort products attributes with uasort.
  *
  * @since 2.6.0
- * @param array $a First attribute to compare.
- * @param array $b Second attribute to compare.
+ * @param array|WC_Product_Attribute|null $a First attribute to compare.
+ * @param array|WC_Product_Attribute|null $b Second attribute to compare.
  * @return int
  */
-function wc_product_attribute_uasort_comparison(array $a, array $b)
+function wc_product_attribute_uasort_comparison($a, $b)
 {
-    $a_position = is_null($a) ? null : $a['position'];
-    $b_position = is_null($b) ? null : $b['position'];
+    $a_position = wc_product_attribute_uasort_get_position($a);
+    $b_position = wc_product_attribute_uasort_get_position($b);
     return wc_uasort_comparison($a_position, $b_position);
+}
+
+/**
+ * @param array|WC_Product_Attribute|null $attribute Attribute entry from product attributes list.
+ * @return int|null
+ */
+function wc_product_attribute_uasort_get_position($attribute)
+{
+    if (is_null($attribute)) {
+        return null;
+    }
+
+    if ($attribute instanceof WC_Product_Attribute) {
+        return $attribute->get_position();
+    }
+
+    if (is_array($attribute)) {
+        return $attribute['position'] ?? null;
+    }
+
+    return null;
 }
 
 /**

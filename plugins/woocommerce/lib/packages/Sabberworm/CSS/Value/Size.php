@@ -213,8 +213,7 @@ class Size extends PrimitiveValue
      *
      * @return string
      */
-    public function render($oOutputFormat)
-    {
+    public function render($oOutputFormat): string    {
         $l = localeconv();
         $sPoint = preg_quote((string) $l['decimal_point'], '/');
         $sSize = preg_match("/[\d\.]+e[+-]?\d+/i", (string)$this->fSize)
