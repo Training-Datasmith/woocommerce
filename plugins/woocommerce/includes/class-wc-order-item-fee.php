@@ -286,9 +286,9 @@ class WC_Order_Item_Fee extends WC_Order_Item
      * @param  string $context What the value is for. Valid values are 'view' and 'edit'.
      * @return string
      */
-    public function get_tax_class($context = 'view')
+    public function get_tax_class(): string
     {
-        return $this->get_prop('tax_class', $context);
+        return (string) $this->get_prop('tax_class', 'view');
     }
 
     /**
@@ -297,9 +297,9 @@ class WC_Order_Item_Fee extends WC_Order_Item
      * @param  string $context What the value is for. Valid values are 'view' and 'edit'.
      * @return string
      */
-    public function get_tax_status($context = 'view')
+    public function get_tax_status(): string
     {
-        return $this->get_prop('tax_status', $context);
+        return (string) $this->get_prop('tax_status', 'view');
     }
 
     /**

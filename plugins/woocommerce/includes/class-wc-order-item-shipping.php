@@ -315,9 +315,9 @@ class WC_Order_Item_Shipping extends WC_Order_Item
      * @param  string $context View or edit context.
      * @return string
      */
-    public function get_tax_class($context = 'view')
+    public function get_tax_class(): string
     {
-        return get_option('woocommerce_shipping_tax_class');
+        return (string) get_option('woocommerce_shipping_tax_class');
     }
 
     /**
@@ -328,7 +328,7 @@ class WC_Order_Item_Shipping extends WC_Order_Item
      * @param  string $context What the value is for. Valid values are 'view' and 'edit'.
      * @return string
      */
-    public function get_tax_status($context = 'view')
+    public function get_tax_status(): string
     {
         $shipping_method = \WC_Shipping_Zones::get_shipping_method($this->get_instance_id());
         return $shipping_method instanceof \WC_Shipping_Method ? $shipping_method->tax_status : ProductTaxStatus::TAXABLE;

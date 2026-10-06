@@ -40,8 +40,7 @@ class CustomerStockNotificationEmail extends WC_Email
      *
      * @return string
      */
-    public function get_default_subject()
-    {
+    public function get_default_subject(bool $partial = false): string    {
         return __('"{product_name}" is back in stock!', 'woocommerce');
     }
 
@@ -50,8 +49,7 @@ class CustomerStockNotificationEmail extends WC_Email
      *
      * @return string
      */
-    public function get_default_heading()
-    {
+    public function get_default_heading(bool $partial = false): string    {
         return __('It\'s back in stock!', 'woocommerce');
     }
 

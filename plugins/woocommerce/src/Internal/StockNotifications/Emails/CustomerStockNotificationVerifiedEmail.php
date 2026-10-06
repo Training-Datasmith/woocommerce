@@ -42,8 +42,7 @@ class CustomerStockNotificationVerifiedEmail extends WC_Email
      *
      * @return string
      */
-    public function get_default_subject()
-    {
+    public function get_default_subject(bool $partial = false): string    {
         return __('You have joined the "{product_name}" waitlist.', 'woocommerce');
     }
 
@@ -52,8 +51,7 @@ class CustomerStockNotificationVerifiedEmail extends WC_Email
      *
      * @return string
      */
-    public function get_default_heading()
-    {
+    public function get_default_heading(bool $partial = false): string    {
         return __('Sign-up successful', 'woocommerce');
     }
 

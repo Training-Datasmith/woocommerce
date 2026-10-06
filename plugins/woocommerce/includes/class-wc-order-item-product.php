@@ -339,9 +339,9 @@ class WC_Order_Item_Product extends WC_Order_Item
      * @param  string $context What the value is for. Valid values are 'view' and 'edit'.
      * @return string
      */
-    public function get_tax_class($context = 'view')
+    public function get_tax_class(): string
     {
-        return $this->get_prop('tax_class', $context);
+        return (string) $this->get_prop('tax_class', 'view');
     }
 
     /**
@@ -503,7 +503,7 @@ class WC_Order_Item_Product extends WC_Order_Item
      *
      * @return string
      */
-    public function get_tax_status()
+    public function get_tax_status(): string
     {
         $product = $this->get_product();
         return $product ? $product->get_tax_status() : ProductTaxStatus::TAXABLE;
