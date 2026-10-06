@@ -157,8 +157,8 @@ class WC_Unit_Test_Case extends WP_HTTP_TestCase
      */
     public function throwAnException($message = null, $code = null)
     {
-        $message = $message ? $message : "We're all doomed!";
-        throw new Exception($message, $code);
+        $message = (null !== $message && '' !== $message) ? (string) $message : "We're all doomed!";
+        throw new Exception($message, (int) $code);
     }
 
     /**
