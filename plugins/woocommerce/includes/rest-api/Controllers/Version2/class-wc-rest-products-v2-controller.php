@@ -1773,7 +1773,7 @@ class WC_REST_Products_V2_Controller extends WC_REST_CRUD_Controller
         }
 
         $request->set_param('context', 'edit');
-        $this->prepare_object_for_response($object, $request);
+        $response = $this->prepare_object_for_response($object, $request);
 
         // If we're forcing, then delete permanently.
         if ($force) {
@@ -1827,14 +1827,33 @@ class WC_REST_Products_V2_Controller extends WC_REST_CRUD_Controller
                 $result = ProductStatus::TRASH === $object->get_status();
             }
         }
-        return new WP_Error(
-            'woocommerce_rest_cannot_delete',
-            /* translators: %s: post type */
-            sprintf(__('The %s cannot be deleted.', 'woocommerce'), $this->post_type),
-            [
+
+        if (! $result) {
+            return new WP_Error(
+                'woocommerce_rest_cannot_delete',
+                /* translators: %s: post type */
+                sprintf(__('The %s cannot be deleted.', 'woocommerce'), $this->post_type),
+                [
                     'status' => 500,
                 ]
-        );
+            );
+        }
+
+        // Delete parent product transients.
+        if (0 !== $object->get_parent_id()) {
+            wc_delete_product_transients($object->get_parent_id());
+        }
+
+        /**
+         * Fires after a single object is deleted or trashed via the REST API.
+         *
+         * @param WC_Data          $object   The deleted or trashed object.
+         * @param WP_REST_Response $response The response data.
+         * @param WP_REST_Request  $request  The request sent to the API.
+         */
+        do_action("woocommerce_rest_delete_{$this->post_type}_object", $object, $response, $request);
+
+        return $response;
     }
 
     /**
