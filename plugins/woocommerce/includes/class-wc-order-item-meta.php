@@ -25,8 +25,10 @@ class WC_Order_Item_Meta
 
     /**
      * Order item
+     *
+     * @var array|\WC_Order_Item|null
      */
-    private ?array $item = null;
+    private array|\WC_Order_Item|null $item = null;
 
     /**
      * Post meta data
