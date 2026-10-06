@@ -5,7 +5,7 @@
 | Branch | `remote-test-2026-10-06` |
 | Spec | `documents/test-suite-plan.md` |
 | Brief | `documents/cloud-grind-agent.md` |
-| Latest SHA | `f8a4c7e093` |
+| Latest SHA | `479e066f93` |
 
 ## Work queue
 
@@ -24,3 +24,4 @@
 - **2026-10-06 ~23:05 UTC** — W3 resume: stop-on-failure past ~400 tests (`b2d25bfca8`). Fixes include checkout shipping methods, coupon/order item types, analytics product sync `round()`, mobile messaging blog id, `wc_let_to_num`, CSV export encoding.
 - **2026-10-06 ~23:08 UTC** — W3: stop-on-failure past **~514** tests (`5e48ca8b8b`). Additional fixes: log handler `wp_mail`, `wc_make_numeric_postcode`, PayPal API URL `strstr`, order item `calculate_taxes` signatures, legacy `WC_Order_Item_Meta` item type.
 - **2026-10-06 ~23:20 UTC** — W3 resume: stop-on-failure past **~900** tests (`f8a4c7e093`). Notable fixes: `WC_Comments` filter removable callback, order coupon/privacy assert fixes, `ObjectCache::is_cached`, variable product version invalidation, wc-admin `legacy-settings` REST args.
+- **2026-10-06 ~23:35 UTC** — W3: stop-on-failure past **~1076** tests (`479e066f93`). Fixes: REST `str_replace` int route params (variations + CRUD pagination), restore v2 product/variation `delete_item` success path, `WC_Brands` REST query `WP_REST_Request` type, shipping zone setting text cast for `stripslashes`.

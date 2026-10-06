@@ -61,9 +61,8 @@ class Customers extends WC_REST_Unit_Test_Case
                 'orderby' => 'id',
             ]
         );
-        $response     = $this->server->dispatch($request);
-        $customers    = $response->get_data();
-        $date_created = get_date_from_gmt(gmdate('Y-m-d H:i:s', strtotime($customer_1->get_date_created())));
+        $response  = $this->server->dispatch($request);
+        $customers = $response->get_data();
 
         $this->assertEquals(200, $response->get_status());
         $this->assertEquals(2, count($customers));
@@ -81,8 +80,8 @@ class Customers extends WC_REST_Unit_Test_Case
         $this->assertArraySubset(
             [
                 'id'                 => $customer_1->get_id(),
-                'date_created'       => wc_rest_prepare_date_response($date_created, false),
-                'date_created_gmt'   => wc_rest_prepare_date_response($date_created),
+                'date_created'       => wc_rest_prepare_date_response($customer_1->get_date_created(), false),
+                'date_created_gmt'   => wc_rest_prepare_date_response($customer_1->get_date_created()),
                 'date_modified'      => wc_rest_prepare_date_response($customer_1->get_date_modified(), false),
                 'date_modified_gmt'  => wc_rest_prepare_date_response($customer_1->get_date_modified()),
                 'email'              => 'test@woo.local',
@@ -143,9 +142,8 @@ class Customers extends WC_REST_Unit_Test_Case
                 'orderby' => 'id',
             ]
         );
-        $response     = $this->server->dispatch($request);
-        $customers    = $response->get_data();
-        $date_created = get_date_from_gmt(gmdate('Y-m-d H:i:s', strtotime($customer_3->get_date_created())));
+        $response  = $this->server->dispatch($request);
+        $customers = $response->get_data();
 
         $this->assertEquals(200, $response->get_status());
 
@@ -162,8 +160,8 @@ class Customers extends WC_REST_Unit_Test_Case
         $this->assertArraySubset(
             [
                 'id'                 => $customer_3->get_id(),
-                'date_created'       => wc_rest_prepare_date_response($date_created, false),
-                'date_created_gmt'   => wc_rest_prepare_date_response($date_created),
+                'date_created'       => wc_rest_prepare_date_response($customer_3->get_date_created(), false),
+                'date_created_gmt'   => wc_rest_prepare_date_response($customer_3->get_date_created()),
                 'date_modified'      => wc_rest_prepare_date_response($customer_3->get_date_modified(), false),
                 'date_modified_gmt'  => wc_rest_prepare_date_response($customer_3->get_date_modified()),
                 'email'              => 'timezonetest@woo.local',
