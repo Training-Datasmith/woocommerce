@@ -751,7 +751,7 @@ class WC_REST_Product_Variations_V2_Controller extends WC_REST_Products_V2_Contr
     protected function prepare_links($object, $request): array
     {
         $product_id = (int) $request['product_id'];
-        $base       = str_replace('(?P<product_id>[\d]+)', $product_id, $this->rest_base);
+        $base       = str_replace('(?P<product_id>[\d]+)', (string) $product_id, $this->rest_base);
         return [
             'self'       => [
                 'href' => rest_url(sprintf('/%s/%s/%d', $this->namespace, $base, $object->get_id())),
