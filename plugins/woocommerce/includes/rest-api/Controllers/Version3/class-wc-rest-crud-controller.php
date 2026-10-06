@@ -440,7 +440,7 @@ abstract class WC_REST_CRUD_Controller extends WC_REST_Posts_Controller
                 $attrib_name_end  = strpos($attrib_name_match[0], '>', $attrib_name_match[1]);
                 $attrib_name      = substr($attrib_name_match[0], $beginning_offset, $attrib_name_end - $beginning_offset);
                 if (isset($request[ $attrib_name ])) {
-                    $base = str_replace("(?P<$attrib_name>[\d]+)", $request[ $attrib_name ], $base);
+                    $base = str_replace("(?P<$attrib_name>[\d]+)", (string) $request[ $attrib_name ], $base);
                 }
             }
         }
