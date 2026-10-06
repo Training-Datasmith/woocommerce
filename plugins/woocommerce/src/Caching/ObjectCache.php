@@ -276,9 +276,9 @@ abstract class ObjectCache
      * @param int|string $id The id of the object to check.
      * @return bool True if there's a cached object with the specified id.
      */
-    public function is_cached(string $id): bool
+    public function is_cached(int|string $id): bool
     {
-        return $this->get_cache_engine()->is_cached($id, $this->get_object_type());
+        return $this->get_cache_engine()->is_cached((string) $id, $this->get_object_type());
     }
 
     /**
