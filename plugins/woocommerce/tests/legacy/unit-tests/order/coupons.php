@@ -458,7 +458,7 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
 
         $applied_coupons = $order->get_items('coupon');
 
-        $this->assertEquals('16.95');
+        $this->assertEquals('16.95', $order->get_total());
         $this->assertEquals('1.73', $order->get_total_tax());
         $this->assertEquals('1.69', $order->get_discount_total());
     }
@@ -495,7 +495,7 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
         $order->calculate_totals(true);
         $order->save();
 
-        $this->assertEquals('998.00');
+        $this->assertEquals('998.00', $order->get_total());
 
         // Remove the custom discount type handler, trash the coupon, recalculate: should not throw.
 
@@ -509,7 +509,7 @@ class WC_Tests_Order_Coupons extends WC_Unit_Test_Case
         $order->recalculate_coupons();
         $order->save();
 
-        $this->assertEquals('1000.00');
+        $this->assertEquals('1000.00', $order->get_total());
     }
 
     /**
