@@ -527,7 +527,7 @@ class OnboardingTasks extends \WC_REST_Data_Controller
         $products = wp_count_posts('product');
         if ($products->publish >= 4) {
             $images   = self::sideload_homepage_images($post_id, 1);
-            $image_1  = ! empty($images[0]) ? $images[0] : '';
+            $image_1  = ! empty($images[0]) ? $images[0] : [];
             $template = self::get_homepage_cover_block($image_1) . '
 				<!-- wp:heading {"align":"center"} -->
 				<h2 style="text-align:center">' . __('Shop by Category', 'woocommerce') . '</h2>
@@ -562,9 +562,9 @@ class OnboardingTasks extends \WC_REST_Data_Controller
         }
 
         $images   = self::sideload_homepage_images($post_id, 3);
-        $image_1  = ! empty($images[0]) ? $images[0] : '';
-        $image_2  = ! empty($images[1]) ? $images[1] : '';
-        $image_3  = ! empty($images[2]) ? $images[2] : '';
+        $image_1  = ! empty($images[0]) ? $images[0] : [];
+        $image_2  = ! empty($images[1]) ? $images[1] : [];
+        $image_3  = ! empty($images[2]) ? $images[2] : [];
         $template = self::get_homepage_cover_block($image_1) . '
 		<!-- wp:heading {"align":"center"} -->
 		<h2 style="text-align:center">' . __('New Products', 'woocommerce') . '</h2>
