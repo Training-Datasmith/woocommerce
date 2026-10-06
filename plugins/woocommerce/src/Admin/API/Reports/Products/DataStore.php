@@ -552,7 +552,7 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
             $shipping_tax_amount = $order->get_item_shipping_tax_amount($order_item);
             $coupon_amount       = $order->get_item_coupon_amount($order_item);
             $tax_amount          = $order->get_item_cart_tax_amount($order_item);
-            $net_revenue         = round($order_item->get_total('edit'), $decimals);
+            $net_revenue         = round((float) $order_item->get_total('edit'), $decimals);
 
             // If the order is a full refund and there is no order items. The order item here is the parent order item.
             if ($is_full_refund_without_line_items) {
