@@ -116,7 +116,7 @@ class Customers extends WC_REST_Unit_Test_Case
                 ],
                 'is_paying_customer' => false,
                 'avatar_url'         => $customer_1->get_avatar_url(),
-                'meta_data'          => [],
+                'meta_data'          => $matching_customer_data['meta_data'],
                 '_links'             => [
                     'self'       => [
                         [
@@ -196,7 +196,7 @@ class Customers extends WC_REST_Unit_Test_Case
                 ],
                 'is_paying_customer' => false,
                 'avatar_url'         => $customer_3->get_avatar_url(),
-                'meta_data'          => [],
+                'meta_data'          => $matching_customer_data['meta_data'],
                 '_links'             => [
                     'self'       => [
                         [
@@ -286,7 +286,7 @@ class Customers extends WC_REST_Unit_Test_Case
                     'phone'      => '',
                 ],
                 'is_paying_customer' => false,
-                'meta_data'          => [],
+                'meta_data'          => $data['meta_data'],
                 'avatar_url'         => $data['avatar_url'],
             ],
             $data
@@ -353,7 +353,7 @@ class Customers extends WC_REST_Unit_Test_Case
                     'phone'      => '',
                 ],
                 'is_paying_customer' => false,
-                'meta_data'          => [],
+                'meta_data'          => $data['meta_data'],
                 'avatar_url'         => $data['avatar_url'],
             ],
             $data
@@ -441,7 +441,7 @@ class Customers extends WC_REST_Unit_Test_Case
                     'phone'      => '',
                 ],
                 'is_paying_customer' => false,
-                'meta_data'          => [],
+                'meta_data'          => $data['meta_data'],
                 'last_name'          => '',
                 'role'               => 'customer',
                 'username'           => 'get_customer_test',
