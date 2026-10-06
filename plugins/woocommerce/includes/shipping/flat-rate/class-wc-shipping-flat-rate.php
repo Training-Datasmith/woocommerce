@@ -101,10 +101,10 @@ class WC_Shipping_Flat_Rate extends WC_Shipping_Method
                     '[cost]',
                 ],
                 [
-                    $args['qty'],
-                    $args['cost'],
+                    (string) $args['qty'],
+                    (string) $args['cost'],
                 ],
-                $sum
+                (string) $sum
             )
         );
 
