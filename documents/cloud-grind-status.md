@@ -5,7 +5,7 @@
 | Branch | `remote-test-2026-10-06` |
 | Spec | `documents/test-suite-plan.md` |
 | Brief | `documents/cloud-grind-agent.md` |
-| Latest SHA | `cd0f4945f8` |
+| Latest SHA | `e8d351df08` |
 
 ## Work queue
 
@@ -20,3 +20,4 @@
 ## Log
 
 - **2026-10-06 ~22:38 UTC** — W0/W1: Added `.cursor/install.sh`, `start.sh`, `environment.json`; `plugins/woocommerce/.wp-env.corpus.json` (PHP 8.4); `bin/corpus-wp-env-start.sh` (iptables FORWARD for DinD). wp-env starts on PHP 8.4.26. PHPUnit lists **9752** tests; bootstrap green after Container/test-stub fixes. W3: fixing runtime TypeError/signature failures (e.g. `wc_format_decimal`, `LookupDataStore`, `ObjectCache`, order items).
+- **2026-10-06 ~22:40 UTC** — W3: Stop-on-failure past test ~13 (`wc_hex_darker`/`dechex` int cast). Full suite run in progress on branch tip `e8d351df08`.
