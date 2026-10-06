@@ -22,10 +22,6 @@ class Utils
     public static function wp_version_compare($version, $operator = null): bool
     {
         $current_wp_version = get_bloginfo('version');
-        if (preg_match('/^([0-9]+\.[0-9]+)/', $current_wp_version, $matches)) {
-            $current_wp_version = (float) $matches[1];
-        }
-
         // Replace non-alphanumeric characters with a dot.
         $current_wp_version = preg_replace('/[^0-9a-zA-Z\.]+/i', '.', $current_wp_version);
         $version            = preg_replace('/[^0-9a-zA-Z\.]+/i', '.', $version);

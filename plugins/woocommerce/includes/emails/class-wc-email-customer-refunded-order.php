@@ -82,7 +82,7 @@ if (! class_exists('WC_Email_Customer_Refunded_Order', false)) :
          * @since  3.1.0
          * @return string
          */
-        public function get_default_subject($partial = false)
+        public function get_default_subject(bool $partial = false): string
         {
             if ($partial) {
                 return __('Your {site_title} order #{order_number} has been partially refunded', 'woocommerce');
@@ -97,7 +97,7 @@ if (! class_exists('WC_Email_Customer_Refunded_Order', false)) :
          * @since  3.1.0
          * @return string
          */
-        public function get_default_heading($partial = false)
+        public function get_default_heading(bool $partial = false): string
         {
             if ($partial) {
                 return $this->email_improvements_enabled
@@ -229,8 +229,7 @@ if (! class_exists('WC_Email_Customer_Refunded_Order', false)) :
          *
          * @return string
          */
-        public function get_content_html()
-        {
+        public function get_content_html(): string        {
             return wc_get_template_html(
                 $this->template_html,
                 [
@@ -252,8 +251,7 @@ if (! class_exists('WC_Email_Customer_Refunded_Order', false)) :
          *
          * @return string
          */
-        public function get_content_plain()
-        {
+        public function get_content_plain(): string        {
             return wc_get_template_html(
                 $this->template_plain,
                 [
@@ -296,8 +294,7 @@ if (! class_exists('WC_Email_Customer_Refunded_Order', false)) :
          * @since 3.7.0
          * @return string
          */
-        public function get_default_additional_content()
-        {
+        public function get_default_additional_content(): string        {
             return $this->email_improvements_enabled
                 ? __('If you need any help with your order, please contact us at {store_email}.', 'woocommerce')
                 : __('We hope to see you again soon.', 'woocommerce');

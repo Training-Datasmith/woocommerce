@@ -723,7 +723,7 @@ class WC_REST_Webhooks_V1_Controller extends WC_REST_Controller
      */
     public function get_collection_params()
     {
-        $params = null;
+        $params = parent::get_collection_params();
 
         $params['context']['default'] = 'view';
 

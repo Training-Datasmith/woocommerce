@@ -63,7 +63,7 @@ class CartExtensionsSchema extends AbstractSchema
      *
      * @return array
      */
-    public function get_item_response($request = null)
+    public function get_item_response($request = null): array
     {
         try {
             $callback = $this->extend->get_update_callback($request['namespace']);

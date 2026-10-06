@@ -34,7 +34,7 @@ abstract class WC_Payment_Token extends WC_Legacy_Payment_Token
      *
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'gateway_id' => '',
         'token'      => '',
         'is_default' => false,

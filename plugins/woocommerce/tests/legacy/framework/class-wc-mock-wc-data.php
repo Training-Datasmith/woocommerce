@@ -122,7 +122,7 @@ class WC_Mock_WC_Data extends WC_Data
     /**
      * Data array
      */
-    protected $data = [
+    protected array $data = [
         'content'    => '',
         'bool_value' => false,
     ];

@@ -69,8 +69,7 @@ class DataStore extends DownloadsDataStore implements DataStoreInterface
      *
      * @return array Query parameters.
      */
-    public function get_default_query_vars()
-    {
+    public function get_default_query_vars(): array    {
         $defaults             = parent::get_default_query_vars();
         $defaults['interval'] = 'week';
 

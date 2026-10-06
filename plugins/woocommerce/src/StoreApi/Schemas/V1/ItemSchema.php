@@ -14,7 +14,7 @@ abstract class ItemSchema extends ProductSchema
      *
      * @return array
      */
-    public function get_properties()
+    public function get_properties(): array
     {
         return [
             'key'                  => [

@@ -311,9 +311,9 @@ class MarketingCampaigns extends WC_REST_Controller
      *
      * @return array Query parameters for the collection.
      */
-    public function get_collection_params()
+    public function get_collection_params(): array
     {
-        $params = null;
+        $params = parent::get_collection_params();
         unset($params['search']);
 
         return $params;

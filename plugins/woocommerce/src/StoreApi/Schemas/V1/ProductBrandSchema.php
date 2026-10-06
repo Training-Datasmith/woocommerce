@@ -50,7 +50,7 @@ class ProductBrandSchema extends TermSchema
      *
      * @return array
      */
-    public function get_properties()
+    public function get_properties(): array
     {
         $schema                 = parent::get_properties();
         $schema['image']        = [
@@ -82,7 +82,7 @@ class ProductBrandSchema extends TermSchema
      * @param \WP_Term $term Term object.
      * @return array
      */
-    public function get_item_response($term)
+    public function get_item_response($term): array
     {
         $response = parent::get_item_response($term);
         $count    = get_term_meta($term->term_id, 'product_count_product_brand', true);

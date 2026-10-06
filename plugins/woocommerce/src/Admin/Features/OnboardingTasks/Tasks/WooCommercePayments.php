@@ -130,8 +130,7 @@ class WooCommercePayments extends Task
      *
      * @return bool
      */
-    public function can_view()
-    {
+    public function can_view(): bool    {
         return self::is_supported();
     }
 

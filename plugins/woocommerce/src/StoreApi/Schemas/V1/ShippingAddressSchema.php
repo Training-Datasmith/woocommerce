@@ -36,7 +36,7 @@ class ShippingAddressSchema extends AbstractAddressSchema
      * @throws RouteException When the invalid object types are provided.
      * @return array
      */
-    public function get_item_response($address)
+    public function get_item_response($address): array
     {
         $validation_util = new ValidationUtils();
         if (($address instanceof \WC_Customer || $address instanceof \WC_Order)) {

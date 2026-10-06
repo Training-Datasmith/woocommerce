@@ -28,7 +28,7 @@ class WC_Customer_Download_Log extends WC_Data
      *
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'timestamp'       => null,
         'permission_id'   => 0,
         'user_id'         => null,

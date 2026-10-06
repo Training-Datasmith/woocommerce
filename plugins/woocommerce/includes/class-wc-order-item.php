@@ -47,7 +47,7 @@ class WC_Order_Item extends WC_Data implements ArrayAccess
      * @since 3.0.0
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'order_id' => 0,
         'name'     => '',
     ];

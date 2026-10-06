@@ -26,7 +26,7 @@ class WC_Product_Download implements ArrayAccess
      * @since 3.0.0
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'id'      => '',
         'name'    => '',
         'file'    => '',

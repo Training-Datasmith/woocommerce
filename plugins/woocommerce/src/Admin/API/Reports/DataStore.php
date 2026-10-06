@@ -273,7 +273,7 @@ class DataStore extends SqlQuery implements DataStoreInterface
      * @param array $query_args Query parameters.
      * @return stdClass|WP_Error Data object `{ totals: *, intervals: array, total: int, pages: int, page_no: int }`, or error.
      */
-    public function get_noncached_data($query_args)
+    public function get_noncached_data(array $query_args)
     {
         /* translators: %s: Method name */
         return new \WP_Error('invalid-method', sprintf(__("Method '%s' not implemented. Must be overridden in subclass.", 'woocommerce'), __METHOD__), [ 'status' => 405 ]);

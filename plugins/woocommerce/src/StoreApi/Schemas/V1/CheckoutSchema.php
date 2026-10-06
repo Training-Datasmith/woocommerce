@@ -212,7 +212,7 @@ class CheckoutSchema extends AbstractSchema
      * @param object $item Results from checkout action.
      * @return array
      */
-    public function get_item_response($item)
+    public function get_item_response($item): array
     {
         $cart           = property_exists($item, 'cart') ? $item->cart : null;
         $payment_result = property_exists($item, 'payment_result') ? $item->payment_result : null;

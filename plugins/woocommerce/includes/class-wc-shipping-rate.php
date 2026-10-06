@@ -26,7 +26,7 @@ class WC_Shipping_Rate implements JsonSerializable
      * @since 9.2.0 Added description and delivery_time.
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'id'            => '',
         'method_id'     => '',
         'instance_id'   => 0,

@@ -63,7 +63,7 @@ class WC_Product extends WC_Abstract_Legacy_Product
      *
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'name'               => '',
         'slug'               => '',
         'date_created'       => null,

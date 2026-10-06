@@ -154,8 +154,7 @@ class DataStore extends VariationsDataStore implements DataStoreInterface
      *
      * @return array Query parameters.
      */
-    public function get_default_query_vars()
-    {
+    public function get_default_query_vars(): array    {
         $defaults                      = parent::get_default_query_vars();
         $defaults['category_includes'] = [];
         $defaults['interval']          = 'week';

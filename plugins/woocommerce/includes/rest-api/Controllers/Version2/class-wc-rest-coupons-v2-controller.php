@@ -152,8 +152,7 @@ class WC_REST_Coupons_V2_Controller extends WC_REST_CRUD_Controller
      * @param  WC_Data $object WC_Data instance.
      * @return array
      */
-    protected function get_formatted_item_data($object)
-    {
+    protected function get_formatted_item_data($object): array    {
         $data = $object->get_data();
 
         $format_decimal = [ 'amount', 'minimum_amount', 'maximum_amount' ];

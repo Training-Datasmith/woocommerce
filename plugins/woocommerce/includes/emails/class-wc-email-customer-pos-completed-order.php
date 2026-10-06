@@ -103,7 +103,7 @@ if (! class_exists('WC_Email_Customer_POS_Completed_Order', false)) :
          *
          * @since  3.1.0
          */
-        public function get_default_subject(): string
+        public function get_default_subject(bool $partial = false): string
         {
             $store_name = $this->get_pos_store_name();
             /* translators: %1$s: Order number, %2$s: Store name */
@@ -116,8 +116,7 @@ if (! class_exists('WC_Email_Customer_POS_Completed_Order', false)) :
          * @since  3.1.0
          * @return string
          */
-        public function get_default_heading()
-        {
+        public function get_default_heading(bool $partial = false): string        {
             return __('Thank you for your in-store purchase', 'woocommerce');
         }
 
@@ -126,8 +125,7 @@ if (! class_exists('WC_Email_Customer_POS_Completed_Order', false)) :
          *
          * @return string
          */
-        public function get_content_html()
-        {
+        public function get_content_html(): string        {
             $this->add_pos_customizations();
             add_action('woocommerce_pos_email_header', $this->email_header(...));
             add_action('woocommerce_pos_email_footer', $this->email_footer(...));
@@ -158,8 +156,7 @@ if (! class_exists('WC_Email_Customer_POS_Completed_Order', false)) :
          *
          * @return string
          */
-        public function get_content_plain()
-        {
+        public function get_content_plain(): string        {
             $this->add_pos_customizations();
             $content = wc_get_template_html(
                 $this->template_plain,

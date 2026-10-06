@@ -29,7 +29,7 @@ class WC_Customer_Download extends WC_Data implements ArrayAccess
      * @since 3.0.0
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'download_id'         => '',
         'product_id'          => 0,
         'user_id'             => 0,

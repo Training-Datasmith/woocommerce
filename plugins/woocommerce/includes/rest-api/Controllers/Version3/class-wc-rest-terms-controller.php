@@ -720,7 +720,7 @@ abstract class WC_REST_Terms_Controller extends WC_REST_Controller
      */
     public function get_collection_params()
     {
-        $params = null;
+        $params = parent::get_collection_params();
 
         $params['context']['default'] = 'view';
 

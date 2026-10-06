@@ -97,8 +97,7 @@ if (! class_exists('WC_Email_Customer_Fulfillment_Updated', false)) :
          * @since  3.1.0
          * @return string
          */
-        public function get_default_subject()
-        {
+        public function get_default_subject(bool $partial = false): string        {
             return __('A shipment from {site_title} order {order_number} has been updated', 'woocommerce');
         }
 
@@ -108,8 +107,7 @@ if (! class_exists('WC_Email_Customer_Fulfillment_Updated', false)) :
          * @since  3.1.0
          * @return string
          */
-        public function get_default_heading()
-        {
+        public function get_default_heading(bool $partial = false): string        {
             return __('Your shipment has been updated', 'woocommerce');
         }
 
@@ -118,8 +116,7 @@ if (! class_exists('WC_Email_Customer_Fulfillment_Updated', false)) :
          *
          * @return string
          */
-        public function get_content_html()
-        {
+        public function get_content_html(): string        {
             $this->maybe_init_fulfillment_for_preview($this->object);
             return wc_get_template_html(
                 $this->template_html,
@@ -140,8 +137,7 @@ if (! class_exists('WC_Email_Customer_Fulfillment_Updated', false)) :
          *
          * @return string
          */
-        public function get_content_plain()
-        {
+        public function get_content_plain(): string        {
             $this->maybe_init_fulfillment_for_preview($this->object);
             return wc_get_template_html(
                 $this->template_plain,
@@ -183,8 +179,7 @@ if (! class_exists('WC_Email_Customer_Fulfillment_Updated', false)) :
          * @since 3.7.0
          * @return string
          */
-        public function get_default_additional_content()
-        {
+        public function get_default_additional_content(): string        {
             return __('If anything looks off or you have questions, feel free to contact our support team.', 'woocommerce');
         }
 

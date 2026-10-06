@@ -662,7 +662,7 @@ class OrdersTableDataStore extends \Abstract_WC_Order_Data_Store_CPT implements 
      *
      * @return \Abstract_WC_Order_Data_Store_CPT
      */
-    protected function get_post_data_store_for_backfill(): \WC_Order_Data_Store_CPT
+    protected function get_post_data_store_for_backfill(): \Abstract_WC_Order_Data_Store_CPT
     {
         return new \WC_Order_Data_Store_CPT();
     }

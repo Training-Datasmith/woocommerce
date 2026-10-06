@@ -37,7 +37,7 @@ class WC_Shipping_Zone extends WC_Legacy_Shipping_Zone
      *
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'zone_name'      => '',
         'zone_order'     => 0,
         'zone_locations' => [],

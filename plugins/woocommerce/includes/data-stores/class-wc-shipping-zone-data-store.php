@@ -441,9 +441,9 @@ class WC_Shipping_Zone_Data_Store extends WC_Data_Store_WP implements WC_Object_
      * @since 10.5.0
      * @param WC_Shipping_Zone $zone Shipping zone object.
      * @param stdClass         $meta Meta object (containing at least ->id).
-     * @return array Empty array - no meta was deleted.
+     * @return void
      */
-    public function delete_meta(&$zone, $meta): array
+    public function delete_meta(&$zone, $meta): void
     {
         wc_get_logger()->warning(
             'Attempted to delete meta from a shipping zone, but shipping zones do not support meta data.',
@@ -453,7 +453,6 @@ class WC_Shipping_Zone_Data_Store extends WC_Data_Store_WP implements WC_Object_
                 'backtrace' => true,
             ]
         );
-        return [];
     }
 
     /**
@@ -487,9 +486,9 @@ class WC_Shipping_Zone_Data_Store extends WC_Data_Store_WP implements WC_Object_
      * @since 10.5.0
      * @param WC_Shipping_Zone $zone Shipping zone object.
      * @param stdClass         $meta Meta object (containing ->id, ->key and ->value).
-     * @return bool False - meta was not updated.
+     * @return void
      */
-    public function update_meta(&$zone, $meta): bool
+    public function update_meta(&$zone, $meta): void
     {
         wc_get_logger()->warning(
             'Attempted to update meta on a shipping zone, but shipping zones do not support meta data.',
@@ -500,6 +499,5 @@ class WC_Shipping_Zone_Data_Store extends WC_Data_Store_WP implements WC_Object_
                 'backtrace' => true,
             ]
         );
-        return false;
     }
 }

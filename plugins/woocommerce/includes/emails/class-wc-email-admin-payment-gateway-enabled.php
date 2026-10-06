@@ -94,8 +94,7 @@ if (! class_exists('WC_Email_Admin_Payment_Gateway_Enabled', false)) :
          * @since 10.6.0
          * @return string
          */
-        public function get_default_subject()
-        {
+        public function get_default_subject(bool $partial = false): string        {
             return __('[{site_title}] Payment gateway "{gateway_title}" enabled', 'woocommerce');
         }
 
@@ -105,8 +104,7 @@ if (! class_exists('WC_Email_Admin_Payment_Gateway_Enabled', false)) :
          * @since 10.6.0
          * @return string
          */
-        public function get_default_heading()
-        {
+        public function get_default_heading(bool $partial = false): string        {
             return __('Payment gateway "{gateway_title}" enabled', 'woocommerce');
         }
 
@@ -163,7 +161,7 @@ if (! class_exists('WC_Email_Admin_Payment_Gateway_Enabled', false)) :
          * @since 10.6.0
          * @return string
          */
-        public function get_recipient()
+        public function get_recipient(): string
         {
             $recipient = parent::get_recipient();
 
@@ -202,8 +200,7 @@ if (! class_exists('WC_Email_Admin_Payment_Gateway_Enabled', false)) :
          * @since 10.6.0
          * @return string
          */
-        public function get_content_html()
-        {
+        public function get_content_html(): string        {
             return wc_get_template_html(
                 $this->template_html,
                 [
@@ -227,8 +224,7 @@ if (! class_exists('WC_Email_Admin_Payment_Gateway_Enabled', false)) :
          * @since 10.6.0
          * @return string
          */
-        public function get_content_plain()
-        {
+        public function get_content_plain(): string        {
             return wc_get_template_html(
                 $this->template_plain,
                 [
@@ -323,8 +319,7 @@ if (! class_exists('WC_Email_Admin_Payment_Gateway_Enabled', false)) :
          * @since 10.6.0
          * @return string
          */
-        public function get_default_additional_content()
-        {
+        public function get_default_additional_content(): string        {
             return __('If this was intentional, you can safely ignore and delete this email.', 'woocommerce');
         }
 

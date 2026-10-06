@@ -56,7 +56,7 @@ abstract class WC_Settings_API
      *
      * @var array
      */
-    protected $data = [];
+    protected array $data = [];
 
     /**
      * Get the form fields after they are initialized.

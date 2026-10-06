@@ -375,8 +375,7 @@ class WC_REST_Orders_V2_Controller extends WC_REST_CRUD_Controller
      *
      * @return array
      */
-    protected function get_formatted_item_data($order)
-    {
+    protected function get_formatted_item_data($order): array    {
         $extra_fields   = [ 'meta_data', 'line_items', 'tax_lines', 'shipping_lines', 'fee_lines', 'coupon_lines', 'refunds', 'payment_url', 'is_editable', 'needs_payment', 'needs_processing' ];
         $format_decimal = [ 'discount_total', 'discount_tax', 'shipping_total', 'shipping_tax', 'shipping_total', 'shipping_tax', 'cart_tax', 'total', 'total_tax' ];
         $format_date    = [ 'date_created', 'date_modified', 'date_completed', 'date_paid' ];

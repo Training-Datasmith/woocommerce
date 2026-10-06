@@ -195,7 +195,7 @@ class WC_Order_Refund extends WC_Abstract_Order
      * @param string $key Value to get.
      * @return mixed
      */
-    public function __get($key)
+    public function __get(string $key): mixed
     {
         wc_doing_it_wrong($key, 'Refund properties should not be accessed directly.', '3.0');
         /**

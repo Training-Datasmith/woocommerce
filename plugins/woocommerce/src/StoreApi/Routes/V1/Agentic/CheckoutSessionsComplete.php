@@ -45,20 +45,6 @@ class CheckoutSessionsComplete extends AbstractCartRoute
     public const SCHEMA_TYPE = CheckoutSessionSchema::IDENTIFIER;
 
     /**
-     * Order controller for managing orders.
-     *
-     * @var OrderController
-     */
-    protected $order_controller;
-
-    /**
-     * Cart controller for managing cart operations.
-     *
-     * @var CartController
-     */
-    protected $cart_controller;
-
-    /**
      * The order object for the current request.
      *
      * @var \WC_Order|null

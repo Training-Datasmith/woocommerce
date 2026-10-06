@@ -68,8 +68,7 @@ if (! class_exists('WC_Email_Customer_Cancelled_Order', false)) :
          * @since  1.0.0
          * @return string
          */
-        public function get_default_subject()
-        {
+        public function get_default_subject(bool $partial = false): string        {
             return __('[{site_title}]: Your order #{order_number} has been cancelled', 'woocommerce');
         }
 
@@ -79,8 +78,7 @@ if (! class_exists('WC_Email_Customer_Cancelled_Order', false)) :
          * @since  1.0.0
          * @return string
          */
-        public function get_default_heading()
-        {
+        public function get_default_heading(bool $partial = false): string        {
             return $this->email_improvements_enabled
                 ? __('Order cancelled: #{order_number}', 'woocommerce')
                 : __('Order Cancelled: #{order_number}', 'woocommerce');
@@ -120,8 +118,7 @@ if (! class_exists('WC_Email_Customer_Cancelled_Order', false)) :
          *
          * @return string
          */
-        public function get_content_html()
-        {
+        public function get_content_html(): string        {
             return wc_get_template_html(
                 $this->template_html,
                 [
@@ -140,8 +137,7 @@ if (! class_exists('WC_Email_Customer_Cancelled_Order', false)) :
          *
          * @return string
          */
-        public function get_content_plain()
-        {
+        public function get_content_plain(): string        {
             return wc_get_template_html(
                 $this->template_plain,
                 [
@@ -179,8 +175,7 @@ if (! class_exists('WC_Email_Customer_Cancelled_Order', false)) :
          * @since 1.0.0
          * @return string
          */
-        public function get_default_additional_content()
-        {
+        public function get_default_additional_content(): string        {
             return __('We hope to see you again soon.', 'woocommerce');
         }
 

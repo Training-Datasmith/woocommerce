@@ -501,7 +501,7 @@ class WC_Email extends WC_Settings_API
      * @since  3.1.0
      * @return string
      */
-    public function get_default_subject()
+    public function get_default_subject(bool $partial = false): string
     {
         return $this->subject;
     }
@@ -512,7 +512,7 @@ class WC_Email extends WC_Settings_API
      * @since  3.1.0
      * @return string
      */
-    public function get_default_heading()
+    public function get_default_heading(bool $partial = false): string
     {
         return $this->heading;
     }

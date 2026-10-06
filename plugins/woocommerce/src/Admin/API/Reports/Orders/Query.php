@@ -44,8 +44,7 @@ class Query extends GenericQuery
      *
      * @return array
      */
-    protected function get_default_query_vars()
-    {
+    protected function get_default_query_vars(): array    {
         return \WC_Object_Query::get_default_query_vars();
     }
 }

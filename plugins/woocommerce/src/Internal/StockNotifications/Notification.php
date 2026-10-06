@@ -38,7 +38,7 @@ class Notification extends \WC_Data
      *
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'status'              => NotificationStatus::PENDING,
         'product_id'          => 0,
         'user_id'             => 0,

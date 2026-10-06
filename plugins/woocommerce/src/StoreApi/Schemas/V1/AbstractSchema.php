@@ -59,7 +59,7 @@ abstract class AbstractSchema
      * @param mixed $item Item to get response for.
      * @return array|stdClass
      */
-    public function get_item_response($item)
+    public function get_item_response($item): array
     {
         return [];
     }
@@ -69,7 +69,7 @@ abstract class AbstractSchema
      *
      * @return array
      */
-    abstract public function get_properties();
+    abstract public function get_properties(): array;
 
     /**
      * Recursive removal of arg_options.

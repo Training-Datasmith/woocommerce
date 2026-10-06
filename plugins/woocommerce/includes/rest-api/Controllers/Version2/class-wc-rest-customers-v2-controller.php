@@ -34,8 +34,7 @@ class WC_REST_Customers_V2_Controller extends WC_REST_Customers_V1_Controller
      * @param  WC_Data $object WC_Data instance.
      * @return array
      */
-    protected function get_formatted_item_data($object)
-    {
+    protected function get_formatted_item_data($object): array    {
         $formatted_data                 = $this->get_formatted_item_data_core($object);
         $formatted_data['orders_count'] = $object->get_order_count();
         $formatted_data['total_spent']  = $object->get_total_spent();

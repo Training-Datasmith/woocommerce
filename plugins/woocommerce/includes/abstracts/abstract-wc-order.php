@@ -45,7 +45,7 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order
      * @since 3.0.0
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'parent_id'          => 0,
         'status'             => '',
         'currency'           => '',
@@ -999,7 +999,7 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order
      *
      * @return array Array of values.
      */
-    protected function get_values_for_total($field)
+    protected function get_values_for_total(string $field): array
     {
         return array_map(
             fn (\WC_Order_Item $item) => wc_add_number_precision((float) $item[ $field ], false),

@@ -84,7 +84,7 @@ if (! class_exists('WC_Email_Customer_POS_Refunded_Order', false)) :
          * @param bool $partial Whether it is a partial refund or a full refund.
          * @since  3.1.0
          */
-        public function get_default_subject($partial = false): string
+        public function get_default_subject(bool $partial = false): string
         {
             $store_name = $this->get_pos_store_name();
             if ($partial) {
@@ -102,7 +102,7 @@ if (! class_exists('WC_Email_Customer_POS_Refunded_Order', false)) :
          * @since  3.1.0
          * @return string
          */
-        public function get_default_heading($partial = false)
+        public function get_default_heading(bool $partial = false): string
         {
             if ($partial) {
                 return $this->email_improvements_enabled
@@ -241,8 +241,7 @@ if (! class_exists('WC_Email_Customer_POS_Refunded_Order', false)) :
          *
          * @return string
          */
-        public function get_content_html()
-        {
+        public function get_content_html(): string        {
             $this->add_pos_customizations();
             add_action('woocommerce_pos_email_header', $this->email_header(...));
             add_action('woocommerce_pos_email_footer', $this->email_footer(...));
@@ -276,8 +275,7 @@ if (! class_exists('WC_Email_Customer_POS_Refunded_Order', false)) :
          *
          * @return string
          */
-        public function get_content_plain()
-        {
+        public function get_content_plain(): string        {
             $this->add_pos_customizations();
             $content = wc_get_template_html(
                 $this->template_plain,

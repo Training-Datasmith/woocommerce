@@ -22,7 +22,7 @@ class WC_Customer extends WC_Legacy_Customer
      *
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'date_created'       => null,
         'date_modified'      => null,
         'email'              => '',

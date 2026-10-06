@@ -68,8 +68,7 @@ if (! class_exists('WC_Email_Failed_Order', false)) :
          * @since  3.1.0
          * @return string
          */
-        public function get_default_subject()
-        {
+        public function get_default_subject(bool $partial = false): string        {
             return __('[{site_title}]: Order #{order_number} has failed', 'woocommerce');
         }
 
@@ -79,8 +78,7 @@ if (! class_exists('WC_Email_Failed_Order', false)) :
          * @since  3.1.0
          * @return string
          */
-        public function get_default_heading()
-        {
+        public function get_default_heading(bool $partial = false): string        {
             return $this->email_improvements_enabled
                 ? __('Order failed: #{order_number}', 'woocommerce')
                 : __('Order Failed: #{order_number}', 'woocommerce');
@@ -118,8 +116,7 @@ if (! class_exists('WC_Email_Failed_Order', false)) :
          *
          * @return string
          */
-        public function get_content_html()
-        {
+        public function get_content_html(): string        {
             return wc_get_template_html(
                 $this->template_html,
                 [
@@ -138,8 +135,7 @@ if (! class_exists('WC_Email_Failed_Order', false)) :
          *
          * @return string
          */
-        public function get_content_plain()
-        {
+        public function get_content_plain(): string        {
             return wc_get_template_html(
                 $this->template_plain,
                 [
@@ -177,8 +173,7 @@ if (! class_exists('WC_Email_Failed_Order', false)) :
          * @since 3.7.0
          * @return string
          */
-        public function get_default_additional_content()
-        {
+        public function get_default_additional_content(): string        {
             return $this->email_improvements_enabled
                 ? __('We hope they’ll be back soon! Read more about <a href="https://woocommerce.com/document/managing-orders/">troubleshooting failed payments</a>.', 'woocommerce')
                 : __('Hopefully they’ll be back. Read more about <a href="https://woocommerce.com/document/managing-orders/">troubleshooting failed payments</a>.', 'woocommerce');

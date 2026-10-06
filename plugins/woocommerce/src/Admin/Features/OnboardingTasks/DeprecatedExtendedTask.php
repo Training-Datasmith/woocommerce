@@ -214,8 +214,7 @@ class DeprecatedExtendedTask extends Task
      *
      * @return bool
      */
-    public function can_view()
-    {
+    public function can_view(): bool    {
         return $this->can_view;
     }
 }

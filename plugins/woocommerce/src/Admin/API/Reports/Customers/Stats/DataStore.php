@@ -73,8 +73,7 @@ class DataStore extends CustomersDataStore implements DataStoreInterface
      *
      * @return array Query parameters.
      */
-    public function get_default_query_vars()
-    {
+    public function get_default_query_vars(): array    {
         $defaults            = ReportsDataStore::get_default_query_vars();
         $defaults['orderby'] = 'date_registered';
         // Do not set `order_before` and `order_after` here, like in the parent class.
@@ -91,7 +90,7 @@ class DataStore extends CustomersDataStore implements DataStoreInterface
      * @param array $query_args Query parameters.
      * @return stdClass|WP_Error Data object `{ totals: *, intervals: array, total: int, pages: int, page_no: int }`, or error.
      */
-    public function get_noncached_data($query_args)
+    public function get_noncached_data(array $query_args)
     {
         global $wpdb;
         $this->initialize_queries();

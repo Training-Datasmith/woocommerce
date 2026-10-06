@@ -85,8 +85,7 @@ class AdditionalPayments extends Payments
      *
      * @return bool
      */
-    public function can_view()
-    {
+    public function can_view(): bool    {
         if (null !== $this->can_view_result) {
             return $this->can_view_result;
         }

@@ -36,7 +36,7 @@ class WC_Order extends WC_Abstract_Order
      * @since 3.0.0
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         // Abstract order props.
         'parent_id'                    => 0,
         'status'                       => '',

@@ -89,8 +89,7 @@ if (! class_exists('WC_Email_Customer_Reset_Password', false)) :
          * @since  3.1.0
          * @return string
          */
-        public function get_default_subject()
-        {
+        public function get_default_subject(bool $partial = false): string        {
             return $this->email_improvements_enabled
                 ? __('Reset your password for {site_title}', 'woocommerce')
                 : __('Password Reset Request for {site_title}', 'woocommerce');
@@ -102,8 +101,7 @@ if (! class_exists('WC_Email_Customer_Reset_Password', false)) :
          * @since  3.1.0
          * @return string
          */
-        public function get_default_heading()
-        {
+        public function get_default_heading(bool $partial = false): string        {
             return $this->email_improvements_enabled
                 ? __('Reset your password', 'woocommerce')
                 : __('Password Reset Request', 'woocommerce');
@@ -140,8 +138,7 @@ if (! class_exists('WC_Email_Customer_Reset_Password', false)) :
          *
          * @return string
          */
-        public function get_content_html()
-        {
+        public function get_content_html(): string        {
             return wc_get_template_html(
                 $this->template_html,
                 [
@@ -163,8 +160,7 @@ if (! class_exists('WC_Email_Customer_Reset_Password', false)) :
          *
          * @return string
          */
-        public function get_content_plain()
-        {
+        public function get_content_plain(): string        {
             return wc_get_template_html(
                 $this->template_plain,
                 [
@@ -207,8 +203,7 @@ if (! class_exists('WC_Email_Customer_Reset_Password', false)) :
          * @since 3.7.0
          * @return string
          */
-        public function get_default_additional_content()
-        {
+        public function get_default_additional_content(): string        {
             return __('Thanks for reading.', 'woocommerce');
         }
     }

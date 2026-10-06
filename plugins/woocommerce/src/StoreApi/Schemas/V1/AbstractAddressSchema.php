@@ -42,7 +42,7 @@ abstract class AbstractAddressSchema extends AbstractSchema
      * @internal Note that required properties don't require values, just that they are included in the request.
      * @return array
      */
-    public function get_properties()
+    public function get_properties(): array
     {
         return array_merge(
             [

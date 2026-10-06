@@ -419,7 +419,7 @@ class WC_Install
     {
         $wc_version      = get_option('woocommerce_version');
         $wc_code_version = WC()->version;
-        $requires_update = version_compare($wc_version, $wc_code_version, '<');
+        $requires_update = version_compare((string) $wc_version, $wc_code_version, '<');
         if (! Constants::is_defined('IFRAME_REQUEST') && $requires_update) {
             self::install();
             /**

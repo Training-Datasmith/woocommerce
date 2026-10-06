@@ -29,7 +29,7 @@ class WC_Coupon extends WC_Legacy_Coupon
      * @since 3.0.0
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'code'                        => '',
         'amount'                      => 0,
         'status'                      => null,

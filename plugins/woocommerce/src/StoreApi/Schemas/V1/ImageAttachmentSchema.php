@@ -75,7 +75,7 @@ class ImageAttachmentSchema extends AbstractSchema
      * @param int $attachment_id Image attachment ID.
      * @return object|null
      */
-    public function get_item_response($attachment_id)
+    public function get_item_response($attachment_id): array
     {
         if (! $attachment_id) {
             return null;

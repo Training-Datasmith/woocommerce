@@ -13,6 +13,18 @@ use WC_Tax;
 final class QueryFilters
 {
     /**
+     * Initialize query filters (deprecated; logic moved to QueryClauses / FilterDataProvider).
+     */
+    public function init(): void
+    {
+        wc_deprecated_function(
+            __METHOD__,
+            '11.0.0',
+            'QueryClauses and FilterDataProvider. This class will be removed in WooCommerce 12.0'
+        );
+    }
+
+    /**
      * Filter the posts clauses of the main query to support global filters.
      *
      * @param array     $args     Query args.

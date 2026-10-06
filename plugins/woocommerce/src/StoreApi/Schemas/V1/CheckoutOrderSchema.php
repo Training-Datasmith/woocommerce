@@ -28,7 +28,7 @@ class CheckoutOrderSchema extends CheckoutSchema
      *
      * @return array
      */
-    public function get_properties()
+    public function get_properties(): array
     {
         $parent_properties = parent::get_properties();
         unset($parent_properties['create_account']);
