@@ -177,7 +177,7 @@ class MockableLegacyProxy extends \Automattic\WooCommerce\Proxies\LegacyProxy
      *
      * @return mixed The result from the function or mock callback.
      */
-    public function call_function($function_name, ...$parameters)
+    public function call_function($function_name, ...$parameters): mixed
     {
         if (array_key_exists($function_name, $this->mocked_functions)) {
             return call_user_func_array($this->mocked_functions[ $function_name ], $parameters);
@@ -199,7 +199,7 @@ class MockableLegacyProxy extends \Automattic\WooCommerce\Proxies\LegacyProxy
      *
      * @return mixed The result from the method or mock callback.
      */
-    public function call_static($class_name, $method_name, ...$parameters)
+    public function call_static($class_name, $method_name, ...$parameters): mixed
     {
         if (array_key_exists($class_name, $this->mocked_statics)) {
             $class_mocks = $this->mocked_statics[ $class_name ];
@@ -260,13 +260,14 @@ class MockableLegacyProxy extends \Automattic\WooCommerce\Proxies\LegacyProxy
      *
      * @param int|string $status An error code to be returned, or an error message to be shown.
      */
-    public function exit($status = 0)
+    public function exit($status = ''): never
     {
         if ($this->mocked_exit) {
             ($this->mocked_exit)($status);
-        } else {
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            exit($status);
+            exit(0);
         }
+
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        exit($status);
     }
 }

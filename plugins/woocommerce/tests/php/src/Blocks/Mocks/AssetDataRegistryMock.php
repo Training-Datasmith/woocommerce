@@ -35,7 +35,7 @@ class AssetDataRegistryMock extends AssetDataRegistry
      *
      * @return bool
      */
-    protected function debug()
+    protected function debug(): bool
     {
         return $this->debug;
     }

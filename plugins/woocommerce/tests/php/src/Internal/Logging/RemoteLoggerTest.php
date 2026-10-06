@@ -779,7 +779,7 @@ namespace Automattic\WooCommerce\Tests\Internal\Logging {
         /**
          * @inheritDoc
          */
-        protected function is_dev_or_local_environment()
+        protected function is_dev_or_local_environment(): bool
         {
             return $this->is_dev_or_local;
         }

@@ -48,7 +48,7 @@ class EmailStub extends \WC_Email
      *
      * @return string
      */
-    public function get_default_subject(): string
+    public function get_default_subject(bool $partial = false): string
     {
         return 'Default Subject';
     }

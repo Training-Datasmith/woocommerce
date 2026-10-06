@@ -78,7 +78,7 @@ class WC_Settings_Migration_Test extends WC_Settings_Page
         ];
     }
 
-    public function output()
+    public function output(): void
     {
         global $current_section;
 

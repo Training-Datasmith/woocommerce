@@ -29,7 +29,7 @@ use Automattic\WooCommerce\Internal\DependencyManagement\RuntimeContainer;
  * When running the unit tests suite this will be replaced with an instance of TestingContainer,
  * which provides additional functionality.
  */
-final readonly class Container
+final class Container
 {
     /**
      * The underlying container.
