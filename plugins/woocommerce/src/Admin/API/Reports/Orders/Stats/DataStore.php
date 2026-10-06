@@ -333,7 +333,7 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      * @param int      $expected_interval_count Number of expected intervals.
      * @return stdClass|WP_Error Data object `{ totals: *, intervals: array, total: int, pages: int, page_no: int }`, or error.
      */
-    public function get_noncached_stats_data(array $query_args, array $params, &$data, $expected_interval_count): \WP_Error|\Automattic\WooCommerce\Admin\API\Reports\stdClass
+    public function get_noncached_stats_data(array $query_args, array $params, &$data, $expected_interval_count): \WP_Error|\stdClass
     {
         global $wpdb;
 
