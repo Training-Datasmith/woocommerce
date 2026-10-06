@@ -50,7 +50,16 @@ class Settings extends \WC_REST_Data_Controller
                     'callback'            => $this->save_settings(...),
                     'permission_callback' => $this->save_items_permissions_check(...),
                     'args'                => [
-                        'schema' => $this->save_items_schema(...),
+                        'tab'     => [
+                            'description' => __('Settings tab.', 'woocommerce'),
+                            'type'        => 'string',
+                            'default'     => 'general',
+                        ],
+                        'section' => [
+                            'description' => __('Settings section.', 'woocommerce'),
+                            'type'        => 'string',
+                            'default'     => '',
+                        ],
                     ],
                 ],
             ]
