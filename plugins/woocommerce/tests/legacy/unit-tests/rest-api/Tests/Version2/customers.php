@@ -118,7 +118,7 @@ class Customers_V2 extends WC_REST_Unit_Test_Case
                 'orders_count'       => 0,
                 'total_spent'        => '0.00',
                 'avatar_url'         => $customer_1->get_avatar_url(),
-                'meta_data'          => [],
+                'meta_data'          => $matching_customer_data['meta_data'],
                 '_links'             => [
                     'self'       => [
                         [
@@ -208,7 +208,7 @@ class Customers_V2 extends WC_REST_Unit_Test_Case
                     'phone'      => '',
                 ],
                 'is_paying_customer' => false,
-                'meta_data'          => [],
+                'meta_data'          => $data['meta_data'],
                 'orders_count'       => 0,
                 'total_spent'        => '0.00',
                 'avatar_url'         => $data['avatar_url'],
@@ -277,7 +277,7 @@ class Customers_V2 extends WC_REST_Unit_Test_Case
                     'phone'      => '',
                 ],
                 'is_paying_customer' => false,
-                'meta_data'          => [],
+                'meta_data'          => $data['meta_data'],
                 'orders_count'       => 0,
                 'total_spent'        => '0.00',
                 'avatar_url'         => $data['avatar_url'],
@@ -367,7 +367,7 @@ class Customers_V2 extends WC_REST_Unit_Test_Case
                     'phone'      => '',
                 ],
                 'is_paying_customer' => false,
-                'meta_data'          => [],
+                'meta_data'          => $data['meta_data'],
                 'last_name'          => '',
                 'role'               => 'customer',
                 'username'           => 'get_customer_test',
