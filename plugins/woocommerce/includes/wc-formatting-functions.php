@@ -1330,7 +1330,7 @@ if (! function_exists('wc_make_numeric_postcode')) {
      */
     function wc_make_numeric_postcode($postcode): string
     {
-        $postcode           = str_replace([ ' ', '-' ], '', $postcode ?? '');
+        $postcode           = str_replace([ ' ', '-' ], '', (string) ($postcode ?? ''));
         $postcode_length    = strlen($postcode);
         $letters_to_numbers = array_merge([ 0 ], range('A', 'Z'));
         $letters_to_numbers = array_flip($letters_to_numbers);
@@ -1340,7 +1340,7 @@ if (! function_exists('wc_make_numeric_postcode')) {
             if (is_numeric($postcode[ $i ])) {
                 $numeric_postcode .= str_pad($postcode[ $i ], 2, '0', STR_PAD_LEFT);
             } elseif (isset($letters_to_numbers[ $postcode[ $i ] ])) {
-                $numeric_postcode .= str_pad($letters_to_numbers[ $postcode[ $i ] ], 2, '0', STR_PAD_LEFT);
+                $numeric_postcode .= str_pad((string) $letters_to_numbers[ $postcode[ $i ] ], 2, '0', STR_PAD_LEFT);
             } else {
                 $numeric_postcode .= '00';
             }
