@@ -26,10 +26,12 @@ class MobileMessagingHandler
      */
     public static function prepare_mobile_message(
         WC_Order $order,
-        ?int $blog_id,
+        int|false|null $blog_id,
         DateTime $now,
         string $domain
     ): ?string {
+        $blog_id = is_int($blog_id) ? $blog_id : null;
+
         try {
             $last_mobile_used = self::get_closer_mobile_usage_date();
 
