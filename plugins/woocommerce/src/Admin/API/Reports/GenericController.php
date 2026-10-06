@@ -252,8 +252,7 @@ abstract class GenericController extends \WC_REST_Reports_Controller
      * @param \WP_REST_Request $request Full request object.
      * @return array Simplified array of params.
      */
-    protected function prepare_reports_query($request)
-    {
+    protected function prepare_reports_query($request): array    {
         return wp_parse_args(
             array_intersect_key(
                 $request->get_query_params(),

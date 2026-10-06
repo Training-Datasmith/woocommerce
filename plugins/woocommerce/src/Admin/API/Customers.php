@@ -72,8 +72,7 @@ class Customers extends \Automattic\WooCommerce\Admin\API\Reports\Customers\Cont
      * @param array $request Request array.
      * @return array
      */
-    protected function prepare_reports_query($request)
-    {
+    protected function prepare_reports_query($request): array    {
         $args              = parent::prepare_reports_query($request);
         $args['customers'] = $request['include'];
         return $args;

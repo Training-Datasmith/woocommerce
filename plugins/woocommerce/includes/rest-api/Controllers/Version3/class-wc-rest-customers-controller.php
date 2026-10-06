@@ -35,8 +35,7 @@ class WC_REST_Customers_Controller extends WC_REST_Customers_V2_Controller
      * @since  3.0.0
      * @return array
      */
-    protected function get_formatted_item_data($object)
-    {
+    protected function get_formatted_item_data($object): array    {
         return $this->get_formatted_item_data_core($object);
     }
 

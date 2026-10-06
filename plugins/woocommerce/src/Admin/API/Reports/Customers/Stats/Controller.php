@@ -43,8 +43,7 @@ class Controller extends \WC_REST_Reports_Controller
      * @param array $request Request array.
      * @return array
      */
-    protected function prepare_reports_query($request)
-    {
+    protected function prepare_reports_query($request): array    {
         $args                        = [];
         $args['registered_before']   = $request['registered_before'];
         $args['registered_after']    = $request['registered_after'];

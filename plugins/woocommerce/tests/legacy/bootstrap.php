@@ -122,7 +122,7 @@ class WC_Unit_Tests_Bootstrap
                 if (false === strpos($class, '\\')) {
                     $helper_path = realpath("$helpers_directory/$class.php");
 
-                    if (dirname($helper_path) === $helpers_directory && file_exists($helper_path)) {
+                    if ($helper_path && dirname($helper_path) === $helpers_directory && file_exists($helper_path)) {
                         require $helper_path;
                         return;
                     }
