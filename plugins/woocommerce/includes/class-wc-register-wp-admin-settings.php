@@ -40,11 +40,11 @@ class WC_Register_WP_Admin_Settings
         $this->object = $object;
 
         if ('page' === $type) {
-            add_filter('woocommerce_settings_groups', $this->register_page_group(...));
-            add_filter('woocommerce_settings-' . $this->object->get_id(), $this->register_page_settings(...));
+            add_filter('woocommerce_settings_groups', [ $this, 'register_page_group' ]);
+            add_filter('woocommerce_settings-' . $this->object->get_id(), [ $this, 'register_page_settings' ]);
         } elseif ('email' === $type) {
-            add_filter('woocommerce_settings_groups', $this->register_email_group(...));
-            add_filter('woocommerce_settings-email_' . $this->object->id, $this->register_email_settings(...));
+            add_filter('woocommerce_settings_groups', [ $this, 'register_email_group' ]);
+            add_filter('woocommerce_settings-email_' . $this->object->id, [ $this, 'register_email_settings' ]);
         }
     }
 
