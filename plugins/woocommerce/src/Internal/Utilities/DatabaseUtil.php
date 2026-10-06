@@ -166,7 +166,11 @@ class DatabaseUtil
             'string' => strval($value),
             // Date properties are converted to the WP timezone (see WC_Data::set_date_prop() method), however
             // for our own tables we persist dates in GMT.
-            'date' => $value ? (new DateTime($value))->setTimezone(new DateTimeZone('+00:00'))->format('Y-m-d H:i:s') : null,
+            'date' => $value ? (
+                $value instanceof \DateTimeInterface
+                    ? (clone $value)->setTimezone(new DateTimeZone('+00:00'))->format('Y-m-d H:i:s')
+                    : (new DateTime((string) $value))->setTimezone(new DateTimeZone('+00:00'))->format('Y-m-d H:i:s')
+            ) : null,
             'date_epoch' => $value ? (new DateTime("@{$value}"))->format('Y-m-d H:i:s') : null,
             default => throw new \Exception(esc_html('Invalid type received: ' . $type)),
         };

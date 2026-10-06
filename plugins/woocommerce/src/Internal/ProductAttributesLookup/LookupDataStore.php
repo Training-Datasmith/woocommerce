@@ -223,7 +223,7 @@ class LookupDataStore
      * @param array|null $changeset The changeset received by on_product_changed.
      * @return int One of the ACTION_ constants.
      */
-    private function get_update_action(array $changeset): int
+    private function get_update_action(?array $changeset): int
     {
         if (is_null($changeset)) {
             // No changeset at all means that the product is new.

@@ -328,9 +328,9 @@ class WC_Order_Item_Product extends WC_Order_Item
      * @param  string $context What the value is for. Valid values are 'view' and 'edit'.
      * @return int
      */
-    public function get_quantity($context = 'view')
+    public function get_quantity(): int
     {
-        return $this->get_prop('quantity', $context);
+        return (int) $this->get_prop('quantity', 'view');
     }
 
     /**

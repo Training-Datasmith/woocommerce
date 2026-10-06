@@ -149,7 +149,7 @@ abstract class ObjectCache
 
         $this->last_cached_data = $object;
         return $this->get_cache_engine()->cache_object(
-            $id,
+            (string) $id,
             $object,
             self::DEFAULT_EXPIRATION === $expiration ? $this->default_expiration : $expiration,
             $this->get_object_type()
@@ -232,7 +232,7 @@ abstract class ObjectCache
 
         $this->verify_expiration_value($expiration);
 
-        $data = $this->get_cache_engine()->get_cached_object($id, $this->get_object_type());
+        $data = $this->get_cache_engine()->get_cached_object((string) $id, $this->get_object_type());
         if (null === $data) {
             $object = null;
             if ($get_from_datastore_callback) {
@@ -255,9 +255,9 @@ abstract class ObjectCache
      * @param int|string $id The id of the object to remove.
      * @return bool True if the object is removed from the cache successfully, false otherwise (because the object wasn't cached or for other reason).
      */
-    public function remove(string $id): bool
+    public function remove(string|int $id): bool
     {
-        return $this->get_cache_engine()->delete_cached_object($id, $this->get_object_type());
+        return $this->get_cache_engine()->delete_cached_object((string) $id, $this->get_object_type());
     }
 
     /**
