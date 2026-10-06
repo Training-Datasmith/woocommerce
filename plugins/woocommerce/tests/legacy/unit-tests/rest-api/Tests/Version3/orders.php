@@ -956,7 +956,7 @@ class WC_Tests_API_Orders extends WC_REST_Unit_Test_Case
             $this->assertEquals('50.00', $order->get_total());
             $this->assertCount(0, $order_coupons);
         } else {
-            $this->assertEquals(number_format($expected_order_amount, 2), $order->get_total());
+            $this->assertEquals($expected_order_amount, $order->get_total());
             $this->assertCount(1, $order_coupons);
             $this->assertEquals($expected_coupon->get_code(), $order_coupons[0]->get_code());
         }
