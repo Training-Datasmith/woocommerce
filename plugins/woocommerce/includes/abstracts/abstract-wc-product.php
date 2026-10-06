@@ -162,7 +162,7 @@ class WC_Product extends WC_Abstract_Legacy_Product
      */
     public function get_type()
     {
-        return $this->product_type ?? ProductType::SIMPLE;
+        return ProductType::SIMPLE;
     }
 
     /**

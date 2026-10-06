@@ -799,7 +799,7 @@ function wc_string_to_datetime($time_string): \WC_DateTime
     // Strings are defined in local WP timezone. Convert to UTC.
     if (1 === preg_match('/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(Z|((-|\+)\d{2}:\d{2}))$/', $time_string, $date_bits)) {
         $offset    = ! empty($date_bits[7]) ? iso8601_timezone_to_offset($date_bits[7]) : wc_timezone_offset();
-        $timestamp = gmmktime($date_bits[4], $date_bits[5], $date_bits[6], $date_bits[2], $date_bits[3], $date_bits[1]) - $offset;
+        $timestamp = gmmktime((int) $date_bits[4], (int) $date_bits[5], (int) $date_bits[6], (int) $date_bits[2], (int) $date_bits[3], (int) $date_bits[1]) - $offset;
     } else {
         $timestamp = wc_string_to_timestamp(get_gmt_from_date(gmdate('Y-m-d H:i:s', wc_string_to_timestamp($time_string))));
     }
