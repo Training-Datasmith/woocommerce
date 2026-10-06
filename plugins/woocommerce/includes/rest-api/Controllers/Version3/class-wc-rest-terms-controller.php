@@ -371,7 +371,7 @@ abstract class WC_REST_Terms_Controller extends WC_REST_Controller
         $max_pages = ceil($total_terms / $per_page);
         $response->header('X-WP-TotalPages', (int) $max_pages);
 
-        $base = str_replace('(?P<attribute_id>[\d]+)', $request['attribute_id'] ?? '', $this->rest_base);
+        $base = str_replace('(?P<attribute_id>[\d]+)', (string) ( $request['attribute_id'] ?? '' ), $this->rest_base);
         $base = add_query_arg($request->get_query_params(), rest_url('/' . $this->namespace . '/' . $base));
         if ($page > 1) {
             $prev_page = $page - 1;
@@ -458,7 +458,7 @@ abstract class WC_REST_Terms_Controller extends WC_REST_Controller
 
         $base = '/' . $this->namespace . '/' . $this->rest_base;
         if (! empty($request['attribute_id'])) {
-            $base = str_replace('(?P<attribute_id>[\d]+)', (int) $request['attribute_id'], $base);
+            $base = str_replace('(?P<attribute_id>[\d]+)', (string) $request['attribute_id'], $base);
         }
 
         $response->header('Location', rest_url($base . '/' . $term->term_id));
@@ -607,7 +607,7 @@ abstract class WC_REST_Terms_Controller extends WC_REST_Controller
         $base = '/' . $this->namespace . '/' . $this->rest_base;
 
         if (! empty($request['attribute_id'])) {
-            $base = str_replace('(?P<attribute_id>[\d]+)', (int) $request['attribute_id'], $base);
+            $base = str_replace('(?P<attribute_id>[\d]+)', (string) $request['attribute_id'], $base);
         }
 
         $links = [
