@@ -636,8 +636,10 @@ class WC_Checkout
      * @param array    $chosen_shipping_methods Chosen shipping methods.
      * @param array    $packages                Packages.
      */
-    public function create_order_shipping_lines(&$order, array $chosen_shipping_methods, $packages): void
+    public function create_order_shipping_lines(&$order, ?array $chosen_shipping_methods, $packages): void
     {
+        $chosen_shipping_methods = $chosen_shipping_methods ?? [];
+
         foreach ($packages as $package_key => $package) {
             if (isset($chosen_shipping_methods[ $package_key ], $package['rates'][ $chosen_shipping_methods[ $package_key ] ])) {
                 $shipping_rate            = $package['rates'][ $chosen_shipping_methods[ $package_key ] ];
