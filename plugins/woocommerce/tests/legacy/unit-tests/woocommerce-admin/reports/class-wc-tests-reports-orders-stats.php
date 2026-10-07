@@ -1021,7 +1021,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         $order_1_datetime = new DateTime();
         $order_1_hour     = (int) $order_1_datetime->format('H');
         $order_1_datetime->setTime($order_1_hour, 10, 0); // Set a time near the top of the hour.
-        $order_1_time = $order_1_datetime->format('U');
+        $order_1_time = $order_1_datetime->getTimestamp();
 
         // One more order needs to fit into the same hour, but also be one second later than this one.
         $order_2_time = $order_1_time + 1;
