@@ -1017,7 +1017,11 @@ class WC_Install
     {
         if (is_null($version)) {
             $last_db_version = array_key_last(self::$db_updates);
-            $version         = version_compare(WC()->version, $last_db_version, '>') ? WC()->version : $last_db_version;
+            if (null === $last_db_version) {
+                $version = WC()->version;
+            } else {
+                $version = version_compare(WC()->version, $last_db_version, '>') ? WC()->version : $last_db_version;
+            }
         }
 
         update_option('woocommerce_db_version', $version);
