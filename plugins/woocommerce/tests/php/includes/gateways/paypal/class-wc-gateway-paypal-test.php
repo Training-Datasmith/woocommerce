@@ -73,7 +73,7 @@ class WC_Gateway_Paypal_Test extends \WC_Unit_Test_Case
 
         // Force refunds check to true.
         $paypal_gateway = $this->getMockBuilder(WC_Gateway_Paypal::class)->setMethods([ 'can_refund_order' ])->getMock();
-        $paypal_gateway->method('can_refund_order')->willReturn('true');
+        $paypal_gateway->method('can_refund_order')->willReturn(true);
 
         $response = $paypal_gateway->process_refund($order);
 
