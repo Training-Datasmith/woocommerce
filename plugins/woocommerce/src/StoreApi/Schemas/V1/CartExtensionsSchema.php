@@ -82,9 +82,7 @@ class CartExtensionsSchema extends AbstractSchema
             // We recalculate the cart if we had something to run.
             $controller = new CartController();
             $cart       = $controller->calculate_totals();
-            $response   = $this->cart_schema->get_item_response($cart);
-
-            return rest_ensure_response($response);
+            return $this->cart_schema->get_item_response($cart);
         } catch (\Exception $e) {
             throw new RouteException(
                 'woocommerce_rest_cart_extensions_error',
