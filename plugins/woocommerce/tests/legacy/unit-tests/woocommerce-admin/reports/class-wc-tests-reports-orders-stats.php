@@ -1041,7 +1041,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // same day, different hour.
         $order_3_datetime  = new DateTime();
         $order_3_datetime  = $order_3_datetime->setTimestamp($order_1_time - HOUR_IN_SECONDS);
-        $order_3_time      = $order_3_datetime->format('U');
+        $order_3_time      = $order_3_datetime->getTimestamp();
         $order[3]['year']  = (int) $order_3_datetime->format('Y');
         $order[3]['month'] = (int) $order_3_datetime->format('m');
         $order[3]['week']  = (int) $order_3_datetime->format('W');
@@ -1050,7 +1050,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Previous day.
         $order_4_datetime  = new DateTime();
         $order_4_datetime  = $order_4_datetime->setTimestamp($order_1_time - DAY_IN_SECONDS);
-        $order_4_time      = $order_4_datetime->format('U');
+        $order_4_time      = $order_4_datetime->getTimestamp();
         $order[4]['year']  = (int) $order_4_datetime->format('Y');
         $order[4]['month'] = (int) $order_4_datetime->format('m');
         $order[4]['week']  = (int) $order_4_datetime->format('W');
@@ -1059,7 +1059,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Previous week.
         $order_5_datetime  = new DateTime();
         $order_5_datetime  = $order_5_datetime->setTimestamp($order_1_time - WEEK_IN_SECONDS);
-        $order_5_time      = $order_5_datetime->format('U');
+        $order_5_time      = $order_5_datetime->getTimestamp();
         $order[5]['year']  = (int) $order_5_datetime->format('Y');
         $order[5]['month'] = (int) $order_5_datetime->format('m');
         $order[5]['week']  = (int) $order_5_datetime->format('W');
@@ -1068,7 +1068,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Previous month.
         $order_6_datetime  = new DateTime();
         $order_6_datetime  = $order_6_datetime->setTimestamp($order_1_time - MONTH_IN_SECONDS);
-        $order_6_time      = $order_6_datetime->format('U');
+        $order_6_time      = $order_6_datetime->getTimestamp();
         $order[6]['year']  = (int) $order_6_datetime->format('Y');
         $order[6]['month'] = (int) $order_6_datetime->format('m');
         $order[6]['week']  = (int) $order_6_datetime->format('W');
@@ -1077,7 +1077,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Previous year.
         $order_7_datetime  = new DateTime();
         $order_7_datetime  = $order_7_datetime->setTimestamp($order_1_time - YEAR_IN_SECONDS);
-        $order_7_time      = $order_7_datetime->format('U');
+        $order_7_time      = $order_7_datetime->getTimestamp();
         $order[7]['year']  = (int) $order_7_datetime->format('Y');
         $order[7]['month'] = (int) $order_7_datetime->format('m');
         $order[7]['week']  = (int) $order_7_datetime->format('W');
@@ -4262,7 +4262,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         $i2_end->setTimestamp($i2_end_timestamp);
 
         $i3_start_timestamp = $i2_end_timestamp + 1;
-        $i3_end_timestamp   = $now->format('U');
+        $i3_end_timestamp   = $now->getTimestamp();
         $i3_start           = new DateTime();
         $i3_start->setTimestamp($i3_start_timestamp);
         $i3_end = new DateTime();
@@ -4696,7 +4696,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Previous year.
         $order_7_datetime  = new DateTime();
         $order_7_datetime  = $order_7_datetime->setTimestamp($order_1_time - YEAR_IN_SECONDS);
-        $order_7_time      = $order_7_datetime->format('U');
+        $order_7_time      = $order_7_datetime->getTimestamp();
         $order[7]['year']  = (int) $order_7_datetime->format('Y');
         $order[7]['month'] = (int) $order_7_datetime->format('m');
         $order[7]['week']  = (int) $order_7_datetime->format('W');
@@ -4705,7 +4705,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Previous month.
         $order_6_datetime  = new DateTime();
         $order_6_datetime  = $order_6_datetime->setTimestamp($order_1_time - MONTH_IN_SECONDS);
-        $order_6_time      = $order_6_datetime->format('U');
+        $order_6_time      = $order_6_datetime->getTimestamp();
         $order[6]['year']  = (int) $order_6_datetime->format('Y');
         $order[6]['month'] = (int) $order_6_datetime->format('m');
         $order[6]['week']  = (int) $order_6_datetime->format('W');
@@ -4714,7 +4714,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Previous week.
         $order_5_datetime  = new DateTime();
         $order_5_datetime  = $order_5_datetime->setTimestamp($order_1_time - WEEK_IN_SECONDS);
-        $order_5_time      = $order_5_datetime->format('U');
+        $order_5_time      = $order_5_datetime->getTimestamp();
         $order[5]['year']  = (int) $order_5_datetime->format('Y');
         $order[5]['month'] = (int) $order_5_datetime->format('m');
         $order[5]['week']  = (int) $order_5_datetime->format('W');
@@ -4723,7 +4723,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Previous day.
         $order_4_datetime  = new DateTime();
         $order_4_datetime  = $order_4_datetime->setTimestamp($order_1_time - DAY_IN_SECONDS);
-        $order_4_time      = $order_4_datetime->format('U');
+        $order_4_time      = $order_4_datetime->getTimestamp();
         $order[4]['year']  = (int) $order_4_datetime->format('Y');
         $order[4]['month'] = (int) $order_4_datetime->format('m');
         $order[4]['week']  = (int) $order_4_datetime->format('W');
@@ -4732,7 +4732,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // same day, -1 hour.
         $order_3_datetime  = new DateTime();
         $order_3_datetime  = $order_3_datetime->setTimestamp($order_1_time - HOUR_IN_SECONDS);
-        $order_3_time      = $order_3_datetime->format('U');
+        $order_3_time      = $order_3_datetime->getTimestamp();
         $order[3]['year']  = (int) $order_3_datetime->format('Y');
         $order[3]['month'] = (int) $order_3_datetime->format('m');
         $order[3]['week']  = (int) $order_3_datetime->format('W');
@@ -5475,7 +5475,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Create one order in previous year.
         $order_7_datetime  = new DateTime();
         $order_7_datetime  = $order_7_datetime->setTimestamp($order_1_time - YEAR_IN_SECONDS);
-        $order_7_time      = $order_7_datetime->format('U');
+        $order_7_time      = $order_7_datetime->getTimestamp();
         $order[7]['year']  = (int) $order_7_datetime->format('Y');
         $order[7]['month'] = (int) $order_7_datetime->format('m');
         $order[7]['week']  = (int) $order_7_datetime->format('W');
@@ -5484,7 +5484,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Create one order in previous month.
         $order_6_datetime  = new DateTime();
         $order_6_datetime  = $order_6_datetime->setTimestamp($order_1_time - MONTH_IN_SECONDS);
-        $order_6_time      = $order_6_datetime->format('U');
+        $order_6_time      = $order_6_datetime->getTimestamp();
         $order[6]['year']  = (int) $order_6_datetime->format('Y');
         $order[6]['month'] = (int) $order_6_datetime->format('m');
         $order[6]['week']  = (int) $order_6_datetime->format('W');
@@ -5493,7 +5493,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Create one order in previous week.
         $order_5_datetime  = new DateTime();
         $order_5_datetime  = $order_5_datetime->setTimestamp($order_1_time - WEEK_IN_SECONDS);
-        $order_5_time      = $order_5_datetime->format('U');
+        $order_5_time      = $order_5_datetime->getTimestamp();
         $order[5]['year']  = (int) $order_5_datetime->format('Y');
         $order[5]['month'] = (int) $order_5_datetime->format('m');
         $order[5]['week']  = (int) $order_5_datetime->format('W');
@@ -5502,7 +5502,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Create one order in previous day.
         $order_4_datetime  = new DateTime();
         $order_4_datetime  = $order_4_datetime->setTimestamp($order_1_time - DAY_IN_SECONDS);
-        $order_4_time      = $order_4_datetime->format('U');
+        $order_4_time      = $order_4_datetime->getTimestamp();
         $order[4]['year']  = (int) $order_4_datetime->format('Y');
         $order[4]['month'] = (int) $order_4_datetime->format('m');
         $order[4]['week']  = (int) $order_4_datetime->format('W');
@@ -5511,7 +5511,7 @@ class WC_Admin_Tests_Reports_Orders_Stats extends WC_Unit_Test_Case
         // Create one order in same day, -1 hour.
         $order_3_datetime  = new DateTime();
         $order_3_datetime  = $order_3_datetime->setTimestamp($order_1_time - HOUR_IN_SECONDS);
-        $order_3_time      = $order_3_datetime->format('U');
+        $order_3_time      = $order_3_datetime->getTimestamp();
         $order[3]['year']  = (int) $order_3_datetime->format('Y');
         $order[3]['month'] = (int) $order_3_datetime->format('m');
         $order[3]['week']  = (int) $order_3_datetime->format('W');
