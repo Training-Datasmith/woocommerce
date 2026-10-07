@@ -22,7 +22,7 @@ class ProductQuery implements QueryClausesGenerator
      *
      * @param \WP_REST_Request $request Request data.
      */
-    public function prepare_objects_query(array $request): array
+    public function prepare_objects_query(\WP_REST_Request $request): array
     {
         $args = [
             'offset'              => $request['offset'],
