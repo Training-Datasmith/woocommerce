@@ -364,7 +364,7 @@ class CheckoutSchema extends AbstractSchema
     {
         return array_reduce(
             array_keys($additional_fields_schema),
-            fn (false $carry, int|string $key) => $carry || true === $additional_fields_schema[ $key ]['required'],
+            fn (bool $carry, int|string $key) => $carry || true === ($additional_fields_schema[ $key ]['required'] ?? false),
             false
         );
     }
