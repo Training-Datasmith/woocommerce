@@ -101,20 +101,20 @@ class DataStore extends ReportsDataStore implements DataStoreInterface
      */
     public static function init(): void
     {
-        add_action('woocommerce_new_customer', self::update_registered_customer(...));
+        add_action('woocommerce_new_customer', [ self::class, 'update_registered_customer' ]);
 
-        add_action('woocommerce_update_customer', self::update_registered_customer(...));
-        add_action('profile_update', self::update_registered_customer(...));
+        add_action('woocommerce_update_customer', [ self::class, 'update_registered_customer' ]);
+        add_action('profile_update', [ self::class, 'update_registered_customer' ]);
 
-        add_action('added_user_meta', self::update_registered_customer_via_last_active(...), 10, 3);
-        add_action('updated_user_meta', self::update_registered_customer_via_last_active(...), 10, 3);
+        add_action('added_user_meta', [ self::class, 'update_registered_customer_via_last_active' ], 10, 3);
+        add_action('updated_user_meta', [ self::class, 'update_registered_customer_via_last_active' ], 10, 3);
 
-        add_action('delete_user', self::delete_customer_by_user_id(...));
-        add_action('remove_user_from_blog', self::delete_customer_by_user_id(...));
+        add_action('delete_user', [ self::class, 'delete_customer_by_user_id' ]);
+        add_action('remove_user_from_blog', [ self::class, 'delete_customer_by_user_id' ]);
 
-        add_action('woocommerce_privacy_remove_order_personal_data', self::anonymize_customer(...));
+        add_action('woocommerce_privacy_remove_order_personal_data', [ self::class, 'anonymize_customer' ]);
 
-        add_action('woocommerce_analytics_delete_order_stats', self::sync_on_order_delete(...), 15, 2);
+        add_action('woocommerce_analytics_delete_order_stats', [ self::class, 'sync_on_order_delete' ], 15, 2);
     }
 
     /**
