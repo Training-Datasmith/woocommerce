@@ -5,7 +5,7 @@
 | Branch | `remote-test-2026-10-06` |
 | Spec | `documents/test-suite-plan.md` |
 | Brief | `documents/cloud-grind-agent.md` |
-| Latest SHA | `f118f2c932` |
+| Latest SHA | `ed47b18734` |
 
 ## Work queue
 
@@ -19,6 +19,7 @@
 
 ## Log
 
+- **2026-10-07 ~20:25 UTC** — W3: SOF past **~5097** / 9753 (`ed47b18734`). Store API: `CartUpdateCustomer` `WP_REST_Request`; `CartExtensionsSchema` array return; cart item image filter array shape + tests.
 - **2026-10-07 ~19:55 UTC** — W3: SOF past **~4043** / 9753 (`f156002e84`). Fulfillments: settings/notes/controller/REST array hooks, auto-fulfill guard, renderer/manager hooks; Blueprint export map; fulfillment meta test.
 - **2026-10-07 ~19:45 UTC** — W3: SOF past **~4031** / 9753. Related products int cast (`d426f9b2ab`).
 - **2026-10-07 ~18:35 UTC** — W3: SOF past **~3840** / 9753 (`742f89ac52`). Resume from ~2920: order CPT cache priming, variable datastore test return type, POS emails, PayPal, REST/v4 routes, tracks shutdown, `wc_get_related_products` limit cast.

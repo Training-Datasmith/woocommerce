@@ -504,9 +504,9 @@ class Checkout extends AbstractCartRoute
             wc_reserve_stock_for_order($this->order);
         } catch (ReserveStockException $e) {
             throw new RouteException(
-                esc_html($e->getErrorCode()),
-                esc_html($e->getMessage()),
-                esc_html($e->getCode())
+                $e->getErrorCode(),
+                $e->getMessage(),
+                (int) $e->getCode()
             );
         }
         wc_log_order_step('[Store API #8] Reserved stock for order', [ 'order_object' => $this->order ]);
