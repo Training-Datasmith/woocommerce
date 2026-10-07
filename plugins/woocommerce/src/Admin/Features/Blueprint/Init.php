@@ -124,7 +124,7 @@ class Init
         // Get active plugins from WordPress options and transform plugins array into export format.
         $active_plugins = $this->wp_get_option('active_plugins', []);
         $plugins        = array_map(
-            fn ($key, int|string $plugin) => [
+            fn (int|string $key, array $plugin) => [
                     'id'      => $key,
                     'label'   => $plugin['Name'],
                     'checked' => in_array($key, $active_plugins, true),
