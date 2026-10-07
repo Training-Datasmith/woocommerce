@@ -106,7 +106,7 @@ class WC_REST_Product_Custom_Fields_Controller extends WC_REST_Controller
         $response = rest_ensure_response($custom_field_names);
 
         $response->header('X-WP-Total', (int) $total_items);
-        $max_pages = ceil($total_items / $limit);
+        $max_pages = (int) ceil((int) $total_items / $limit);
         $response->header('X-WP-TotalPages', (int) $max_pages);
 
         $base = add_query_arg($request->get_query_params(), rest_url('/' . $this->namespace . '/' . $this->rest_base . '/names'));
