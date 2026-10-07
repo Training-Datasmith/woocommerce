@@ -242,30 +242,30 @@ class WC_Emails
         $this->init();
 
         // Email Header, Footer and content hooks.
-        add_action('woocommerce_email_header', $this->email_header(...));
-        add_action('woocommerce_email_footer', $this->email_footer(...));
-        add_action('woocommerce_email_order_details', $this->order_downloads(...), 10, 4);
-        add_action('woocommerce_email_order_details', $this->order_details(...), 10, 4);
-        add_action('woocommerce_email_order_meta', $this->order_meta(...), 10, 3);
-        add_action('woocommerce_email_customer_details', $this->customer_details(...), 10, 3);
-        add_action('woocommerce_email_customer_details', $this->email_addresses(...), 20, 3);
-        add_action('woocommerce_email_customer_details', $this->additional_checkout_fields(...), 30, 3);
-        add_action('woocommerce_email_customer_address_section', $this->additional_address_fields(...), 30, 4);
+        add_action('woocommerce_email_header', [ $this, 'email_header' ]);
+        add_action('woocommerce_email_footer', [ $this, 'email_footer' ]);
+        add_action('woocommerce_email_order_details', [ $this, 'order_downloads' ], 10, 4);
+        add_action('woocommerce_email_order_details', [ $this, 'order_details' ], 10, 4);
+        add_action('woocommerce_email_order_meta', [ $this, 'order_meta' ], 10, 3);
+        add_action('woocommerce_email_customer_details', [ $this, 'customer_details' ], 10, 3);
+        add_action('woocommerce_email_customer_details', [ $this, 'email_addresses' ], 20, 3);
+        add_action('woocommerce_email_customer_details', [ $this, 'additional_checkout_fields' ], 30, 3);
+        add_action('woocommerce_email_customer_address_section', [ $this, 'additional_address_fields' ], 30, 4);
 
         if (FeaturesUtil::feature_is_enabled('fulfillments')) {
             // Fulfillment details and meta.
-            add_action('woocommerce_email_fulfillment_details', $this->fulfillment_details(...), 10, 5);
-            add_action('woocommerce_email_fulfillment_meta', $this->fulfillment_meta(...), 30, 4);
+            add_action('woocommerce_email_fulfillment_details', [ $this, 'fulfillment_details' ], 10, 5);
+            add_action('woocommerce_email_fulfillment_meta', [ $this, 'fulfillment_meta' ], 30, 4);
         }
 
         // Hooks for sending emails during store events.
-        add_action('woocommerce_low_stock_notification', $this->low_stock(...));
-        add_action('woocommerce_no_stock_notification', $this->no_stock(...));
-        add_action('woocommerce_product_on_backorder_notification', $this->backorder(...));
-        add_action('woocommerce_created_customer_notification', $this->customer_new_account(...), 10, 3);
+        add_action('woocommerce_low_stock_notification', [ $this, 'low_stock' ]);
+        add_action('woocommerce_no_stock_notification', [ $this, 'no_stock' ]);
+        add_action('woocommerce_product_on_backorder_notification', [ $this, 'backorder' ]);
+        add_action('woocommerce_created_customer_notification', [ $this, 'customer_new_account' ], 10, 3);
 
         // Hook for replacing {site_title} in email-footer.
-        add_filter('woocommerce_email_footer_text', $this->replace_placeholders(...));
+        add_filter('woocommerce_email_footer_text', [ $this, 'replace_placeholders' ]);
 
         /**
          * Action hook for email classes to hook into.
@@ -980,8 +980,8 @@ class WC_Emails
      */
     private function add_email_sender_filters(): void
     {
-        add_filter('wp_mail_from', $this->get_from_address(...));
-        add_filter('wp_mail_from_name', $this->get_from_name(...));
+        add_filter('wp_mail_from', [ $this, 'get_from_address' ]);
+        add_filter('wp_mail_from_name', [ $this, 'get_from_name' ]);
     }
 
     /**
@@ -989,8 +989,8 @@ class WC_Emails
      */
     private function remove_email_sender_filters(): void
     {
-        remove_filter('wp_mail_from', $this->get_from_address(...));
-        remove_filter('wp_mail_from_name', $this->get_from_name(...));
+        remove_filter('wp_mail_from', [ $this, 'get_from_address' ]);
+        remove_filter('wp_mail_from_name', [ $this, 'get_from_name' ]);
     }
 
     /**
