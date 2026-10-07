@@ -16,9 +16,9 @@ class FulfillmentsSettings
      */
     public function register(): void
     {
-        add_filter('admin_init', $this->init_settings_auto_fulfill(...));
-        add_action('woocommerce_order_status_processing', $this->auto_fulfill_items_on_processing(...), 10, 2);
-        add_action('woocommerce_order_status_completed', $this->auto_fulfill_items_on_completed(...), 10, 2);
+        add_filter('admin_init', [ $this, 'init_settings_auto_fulfill' ]);
+        add_action('woocommerce_order_status_processing', [ $this, 'auto_fulfill_items_on_processing' ], 10, 2);
+        add_action('woocommerce_order_status_completed', [ $this, 'auto_fulfill_items_on_completed' ], 10, 2);
     }
 
     /**
@@ -26,7 +26,7 @@ class FulfillmentsSettings
      */
     public function init_settings_auto_fulfill(): void
     {
-        add_filter('woocommerce_get_settings_products', $this->add_auto_fulfill_settings(...), 10, 2);
+        add_filter('woocommerce_get_settings_products', [ $this, 'add_auto_fulfill_settings' ], 10, 2);
     }
 
     /**

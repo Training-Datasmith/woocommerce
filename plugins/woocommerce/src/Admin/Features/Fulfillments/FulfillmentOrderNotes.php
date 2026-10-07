@@ -36,10 +36,10 @@ class FulfillmentOrderNotes
      */
     public function register(): void
     {
-        add_action('woocommerce_fulfillment_after_create', $this->add_fulfillment_created_note(...), 10, 1);
-        add_filter('woocommerce_fulfillment_before_update', $this->capture_previous_status(...), 10, 1);
-        add_action('woocommerce_fulfillment_after_update', $this->add_fulfillment_updated_note(...), 10, 1);
-        add_action('woocommerce_fulfillment_after_delete', $this->add_fulfillment_deleted_note(...), 10, 1);
+        add_action('woocommerce_fulfillment_after_create', [ $this, 'add_fulfillment_created_note' ], 10, 1);
+        add_filter('woocommerce_fulfillment_before_update', [ $this, 'capture_previous_status' ], 10, 1);
+        add_action('woocommerce_fulfillment_after_update', [ $this, 'add_fulfillment_updated_note' ], 10, 1);
+        add_action('woocommerce_fulfillment_after_delete', [ $this, 'add_fulfillment_deleted_note' ], 10, 1);
     }
 
     /**

@@ -32,8 +32,8 @@ class FulfillmentsController
      */
     public function register(): void
     {
-        add_filter('woocommerce_data_stores', $this->register_data_stores(...));
-        add_action('init', $this->initialize_fulfillments(...), 10, 0);
+        add_filter('woocommerce_data_stores', [ $this, 'register_data_stores' ]);
+        add_action('init', [ $this, 'initialize_fulfillments' ], 10, 0);
     }
 
     /**
