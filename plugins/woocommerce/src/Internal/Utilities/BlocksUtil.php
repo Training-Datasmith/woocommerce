@@ -48,7 +48,10 @@ class BlocksUtil
 
         return array_reduce(
             $blocks,
-            function ($acc, array $block) use ($block_name) {
+            function ($acc, $block) use ($block_name) {
+                if (! is_array($block)) {
+                    return $acc;
+                }
                 $parsed_blocks = ! empty($block['content']) ? parse_blocks($block['content']) : [];
                 if (! empty($parsed_blocks) && $block_name === $parsed_blocks[0]['blockName']) {
                     array_push($acc, $parsed_blocks[0]);
