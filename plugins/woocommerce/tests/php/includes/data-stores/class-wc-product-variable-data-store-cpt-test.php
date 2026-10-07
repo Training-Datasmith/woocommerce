@@ -610,7 +610,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case
     {
         // phpcs:disable Generic.CodeAnalysis, Squiz.Commenting
         return new class () extends WC_Product_Variable_Data_Store_CPT {
-            public function get_price_hash(&$product, $for_display = false)
+            public function get_price_hash(&$product, $for_display = false): string
             {
                 return parent::get_price_hash($product, $for_display);
             }
