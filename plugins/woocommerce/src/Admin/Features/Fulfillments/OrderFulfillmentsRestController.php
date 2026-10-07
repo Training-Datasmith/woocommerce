@@ -161,7 +161,7 @@ class OrderFulfillmentsRestController extends RestApiControllerBase
      *
      * @throws \WP_Error If the URL contains an order, but the order does not exist.
      */
-    protected function check_permission_for_fulfillments(WP_REST_Request $request): \WP_Error|bool
+    public function check_permission_for_fulfillments(WP_REST_Request $request): \WP_Error|bool
     {
         // Fetch the order first if there's an order_id in the request.
         $order = null;
