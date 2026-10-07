@@ -108,11 +108,11 @@ class Fulfillment extends \WC_Data
     /**
      * Set the entity ID.
      *
-     * @param string|null $entity_id Entity ID.
+     * @param string|int|null $entity_id Entity ID.
      */
-    public function set_entity_id(?string $entity_id): void
+    public function set_entity_id(string|int|null $entity_id): void
     {
-        $this->data['entity_id'] = $entity_id;
+        $this->data['entity_id'] = null === $entity_id ? null : (string) $entity_id;
     }
 
     /**
