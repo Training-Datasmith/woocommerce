@@ -5,7 +5,7 @@
 | Branch | `remote-test-2026-10-06` |
 | Spec | `documents/test-suite-plan.md` |
 | Brief | `documents/cloud-grind-agent.md` |
-| Latest SHA | `647da929b3` |
+| Latest SHA | `9b8ffdbc6c` |
 
 ## Work queue
 
@@ -24,6 +24,7 @@
 - **2026-10-06 ~23:05 UTC** — W3 resume: stop-on-failure past ~400 tests (`b2d25bfca8`). Fixes include checkout shipping methods, coupon/order item types, analytics product sync `round()`, mobile messaging blog id, `wc_let_to_num`, CSV export encoding.
 - **2026-10-06 ~23:08 UTC** — W3: stop-on-failure past **~514** tests (`5e48ca8b8b`). Additional fixes: log handler `wp_mail`, `wc_make_numeric_postcode`, PayPal API URL `strstr`, order item `calculate_taxes` signatures, legacy `WC_Order_Item_Meta` item type.
 - **2026-10-06 ~23:20 UTC** — W3 resume: stop-on-failure past **~900** tests (`f8a4c7e093`). Notable fixes: `WC_Comments` filter removable callback, order coupon/privacy assert fixes, `ObjectCache::is_cached`, variable product version invalidation, wc-admin `legacy-settings` REST args.
+- **2026-10-07 ~00:05 UTC** — W3: SOF past **~1833** tests (`647da929b3`). REST terms `attribute_id` `str_replace` string cast; continued hook singleton / onboarding fixes from prior commits on branch.
 - **2026-10-06 ~23:50 UTC** — W3 resume from `f40924c92c`: SOF past **~1798** tests (`8767fc67c7`). Fixes: v3 order coupon `number_format`, settings/query/deprecated hook array callables, `wc_get_logger` singleton, onboarding homepage image fallbacks.
 - **2026-10-06 ~23:38 UTC** — W3: stop-on-failure past **~1127** tests (`b140e93e7a`). v3 customer REST date assertions aligned with `WC_DateTime`.
 - **2026-10-06 ~23:35 UTC** — W3: stop-on-failure past **~1076** tests (`479e066f93`). Fixes: REST `str_replace` int route params (variations + CRUD pagination), restore v2 product/variation `delete_item` success path, `WC_Brands` REST query `WP_REST_Request` type, shipping zone setting text cast for `stripslashes`.
