@@ -19,6 +19,7 @@
 
 ## Log
 
+- **2026-10-07 ~18:35 UTC** — W3: SOF past **~3840** / 9753 (`742f89ac52`). Resume from ~2920: order CPT cache priming, variable datastore test return type, POS emails, PayPal, REST/v4 routes, tracks shutdown, `wc_get_related_products` limit cast.
 - **2026-10-07 ~18:15 UTC** — W3: SOF past **~3827** / 9753 (`7f50dda26b`). Fixes: order item cache `array_reduce` initial value; POS email footer hooks; PayPal `number_format`; REST refunds/custom-fields/COGS/taxes types; v4 shipping zones/methods route callables; `WC_Tracks_Client` shutdown hook; product tax test mock arity.
 - **2026-10-07 ~02:55 UTC** — W3: SOF past **~2920** / 9753 (`197f4d3c98`). Fixes: onboarding hook guards, admin reports/coupons/orders-stats dates, fulfillments datastore + table bootstrap, `StoredUrl` casts, `WC_Emails`/`WC_Admin_Reports` array hooks, `WC_Checkout` null customer, `WC_Helper` REQUEST_URI casts, install schema test isolation, Action Scheduler test helper cap/purge (unblocks SOF ~1952 stall), `WC_Data_Store::read_multiple` callable check.
 - **2026-10-06 ~22:38 UTC** — W0/W1: Added `.cursor/install.sh`, `start.sh`, `environment.json`; `plugins/woocommerce/.wp-env.corpus.json` (PHP 8.4); `bin/corpus-wp-env-start.sh` (iptables FORWARD for DinD). wp-env starts on PHP 8.4.26. PHPUnit lists **9752** tests; bootstrap green after Container/test-stub fixes. W3: fixing runtime TypeError/signature failures (e.g. `wc_format_decimal`, `LookupDataStore`, `ObjectCache`, order items).

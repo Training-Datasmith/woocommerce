@@ -1393,7 +1393,7 @@ function wc_get_related_products($product_id, $limit = 5, $exclude_ids = [], $re
     }
 
     // If the limit is not numeric, set it to null.
-    $limit = is_numeric($limit) ? $limit : null;
+    $limit = is_numeric($limit) ? (int) $limit : null;
 
     if (null === $limit) {
         return [];
