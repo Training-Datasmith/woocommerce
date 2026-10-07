@@ -497,9 +497,17 @@ class FulfillmentsDataStoreTest extends \WC_Unit_Test_Case
         $this->assertCount(1, $new_metadata);
         $this->assertEquals('_items', $new_metadata[0]->key);
 
-        $result = $this->data_store->update_meta($fulfillment, $new_metadata[0]);
+        $this->data_store->update_meta($fulfillment, $new_metadata[0]);
 
-        $this->assertEquals(1, $result);
+        global $wpdb;
+        $meta = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT meta_value FROM {$wpdb->prefix}wc_order_fulfillment_meta WHERE meta_id = %d",
+                $new_metadata[0]->id
+            )
+        );
+        $this->assertNotNull($meta);
+        $this->assertEquals(wp_json_encode($new_items), $meta->meta_value);
     }
 
     /**
