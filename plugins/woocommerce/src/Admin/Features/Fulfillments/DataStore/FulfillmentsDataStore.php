@@ -477,7 +477,7 @@ class FulfillmentsDataStore extends \WC_Data_Store_WP implements \WC_Object_Data
             throw new \Exception(esc_html__('Cannot update meta for a deleted fulfillment.', 'woocommerce'));
         }
 
-        $rows_updated = $wpdb->update(
+        $wpdb->update(
             $wpdb->prefix . 'wc_order_fulfillment_meta',
             [
                 'meta_value' => wp_json_encode($meta->value), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value

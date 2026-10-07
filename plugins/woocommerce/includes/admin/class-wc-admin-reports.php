@@ -42,8 +42,8 @@ class WC_Admin_Reports
      */
     public static function register_orders_hook_handlers(): void
     {
-        add_action('woocommerce_delete_shop_order_transients', self::delete_legacy_reports_transients(...), 10, 1);
-        add_action('woocommerce_delete_legacy_report_transients', self::delete_legacy_reports_transients(...), 10, 2);
+        add_action('woocommerce_delete_shop_order_transients', [ self::class, 'delete_legacy_reports_transients' ], 10, 1);
+        add_action('woocommerce_delete_legacy_report_transients', [ self::class, 'delete_legacy_reports_transients' ], 10, 2);
     }
 
     /**
