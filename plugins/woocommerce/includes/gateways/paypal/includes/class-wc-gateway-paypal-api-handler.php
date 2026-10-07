@@ -63,7 +63,7 @@ class WC_Gateway_Paypal_API_Handler
             'PWD'             => self::$api_password,
             'METHOD'          => 'DoCapture',
             'AUTHORIZATIONID' => $order->get_transaction_id(),
-            'AMT'             => number_format(is_null($amount) ? $order->get_total() : $amount, 2, '.', ''),
+            'AMT'             => number_format((float) (is_null($amount) ? $order->get_total() : $amount), 2, '.', ''),
             'CURRENCYCODE'    => $order->get_currency(),
             'COMPLETETYPE'    => 'Complete',
         ];
