@@ -671,7 +671,7 @@ class WC_Helper_Updater
         ];
 
         // Detect if this is a manual refresh button click.
-        $request_uri = wp_unslash($_SERVER['REQUEST_URI'] ?? ''); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $request_uri = (string) wp_unslash($_SERVER['REQUEST_URI'] ?? ''); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $source      = '';
         if (stripos($request_uri, 'wc/v3/marketplace/refresh') !== false) {
             $source = 'refresh-button';
