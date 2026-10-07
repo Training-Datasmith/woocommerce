@@ -37,8 +37,8 @@ class OnboardingSync
      */
     public function init(): void
     {
-        add_action('update_option_' . OnboardingProfile::DATA_OPTION, $this->send_profile_data_on_update(...), 10, 2);
-        add_action('woocommerce_helper_connected', $this->send_profile_data_on_connect(...));
+        add_action('update_option_' . OnboardingProfile::DATA_OPTION, [ $this, 'send_profile_data_on_update' ], 10, 2);
+        add_action('woocommerce_helper_connected', [ $this, 'send_profile_data_on_connect' ]);
 
         if (! is_admin()) {
             return;
@@ -112,12 +112,12 @@ class OnboardingSync
     /**
      * Send profiler data on profiler change to completion.
      *
-     * @param array $old_value Previous value.
-     * @param array $value Current value.
+     * @param array|mixed $old_value Previous value.
+     * @param array|mixed $value Current value.
      */
-    public function send_profile_data_on_update($old_value, array $value): void
+    public function send_profile_data_on_update($old_value, $value): void
     {
-        if (! isset($value['completed']) || ! $value['completed']) {
+        if (! is_array($value) || ! isset($value['completed']) || ! $value['completed']) {
             return;
         }
 
