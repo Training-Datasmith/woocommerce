@@ -88,8 +88,12 @@ class RemoteInboxNotificationsEngine extends RemoteSpecsEngine
      * @param mixed $old_value Old value.
      * @param mixed $new_value New value.
      */
-    public static function update_profile_option(array $old_value, array $new_value): void
+    public static function update_profile_option($old_value, $new_value): void
     {
+        if (! is_array($old_value) || ! is_array($new_value)) {
+            return;
+        }
+
         // Return early if we're not completing the profiler.
         if (
             (isset($old_value['completed']) && $old_value['completed']) ||

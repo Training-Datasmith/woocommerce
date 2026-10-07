@@ -33,11 +33,15 @@ class OnboardingProfile
     /**
      * Trigger the woocommerce_onboarding_profile_completed action
      *
-     * @param array $old_value Previous value.
-     * @param array $value Current value.
+     * @param array|mixed $old_value Previous value.
+     * @param array|mixed $value Current value.
      */
-    public static function trigger_complete(array $old_value, array $value): void
+    public static function trigger_complete($old_value, $value): void
     {
+        if (! is_array($old_value) || ! is_array($value)) {
+            return;
+        }
+
         if (isset($old_value['completed']) && $old_value['completed']) {
             return;
         }
