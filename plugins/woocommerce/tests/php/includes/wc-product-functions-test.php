@@ -51,7 +51,7 @@ class WC_Product_Functions_Tests extends \WC_Unit_Test_Case
             [
                 'WC_Tax' =>
                 [
-                    'get_rates'          => function ($tax_class, $customer) use (&$customer_passed_to_get_rates) {
+                    'get_rates'          => function ($tax_class, $customer = null) use (&$customer_passed_to_get_rates) {
                         $customer_passed_to_get_rates = $customer;
                     },
                     'get_base_tax_rates' => function () use (&$get_base_rates_invoked) {

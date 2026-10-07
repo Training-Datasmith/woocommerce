@@ -73,8 +73,11 @@ class WC_REST_Product_Custom_Fields_Controller extends WC_REST_Controller
 
         $search = trim((string) $request['search']);
         $order  = strtoupper((string) $request['order']) === 'DESC' ? 'DESC' : 'ASC';
-        $page   = (int) $request['page'];
-        $limit  = (int) $request['per_page'];
+        $page  = max(1, (int) $request->get_param('page'));
+        $limit = (int) $request->get_param('per_page');
+        if ($limit < 1) {
+            $limit = 10;
+        }
         $offset = ($page - 1) * $limit;
 
         $base_query = $wpdb->prepare(

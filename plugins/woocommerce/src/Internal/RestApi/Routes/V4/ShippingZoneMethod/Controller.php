@@ -95,19 +95,19 @@ class Controller extends AbstractController
                 ],
                 [
                     'methods'             => WP_REST_Server::READABLE,
-                    'callback'            => $this->get_item(...),
-                    'permission_callback' => $this->check_permissions(...),
+                    'callback'            => [ $this, 'get_item' ],
+                    'permission_callback' => [ $this, 'check_permissions' ],
                 ],
                 [
                     'methods'             => WP_REST_Server::EDITABLE,
-                    'callback'            => $this->update_item(...),
-                    'permission_callback' => $this->check_permissions(...),
+                    'callback'            => [ $this, 'update_item' ],
+                    'permission_callback' => [ $this, 'check_permissions' ],
                     'args'                => $this->get_endpoint_args_for_item_schema(WP_REST_Server::EDITABLE),
                 ],
                 [
                     'methods'             => WP_REST_Server::DELETABLE,
-                    'callback'            => $this->delete_item(...),
-                    'permission_callback' => $this->check_permissions(...),
+                    'callback'            => [ $this, 'delete_item' ],
+                    'permission_callback' => [ $this, 'check_permissions' ],
                     'args'                => $this->get_endpoint_args_for_item_schema(WP_REST_Server::DELETABLE),
                 ],
             ]

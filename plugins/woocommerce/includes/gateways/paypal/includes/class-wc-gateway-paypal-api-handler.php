@@ -91,7 +91,7 @@ class WC_Gateway_Paypal_API_Handler
             'REFUNDTYPE'    => 'Full',
         ];
         if (! is_null($amount)) {
-            $request['AMT']          = number_format($amount, 2, '.', '');
+            $request['AMT']          = number_format((float) $amount, 2, '.', '');
             $request['CURRENCYCODE'] = $order->get_currency();
             $request['REFUNDTYPE']   = 'Partial';
         }
