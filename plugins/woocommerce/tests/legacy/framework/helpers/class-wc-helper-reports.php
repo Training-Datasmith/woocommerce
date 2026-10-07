@@ -25,5 +25,8 @@ class WC_Helper_Reports
         $wpdb->query('DELETE FROM ' . \Automattic\WooCommerce\Admin\API\Reports\Coupons\DataStore::get_db_table_name()); // @codingStandardsIgnoreLine.
         $wpdb->query('DELETE FROM ' . \Automattic\WooCommerce\Admin\API\Reports\Customers\DataStore::get_db_table_name()); // @codingStandardsIgnoreLine.
         \Automattic\WooCommerce\Internal\Admin\CategoryLookup::instance()->regenerate();
+
+        // Prevent unbounded Action Scheduler backlog from slowing the full PHPUnit suite.
+        WC_Helper_Queue::cancel_all_pending();
     }
 }
