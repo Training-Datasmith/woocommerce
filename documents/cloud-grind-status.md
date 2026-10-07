@@ -5,7 +5,7 @@
 | Branch | `remote-test-2026-10-06` |
 | Spec | `documents/test-suite-plan.md` |
 | Brief | `documents/cloud-grind-agent.md` |
-| Latest SHA | `956fa98dcb` |
+| Latest SHA | `4a36e8b4e6` |
 
 ## Work queue
 
@@ -19,6 +19,7 @@
 
 ## Log
 
+- **2026-10-07 ~20:45 UTC** — W3: SOF past **~5112** / 9753 (`956fa98dcb`). Checkout reserve-stock `RouteException` int status; `AbstractSchema` null nested extension sanitize/validate.
 - **2026-10-07 ~20:25 UTC** — W3: SOF past **~5097** / 9753 (`ed47b18734`). Store API: `CartUpdateCustomer` `WP_REST_Request`; `CartExtensionsSchema` array return; cart item image filter array shape + tests.
 - **2026-10-07 ~19:55 UTC** — W3: SOF past **~4043** / 9753 (`f156002e84`). Fulfillments: settings/notes/controller/REST array hooks, auto-fulfill guard, renderer/manager hooks; Blueprint export map; fulfillment meta test.
 - **2026-10-07 ~19:45 UTC** — W3: SOF past **~4031** / 9753. Related products int cast (`d426f9b2ab`).
