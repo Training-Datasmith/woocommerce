@@ -119,15 +119,15 @@ class Products extends \WC_REST_Products_Controller
      */
     public function get_items($request)
     {
-        add_filter('posts_fields', self::add_wp_query_fields(...), 10, 2);
-        add_filter('posts_where', self::add_wp_query_filter(...), 10, 2);
-        add_filter('posts_join', self::add_wp_query_join(...), 10, 2);
-        add_filter('posts_groupby', self::add_wp_query_group_by(...), 10, 2);
+        add_filter('posts_fields', [ self::class, 'add_wp_query_fields' ], 10, 2);
+        add_filter('posts_where', [ self::class, 'add_wp_query_filter' ], 10, 2);
+        add_filter('posts_join', [ self::class, 'add_wp_query_join' ], 10, 2);
+        add_filter('posts_groupby', [ self::class, 'add_wp_query_group_by' ], 10, 2);
         $response = parent::get_items($request);
-        remove_filter('posts_fields', self::add_wp_query_fields(...), 10);
-        remove_filter('posts_where', self::add_wp_query_filter(...), 10);
-        remove_filter('posts_join', self::add_wp_query_join(...), 10);
-        remove_filter('posts_groupby', self::add_wp_query_group_by(...), 10);
+        remove_filter('posts_fields', [ self::class, 'add_wp_query_fields' ], 10);
+        remove_filter('posts_where', [ self::class, 'add_wp_query_filter' ], 10);
+        remove_filter('posts_join', [ self::class, 'add_wp_query_join' ], 10);
+        remove_filter('posts_groupby', [ self::class, 'add_wp_query_group_by' ], 10);
 
         /**
          * The low stock query caused performance issues in WooCommerce 5.5.1

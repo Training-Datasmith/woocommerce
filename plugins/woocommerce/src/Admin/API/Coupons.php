@@ -68,9 +68,9 @@ class Coupons extends \WC_REST_Coupons_Controller
      */
     public function get_items($request)
     {
-        add_filter('posts_where', self::add_wp_query_search_code_filter(...), 10, 2);
+        add_filter('posts_where', [ self::class, 'add_wp_query_search_code_filter' ], 10, 2);
         $response = parent::get_items($request);
-        remove_filter('posts_where', self::add_wp_query_search_code_filter(...), 10);
+        remove_filter('posts_where', [ self::class, 'add_wp_query_search_code_filter' ], 10);
         return $response;
     }
 
