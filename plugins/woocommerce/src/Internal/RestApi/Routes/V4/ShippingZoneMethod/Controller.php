@@ -76,8 +76,8 @@ class Controller extends AbstractController
             '/' . $this->rest_base,
             [
                 'methods'             => WP_REST_Server::CREATABLE,
-                'callback'            => $this->create_item(...),
-                'permission_callback' => $this->check_permissions(...),
+                'callback'            => [ $this, 'create_item' ],
+                'permission_callback' => [ $this, 'check_permissions' ],
                 'args'                => $this->get_endpoint_args_for_item_schema(WP_REST_Server::CREATABLE),
             ]
         );
