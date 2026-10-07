@@ -1074,7 +1074,7 @@ class QueryBuilder
 
         $merged_query = array_reduce(
             $queries,
-            function ($acc, array $query) use ($special_query_keys, &$special_query_vars) {
+            function ($acc, $query) use ($special_query_keys, &$special_query_vars) {
                 if (! is_array($query)) {
                     return $acc;
                 }
