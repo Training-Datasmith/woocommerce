@@ -120,21 +120,25 @@ class CartItemSchema extends ItemSchema
         $logger       = wc_get_logger();
 
         foreach ($filtered_images as $image) {
+            $image_id = is_array($image) ? ($image['id'] ?? null) : ($image->id ?? null);
+            $thumbnail = is_array($image) ? ($image['thumbnail'] ?? null) : ($image->thumbnail ?? null);
+            $src       = is_array($image) ? ($image['src'] ?? null) : ($image->src ?? null);
+
             // If id is not set then something is wrong with the image, and further logging would break (it uses the ID).
-            if (! isset($image->id)) {
+            if (null === $image_id) {
                 $logger->warning('After passing through woocommerce_cart_item_images filter, one of the images did not have an id property.');
                 continue;
             }
 
             // Check if thumbnail is a valid url.
-            if (empty($image->thumbnail) || ! filter_var($image->thumbnail, FILTER_VALIDATE_URL)) {
-                $logger->warning(sprintf('After passing through woocommerce_cart_item_images filter, image with id %s did not have a valid thumbnail property.', $image->id));
+            if (empty($thumbnail) || ! filter_var($thumbnail, FILTER_VALIDATE_URL)) {
+                $logger->warning(sprintf('After passing through woocommerce_cart_item_images filter, image with id %s did not have a valid thumbnail property.', $image_id));
                 continue;
             }
 
             // Check if src is a valid url.
-            if (empty($image->src) || ! filter_var($image->src, FILTER_VALIDATE_URL)) {
-                $logger->warning(sprintf('After passing through woocommerce_cart_item_images filter, image with id %s did not have a valid src property.', $image->id));
+            if (empty($src) || ! filter_var($src, FILTER_VALIDATE_URL)) {
+                $logger->warning(sprintf('After passing through woocommerce_cart_item_images filter, image with id %s did not have a valid src property.', $image_id));
                 continue;
             }
 

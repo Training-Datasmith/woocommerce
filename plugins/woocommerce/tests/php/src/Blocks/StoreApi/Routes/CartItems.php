@@ -347,9 +347,9 @@ class CartItems extends ControllerTestCase
         add_filter(
             'woocommerce_store_api_cart_item_images',
             function ($images) {
-                foreach ($images as $image) {
-                    $image->src       = 'https://example.com/image-1.jpg';
-                    $image->thumbnail = 'https://example.com/image-1-thumbnail.jpg';
+                foreach ($images as $key => $image) {
+                    $images[ $key ]['src']       = 'https://example.com/image-1.jpg';
+                    $images[ $key ]['thumbnail'] = 'https://example.com/image-1-thumbnail.jpg';
                 }
 
                 return $images;
@@ -361,8 +361,8 @@ class CartItems extends ControllerTestCase
         $response = $controller->prepare_item_for_response(current($cart), new \WP_REST_Request());
         $image    = $response->get_data()['images'][0];
         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-        $this->assertEquals($image->src, 'https://example.com/image-1.jpg');
-        $this->assertEquals($image->thumbnail, 'https://example.com/image-1-thumbnail.jpg');
+        $this->assertEquals($image['src'], 'https://example.com/image-1.jpg');
+        $this->assertEquals($image['thumbnail'], 'https://example.com/image-1-thumbnail.jpg');
         remove_all_filters('woocommerce_store_api_cart_item_images');
     }
 
