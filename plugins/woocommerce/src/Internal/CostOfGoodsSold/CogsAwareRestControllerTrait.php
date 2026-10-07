@@ -41,10 +41,10 @@ trait CogsAwareRestControllerTrait
     /**
      * Apply Cost of Goods Sold related information received in the request body to a product object.
      *
-     * @param WP_Rest_Request $request Request data.
-     * @param WC_Product      $product The product to apply the data to.
+     * @param \WP_REST_Request $request Request data.
+     * @param \WC_Product      $product The product to apply the data to.
      */
-    private function set_cogs_info_in_product_object(array $request, $product): void
+    private function set_cogs_info_in_product_object(\WP_REST_Request $request, $product): void
     {
         $values = $request['cost_of_goods_sold']['values'] ?? null;
         if (! is_null($values)) {
