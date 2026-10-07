@@ -73,18 +73,18 @@ class ImageAttachmentSchema extends AbstractSchema
      * Convert a WooCommerce product into an object suitable for the response.
      *
      * @param int $attachment_id Image attachment ID.
-     * @return array|null
+     * @return array
      */
-    public function get_item_response($attachment_id): ?array
+    public function get_item_response($attachment_id): array
     {
         if (! $attachment_id) {
-            return null;
+            return [];
         }
 
         $attachment = wp_get_attachment_image_src($attachment_id, 'full');
 
         if (! is_array($attachment)) {
-            return null;
+            return [];
         }
 
         $thumbnail = wp_get_attachment_image_src($attachment_id, 'woocommerce_thumbnail');
