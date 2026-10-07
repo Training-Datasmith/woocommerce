@@ -95,7 +95,14 @@ class FulfillmentsController
     {
         global $wpdb;
 
-        if (get_option('woocommerce_fulfillments_db_tables_created', false)) {
+        $fulfillments_table = $wpdb->prefix . 'wc_order_fulfillments';
+        $meta_table         = $wpdb->prefix . 'wc_order_fulfillment_meta';
+
+        if (
+            get_option('woocommerce_fulfillments_db_tables_created', false)
+            && $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $fulfillments_table)) === $fulfillments_table
+            && $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $meta_table)) === $meta_table
+        ) {
             // The tables already exist, no need to create them again.
             return;
         }
