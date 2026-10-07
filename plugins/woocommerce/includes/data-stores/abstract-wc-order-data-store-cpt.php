@@ -641,7 +641,8 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
                 }
                 $order_items_collection[ $order_item->order_id ][] = $order_item;
                 return $order_items_collection;
-            }
+            },
+            []
         );
         foreach ($order_items_for_all_orders as $order_id => $items) {
             wp_cache_set('order-items-' . $order_id, $items, 'orders');
