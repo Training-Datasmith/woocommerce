@@ -118,7 +118,7 @@ abstract class AbstractTermsRoute extends AbstractRoute
      *
      * @return \WP_REST_Response
      */
-    protected function get_terms_response($taxonomy, array $request)
+    protected function get_terms_response($taxonomy, \WP_REST_Request $request)
     {
         $page          = (int) $request['page'];
         $per_page      = $request['per_page'] ? (int) $request['per_page'] : 0;
