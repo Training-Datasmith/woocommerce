@@ -27,7 +27,7 @@ class OnboardingProfile
      */
     public static function init(): void
     {
-        add_action('update_option_' . self::DATA_OPTION, self::trigger_complete(...), 10, 2);
+        add_action('update_option_' . self::DATA_OPTION, [ self::class, 'trigger_complete' ], 10, 2);
     }
 
     /**
