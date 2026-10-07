@@ -340,16 +340,18 @@ class Products extends Task
     public function maybe_redirect_to_add_product_tasklist(): void
     {
         $screen = get_current_screen();
-        if ('edit' === $screen->base && 'product' === $screen->post_type) {
-            // wp_count_posts is cached.
-            $counts = (array) wp_count_posts($screen->post_type);
-            unset($counts['auto-draft']);
-            $count = array_sum($counts);
-            if ($count > 0) {
-                return;
-            }
-            wp_safe_redirect(admin_url('admin.php?page=wc-admin&task=products'));
-            exit;
+        if (! $screen || 'edit' !== $screen->base || 'product' !== $screen->post_type) {
+            return;
         }
+
+        // wp_count_posts is cached.
+        $counts = (array) wp_count_posts($screen->post_type);
+        unset($counts['auto-draft']);
+        $count = array_sum($counts);
+        if ($count > 0) {
+            return;
+        }
+        wp_safe_redirect(admin_url('admin.php?page=wc-admin&task=products'));
+        exit;
     }
 }
