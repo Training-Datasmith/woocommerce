@@ -197,7 +197,7 @@ class Register
             return false;
         }
 
-        return new StoredUrl($result->url_id, $result->url, $result->enabled);
+        return new StoredUrl((int) $result->url_id, $result->url, (bool) $result->enabled);
     }
 
     /**
@@ -221,7 +221,7 @@ class Register
             return false;
         }
 
-        return new StoredUrl($result->url_id, $result->url, $result->enabled);
+        return new StoredUrl((int) $result->url_id, $result->url, (bool) $result->enabled);
     }
 
     /**
@@ -395,7 +395,7 @@ class Register
         // phpcs:enable
 
         foreach ($results as $single_result) {
-            $paths[] = new StoredUrl($single_result->url_id, $single_result->url, $single_result->enabled);
+            $paths[] = new StoredUrl((int) $single_result->url_id, $single_result->url, (bool) $single_result->enabled);
         }
 
         return [
