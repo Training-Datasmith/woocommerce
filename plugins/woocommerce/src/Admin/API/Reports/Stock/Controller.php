@@ -122,16 +122,16 @@ class Controller extends GenericController implements ExportableInterface
      */
     public function get_items($request)
     {
-        add_filter('posts_where', self::add_wp_query_filter(...), 10, 2);
-        add_filter('posts_join', self::add_wp_query_join(...), 10, 2);
-        add_filter('posts_groupby', self::add_wp_query_group_by(...), 10, 2);
-        add_filter('posts_clauses', self::add_wp_query_orderby(...), 10, 2);
+        add_filter('posts_where', [ self::class, 'add_wp_query_filter' ], 10, 2);
+        add_filter('posts_join', [ self::class, 'add_wp_query_join' ], 10, 2);
+        add_filter('posts_groupby', [ self::class, 'add_wp_query_group_by' ], 10, 2);
+        add_filter('posts_clauses', [ self::class, 'add_wp_query_orderby' ], 10, 2);
         $query_args    = $this->prepare_reports_query($request);
         $query_results = $this->get_products($query_args);
-        remove_filter('posts_where', self::add_wp_query_filter(...), 10);
-        remove_filter('posts_join', self::add_wp_query_join(...), 10);
-        remove_filter('posts_groupby', self::add_wp_query_group_by(...), 10);
-        remove_filter('posts_clauses', self::add_wp_query_orderby(...), 10);
+        remove_filter('posts_where', [ self::class, 'add_wp_query_filter' ], 10);
+        remove_filter('posts_join', [ self::class, 'add_wp_query_join' ], 10);
+        remove_filter('posts_groupby', [ self::class, 'add_wp_query_group_by' ], 10);
+        remove_filter('posts_clauses', [ self::class, 'add_wp_query_orderby' ], 10);
 
         $objects = [];
         foreach ($query_results['objects'] as $object) {
