@@ -463,11 +463,9 @@ class FulfillmentsDataStore extends \WC_Data_Store_WP implements \WC_Object_Data
      * @param Fulfillment  $data The fulfillment object to save.
      * @param WC_Meta_Data $meta Meta object (containing at least ->id).
      *
-     * @return int Number of rows updated.
-     *
      * @throws \Exception If the fulfillment or meta is not saved.
      */
-    public function update_meta(&$data, $meta): int
+    public function update_meta(&$data, $meta): void
     {
         // Update the metadata for the fulfillment.
         global $wpdb;
@@ -503,8 +501,6 @@ class FulfillmentsDataStore extends \WC_Data_Store_WP implements \WC_Object_Data
         if ($wpdb->last_error) {
             throw new \Exception(esc_html__('Failed to update fulfillment meta.', 'woocommerce'));
         }
-
-        return $rows_updated;
     }
 
     /**
