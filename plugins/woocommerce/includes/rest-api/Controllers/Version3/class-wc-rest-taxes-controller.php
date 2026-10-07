@@ -136,7 +136,7 @@ class WC_REST_Taxes_Controller extends WC_REST_Taxes_V2_Controller
      *
      * @param WP_REST_Request $request The request to adjust.
      */
-    private function adjust_cities_and_postcodes(array &$request): void
+    private function adjust_cities_and_postcodes(\WP_REST_Request &$request): void
     {
         if (isset($request['cities'])) {
             $request['city'] = join(';', $request['cities']);
