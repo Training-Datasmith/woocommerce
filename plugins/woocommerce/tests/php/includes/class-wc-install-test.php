@@ -379,8 +379,18 @@ class WC_Install_Test extends \WC_Unit_Test_Case
             return $shop_id;
         };
 
+        $supply_feature_disabled = function () {
+            return 'no';
+        };
+
+        $supply_column_status = function () {
+            return 'no';
+        };
+
         add_filter('option_woocommerce_version', $supply_version);
         add_filter('woocommerce_get_shop_page_id', $supply_shop_id);
+        add_filter('pre_option_woocommerce_feature_fulfillments_enabled', $supply_feature_disabled);
+        add_filter('pre_option_' . \Automattic\WooCommerce\Admin\API\Reports\Orders\Stats\DataStore::OPTION_ORDER_STATS_TABLE_HAS_COLUMN_ORDER_FULFILLMENT_STATUS, $supply_column_status);
 
         // Verify that is_new_install returns true.
         $this->assertTrue(WC_Install::is_new_install(), 'is_new_install should return true for testing new installation.');
@@ -400,6 +410,8 @@ class WC_Install_Test extends \WC_Unit_Test_Case
         // Cleanup.
         remove_filter('option_woocommerce_version', $supply_version);
         remove_filter('woocommerce_get_shop_page_id', $supply_shop_id);
+        remove_filter('pre_option_woocommerce_feature_fulfillments_enabled', $supply_feature_disabled);
+        remove_filter('pre_option_' . \Automattic\WooCommerce\Admin\API\Reports\Orders\Stats\DataStore::OPTION_ORDER_STATS_TABLE_HAS_COLUMN_ORDER_FULFILLMENT_STATUS, $supply_column_status);
     }
 
     /**
