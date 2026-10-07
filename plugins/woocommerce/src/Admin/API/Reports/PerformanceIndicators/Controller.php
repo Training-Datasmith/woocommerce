@@ -577,9 +577,13 @@ class Controller extends GenericController
             // Loop over provided data and filter by the queried date.
             // Note that this is currently limited to 30 days via the Jetpack API
             // but the WordPress.com endpoint allows up to 90 days.
-            $total  = 0;
-            $before = gmdate('Y-m-d', strtotime($query_args['before'] ?? TimeInterval::default_before()));
-            $after  = gmdate('Y-m-d', strtotime($query_args['after'] ?? TimeInterval::default_after()));
+            $total       = 0;
+            $before_arg  = $query_args['before'] ?? TimeInterval::default_before();
+            $after_arg   = $query_args['after'] ?? TimeInterval::default_after();
+            $before_time = $before_arg instanceof \DateTimeInterface ? $before_arg->getTimestamp() : strtotime((string) $before_arg);
+            $after_time  = $after_arg instanceof \DateTimeInterface ? $after_arg->getTimestamp() : strtotime((string) $after_arg);
+            $before      = gmdate('Y-m-d', $before_time);
+            $after       = gmdate('Y-m-d', $after_time);
             foreach ($data['general']->visits->data as $datum) {
                 if ($datum[0] >= $after && $datum[0] <= $before) {
                     $total += $datum[ $index ];
