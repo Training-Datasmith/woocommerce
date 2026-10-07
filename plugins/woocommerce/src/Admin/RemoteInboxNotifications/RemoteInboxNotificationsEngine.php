@@ -43,7 +43,7 @@ class RemoteInboxNotificationsEngine extends RemoteSpecsEngine
         // Trigger when the profile data option is updated (during onboarding).
         add_action(
             'update_option_' . OnboardingProfile::DATA_OPTION,
-            self::update_profile_option(...),
+            [ self::class, 'update_profile_option' ],
             10,
             2
         );
