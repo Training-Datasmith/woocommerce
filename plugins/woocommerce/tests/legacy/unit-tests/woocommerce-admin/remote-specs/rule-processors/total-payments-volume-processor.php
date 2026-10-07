@@ -274,25 +274,23 @@ class WC_Admin_Tests_RemoteSpecs_RuleProcessors_TotalPaymentsVolumeProcessor ext
             ->onlyMethods([ 'get_reports_query' ])
             ->getMock();
 
+        $mocked_query = $this->getMockBuilder(RevenueQuery::class)
+            ->onlyMethods([ 'get_data' ])
+            ->getMock();
+
+        $mocked_query->expects($this->once())
+            ->method('get_data')
+            ->willReturn(
+                (object) [
+                    'totals' => (object) [
+                        'total_sales' => 3000000,
+                    ],
+                ]
+            );
+
         $mock->expects($this->once())
             ->method('get_reports_query')
-            ->willReturn(
-                new class () {
-                    /**
-                     * Get the report data.
-                     *
-                     * @return object The report data.
-                     */
-                    public function get_data()
-                    {
-                        return (object) [
-                            'totals' => (object) [
-                                'total_sales' => 3000000,
-                            ],
-                        ];
-                    }
-                }
-            );
+            ->willReturn($mocked_query);
 
         $this->assertTrue(
             $mock->process(
