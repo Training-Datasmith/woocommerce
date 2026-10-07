@@ -105,6 +105,10 @@ class FulfillmentsSettings
     {
         $order = $order instanceof WC_Order ? $order : wc_get_order($order_id);
 
+        if (! $order instanceof WC_Order) {
+            return;
+        }
+
         if (empty($order->get_items())) {
             return;
         }
@@ -172,6 +176,11 @@ class FulfillmentsSettings
     public function auto_fulfill_items_on_completed(int $order_id, $order): void
     {
         $order = $order instanceof WC_Order ? $order : wc_get_order($order_id);
+
+        if (! $order instanceof WC_Order) {
+            return;
+        }
+
         if (empty($order->get_items())) {
             return;
         }

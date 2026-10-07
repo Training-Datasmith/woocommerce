@@ -31,9 +31,9 @@ class FulfillmentsManager
      */
     public function register(): void
     {
-        add_filter('woocommerce_fulfillment_shipping_providers', $this->get_initial_shipping_providers(...), 10, 1);
-        add_filter('woocommerce_fulfillment_translate_meta_key', $this->translate_fulfillment_meta_key(...), 10, 1);
-        add_filter('woocommerce_fulfillment_parse_tracking_number', $this->try_parse_tracking_number(...), 10, 3);
+        add_filter('woocommerce_fulfillment_shipping_providers', [ $this, 'get_initial_shipping_providers' ], 10, 1);
+        add_filter('woocommerce_fulfillment_translate_meta_key', [ $this, 'translate_fulfillment_meta_key' ], 10, 1);
+        add_filter('woocommerce_fulfillment_parse_tracking_number', [ $this, 'try_parse_tracking_number' ], 10, 3);
 
         $this->init_fulfillment_status_hooks();
         $this->init_refund_hooks();
@@ -65,8 +65,8 @@ class FulfillmentsManager
      */
     private function init_refund_hooks(): void
     {
-        add_action('woocommerce_refund_created', $this->update_fulfillments_after_refund(...), 10, 1);
-        add_action('woocommerce_delete_order_refund', $this->update_fulfillment_status_after_refund_deleted(...), 10, 1);
+        add_action('woocommerce_refund_created', [ $this, 'update_fulfillments_after_refund' ], 10, 1);
+        add_action('woocommerce_delete_order_refund', [ $this, 'update_fulfillment_status_after_refund_deleted' ], 10, 1);
     }
 
     /**
