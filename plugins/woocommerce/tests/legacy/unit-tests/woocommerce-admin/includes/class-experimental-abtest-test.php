@@ -102,9 +102,15 @@ class Experimental_Abtest_Test extends WC_Unit_Test_Case
     {
         $exp = new Experimental_Abtest('', 'platform', true);
 
-        $this->assertEquals(
-            is_wp_error($exp->request_assignment('test_experiment_name')),
-            true
+        $this->assertTrue(
+            is_wp_error(
+                $exp->request_assignment(
+                    [
+                        'experiment_name' => 'test_experiment_name',
+                        'anon_id'         => '',
+                    ]
+                )
+            )
         );
     }
 
