@@ -157,7 +157,11 @@ abstract class AbstractSchema
          * @param string           $param
          * @return true|\WP_Error
          */
-        return function (array $values, $request, string $param) use ($properties) {
+        return function ($values, $request, string $param) use ($properties) {
+            if (! is_array($values)) {
+                $values = [];
+            }
+
             foreach ($properties as $property_key => $property_value) {
                 $current_value = $values[ $property_key ] ?? null;
 
@@ -181,7 +185,8 @@ abstract class AbstractSchema
 
                 if (isset($property_value['properties'])) {
                     $validate_callback = $this->get_recursive_validate_callback($property_value['properties']);
-                    $result            = $validate_callback($current_value, $request, $param . ' > ' . $property_key);
+                    $nested_values     = is_array($current_value) ? $current_value : [];
+                    $result            = $validate_callback($nested_values, $request, $param . ' > ' . $property_key);
 
                     if (! $result || is_wp_error($result)) {
                         // If schema validation fails, we return here as we don't need to validate any deeper.
@@ -210,7 +215,11 @@ abstract class AbstractSchema
          * @param string           $param
          * @return true|\WP_Error
          */
-        return function (array $values, $request, string $param) use ($properties) {
+        return function ($values, $request, string $param) use ($properties) {
+            if (! is_array($values)) {
+                $values = [];
+            }
+
             $sanitized_values = [];
 
             foreach ($properties as $property_key => $property_value) {
@@ -230,7 +239,8 @@ abstract class AbstractSchema
 
                 if (isset($property_value['properties'])) {
                     $sanitize_callback                 = $this->get_recursive_sanitize_callback($property_value['properties']);
-                    $sanitized_values[ $property_key ] = $sanitize_callback($current_value, $request, $param . ' > ' . $property_key);
+                    $nested_values                     = is_array($current_value) ? $current_value : [];
+                    $sanitized_values[ $property_key ] = $sanitize_callback($nested_values, $request, $param . ' > ' . $property_key);
                 } else {
                     $sanitized_values[ $property_key ] = $current_value;
                 }
