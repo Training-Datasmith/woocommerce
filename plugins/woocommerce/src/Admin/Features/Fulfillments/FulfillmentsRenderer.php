@@ -29,28 +29,28 @@ class FulfillmentsRenderer
     {
         if (OrderUtil::custom_orders_table_usage_is_enabled()) {
             // Hook into column definitions and add the new fulfillment columns.
-            add_filter('manage_woocommerce_page_wc-orders_columns', $this->add_fulfillment_columns(...));
+            add_filter('manage_woocommerce_page_wc-orders_columns', [ $this, 'add_fulfillment_columns' ]);
             // Hook into the column rendering and render the new fulfillment columns.
-            add_action('manage_woocommerce_page_wc-orders_custom_column', $this->render_fulfillment_column_row_data(...), 10, 2);
+            add_action('manage_woocommerce_page_wc-orders_custom_column', [ $this, 'render_fulfillment_column_row_data' ], 10, 2);
         } else {
             // For legacy orders table, hook into column definitions and add the new fulfillment columns.
-            add_filter('manage_edit-shop_order_columns', $this->add_fulfillment_columns(...));
+            add_filter('manage_edit-shop_order_columns', [ $this, 'add_fulfillment_columns' ]);
             // Hook into the column rendering and render the new fulfillment columns.
-            add_action('manage_shop_order_posts_custom_column', $this->render_fulfillment_column_row_data_legacy(...), 25, 1);
+            add_action('manage_shop_order_posts_custom_column', [ $this, 'render_fulfillment_column_row_data_legacy' ], 25, 1);
         }
         // Hook into the admin footer to add the fulfillment drawer slot, which the React component will mount on.
-        add_action('admin_footer', $this->render_fulfillment_drawer_slot(...));
+        add_action('admin_footer', [ $this, 'render_fulfillment_drawer_slot' ]);
         // Hook into the admin enqueue scripts to load the fulfillment drawer component.
-        add_action('admin_enqueue_scripts', $this->load_components(...));
+        add_action('admin_enqueue_scripts', [ $this, 'load_components' ]);
         // Hook into the order details page to render the fulfillment badges.
-        add_action('woocommerce_admin_order_data_header_right', $this->render_order_details_badges(...));
+        add_action('woocommerce_admin_order_data_header_right', [ $this, 'render_order_details_badges' ]);
         // Hook into the order details before order table to render the fulfillment customer details.
-        add_action('woocommerce_order_details_before_order_table', $this->render_fulfillment_customer_details(...));
+        add_action('woocommerce_order_details_before_order_table', [ $this, 'render_fulfillment_customer_details' ]);
         // Initialize the renderer for bulk actions.
-        add_action('admin_init', $this->init_admin_hooks(...));
+        add_action('admin_init', [ $this, 'init_admin_hooks' ]);
         // Hook into the order status text to append the fulfillment status.
-        add_filter('woocommerce_order_details_status', $this->render_fulfillment_status_text(...), 10, 2);
-        add_filter('woocommerce_order_tracking_status', $this->render_fulfillment_status_text(...), 10, 2);
+        add_filter('woocommerce_order_details_status', [ $this, 'render_fulfillment_status_text' ], 10, 2);
+        add_filter('woocommerce_order_tracking_status', [ $this, 'render_fulfillment_status_text' ], 10, 2);
     }
 
     /**
@@ -60,18 +60,18 @@ class FulfillmentsRenderer
     {
         if (OrderUtil::custom_orders_table_usage_is_enabled()) {
             // For custom orders table, we need to add the bulk actions to the custom orders table.
-            add_filter('bulk_actions-woocommerce_page_wc-orders', $this->define_fulfillment_bulk_actions(...));
-            add_filter('handle_bulk_actions-woocommerce_page_wc-orders', $this->handle_fulfillment_bulk_actions(...), 10, 3);
+            add_filter('bulk_actions-woocommerce_page_wc-orders', [ $this, 'define_fulfillment_bulk_actions' ]);
+            add_filter('handle_bulk_actions-woocommerce_page_wc-orders', [ $this, 'handle_fulfillment_bulk_actions' ], 10, 3);
             // For custom orders table, we need to filter the query to include fulfillment status.
-            add_action('woocommerce_order_list_table_restrict_manage_orders', $this->render_fulfillment_filters(...));
-            add_filter('woocommerce_order_query_args', $this->filter_orders_list_table_query(...), 10, 1);
+            add_action('woocommerce_order_list_table_restrict_manage_orders', [ $this, 'render_fulfillment_filters' ]);
+            add_filter('woocommerce_order_query_args', [ $this, 'filter_orders_list_table_query' ], 10, 1);
         } else {
             // For legacy orders table, we need to add the bulk actions to the legacy orders table.
-            add_filter('bulk_actions-edit-shop_order', $this->define_fulfillment_bulk_actions(...));
-            add_filter('handle_bulk_actions-edit-shop_order', $this->handle_fulfillment_bulk_actions(...), 10, 3);
+            add_filter('bulk_actions-edit-shop_order', [ $this, 'define_fulfillment_bulk_actions' ]);
+            add_filter('handle_bulk_actions-edit-shop_order', [ $this, 'handle_fulfillment_bulk_actions' ], 10, 3);
             // For legacy orders table, we need to filter the query to include fulfillment status.
-            add_action('restrict_manage_posts', $this->render_fulfillment_filters_legacy(...));
-            add_action('pre_get_posts', $this->filter_legacy_orders_list_query(...));
+            add_action('restrict_manage_posts', [ $this, 'render_fulfillment_filters_legacy' ]);
+            add_action('pre_get_posts', [ $this, 'filter_legacy_orders_list_query' ]);
         }
     }
 
