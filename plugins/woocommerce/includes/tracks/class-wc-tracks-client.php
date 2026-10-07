@@ -327,7 +327,7 @@ class WC_Tracks_Client
 
         // Register shutdown hook once.
         if (! self::$shutdown_hook_registered) {
-            add_action('shutdown', self::send_batched_pixels(...), 20);
+            add_action('shutdown', [ self::class, 'send_batched_pixels' ], 20);
             self::$shutdown_hook_registered = true;
         }
     }
