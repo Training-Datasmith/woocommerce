@@ -297,7 +297,8 @@ class WC_Order_Factory
              */
             $order_class_names[ $order_id ] = apply_filters('woocommerce_order_class', $order_class_names[ $order_id ], $order_type, $order_id);
 
-            if (! class_exists($order_class_names[ $order_id ])) {
+            $class_name = $order_class_names[ $order_id ];
+            if (! is_string($class_name) || ! class_exists($class_name)) {
                 $order_class_names[ $order_id ] = false;
             }
         }
