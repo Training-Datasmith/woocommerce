@@ -167,7 +167,7 @@ class WC_Data_Store
     public function read_multiple(&$objects = []): void
     {
         // If the datastore allows for bulk-reading, use it.
-        if (is_callable($this->instance->read_multiple(...))) {
+        if (is_callable([ $this->instance, 'read_multiple' ])) {
             $this->instance->read_multiple($objects);
         } else {
             foreach ($objects as &$obj) {
