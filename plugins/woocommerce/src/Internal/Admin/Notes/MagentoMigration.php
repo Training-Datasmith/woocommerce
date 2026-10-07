@@ -34,8 +34,8 @@ class MagentoMigration
      */
     public function __construct()
     {
-        add_action('update_option_' . OnboardingProfile::DATA_OPTION, self::possibly_add_note(...));
-        add_action('woocommerce_admin_magento_migration_note', self::save_note(...));
+        add_action('update_option_' . OnboardingProfile::DATA_OPTION, [ self::class, 'possibly_add_note' ]);
+        add_action('woocommerce_admin_magento_migration_note', [ self::class, 'save_note' ]);
     }
 
     /**

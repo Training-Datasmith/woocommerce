@@ -37,7 +37,7 @@ class SellingOnlineCourses
     {
         add_action(
             'update_option_' . OnboardingProfile::DATA_OPTION,
-            $this->check_onboarding_profile(...),
+            [ self::class, 'check_onboarding_profile' ],
             10,
             3
         );
@@ -50,8 +50,12 @@ class SellingOnlineCourses
      * @param object $value     The new option value.
      * @param string $option    The name of the option.
      */
-    public static function check_onboarding_profile($old_value, array $value, $option): void
+    public static function check_onboarding_profile($old_value, $value, $option): void
     {
+        if (! is_array($value)) {
+            return;
+        }
+
         // Skip adding if this store is in the education/learning industry.
         if (! isset($value['industry'])) {
             return;
