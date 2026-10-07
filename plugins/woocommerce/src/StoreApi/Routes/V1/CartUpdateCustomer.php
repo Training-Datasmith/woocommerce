@@ -82,7 +82,7 @@ class CartUpdateCustomer extends AbstractCartRoute
      * @param array            $shipping Shipping address.
      * @return \WP_Error|true
      */
-    protected function validate_address_params(array $request, $billing, $shipping): \WP_Error|true
+    protected function validate_address_params(\WP_REST_Request $request, $billing, $shipping): \WP_Error|true
     {
         $posted_billing  = isset($request['billing_address']);
         $posted_shipping = isset($request['shipping_address']);
