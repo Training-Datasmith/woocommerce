@@ -129,8 +129,8 @@ class Batch extends ControllerTestCase
         $response_data = $response->get_data();
 
         $this->assertEquals(2, count($response_data['responses']));
-        $this->assertEquals(400, $response_data['responses'][0]['status'], $response_data['responses'][0]['status']);
-        $this->assertEquals(201, $response_data['responses'][1]['status'], $response_data['responses'][1]['status']);
+        $this->assertEquals(400, $response_data['responses'][0]['status'], 'First batch response status should be 400.');
+        $this->assertEquals(201, $response_data['responses'][1]['status'], 'Second batch response status should be 201.');
     }
 
     /**
