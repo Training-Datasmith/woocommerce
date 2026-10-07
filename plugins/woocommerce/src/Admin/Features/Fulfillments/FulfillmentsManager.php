@@ -53,9 +53,9 @@ class FulfillmentsManager
     private function init_fulfillment_status_hooks(): void
     {
         // Update order fulfillment status when a fulfillment is created, updated, or deleted.
-        add_action('woocommerce_fulfillment_after_create', $this->update_order_fulfillment_status_on_fulfillment_update(...), 10, 1);
-        add_action('woocommerce_fulfillment_after_update', $this->update_order_fulfillment_status_on_fulfillment_update(...), 10, 1);
-        add_action('woocommerce_fulfillment_after_delete', $this->update_order_fulfillment_status_on_fulfillment_update(...), 10, 1);
+        add_action('woocommerce_fulfillment_after_create', [ $this, 'update_order_fulfillment_status_on_fulfillment_update' ], 10, 1);
+        add_action('woocommerce_fulfillment_after_update', [ $this, 'update_order_fulfillment_status_on_fulfillment_update' ], 10, 1);
+        add_action('woocommerce_fulfillment_after_delete', [ $this, 'update_order_fulfillment_status_on_fulfillment_update' ], 10, 1);
     }
 
     /**
