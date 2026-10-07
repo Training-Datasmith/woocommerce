@@ -188,7 +188,7 @@ class WC_Admin_Tests_Reports_Coupons extends WC_Unit_Test_Case
             $c1_date_created     = '';
             $c1_date_created_gmt = '';
         } else {
-            $c1_date_created_gmt = new DateTime($c1_date_created);
+            $c1_date_created_gmt = DateTime::createFromInterface($c1_date_created);
             $c1_date_created_gmt->setTimezone($gmt_timezone);
 
             $c1_date_created     = $c1_date_created->format(TimeInterval::$iso_datetime_format);
@@ -200,7 +200,7 @@ class WC_Admin_Tests_Reports_Coupons extends WC_Unit_Test_Case
             $c1_date_expires     = '';
             $c1_date_expires_gmt = '';
         } else {
-            $c1_date_expires_gmt = new DateTime($c1_date_expires);
+            $c1_date_expires_gmt = DateTime::createFromInterface($c1_date_expires);
             $c1_date_expires_gmt->setTimezone($gmt_timezone);
 
             $c1_date_expires     = $c1_date_expires->format(TimeInterval::$iso_datetime_format);
@@ -226,7 +226,7 @@ class WC_Admin_Tests_Reports_Coupons extends WC_Unit_Test_Case
             $c2_date_created     = '';
             $c2_date_created_gmt = '';
         } else {
-            $c2_date_created_gmt = new DateTime($c2_date_created);
+            $c2_date_created_gmt = DateTime::createFromInterface($c2_date_created);
             $c2_date_created_gmt->setTimezone($gmt_timezone);
 
             $c2_date_created     = $c2_date_created->format(TimeInterval::$iso_datetime_format);
@@ -238,7 +238,7 @@ class WC_Admin_Tests_Reports_Coupons extends WC_Unit_Test_Case
             $c2_date_expires     = '';
             $c2_date_expires_gmt = '';
         } else {
-            $c2_date_expires_gmt = new DateTime($c2_date_expires);
+            $c2_date_expires_gmt = DateTime::createFromInterface($c2_date_expires);
             $c2_date_expires_gmt->setTimezone($gmt_timezone);
 
             $c2_date_expires     = $c2_date_expires->format(TimeInterval::$iso_datetime_format);
@@ -425,7 +425,7 @@ class WC_Admin_Tests_Reports_Coupons extends WC_Unit_Test_Case
             $c1_date_created     = '';
             $c1_date_created_gmt = '';
         } else {
-            $c1_date_created_gmt = new DateTime($c1_date_created);
+            $c1_date_created_gmt = DateTime::createFromInterface($c1_date_created);
             $c1_date_created_gmt->setTimezone($gmt_timezone);
 
             $c1_date_created     = $c1_date_created->format(TimeInterval::$iso_datetime_format);
@@ -437,7 +437,7 @@ class WC_Admin_Tests_Reports_Coupons extends WC_Unit_Test_Case
             $c1_date_expires     = '';
             $c1_date_expires_gmt = '';
         } else {
-            $c1_date_expires_gmt = new DateTime($c1_date_expires);
+            $c1_date_expires_gmt = DateTime::createFromInterface($c1_date_expires);
             $c1_date_expires_gmt->setTimezone($gmt_timezone);
 
             $c1_date_expires     = $c1_date_expires->format(TimeInterval::$iso_datetime_format);
