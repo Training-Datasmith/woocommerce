@@ -282,11 +282,11 @@ if (! class_exists('WC_Email_Customer_POS_Completed_Order', false)) :
         private function add_pos_customizations(): void
         {
             // Add action to display unit price in the beginning of the order item meta.
-            add_action('woocommerce_order_item_meta_start', $this->add_unit_price(...), 10, 4);
+            add_action('woocommerce_order_item_meta_start', [ $this, 'add_unit_price' ], 10, 4);
             // Add filter to include additional details in the order item totals table.
-            add_filter('woocommerce_get_order_item_totals', $this->order_item_totals(...), 10, 3);
+            add_filter('woocommerce_get_order_item_totals', [ $this, 'order_item_totals' ], 10, 3);
             // Add filter for custom footer text with highest priority to run before the default footer text filtering in `WC_Emails`.
-            add_filter('woocommerce_email_footer_text', $this->replace_footer_placeholders(...), 1, 2);
+            add_filter('woocommerce_email_footer_text', [ $this, 'replace_footer_placeholders' ], 1, 2);
         }
 
         /**
@@ -295,9 +295,9 @@ if (! class_exists('WC_Email_Customer_POS_Completed_Order', false)) :
         private function remove_pos_customizations(): void
         {
             // Remove actions and filters after generating content to avoid affecting other emails.
-            remove_action('woocommerce_order_item_meta_start', $this->add_unit_price(...), 10);
-            remove_filter('woocommerce_get_order_item_totals', $this->order_item_totals(...), 10);
-            remove_filter('woocommerce_email_footer_text', $this->replace_footer_placeholders(...), 1);
+            remove_action('woocommerce_order_item_meta_start', [ $this, 'add_unit_price' ], 10);
+            remove_filter('woocommerce_get_order_item_totals', [ $this, 'order_item_totals' ], 10);
+            remove_filter('woocommerce_email_footer_text', [ $this, 'replace_footer_placeholders' ], 1);
         }
 
         /**
@@ -492,7 +492,7 @@ if (! class_exists('WC_Email_Customer_POS_Completed_Order', false)) :
         public function replace_footer_placeholders($footer_text, $email)
         {
             // Only replace placeholders if we're in the context of a POS email.
-            if ($email->id !== $this->id) {
+            if (! is_object($email) || ! isset($email->id) || $email->id !== $this->id) {
                 return $footer_text;
             }
 
