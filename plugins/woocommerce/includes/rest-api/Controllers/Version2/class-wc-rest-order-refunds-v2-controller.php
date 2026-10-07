@@ -243,7 +243,7 @@ class WC_REST_Order_Refunds_V2_Controller extends WC_REST_Orders_V2_Controller
      */
     protected function prepare_links($object, $request): array
     {
-        $base  = str_replace('(?P<order_id>[\d]+)', $object->get_parent_id(), $this->rest_base);
+        $base  = str_replace('(?P<order_id>[\d]+)', (string) $object->get_parent_id(), $this->rest_base);
 
         return [
             'self'       => [
